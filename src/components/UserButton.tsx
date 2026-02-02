@@ -1,14 +1,9 @@
-import {
-  Menu,
-  MenuItem,
-  MenuPopup,
-  MenuSeparator,
-  MenuTrigger,
-} from '@/components/ui/menu'
-import { LogOut, Settings, UserIcon } from 'lucide-react'
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from '@/components/ui/menu'
+import { UserIcon } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { Link, useRouter } from '@tanstack/react-router'
 import { Button } from './ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 
 export default function UserButton() {
   const { data: session } = authClient.useSession()
@@ -18,23 +13,25 @@ export default function UserButton() {
 
   return (
     <Menu>
-      <MenuTrigger render={<Button variant={'outline'} size={'sm'} />}>
+      <MenuTrigger render={<Button variant={'outline'} size={'default'} />}>
         {session.user.image ? (
-          <img
-            src={session.user.image}
-            alt={session.user.name || 'User'}
-            className="w-4 h-4 rounded-full object-cover border"
-          />
+          <Avatar className="size-5">
+            <AvatarImage
+              alt={session.user.name || 'User'}
+              src={session.user.image}
+            />
+            <AvatarFallback>{session.user.name?.split(' ')[0]}</AvatarFallback>
+          </Avatar>
         ) : (
           <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
             <UserIcon className="w-4 h-4 text-muted-foreground" />
           </div>
         )}
-        <span className="text-xs">
+        <span className="text-sm">
           {(session.user as any).username || session.user.name?.split(' ')[0]}
         </span>
       </MenuTrigger>
-      <MenuPopup align="end" sideOffset={8} className="w-56">
+      <MenuPopup align="end" sideOffset={8}>
         <MenuItem
           render={
             <Link
@@ -43,10 +40,9 @@ export default function UserButton() {
             />
           }
         >
-          <Settings className="mr-2 h-4 w-4" />
-          Dashboard
+          {/* < className="mr-2 h-4 w-4" /> */}
+          Edit Profile
         </MenuItem>
-        <MenuSeparator />
         <MenuItem
           onClick={async () => {
             await authClient.signOut({
@@ -59,7 +55,7 @@ export default function UserButton() {
             })
           }}
         >
-          <LogOut className="mr-2 h-4 w-4" />
+          {/* <LogOut className="mr-2 h-4 w-4" /> */}
           Log out
         </MenuItem>
       </MenuPopup>

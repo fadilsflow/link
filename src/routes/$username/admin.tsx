@@ -123,11 +123,15 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState('profile')
   const [localLinks, setLocalLinks] = useState<any[]>([])
   const [profileStatus, setProfileStatus] = useState<
-    'saved' | 'saving' | 'error'
-  >('saved')
+    'saved' | 'saving' | 'error' | undefined
+  >(undefined)
 
   // Track if we are currently manipulating items to prevent sync overwrites
   const isManipulatingRef = useRef(false)
+
+  // Debounce timers
+  const profileDebounceRef = useRef<NodeJS.Timeout | null>(null)
+  const linkDebounceRefs = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
   // Realtime Data
   const { data: dashboardData, isFetching: isQueryFetching } = useQuery({
@@ -149,8 +153,8 @@ function Dashboard() {
       setLocalLinks(
         dashboardData.links.map((l: any) => ({
           ...l,
-          syncStatus: 'saved',
-          errors: {}, // Clear errors on fresh sync? Or keep them? Better to clear or re-validate.
+          // Don't set syncStatus on initial load - let it be undefined
+          errors: {},
         })),
       )
     }
@@ -182,51 +186,31 @@ function Dashboard() {
 
   const createLink = useMutation({
     mutationKey: ['createLink', username],
-    mutationFn: (data: { userId: string }) =>
+    mutationFn: (data: { userId: string; title: string; url: string }) =>
       trpcClient.link.create.mutate(data),
-    onMutate: async (newData) => {
-      isManipulatingRef.current = true
-      // Cancel queries to prevent old data from overwriting our new Optimistic link
-      await queryClient.cancelQueries({ queryKey: ['dashboard', username] })
-
-      // Optimistic Link Creation
-      const tempId = 'temp-' + Date.now()
-      const newLink = {
-        id: tempId,
-        userId: newData.userId,
-        title: '',
-        url: '',
-        isEnabled: true,
-        order: (localLinks?.[localLinks.length - 1]?.order || 0) + 1,
-        syncStatus: 'saving', // It is saving to DB
-        errors: { title: 'Title is required', url: 'Invalid URL' }, // Initial validation state
-      }
-      setLocalLinks((prev) => [...prev, newLink])
-      return { tempId }
-    },
-    onSuccess: (newLink, variables, context) => {
-      // The creation succeeded on server
+    onSuccess: (newLink) => {
+      // Replace temp link with real link from server
       setLocalLinks((prev) =>
         prev.map((l) =>
-          l.id === context?.tempId
-            ? {
-                ...newLink,
-                syncStatus: 'saved', // It is saved in DB!
-                errors: { title: 'Title is required', url: 'Invalid URL' }, // But still invalid content
-              }
+          l.id.startsWith('temp-') &&
+          l.title === newLink.title &&
+          l.url === newLink.url
+            ? { ...newLink, syncStatus: 'saved', errors: {} }
             : l,
         ),
       )
-
-      // Release lock with delay
-      setTimeout(() => {
-        isManipulatingRef.current = false
-        // Only invalidate after lock is released
-        queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
-      }, 500)
+      isManipulatingRef.current = false
+      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
     },
-    onError: (err, variables, context) => {
-      setLocalLinks((prev) => prev.filter((l) => l.id !== context?.tempId))
+    onError: (err, variables) => {
+      // Mark as error but keep the link
+      setLocalLinks((prev) =>
+        prev.map((l) =>
+          l.title === variables.title && l.url === variables.url
+            ? { ...l, syncStatus: 'error' }
+            : l,
+        ),
+      )
       isManipulatingRef.current = false
     },
   })
@@ -241,6 +225,7 @@ function Dashboard() {
       await queryClient.cancelQueries({ queryKey: ['dashboard', username] })
     },
     onSuccess: () => {
+      // Update status to saved
       setLocalLinks((prev) =>
         prev.map((l) => ({
           ...l,
@@ -248,16 +233,14 @@ function Dashboard() {
         })),
       )
 
+      // Release lock but DON'T invalidate queries
+      // This is local-first: we trust our local state
       setTimeout(() => {
         isManipulatingRef.current = false
-        // Silent invalidate to eventually get consistent
-        queryClient.invalidateQueries(
-          { queryKey: ['dashboard', username] },
-          { cancelRefetch: false },
-        )
-      }, 1500)
+      }, 500)
     },
     onError: () => {
+      // On error, revert by invalidating
       isManipulatingRef.current = false
       queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
     },
@@ -305,7 +288,21 @@ function Dashboard() {
   // Handlers
   const handleProfileUpdate = (field: string, value: string) => {
     if (!user) return
-    updateProfile.mutate({ userId: user.id, [field]: value })
+    // Don't post if value hasn't changed
+    if (user[field as keyof typeof user] === value) return
+
+    // Clear existing timer
+    if (profileDebounceRef.current) {
+      clearTimeout(profileDebounceRef.current)
+    }
+
+    // Set status to saving immediately
+    setProfileStatus('saving')
+
+    // Debounce: wait 2 seconds after user stops typing
+    profileDebounceRef.current = setTimeout(() => {
+      updateProfile.mutate({ userId: user.id, [field]: value })
+    }, 2000)
   }
 
   const handleLinkUpdate = (id: string, field: string, value: any) => {
@@ -332,17 +329,59 @@ function Dashboard() {
           else delete errors.url
         }
 
-        return { ...updatedLink, errors, syncStatus: 'saving' }
+        // Check if both title and URL are now valid
+        const hasNoErrors = Object.keys(errors).length === 0
+        const newStatus = hasNoErrors ? 'saving' : 'unsaved'
+
+        return { ...updatedLink, errors, syncStatus: newStatus }
       }),
     )
 
-    // 3. Trigger background mutation even if invalid (we save drafts)
-    updateLink.mutate({ id, [field]: value })
+    // 3. Clear existing debounce timer for this link
+    const existingTimer = linkDebounceRefs.current.get(id)
+    if (existingTimer) {
+      clearTimeout(existingTimer)
+    }
+
+    // 4. Get updated link data
+    const updatedLink = localLinks.find((l) => l.id === id)
+    if (!updatedLink) return
+
+    const updatedData = { ...updatedLink, [field]: value }
+
+    // Validate both fields
+    const result = linkSchema.safeParse({
+      title: updatedData.title,
+      url: updatedData.url,
+    })
+
+    // 5. Only POST if both title and URL are valid, with 2-second debounce
+    if (result.success) {
+      const timer = setTimeout(() => {
+        // If this is a temp link, create it on server
+        if (id.startsWith('temp-')) {
+          createLink.mutate({
+            userId: user!.id,
+            title: updatedData.title,
+            url: updatedData.url,
+          })
+        } else {
+          // Otherwise update existing link
+          updateLink.mutate({ id, [field]: value })
+        }
+        linkDebounceRefs.current.delete(id)
+      }, 2000)
+
+      linkDebounceRefs.current.set(id, timer)
+    }
   }
 
   const handleDeleteLink = (id: string) => {
     setLocalLinks((prev) => prev.filter((link) => link.id !== id))
-    deleteLink.mutate({ id })
+    // Only delete from server if it's not a temp link
+    if (!id.startsWith('temp-')) {
+      deleteLink.mutate({ id })
+    }
   }
 
   const handleReorder = (newLinks: any[]) => {
@@ -353,7 +392,10 @@ function Dashboard() {
     const updatedLocalLinks = newLinks.map((link, index) => {
       const newOrder = index + 1
       if (link.order !== newOrder) {
-        updates.push({ id: link.id, order: newOrder })
+        // Only add to updates if it's not a temp link
+        if (!link.id.startsWith('temp-')) {
+          updates.push({ id: link.id, order: newOrder })
+        }
         return { ...link, order: newOrder, syncStatus: 'saving' } // Mark moved items as saving
       }
       return link
@@ -362,7 +404,7 @@ function Dashboard() {
     // 2. Update local state
     setLocalLinks(updatedLocalLinks)
 
-    // 3. Trigger mutation if there are changes
+    // 3. Trigger mutation if there are changes (only for real links)
     if (updates.length > 0) {
       reorderLinks.mutate({ items: updates })
     } else {
@@ -471,7 +513,21 @@ function Dashboard() {
           {/* Block Controls */}
           <Button
             className="w-full h-12 font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow-sm"
-            onClick={() => createLink.mutate({ userId: user.id })}
+            onClick={() => {
+              // Create local-only link, don't POST until title and URL are filled
+              const tempId = 'temp-' + Date.now()
+              const newLink = {
+                id: tempId,
+                userId: user.id,
+                title: '',
+                url: '',
+                isEnabled: true,
+                order: (localLinks?.[localLinks.length - 1]?.order || 0) + 1,
+                syncStatus: 'unsaved' as const,
+                errors: { title: 'Title is required', url: 'Invalid URL' },
+              }
+              setLocalLinks((prev) => [...prev, newLink])
+            }}
           >
             <Plus className="mr-2 h-4 w-4" />
             Add a Block

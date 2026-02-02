@@ -63,7 +63,7 @@ export function ProfileEditor({
               <Input
                 defaultValue={user.name}
                 className="font-medium pr-10"
-                onBlur={(e) => onUpdate('name', e.target.value)}
+                onChange={(e) => onUpdate('name', e.target.value)}
               />
               <Pencil className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
             </div>
@@ -74,7 +74,7 @@ export function ProfileEditor({
                   defaultValue={user.title || ''}
                   placeholder="Job Title (e.g. Software Engineer)"
                   className="pr-16"
-                  onBlur={(e) => onUpdate('title', e.target.value)}
+                  onChange={(e) => onUpdate('title', e.target.value)}
                 />
               </div>
             </div>
@@ -85,7 +85,7 @@ export function ProfileEditor({
                   className="min-h-[100px] resize-none pr-16 text-sm"
                   placeholder="Bio"
                   defaultValue={user.bio || ''}
-                  onBlur={(e) => onUpdate('bio', e.target.value)}
+                  onChange={(e) => onUpdate('bio', e.target.value)}
                 />
               </div>
             </div>

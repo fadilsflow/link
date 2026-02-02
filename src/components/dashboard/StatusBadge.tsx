@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 export type SyncStatus = 'saved' | 'saving' | 'unsaved' | 'error'
 
 interface StatusBadgeProps {
-  status: SyncStatus
+  status?: SyncStatus
   className?: string
 }
 
@@ -18,16 +18,13 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       const timer = setTimeout(() => setShowSaved(false), 2000)
       return () => clearTimeout(timer)
     }
-    // If status changes from saved to something else, hide "saved" immediately?
-    // Or if we are unsaved/saving, we definitely want to show it.
-    // actually if we transition saved -> saving, we just show saving.
     setShowSaved(true)
   }, [status])
 
-  // Logic:
-  // - saving: always show
-  // - unsaved/error: always show
-  // - saved: show for 2s then hide (fade out)
+  // Don't show anything if status is undefined
+  if (!status) {
+    return <div className={cn('w-24 border-l border-border/30', className)} />
+  }
 
   const isVisible =
     status === 'saving' ||

@@ -109,7 +109,7 @@ export function SortableLinkItem({
                 errors.title &&
                   'border border-destructive/50 bg-destructive/5 focus-visible:ring-destructive/30',
               )}
-              onBlur={(e) =>
+              onChange={(e) =>
                 handleLinkUpdate?.(link.id, 'title', e.target.value)
               }
             />
@@ -130,7 +130,9 @@ export function SortableLinkItem({
                 errors.url &&
                   'border border-destructive/50 bg-destructive/5 focus-visible:ring-destructive/30',
               )}
-              onBlur={(e) => handleLinkUpdate?.(link.id, 'url', e.target.value)}
+              onChange={(e) =>
+                handleLinkUpdate?.(link.id, 'url', e.target.value)
+              }
             />
             {errors.url && (
               <p className="text-[10px] text-destructive font-medium px-1">

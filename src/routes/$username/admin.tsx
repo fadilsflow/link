@@ -140,6 +140,7 @@ function Dashboard() {
   // Sync localLinks with dashboardData only when NOT fetching and not continuously refetching
   useEffect(() => {
     // Only sync if we are not in the middle of a drag/drop or optimistic update sequence
+    // AND if we are not awaiting a reorder confirmation (optimistic reorder should persist)
     if (
       dashboardData?.links &&
       !isQueryFetching &&
@@ -185,6 +186,8 @@ function Dashboard() {
       trpcClient.link.create.mutate(data),
     onMutate: async (newData) => {
       isManipulatingRef.current = true
+      // Cancel queries to prevent old data from overwriting our new Optimistic link
+      await queryClient.cancelQueries({ queryKey: ['dashboard', username] })
 
       // Optimistic Link Creation
       const tempId = 'temp-' + Date.now()
@@ -215,14 +218,12 @@ function Dashboard() {
         ),
       )
 
-      // We can release the manipulation lock after a short delay or immediately
-      // But invalidating queries might cause a jump if we are not careful.
-      // logic: update succeeded, state is consistent.
+      // Release lock with delay
       setTimeout(() => {
         isManipulatingRef.current = false
+        // Only invalidate after lock is released
+        queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
       }, 500)
-
-      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
     },
     onError: (err, variables, context) => {
       setLocalLinks((prev) => prev.filter((l) => l.id !== context?.tempId))
@@ -234,8 +235,10 @@ function Dashboard() {
     mutationKey: ['reorderLinks', username],
     mutationFn: (data: { items: { id: string; order: number }[] }) =>
       trpcClient.link.reorder.mutate(data),
-    onMutate: () => {
+    onMutate: async () => {
       isManipulatingRef.current = true
+      // Stop background refetches immediately
+      await queryClient.cancelQueries({ queryKey: ['dashboard', username] })
     },
     onSuccess: () => {
       setLocalLinks((prev) =>
@@ -247,13 +250,12 @@ function Dashboard() {
 
       setTimeout(() => {
         isManipulatingRef.current = false
-      }, 1000)
-
-      // Silent invalidate
-      queryClient.invalidateQueries(
-        { queryKey: ['dashboard', username] },
-        { cancelRefetch: false },
-      )
+        // Silent invalidate to eventually get consistent
+        queryClient.invalidateQueries(
+          { queryKey: ['dashboard', username] },
+          { cancelRefetch: false },
+        )
+      }, 1500)
     },
     onError: () => {
       isManipulatingRef.current = false
@@ -307,7 +309,12 @@ function Dashboard() {
   }
 
   const handleLinkUpdate = (id: string, field: string, value: any) => {
-    // 1. Update local state immediately
+    // 1. Check if value actually changed (Debounce / Anti-spam)
+    const targetLink = localLinks.find((l) => l.id === id)
+    if (!targetLink) return
+    if (targetLink[field] === value) return
+
+    // 2. Update local state immediately
     setLocalLinks((prev) =>
       prev.map((link) => {
         if (link.id !== id) return link
@@ -329,11 +336,7 @@ function Dashboard() {
       }),
     )
 
-    // 2. Trigger background mutation even if invalid (we save drafts)
-    // OR we only save valid data? User complained: "ter post ketika sudah ada title dan url nya"
-    // implies they want it to post ALWAYS or visible always.
-    // We will save to DB regardless of validation (Validation is for display)
-
+    // 3. Trigger background mutation even if invalid (we save drafts)
     updateLink.mutate({ id, [field]: value })
   }
 

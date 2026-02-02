@@ -154,14 +154,15 @@ const linkRouter = {
     )
     .mutation(async ({ input }) => {
       console.log('TRPC: Reordering links', input.items.length, 'items')
-      await db.transaction(async (tx) => {
-        for (const item of input.items) {
-          await tx
+      // neon-http driver does not support transactions, so we run these in parallel
+      await Promise.all(
+        input.items.map((item) =>
+          db
             .update(links)
             .set({ order: item.order })
-            .where(eq(links.id, item.id))
-        }
-      })
+            .where(eq(links.id, item.id)),
+        ),
+      )
       return { success: true }
     }),
 } satisfies TRPCRouterRecord

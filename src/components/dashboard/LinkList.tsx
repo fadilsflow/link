@@ -13,7 +13,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
+// import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { SortableLinkItem } from './SortableLinkItem'
 
 interface Link {
@@ -62,7 +62,7 @@ export function LinkList({
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      modifiers={[restrictToVerticalAxis]}
+      // modifiers={[restrictToVerticalAxis]}
       onDragEnd={handleDragEnd}
     >
       <SortableContext

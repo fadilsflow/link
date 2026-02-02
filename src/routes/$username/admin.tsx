@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { z } from 'zod'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -122,22 +122,34 @@ function Dashboard() {
 
   const [activeTab, setActiveTab] = useState('profile')
   const [localLinks, setLocalLinks] = useState<any[]>([])
+  const [profileStatus, setProfileStatus] = useState<
+    'saved' | 'saving' | 'error'
+  >('saved')
+
+  // Track if we are currently manipulating items to prevent sync overwrites
+  const isManipulatingRef = useRef(false)
 
   // Realtime Data
   const { data: dashboardData, isFetching: isQueryFetching } = useQuery({
     queryKey: ['dashboard', username],
     queryFn: () => trpcClient.user.getDashboard.query({ username }),
     initialData: initialData,
-    refetchOnWindowFocus: false, // Prevent background refetches from resetting local state
+    refetchOnWindowFocus: false,
   })
 
-  // Sync localLinks with dashboardData only when NOT fetching and not recently updated locally
+  // Sync localLinks with dashboardData only when NOT fetching and not continuously refetching
   useEffect(() => {
-    if (dashboardData?.links && !isQueryFetching) {
+    // Only sync if we are not in the middle of a drag/drop or optimistic update sequence
+    if (
+      dashboardData?.links &&
+      !isQueryFetching &&
+      !isManipulatingRef.current
+    ) {
       setLocalLinks(
         dashboardData.links.map((l: any) => ({
           ...l,
           syncStatus: 'saved',
+          errors: {}, // Clear errors on fresh sync? Or keep them? Better to clear or re-validate.
         })),
       )
     }
@@ -154,9 +166,16 @@ function Dashboard() {
       title?: string
       bio?: string
     }) => trpcClient.user.updateProfile.mutate(data),
+    onMutate: () => {
+      setProfileStatus('saving')
+    },
     onSuccess: () => {
+      setProfileStatus('saved')
       queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
       router.invalidate()
+    },
+    onError: () => {
+      setProfileStatus('error')
     },
   })
 
@@ -165,6 +184,8 @@ function Dashboard() {
     mutationFn: (data: { userId: string }) =>
       trpcClient.link.create.mutate(data),
     onMutate: async (newData) => {
+      isManipulatingRef.current = true
+
       // Optimistic Link Creation
       const tempId = 'temp-' + Date.now()
       const newLink = {
@@ -174,28 +195,38 @@ function Dashboard() {
         url: '',
         isEnabled: true,
         order: (localLinks?.[localLinks.length - 1]?.order || 0) + 1,
-        syncStatus: 'unsaved',
+        syncStatus: 'saving', // It is saving to DB
+        errors: { title: 'Title is required', url: 'Invalid URL' }, // Initial validation state
       }
       setLocalLinks((prev) => [...prev, newLink])
       return { tempId }
     },
     onSuccess: (newLink, variables, context) => {
-      // Check if the newly created link (from server) is actually valid by our UI standards
-      const result = linkSchema.safeParse({
-        title: newLink.title,
-        url: newLink.url,
-      })
-      const status = result.success ? 'saved' : 'unsaved'
-
+      // The creation succeeded on server
       setLocalLinks((prev) =>
         prev.map((l) =>
-          l.id === context?.tempId ? { ...newLink, syncStatus: status } : l,
+          l.id === context?.tempId
+            ? {
+                ...newLink,
+                syncStatus: 'saved', // It is saved in DB!
+                errors: { title: 'Title is required', url: 'Invalid URL' }, // But still invalid content
+              }
+            : l,
         ),
       )
+
+      // We can release the manipulation lock after a short delay or immediately
+      // But invalidating queries might cause a jump if we are not careful.
+      // logic: update succeeded, state is consistent.
+      setTimeout(() => {
+        isManipulatingRef.current = false
+      }, 500)
+
       queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
     },
     onError: (err, variables, context) => {
       setLocalLinks((prev) => prev.filter((l) => l.id !== context?.tempId))
+      isManipulatingRef.current = false
     },
   })
 
@@ -203,6 +234,9 @@ function Dashboard() {
     mutationKey: ['reorderLinks', username],
     mutationFn: (data: { items: { id: string; order: number }[] }) =>
       trpcClient.link.reorder.mutate(data),
+    onMutate: () => {
+      isManipulatingRef.current = true
+    },
     onSuccess: () => {
       setLocalLinks((prev) =>
         prev.map((l) => ({
@@ -210,6 +244,11 @@ function Dashboard() {
           syncStatus: l.syncStatus === 'saving' ? 'saved' : l.syncStatus,
         })),
       )
+
+      setTimeout(() => {
+        isManipulatingRef.current = false
+      }, 1000)
+
       // Silent invalidate
       queryClient.invalidateQueries(
         { queryKey: ['dashboard', username] },
@@ -217,6 +256,7 @@ function Dashboard() {
       )
     },
     onError: () => {
+      isManipulatingRef.current = false
       queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
     },
   })
@@ -229,13 +269,18 @@ function Dashboard() {
       url?: string
       isEnabled?: boolean
     }) => trpcClient.link.update.mutate(data),
+    onMutate: () => {
+      // We don't necessarily need to lock unrelated updates, but it's safer
+      // isManipulatingRef.current = true
+    },
     onSuccess: (updatedLink) => {
       setLocalLinks((prev) =>
         prev.map((l) =>
-          l.id === updatedLink.id ? { ...updatedLink, syncStatus: 'saved' } : l,
+          l.id === updatedLink.id
+            ? { ...l, ...updatedLink, syncStatus: 'saved' }
+            : l,
         ),
       )
-      // Do not invalidate immediately to prevent sync flicker
     },
     onError: (err, variables) => {
       setLocalLinks((prev) =>
@@ -269,32 +314,27 @@ function Dashboard() {
         const updatedLink = { ...link, [field]: value }
 
         // Validation check
-        const result = linkSchema.safeParse({
-          title: updatedLink.title,
-          url: updatedLink.url,
-        })
-
-        if (!result.success) {
-          return { ...updatedLink, syncStatus: 'unsaved' }
+        const errors = { ...link.errors }
+        if (field === 'title') {
+          if (!value) errors.title = 'Title is required'
+          else delete errors.title
+        }
+        if (field === 'url') {
+          const result = linkSchema.safeParse({ title: 'ignore', url: value })
+          if (!result.success) errors.url = 'Invalid URL'
+          else delete errors.url
         }
 
-        return { ...updatedLink, syncStatus: 'saving' }
+        return { ...updatedLink, errors, syncStatus: 'saving' }
       }),
     )
 
-    // 2. Only trigger background mutation if valid
-    const targetLink = localLinks.find((l) => l.id === id)
-    if (!targetLink) return
+    // 2. Trigger background mutation even if invalid (we save drafts)
+    // OR we only save valid data? User complained: "ter post ketika sudah ada title dan url nya"
+    // implies they want it to post ALWAYS or visible always.
+    // We will save to DB regardless of validation (Validation is for display)
 
-    const updatedData = { ...targetLink, [field]: value }
-    const result = linkSchema.safeParse({
-      title: updatedData.title,
-      url: updatedData.url,
-    })
-
-    if (result.success) {
-      updateLink.mutate({ id, [field]: value })
-    }
+    updateLink.mutate({ id, [field]: value })
   }
 
   const handleDeleteLink = (id: string) => {
@@ -303,13 +343,15 @@ function Dashboard() {
   }
 
   const handleReorder = (newLinks: any[]) => {
+    isManipulatingRef.current = true
+
     // 1. Calculate new orders (1 is top)
     const updates: { id: string; order: number }[] = []
     const updatedLocalLinks = newLinks.map((link, index) => {
       const newOrder = index + 1
       if (link.order !== newOrder) {
         updates.push({ id: link.id, order: newOrder })
-        return { ...link, order: newOrder, syncStatus: 'saving' }
+        return { ...link, order: newOrder, syncStatus: 'saving' } // Mark moved items as saving
       }
       return link
     })
@@ -320,6 +362,8 @@ function Dashboard() {
     // 3. Trigger mutation if there are changes
     if (updates.length > 0) {
       reorderLinks.mutate({ items: updates })
+    } else {
+      isManipulatingRef.current = false
     }
   }
 
@@ -417,7 +461,7 @@ function Dashboard() {
         <div className="space-y-6">
           <ProfileEditor
             user={user}
-            isPending={updateProfile.isPending}
+            status={profileStatus}
             onUpdate={handleProfileUpdate}
           />
 

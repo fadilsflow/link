@@ -15,6 +15,13 @@
       "when": 1770012669168,
       "tag": "0001_fixed_sunfire",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770019704377,
+      "tag": "0002_worried_black_bolt",
+      "breakpoints": true
     }
   ]
 }

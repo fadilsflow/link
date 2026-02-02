@@ -8,7 +8,7 @@ export const Header = () => {
 
   return (
     <header>
-      <nav className="fixed z-20 w-full bg-background">
+      <nav className="fixed z-20 w-full bg-background border-b border-border/64">
         <div className="mx-auto max-w-6xl px-4 py-2 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="-mt-0.5 flex shrink-0 items-center gap-1.5 font-heading font-semibold text-2xl sm:text-[1.625em]">

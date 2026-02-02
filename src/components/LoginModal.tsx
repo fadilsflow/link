@@ -29,14 +29,13 @@ export function LoginModal() {
       setLoading(false)
     }
   }
-  
 
   return (
     <Dialog>
       <DialogTrigger
         className={buttonVariants({ variant: 'default', size: 'sm' })}
       >
-        Login
+        Sign in
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

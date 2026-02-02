@@ -22,7 +22,7 @@ function App() {
   return (
     <>
       <Header />
-      <main className="flex-1 min-h-screen bg-zinc-50/50 dark:bg-zinc-950">
+      <main className="flex-1 min-h-screen">
         <HeroSection />
       </main>
     </>

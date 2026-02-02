@@ -1,19 +1,8 @@
 import { Button } from './ui/button'
-import {
-  BadgeCheck,
-  Users,
-  Briefcase,
-  Zap,
-  ArrowRight,
-  Sparkles,
-} from 'lucide-react'
-import { Link } from '@tanstack/react-router'
-
+import { Users, Briefcase, Zap, Sparkles } from 'lucide-react'
 export function HeroSection() {
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center px-4 py-24 text-center sm:py-32">
-      {/* Background decorations if needed, omitting for clean look matching image */}
-
       {/* Badge */}
       <div className="mb-8 inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-50/50 p-1 pr-4 backdrop-blur-sm transition-colors hover:bg-emerald-100/50">
         <span className="rounded-full bg-emerald-500 px-3 py-1 text-[10px] font-bold uppercase leading-tight tracking-wide text-white shadow-sm">

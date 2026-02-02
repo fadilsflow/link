@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { StatusBadge } from './StatusBadge'
 
 interface LinkItemProps {
   link: {
@@ -20,6 +21,7 @@ interface LinkItemProps {
     url: string
     isEnabled: boolean
     syncStatus?: 'saved' | 'saving' | 'unsaved' | 'error'
+    errors?: { title?: string; url?: string }
   }
   handleLinkUpdate?: (id: string, field: string, value: any) => void
   handleDeleteLink?: (id: string) => void
@@ -31,16 +33,6 @@ export function SortableLinkItem({
   handleLinkUpdate,
   handleDeleteLink,
 }: LinkItemProps) {
-  const [showStatus, setShowStatus] = useState(true)
-
-  useEffect(() => {
-    if (link.syncStatus === 'saved') {
-      const timer = setTimeout(() => setShowStatus(false), 2000)
-      return () => clearTimeout(timer)
-    }
-    setShowStatus(true)
-  }, [link.syncStatus])
-
   const {
     attributes,
     listeners,
@@ -58,6 +50,7 @@ export function SortableLinkItem({
   }
 
   const status = link.syncStatus || 'saved'
+  const errors = link.errors || {}
 
   return (
     <div
@@ -114,62 +107,53 @@ export function SortableLinkItem({
         </div>
 
         <div className="grid gap-3">
-          <Input
-            key={`title-${link.id}`}
-            defaultValue={link.title}
-            placeholder="Link Title"
-            className="h-9 bg-muted/30 border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all font-medium"
-            onBlur={(e) => handleLinkUpdate?.(link.id, 'title', e.target.value)}
-          />
+          <div className="space-y-1">
+            <Input
+              key={`title-${link.id}`}
+              defaultValue={link.title}
+              placeholder="Link Title"
+              className={cn(
+                'h-9 bg-muted/30 border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all font-medium',
+                errors.title &&
+                  'border border-destructive/50 bg-destructive/5 focus-visible:ring-destructive/30',
+              )}
+              onBlur={(e) =>
+                handleLinkUpdate?.(link.id, 'title', e.target.value)
+              }
+            />
+            {errors.title && (
+              <p className="text-[10px] text-destructive font-medium px-1">
+                {errors.title}
+              </p>
+            )}
+          </div>
 
-          <Input
-            key={`url-${link.id}`}
-            defaultValue={link.url}
-            placeholder="url (e.g. https://github.com)"
-            className="h-9 bg-muted/30 border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all text-xs text-muted-foreground"
-            onBlur={(e) => handleLinkUpdate?.(link.id, 'url', e.target.value)}
-          />
+          <div className="space-y-1">
+            <Input
+              key={`url-${link.id}`}
+              defaultValue={link.url}
+              placeholder="url (e.g. https://github.com)"
+              className={cn(
+                'h-9 bg-muted/30 border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all text-xs text-muted-foreground',
+                errors.url &&
+                  'border border-destructive/50 bg-destructive/5 focus-visible:ring-destructive/30',
+              )}
+              onBlur={(e) => handleLinkUpdate?.(link.id, 'url', e.target.value)}
+            />
+            {errors.url && (
+              <p className="text-[10px] text-destructive font-medium px-1">
+                {errors.url}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Right Status Badge */}
-      <div
-        className={cn(
-          'w-24 flex flex-col items-center justify-center gap-1.5 border-l border-border/30 transition-all duration-300',
-          status === 'saved' && showStatus && 'bg-emerald-50/30 opacity-100',
-          status === 'saved' &&
-            !showStatus &&
-            'bg-transparent opacity-0 w-0 border-none',
-          status === 'saving' && 'bg-zinc-50/50 opacity-100 w-24',
-          (status === 'unsaved' || status === 'error') &&
-            'bg-amber-50/30 opacity-100 w-24',
-        )}
-      >
-        {status === 'saved' && showStatus && (
-          <>
-            <CheckCircle2 className="h-5 w-5 text-emerald-500 animate-in fade-in zoom-in duration-300" />
-            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">
-              Saved
-            </span>
-          </>
-        )}
-        {status === 'saving' && (
-          <>
-            <Loader2 className="h-5 w-5 text-zinc-400 animate-spin" />
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
-              Saving
-            </span>
-          </>
-        )}
-        {(status === 'unsaved' || status === 'error') && (
-          <>
-            <XCircle className="h-5 w-5 text-amber-500" />
-            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-tighter">
-              Unsaved
-            </span>
-          </>
-        )}
-      </div>
+      <StatusBadge
+        status={status}
+        className="w-24 border-l border-border/30 h-auto"
+      />
     </div>
   )
 }

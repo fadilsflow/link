@@ -123,11 +123,12 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState('profile')
   const [localLinks, setLocalLinks] = useState<any[]>([])
   const [profileStatus, setProfileStatus] = useState<
-    'saved' | 'saving' | 'error' | undefined
+    'saved' | 'saving' | 'error' | 'unsaved' | undefined
   >(undefined)
 
   // Track if we are currently manipulating items to prevent sync overwrites
   const isManipulatingRef = useRef(false)
+  const [debugLocalReorder, setDebugLocalReorder] = useState(false)
 
   // Debounce timers
   const profileDebounceRef = useRef<NodeJS.Timeout | null>(null)
@@ -141,24 +142,25 @@ function Dashboard() {
     refetchOnWindowFocus: false,
   })
 
-  // Sync localLinks with dashboardData only when NOT fetching and not continuously refetching
+  // Sync localLinks with dashboardData ONLY ONCE on initial load (Local-First Strategy)
+  // We trust local state manipulation for all subsequent updates.
+  const hasHydratedRef = useRef(false)
+
   useEffect(() => {
-    // Only sync if we are not in the middle of a drag/drop or optimistic update sequence
-    // AND if we are not awaiting a reorder confirmation (optimistic reorder should persist)
-    if (
-      dashboardData?.links &&
-      !isQueryFetching &&
-      !isManipulatingRef.current
-    ) {
-      setLocalLinks(
-        dashboardData.links.map((l: any) => ({
-          ...l,
-          // Don't set syncStatus on initial load - let it be undefined
-          errors: {},
-        })),
-      )
-    }
-  }, [dashboardData?.links, isQueryFetching])
+    // If we already hydrated or don't have data, skip
+    if (hasHydratedRef.current || !dashboardData?.links) return
+
+    setLocalLinks(
+      dashboardData.links.map((l: any) => ({
+        ...l,
+        // Don't set syncStatus on initial load - let it be undefined
+        errors: {},
+      })),
+    )
+
+    // Mark as hydrated so we never overwrite local state with server data again
+    hasHydratedRef.current = true
+  }, [dashboardData?.links])
 
   const user = dashboardData?.user
 
@@ -176,8 +178,7 @@ function Dashboard() {
     },
     onSuccess: () => {
       setProfileStatus('saved')
-      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
-      router.invalidate()
+      // DON'T invalidate - keep temp links alive
     },
     onError: () => {
       setProfileStatus('error')
@@ -200,7 +201,7 @@ function Dashboard() {
         ),
       )
       isManipulatingRef.current = false
-      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      // DON'T invalidate - keep temp links alive
     },
     onError: (err, variables) => {
       // Mark as error but keep the link
@@ -219,29 +220,21 @@ function Dashboard() {
     mutationKey: ['reorderLinks', username],
     mutationFn: (data: { items: { id: string; order: number }[] }) =>
       trpcClient.link.reorder.mutate(data),
-    onMutate: async () => {
-      isManipulatingRef.current = true
-      // Stop background refetches immediately
-      await queryClient.cancelQueries({ queryKey: ['dashboard', username] })
+    onMutate: () => {
+      // Local state is already updated by handleReorder
+      // No need to lock or cancel queries since we have one-time hydration now
     },
     onSuccess: () => {
-      // Update status to saved
+      // Just ensure status is set to saved if we were showing it
       setLocalLinks((prev) =>
         prev.map((l) => ({
           ...l,
           syncStatus: l.syncStatus === 'saving' ? 'saved' : l.syncStatus,
         })),
       )
-
-      // Release lock but DON'T invalidate queries
-      // This is local-first: we trust our local state
-      setTimeout(() => {
-        isManipulatingRef.current = false
-      }, 500)
     },
     onError: () => {
-      // On error, revert by invalidating
-      isManipulatingRef.current = false
+      // Only now we might want to refetch to correct state
       queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
     },
   })
@@ -296,13 +289,14 @@ function Dashboard() {
       clearTimeout(profileDebounceRef.current)
     }
 
-    // Set status to saving immediately
-    setProfileStatus('saving')
+    // Set status to unsaved while typing
+    setProfileStatus('unsaved')
 
-    // Debounce: wait 2 seconds after user stops typing
+    // Debounce: wait 1 second after user stops typing
     profileDebounceRef.current = setTimeout(() => {
+      setProfileStatus('saving')
       updateProfile.mutate({ userId: user.id, [field]: value })
-    }, 2000)
+    }, 1000)
   }
 
   const handleLinkUpdate = (id: string, field: string, value: any) => {
@@ -355,9 +349,14 @@ function Dashboard() {
       url: updatedData.url,
     })
 
-    // 5. Only POST if both title and URL are valid, with 2-second debounce
+    // 5. Only POST if both title and URL are valid, with 1-second debounce
     if (result.success) {
       const timer = setTimeout(() => {
+        // Set individual link status to saving
+        setLocalLinks((prev) =>
+          prev.map((l) => (l.id === id ? { ...l, syncStatus: 'saving' } : l)),
+        )
+
         // If this is a temp link, create it on server
         if (id.startsWith('temp-')) {
           createLink.mutate({
@@ -370,7 +369,7 @@ function Dashboard() {
           updateLink.mutate({ id, [field]: value })
         }
         linkDebounceRefs.current.delete(id)
-      }, 2000)
+      }, 1000)
 
       linkDebounceRefs.current.set(id, timer)
     }
@@ -396,7 +395,8 @@ function Dashboard() {
         if (!link.id.startsWith('temp-')) {
           updates.push({ id: link.id, order: newOrder })
         }
-        return { ...link, order: newOrder, syncStatus: 'saving' } // Mark moved items as saving
+        // Don't show status for reorder operations
+        return { ...link, order: newOrder }
       }
       return link
     })
@@ -405,7 +405,9 @@ function Dashboard() {
     setLocalLinks(updatedLocalLinks)
 
     // 3. Trigger mutation if there are changes (only for real links)
-    if (updates.length > 0) {
+    if (updates.length > 0 && !debugLocalReorder) {
+      // NOTE: User requested purely local drag first to debug blink.
+      // Uncomment this line to re-enable server sync:
       reorderLinks.mutate({ items: updates })
     } else {
       isManipulatingRef.current = false
@@ -423,6 +425,18 @@ function Dashboard() {
             <span className="font-bold text-2xl tracking-tighter">
               LIN<span className="rotate-180 inline-block">K</span>E
             </span>
+          </div>
+
+          <div className="px-2 flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="debug"
+              checked={debugLocalReorder}
+              onChange={(e) => setDebugLocalReorder(e.target.checked)}
+            />
+            <label htmlFor="debug" className="text-xs text-muted-foreground">
+              Debug: Local Reorder Only
+            </label>
           </div>
 
           <Card className="overflow-hidden border-none shadow-sm">
@@ -534,11 +548,18 @@ function Dashboard() {
           </Button>
 
           {/* Links List */}
+          {/* Links List */}
           <LinkList
             links={localLinks}
             onUpdate={handleLinkUpdate}
             onDelete={handleDeleteLink}
             onReorder={handleReorder}
+            onDragStart={() => {
+              isManipulatingRef.current = true
+            }}
+            onDragCancel={() => {
+              isManipulatingRef.current = false
+            }}
           />
         </div>
       </div>

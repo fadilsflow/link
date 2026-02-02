@@ -29,6 +29,8 @@ interface LinkListProps {
   onUpdate: (id: string, field: string, value: any) => void
   onDelete: (id: string) => void
   onReorder: (newLinks: Link[]) => void
+  onDragStart?: () => void
+  onDragCancel?: () => void
 }
 
 export function LinkList({
@@ -36,6 +38,8 @@ export function LinkList({
   onUpdate,
   onDelete,
   onReorder,
+  onDragStart,
+  onDragCancel,
 }: LinkListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -46,10 +50,17 @@ export function LinkList({
     }),
   )
 
+  const handleDragStart = () => {
+    onDragStart?.()
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
 
-    if (!over || active.id === over.id) return
+    if (!over || active.id === over.id) {
+      onDragCancel?.()
+      return
+    }
 
     const oldIndex = links.findIndex((l) => l.id === active.id)
     const newIndex = links.findIndex((l) => l.id === over.id)
@@ -61,7 +72,9 @@ export function LinkList({
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragCancel={onDragCancel}
     >
       <SortableContext
         items={links.map((l) => l.id)}

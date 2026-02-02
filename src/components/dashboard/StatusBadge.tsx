@@ -35,11 +35,9 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center gap-1.5 transition-all duration-300',
+        'flex flex-col items-center justify-center gap-1.5 transition-all duration-300 w-24 border-l border-border/30',
         status === 'saved' && isVisible && 'bg-emerald-50/30 opacity-100',
-        status === 'saved' &&
-          !isVisible &&
-          'bg-transparent opacity-0 w-0 border-none',
+        status === 'saved' && !isVisible && 'bg-transparent opacity-0',
         status === 'saving' && 'bg-zinc-50/50 opacity-100',
         (status === 'unsaved' || status === 'error') &&
           'bg-amber-50/30 opacity-100',

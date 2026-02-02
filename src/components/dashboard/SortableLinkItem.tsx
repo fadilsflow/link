@@ -49,7 +49,7 @@ export function SortableLinkItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group relative flex items-stretch bg-background border border-border/60 rounded-2xl transition-all duration-200 overflow-hidden',
+        'group relative flex items-stretch bg-background border border-border/60 rounded-2xl transition-colors duration-200 overflow-hidden',
         isDragging && 'shadow-2xl ring-2 ring-primary/20',
         status === 'saved' && 'border-emerald-100/50',
         status === 'unsaved' && 'border-amber-100/50',

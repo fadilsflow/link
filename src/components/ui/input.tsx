@@ -19,8 +19,6 @@ function Input({
   size = 'default',
   unstyled = false,
   nativeInput = false,
-  children,
-  dangerouslySetInnerHTML,
   ...props
 }: InputProps) {
   const inputClassName = cn(
@@ -51,18 +49,14 @@ function Input({
           className={inputClassName}
           data-slot="input"
           size={typeof size === 'number' ? size : undefined}
-          {...(props as any)}
-          children={undefined}
-          dangerouslySetInnerHTML={undefined}
+          {...props}
         />
       ) : (
         <InputPrimitive
           className={inputClassName}
           data-slot="input"
           size={typeof size === 'number' ? size : undefined}
-          {...(props as any)}
-          children={undefined}
-          dangerouslySetInnerHTML={undefined}
+          {...props}
         />
       )}
     </span>

@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/menu'
 import { LogOut, Settings, UserIcon } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
-import { useRouter } from '@tanstack/react-router'
+import { Link, useRouter } from '@tanstack/react-router'
 import { Button } from './ui/button'
 
 export default function UserButton() {
@@ -35,9 +35,16 @@ export default function UserButton() {
         </span>
       </MenuTrigger>
       <MenuPopup align="end" sideOffset={8} className="w-56">
-        <MenuItem>
+        <MenuItem
+          render={
+            <Link
+              to={`/$username/admin`}
+              params={{ username: (session.user as any).username }}
+            />
+          }
+        >
           <Settings className="mr-2 h-4 w-4" />
-          Profile
+          Dashboard
         </MenuItem>
         <MenuSeparator />
         <MenuItem

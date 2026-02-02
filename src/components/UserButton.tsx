@@ -30,7 +30,9 @@ export default function UserButton() {
             <UserIcon className="w-4 h-4 text-muted-foreground" />
           </div>
         )}
-        <span className="text-xs">{session.user.name?.split(' ')[0]}</span>
+        <span className="text-xs">
+          {(session.user as any).username || session.user.name?.split(' ')[0]}
+        </span>
       </MenuTrigger>
       <MenuPopup align="end" sideOffset={8} className="w-56">
         <MenuItem>

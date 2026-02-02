@@ -24,6 +24,14 @@ export const auth = betterAuth({
         type: 'string',
         required: false,
       },
+      bio: {
+        type: 'string',
+        required: false,
+      },
+      title: {
+        type: 'string',
+        required: false,
+      },
     },
   },
   plugins: [tanstackStartCookies()],

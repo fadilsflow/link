@@ -1,36 +1,35 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import {
-  Camera,
   Copy,
-  Globe,
-  GripVertical,
   LayoutTemplate,
-  Link as LinkIcon,
   Palette,
-  Plus,
-  Settings,
-  Share2,
-  Trash2,
   BarChart3,
-  X,
-  Eye,
-  Pencil,
-  Lock,
+  Settings,
+  Plus,
   Loader2,
-  Check,
+  Lock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { z } from 'zod'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { checkOnboardingStatus } from '@/lib/onboarding-server'
-
 import { getDashboardData } from '@/lib/profile-server'
+
+import { LinkList } from '@/components/dashboard/LinkList'
+import { ProfileEditor } from '@/components/dashboard/ProfileEditor'
+
+const linkSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  url: z.string().url('Invalid URL'),
+})
 
 export const Route = createFileRoute('/$username/admin')({
   component: Dashboard,
@@ -56,9 +55,7 @@ function AccessDenied() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <div className="flex flex-col items-center max-w-md text-center space-y-6">
         <div className="relative flex items-center justify-center w-24 h-24 bg-muted/30 rounded-2xl mb-2">
-          {/* Document shape hint */}
           <div className="absolute inset-4 border border-border/40 rounded-lg bg-background" />
-          {/* Lock Icon */}
           <div className="relative z-10 p-3 bg-emerald-50 rounded-xl">
             <div className="bg-emerald-500 rounded-md p-1">
               <Lock className="w-6 h-6 text-white leading-none" />
@@ -112,17 +109,11 @@ function AccessDenied() {
   )
 }
 
-import { useRouter } from '@tanstack/react-router'
-import { useMutation } from '@tanstack/react-query'
-import { trpcClient } from '@/integrations/tanstack-query/root-provider'
-
-// ... existing AccessDenied ...
-
 function Dashboard() {
   const { username } = Route.useParams()
-  const { status, dashboardData } = Route.useLoaderData()
+  const { status, dashboardData: initialData } = Route.useLoaderData()
   const router = useRouter()
-  // const utils = trpc.useUtils() // Not available
+  const queryClient = useQueryClient()
 
   // Access Control
   if (!status.isLoggedIn || status.user?.username !== username) {
@@ -130,40 +121,138 @@ function Dashboard() {
   }
 
   const [activeTab, setActiveTab] = useState('profile')
+  const [localLinks, setLocalLinks] = useState<any[]>([])
 
-  const links = dashboardData?.links || []
+  // Realtime Data
+  const { data: dashboardData, isFetching: isQueryFetching } = useQuery({
+    queryKey: ['dashboard', username],
+    queryFn: () => trpcClient.user.getDashboard.query({ username }),
+    initialData: initialData,
+    refetchOnWindowFocus: false, // Prevent background refetches from resetting local state
+  })
+
+  // Sync localLinks with dashboardData only when NOT fetching and not recently updated locally
+  useEffect(() => {
+    if (dashboardData?.links && !isQueryFetching) {
+      setLocalLinks(
+        dashboardData.links.map((l: any) => ({
+          ...l,
+          syncStatus: 'saved',
+        })),
+      )
+    }
+  }, [dashboardData?.links, isQueryFetching])
+
   const user = dashboardData?.user
 
   // Mutations
   const updateProfile = useMutation({
+    mutationKey: ['updateProfile', username],
     mutationFn: (data: {
       userId: string
       name?: string
       title?: string
       bio?: string
     }) => trpcClient.user.updateProfile.mutate(data),
-    onSuccess: () => router.invalidate(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      router.invalidate()
+    },
   })
 
   const createLink = useMutation({
+    mutationKey: ['createLink', username],
     mutationFn: (data: { userId: string }) =>
       trpcClient.link.create.mutate(data),
-    onSuccess: () => router.invalidate(),
+    onMutate: async (newData) => {
+      // Optimistic Link Creation
+      const tempId = 'temp-' + Date.now()
+      const newLink = {
+        id: tempId,
+        userId: newData.userId,
+        title: '',
+        url: '',
+        isEnabled: true,
+        order: (localLinks?.[localLinks.length - 1]?.order || 0) + 1,
+        syncStatus: 'unsaved',
+      }
+      setLocalLinks((prev) => [...prev, newLink])
+      return { tempId }
+    },
+    onSuccess: (newLink, variables, context) => {
+      // Check if the newly created link (from server) is actually valid by our UI standards
+      const result = linkSchema.safeParse({
+        title: newLink.title,
+        url: newLink.url,
+      })
+      const status = result.success ? 'saved' : 'unsaved'
+
+      setLocalLinks((prev) =>
+        prev.map((l) =>
+          l.id === context?.tempId ? { ...newLink, syncStatus: status } : l,
+        ),
+      )
+      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+    },
+    onError: (err, variables, context) => {
+      setLocalLinks((prev) => prev.filter((l) => l.id !== context?.tempId))
+    },
+  })
+
+  const reorderLinks = useMutation({
+    mutationKey: ['reorderLinks', username],
+    mutationFn: (data: { items: { id: string; order: number }[] }) =>
+      trpcClient.link.reorder.mutate(data),
+    onSuccess: () => {
+      setLocalLinks((prev) =>
+        prev.map((l) => ({
+          ...l,
+          syncStatus: l.syncStatus === 'saving' ? 'saved' : l.syncStatus,
+        })),
+      )
+      // Silent invalidate
+      queryClient.invalidateQueries(
+        { queryKey: ['dashboard', username] },
+        { cancelRefetch: false },
+      )
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+    },
   })
 
   const updateLink = useMutation({
+    mutationKey: ['updateLink', username],
     mutationFn: (data: {
       id: string
       title?: string
       url?: string
       isEnabled?: boolean
     }) => trpcClient.link.update.mutate(data),
-    onSuccess: () => router.invalidate(),
+    onSuccess: (updatedLink) => {
+      setLocalLinks((prev) =>
+        prev.map((l) =>
+          l.id === updatedLink.id ? { ...updatedLink, syncStatus: 'saved' } : l,
+        ),
+      )
+      // Do not invalidate immediately to prevent sync flicker
+    },
+    onError: (err, variables) => {
+      setLocalLinks((prev) =>
+        prev.map((l) =>
+          l.id === variables.id ? { ...l, syncStatus: 'error' } : l,
+        ),
+      )
+    },
   })
 
   const deleteLink = useMutation({
+    mutationKey: ['deleteLink', username],
     mutationFn: (data: { id: string }) => trpcClient.link.delete.mutate(data),
-    onSuccess: () => router.invalidate(),
+    onSuccess: (res, variables) => {
+      setLocalLinks((prev) => prev.filter((l) => l.id !== variables.id))
+      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+    },
   })
 
   // Handlers
@@ -172,17 +261,66 @@ function Dashboard() {
     updateProfile.mutate({ userId: user.id, [field]: value })
   }
 
-  const handleAddLink = () => {
-    if (!user) return
-    createLink.mutate({ userId: user.id })
-  }
+  const handleLinkUpdate = (id: string, field: string, value: any) => {
+    // 1. Update local state immediately
+    setLocalLinks((prev) =>
+      prev.map((link) => {
+        if (link.id !== id) return link
+        const updatedLink = { ...link, [field]: value }
 
-  const handleLinkUpdate = (id: string, field: string, value: string) => {
-    updateLink.mutate({ id, [field]: value })
+        // Validation check
+        const result = linkSchema.safeParse({
+          title: updatedLink.title,
+          url: updatedLink.url,
+        })
+
+        if (!result.success) {
+          return { ...updatedLink, syncStatus: 'unsaved' }
+        }
+
+        return { ...updatedLink, syncStatus: 'saving' }
+      }),
+    )
+
+    // 2. Only trigger background mutation if valid
+    const targetLink = localLinks.find((l) => l.id === id)
+    if (!targetLink) return
+
+    const updatedData = { ...targetLink, [field]: value }
+    const result = linkSchema.safeParse({
+      title: updatedData.title,
+      url: updatedData.url,
+    })
+
+    if (result.success) {
+      updateLink.mutate({ id, [field]: value })
+    }
   }
 
   const handleDeleteLink = (id: string) => {
+    setLocalLinks((prev) => prev.filter((link) => link.id !== id))
     deleteLink.mutate({ id })
+  }
+
+  const handleReorder = (newLinks: any[]) => {
+    // 1. Calculate new orders (1 is top)
+    const updates: { id: string; order: number }[] = []
+    const updatedLocalLinks = newLinks.map((link, index) => {
+      const newOrder = index + 1
+      if (link.order !== newOrder) {
+        updates.push({ id: link.id, order: newOrder })
+        return { ...link, order: newOrder, syncStatus: 'saving' }
+      }
+      return link
+    })
+
+    // 2. Update local state
+    setLocalLinks(updatedLocalLinks)
+
+    // 3. Trigger mutation if there are changes
+    if (updates.length > 0) {
+      reorderLinks.mutate({ items: updates })
+    }
   }
 
   if (!user) return null
@@ -277,166 +415,28 @@ function Dashboard() {
 
         {/* Main Content */}
         <div className="space-y-6">
-          {/* Top Profile Card */}
-          <Card className="border-none shadow-sm">
-            <CardContent className="p-6 space-y-6">
-              <div className="flex items-start justify-between">
-                <div className="relative group cursor-pointer">
-                  <Avatar className="h-20 w-20 border-2 border-background shadow-sm">
-                    <AvatarImage
-                      src={user.image || '/avatar-placeholder.png'}
-                    />
-                    <AvatarFallback className="bg-black text-white text-xl">
-                      {user.name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  {/* Image upload placeholder */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="h-6 w-6 text-white" />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Link
-                    to="/$username"
-                    params={{ username }}
-                    // (session.user as any).username
-                    target="_blank"
-                  >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-9 gap-2 text-xs font-medium"
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      Preview
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              <div className="space-y-4 max-w-lg">
-                <div className="relative">
-                  <Input
-                    defaultValue={user.name}
-                    className="font-medium pr-10"
-                    onBlur={(e) => handleProfileUpdate('name', e.target.value)}
-                  />
-                  <Pencil className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-                </div>
-
-                <div className="space-y-1">
-                  <div className="relative">
-                    <Input
-                      defaultValue={user.title || ''}
-                      placeholder="Job Title (e.g. Software Engineer)"
-                      className="pr-16"
-                      onBlur={(e) =>
-                        handleProfileUpdate('title', e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="relative">
-                    <Textarea
-                      className="min-h-[100px] resize-none pr-16 text-sm"
-                      placeholder="Bio"
-                      defaultValue={user.bio || ''}
-                      onBlur={(e) => handleProfileUpdate('bio', e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {updateProfile.isPending && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Saving...
-                  </span>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <ProfileEditor
+            user={user}
+            isPending={updateProfile.isPending}
+            onUpdate={handleProfileUpdate}
+          />
 
           {/* Block Controls */}
           <Button
             className="w-full h-12 font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow-sm"
-            onClick={handleAddLink}
-            disabled={createLink.isPending}
+            onClick={() => createLink.mutate({ userId: user.id })}
           >
-            {createLink.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="mr-2 h-4 w-4" />
-            )}
+            <Plus className="mr-2 h-4 w-4" />
             Add a Block
           </Button>
 
           {/* Links List */}
-          <Card className="border-none shadow-sm bg-muted/30">
-            <CardContent className="p-4 space-y-4">
-              <div className="space-y-3">
-                {links.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    No links yet. Add one to get started!
-                  </div>
-                )}
-
-                {links.map((link) => (
-                  <div
-                    key={link.id}
-                    className="group relative flex flex-col gap-3 bg-background border border-border/60 rounded-xl p-4 hover:border-primary/50 transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
-                        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                          Link
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDeleteLink(link.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="pl-7 space-y-3">
-                      <div className="grid gap-2">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          Title
-                        </label>
-                        <Input
-                          defaultValue={link.title}
-                          className="h-9"
-                          onBlur={(e) =>
-                            handleLinkUpdate(link.id, 'title', e.target.value)
-                          }
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          URL
-                        </label>
-                        <Input
-                          defaultValue={link.url}
-                          className="h-9"
-                          placeholder="https://..."
-                          onBlur={(e) =>
-                            handleLinkUpdate(link.id, 'url', e.target.value)
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <LinkList
+            links={localLinks}
+            onUpdate={handleLinkUpdate}
+            onDelete={handleDeleteLink}
+            onReorder={handleReorder}
+          />
         </div>
       </div>
     </div>

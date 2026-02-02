@@ -45,6 +45,20 @@ const userRouter = {
 
       return updatedUser
     }),
+  getDashboard: publicProcedure
+    .input(z.object({ username: z.string() }))
+    .query(async ({ input }) => {
+      const userProfile = await db.query.user.findFirst({
+        where: eq(user.username, input.username),
+        with: {
+          links: {
+            orderBy: [asc(links.order)],
+          },
+        },
+      })
+      if (!userProfile) return null
+      return { user: userProfile, links: userProfile.links }
+    }),
   updateProfile: publicProcedure
     .input(
       z.object({
@@ -73,7 +87,7 @@ const linkRouter = {
     .input(
       z.object({
         userId: z.string(),
-        title: z.string().default('New Link'),
+        title: z.string().default(''),
         url: z.string().default(''),
       }),
     )
@@ -81,9 +95,9 @@ const linkRouter = {
       // Get max order
       const userLinks = await db.query.links.findMany({
         where: eq(links.userId, input.userId),
-        orderBy: [desc(links.order)],
+        orderBy: [asc(links.order)],
       })
-      const maxOrder = userLinks[0]?.order ?? 0
+      const maxOrder = userLinks[userLinks.length - 1]?.order ?? 0
 
       const [newLink] = await db
         .insert(links)
@@ -139,8 +153,7 @@ const linkRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      // Use transaction for bulk update if possible, or parallel/sequential updates
-      // Neondb/drizzle batching:
+      console.log('TRPC: Reordering links', input.items.length, 'items')
       await db.transaction(async (tx) => {
         for (const item of input.items) {
           await tx

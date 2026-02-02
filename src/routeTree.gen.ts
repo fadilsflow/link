@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TestDndRouteImport } from './routes/test-dnd'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsernameIndexRouteImport } from './routes/$username/index'
@@ -16,6 +17,11 @@ import { Route as UsernameAdminRouteImport } from './routes/$username/admin'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
+const TestDndRoute = TestDndRouteImport.update({
+  id: '/test-dnd',
+  path: '/test-dnd',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -50,6 +56,7 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/test-dnd': typeof TestDndRoute
   '/$username/admin': typeof UsernameAdminRoute
   '/$username/': typeof UsernameIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/test-dnd': typeof TestDndRoute
   '/$username/admin': typeof UsernameAdminRoute
   '/$username': typeof UsernameIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/test-dnd': typeof TestDndRoute
   '/$username/admin': typeof UsernameAdminRoute
   '/$username/': typeof UsernameIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/onboarding'
+    | '/test-dnd'
     | '/$username/admin'
     | '/$username/'
     | '/api/auth/$'
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/onboarding'
+    | '/test-dnd'
     | '/$username/admin'
     | '/$username'
     | '/api/auth/$'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/onboarding'
+    | '/test-dnd'
     | '/$username/admin'
     | '/$username/'
     | '/api/auth/$'
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OnboardingRoute: typeof OnboardingRoute
+  TestDndRoute: typeof TestDndRoute
   UsernameAdminRoute: typeof UsernameAdminRoute
   UsernameIndexRoute: typeof UsernameIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -110,6 +123,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/test-dnd': {
+      id: '/test-dnd'
+      path: '/test-dnd'
+      fullPath: '/test-dnd'
+      preLoaderRoute: typeof TestDndRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -158,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardingRoute: OnboardingRoute,
+  TestDndRoute: TestDndRoute,
   UsernameAdminRoute: UsernameAdminRoute,
   UsernameIndexRoute: UsernameIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

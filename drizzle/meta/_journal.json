@@ -22,6 +22,13 @@
       "when": 1770019704377,
       "tag": "0002_worried_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770032342274,
+      "tag": "0003_majestic_tombstone",
+      "breakpoints": true
     }
   ]
 }

@@ -422,9 +422,7 @@ function Dashboard() {
         {/* Left Sidebar */}
         <div className="space-y-6">
           <div className="flex items-center gap-2 px-2">
-            <span className="font-bold text-2xl tracking-tighter">
-              LIN<span className="rotate-180 inline-block">K</span>E
-            </span>
+            <span className="font-heading text-2xl ">Link</span>
           </div>
 
           <div className="px-2 flex items-center space-x-2">
@@ -519,7 +517,7 @@ function Dashboard() {
         {/* Main Content */}
         <div className="space-y-6">
           <ProfileEditor
-            user={user}
+            user={user as any}
             status={profileStatus}
             onUpdate={handleProfileUpdate}
           />

@@ -22,6 +22,7 @@ interface Link {
   url: string
   isEnabled: boolean
   syncStatus?: 'saved' | 'saving' | 'unsaved' | 'error'
+  errors?: { title?: string; url?: string }
 }
 
 interface LinkListProps {

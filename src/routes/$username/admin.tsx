@@ -28,15 +28,27 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { checkOnboardingStatus } from '@/lib/onboarding-server'
 
+import { getDashboardData } from '@/lib/profile-server'
+
 export const Route = createFileRoute('/$username/admin')({
   component: Dashboard,
-  loader: async () => await checkOnboardingStatus(),
+  loader: async () => {
+    const status = await checkOnboardingStatus()
+    if (!status.isLoggedIn) return { status, dashboardData: null }
+
+    try {
+      const dashboardData = await getDashboardData()
+      return { status, dashboardData }
+    } catch (e) {
+      return { status, dashboardData: null }
+    }
+  },
   notFoundComponent: () => <AccessDenied />,
 })
 
 function AccessDenied() {
   const { username } = Route.useParams()
-  const status = Route.useLoaderData()
+  const { status } = Route.useLoaderData()
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
@@ -100,7 +112,7 @@ function AccessDenied() {
 
 function Dashboard() {
   const { username } = Route.useParams()
-  const status = Route.useLoaderData()
+  const { status, dashboardData } = Route.useLoaderData()
 
   // Access Control: Must be logged in AND current user must match the route username
   if (!status.isLoggedIn || status.user?.username !== username) {
@@ -108,28 +120,7 @@ function Dashboard() {
   }
 
   const [activeTab, setActiveTab] = useState('profile')
-  const [links, setLinks] = useState([
-    {
-      id: 1,
-      name: 'Featured Content',
-      url: 'https://fadils.xyz/blog/belajar-laravel-dari-migration-hingga-crud-menggunakan-pola-r',
-      active: true,
-      max: 50,
-      current: 16,
-    },
-    {
-      id: 2,
-      name: '',
-      url: 'https://fadils.xyz/blog',
-      active: true,
-    },
-    {
-      id: 3,
-      name: '',
-      url: 'https://fadils.xyz/resume',
-      active: true,
-    },
-  ])
+  const [links, setLinks] = useState(dashboardData?.links || [])
 
   return (
     <div className="min-h-screen bg-muted/20 p-4 md:p-8 font-sans">

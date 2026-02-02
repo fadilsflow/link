@@ -1,24 +1,25 @@
-import { createFileRoute } from '@tanstack/react-router'
-import {
-  Globe,
-  Link as LinkIcon,
-  X as XIcon,
-  ArrowUpRight,
-  ChevronLeft,
-  ChevronRight,
-  MoreHorizontal,
-} from 'lucide-react'
+import { createFileRoute, notFound } from '@tanstack/react-router'
+import { Globe, Link as LinkIcon, X as XIcon, ArrowUpRight } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { getPublicProfile } from '@/lib/profile-server'
+import NotFound from '@/components/NotFound'
 
 export const Route = createFileRoute('/$username/')({
   component: UserProfile,
+  loader: async ({ params }) => {
+    const data = await getPublicProfile({ data: params.username })
+    if (!data) {
+      throw notFound()
+    }
+    return data
+  },
+  notFoundComponent: NotFound,
 })
 
 function UserProfile() {
-  const { username } = Route.useParams()
+  const { user, links } = Route.useLoaderData()
 
   return (
     <div className="min-h-screen relative font-sans text-slate-900 bg-gray-50">
@@ -39,12 +40,12 @@ function UserProfile() {
             className="rounded-full bg-white/90 backdrop-blur-sm hover:bg-white text-xs font-semibold h-8 gap-2 shadow-sm border border-black/5"
           >
             <Avatar className="h-4 w-4">
-              <AvatarImage src="/avatar-placeholder.png" />
+              <AvatarImage src={user.image || '/avatar-placeholder.png'} />
               <AvatarFallback className="bg-black text-white text-[8px]">
-                FD
+                {user.name.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            {username}
+            {user.username}
           </Button>
         </div>
       </div>
@@ -57,9 +58,9 @@ function UserProfile() {
             {/* Avatar - Overlapping top */}
             <div className="-mt-12 mb-4 flex justify-start">
               <Avatar className="h-24 w-24 border-4 border-white shadow-md bg-black">
-                <AvatarImage src="/avatar-placeholder.png" />
+                <AvatarImage src={user.image || '/avatar-placeholder.png'} />
                 <AvatarFallback className="bg-black text-white text-2xl font-bold">
-                  FD
+                  {user.name.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             </div>
@@ -67,7 +68,7 @@ function UserProfile() {
             <div className="space-y-4">
               <div>
                 <h1 className="text-2xl font-bold leading-tight flex items-center gap-2">
-                  {username}
+                  {user.name}
                 </h1>
                 <p className="text-muted-foreground font-medium text-sm mt-1">
                   Software Engineer
@@ -101,77 +102,24 @@ function UserProfile() {
           </Button>
         </div>
 
-        {/* Featured Content Block */}
-        <Card className="w-full border-none shadow-sm rounded-2xl overflow-hidden bg-white">
-          <div className="p-4 flex items-center gap-3 border-b border-border/40">
-            <div className="bg-muted p-1.5 rounded-md">
-              <LinkIcon className="h-4 w-4" />
-            </div>
-            <span className="font-semibold text-sm">Featured Content</span>
-          </div>
-
-          <div className="p-4">
-            <div className="bg-black rounded-lg aspect-video mb-4 flex items-center justify-center relative overflow-hidden group cursor-pointer">
-              {/* Mock Video UI */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center">
-                <div className="mb-4">
-                  {/* Laravel Logo Mock */}
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="h-12 w-12 text-red-500"
-                  >
-                    <path d="M7 20l10 0" />
-                    <path d="M9 16l0 4" />
-                    <path d="M15 16l0 4" />
-                    <path d="M12 4l-9 6l2 11l14 -0l2 -11z" />
-                  </svg>
+        {/* Links List */}
+        {links.map((link) => (
+          <Card
+            key={link.id}
+            className="w-full border-none shadow-sm rounded-2xl overflow-hidden bg-white hover:scale-[1.01] hover:shadow-md transition-all cursor-pointer group"
+            onClick={() => window.open(link.url, '_blank')}
+          >
+            <div className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="bg-muted h-10 w-10 rounded-full flex items-center justify-center shrink-0 group-hover:bg-muted/80 transition-colors">
+                  <LinkIcon className="h-5 w-5 text-slate-600" />
                 </div>
-                <h3 className="text-xl font-bold tracking-tight">
-                  Tutorial lengkap membangun aplikasi Laravel
-                </h3>
-                <p className="text-xs text-gray-400 mt-2 max-w-[250px]">
-                  dari Migration database sampai implementasi MVC dan CRUD.
-                </p>
+                <span className="font-semibold text-sm">{link.title}</span>
               </div>
-              <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
+              <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </div>
-
-            <div className="space-y-1">
-              <h3 className="font-bold text-sm leading-tight">
-                Belajar Laravel dari Migration hingga CRUD menggunakan pola MVC
-                - Fadil
-              </h3>
-              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                Tutorial lengkap membangun aplikasi Laravel: dari Migration
-                database sampai implementasi MVC dan CRUD. Cocok untuk pemula
-                yang ingin menguasai framework Laravel!
-              </p>
-            </div>
-
-            {/* Carousel Dots */}
-            <div className="flex justify-center gap-2 mt-4 pt-2">
-              <div className="h-2 w-4 rounded-full bg-slate-800"></div>
-              <div className="h-2 w-2 rounded-full bg-slate-200"></div>
-              <div className="h-2 w-2 rounded-full bg-slate-200"></div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Link Block - Porto */}
-        <Card className="w-full border-none shadow-sm rounded-2xl overflow-hidden bg-white hover:scale-[1.01] hover:shadow-md transition-all cursor-pointer group">
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-muted h-10 w-10 rounded-full flex items-center justify-center shrink-0 group-hover:bg-muted/80 transition-colors">
-                <LinkIcon className="h-5 w-5 text-slate-600" />
-              </div>
-              <span className="font-semibold text-sm">porto</span>
-            </div>
-            <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </div>
-        </Card>
+          </Card>
+        ))}
 
         {/* Footer */}
         <div className="mt-8 mb-4">

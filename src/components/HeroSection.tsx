@@ -4,9 +4,9 @@ export function HeroSection() {
   return (
     <section className="relative flex min-h-screen flex-col items-center justify-center px-4 py-24 text-center sm:py-32">
       {/* Badge */}
-      <div className="mb-8 inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-50/50 p-1 pr-4 backdrop-blur-sm transition-colors hover:bg-emerald-100/50">
+      <div className="mb-8 inline-flex items-center">
         <span className="rounded-full bg-emerald-500 px-3 py-1 text-[10px] font-bold uppercase leading-tight tracking-wide text-white shadow-sm">
-          Link 2.0
+          Link 1.0
         </span>
         <span className="ml-2.5 text-xs font-bold tracking-wide text-emerald-600 uppercase">
           Streamline your digital identity

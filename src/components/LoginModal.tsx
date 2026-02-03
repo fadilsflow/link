@@ -37,9 +37,9 @@ export function LoginModal() {
       >
         Sign in
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[325px]">
         <DialogHeader>
-          <DialogTitle>Sign in to Link.</DialogTitle>
+          <DialogTitle className="font-heading">Link.com</DialogTitle>
           <DialogDescription>
             Welcome back! Please sign in to continue
           </DialogDescription>
@@ -48,7 +48,7 @@ export function LoginModal() {
           <Button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full flex gap-2"
+            className="w-full flex gap-2 my-4"
           >
             {loading ? <Spinner className="h-4 w-4" /> : <Google />}
             Continue with Google

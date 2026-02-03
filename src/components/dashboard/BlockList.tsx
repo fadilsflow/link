@@ -1,6 +1,6 @@
 import {
   DndContext,
-  closestCenter,
+  closestCorners,
   PointerSensor,
   KeyboardSensor,
   useSensor,
@@ -73,7 +73,7 @@ export function BlockList({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={closestCorners}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={onDragCancel}

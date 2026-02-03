@@ -32,7 +32,7 @@ import { ProfileEditor } from '@/components/dashboard/ProfileEditor'
 import { BlockList } from '@/components/dashboard/BlockList'
 import { z } from 'zod'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 
 export const Route = createFileRoute('/$username/admin')({
   component: AdminDashboard,
@@ -317,63 +317,69 @@ function AdminDashboard() {
   if (!user) return null
 
   return (
-    <div className="py-10 lg:pl-20 flex min-h-screen bg-[#F9FAFB] font-sans selection:bg-zinc-900 selection:text-white">
+    <div className="container mx-auto lg:py-10  flex min-h-screen ">
       {/* SIDEBAR */}
-      <Card className="w-[320px] bg-white border-r border-[#E5E7EB] p-8 hidden lg:flex flex-col sticky top-0 h-screen">
-        <span className="mb-10 text-2xl font-heading">link</span>
-
-        {/* User Switcher Card */}
-        <div className="bg-[#F9FAFB] border border-[#F3F4F6] rounded-2xl p-4 mb-6 flex items-center gap-3 group cursor-pointer hover:bg-white hover:shadow-sm transition-all duration-300">
-          <Avatar className="h-10 w-10 border-2 border-white ring-1 ring-zinc-100 shadow-sm">
-            <AvatarImage src={user.image || ''} />
-            <AvatarFallback className="bg-zinc-900 text-white text-xs font-bold">
-              {user.name.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-zinc-900 truncate">
-              {user.username}
-            </h3>
-            <p className="text-[11px] font-medium text-zinc-400">
-              Personal Account
-            </p>
+      <Card
+        className="w-[336px] h-screen flex flex-col sticky left-[20px] top-[30px] "
+        style={{ maxHeight: 'min(-100px + 100vh, 984px)' }}
+      >
+        <CardContent>
+          <div className="mb-8 flex items-center ">
+            <span className="text-3xl font-heading">link.</span>
           </div>
-          <ArrowRightLeft className="h-4 w-4 text-zinc-400 group-hover:text-zinc-900 transition-colors" />
-        </div>
 
-        {/* Profile Link Card */}
-        <div className="space-y-3 mb-10">
-          <div className="bg-white border border-[#F3F4F6] rounded-2xl p-1 flex items-center shadow-sm">
-            <div className="flex-1 px-4 py-2 text-xs font-medium text-zinc-500 bg-[#F9FAFB] rounded-xl truncate">
-              link3.to/{user.username}
+          <div className="flex flex-col gap-3 mb-10">
+            {/* User Switcher Card */}
+            <div className="border rounded-xl p-4 flex items-center gap-3 cursor-pointer">
+              <Avatar className="h-10 w-10 border-2 border-white ring-1 ring-zinc-100 shadow-sm">
+                <AvatarImage src={user.image || ''} />
+                <AvatarFallback className="bg-zinc-900 text-white text-xs font-bold">
+                  {user.name.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-bold text-zinc-900 truncate">
+                  {user.username}
+                </h3>
+                <p className="text-[11px] font-medium text-zinc-400">
+                  Personal Account
+                </p>
+              </div>
+              <ArrowRightLeft className="h-4 w-4 text-zinc-400 group-hover:text-zinc-900 transition-colors" />
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 text-zinc-400 hover:text-zinc-900"
-              onClick={() => {
-                navigator.clipboard.writeText(`link3.to/${user.username}`)
-              }}
-            >
-              <Copy className="h-3.5 w-3.5" />
+
+            <div className="bg-white border border-[#F3F4F6] rounded-2xl p-1 flex items-center shadow-sm">
+              <div className="flex-1 px-4 py-2 text-xs font-medium text-zinc-500 bg-[#F9FAFB] rounded-xl truncate">
+                link3.to/{user.username}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-zinc-400 hover:text-zinc-900"
+                onClick={() => {
+                  navigator.clipboard.writeText(`link3.to/${user.username}`)
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <Button className="w-full h-11 bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl text-xs font-bold shadow-md shadow-zinc-200 transition-all active:scale-[0.98]">
+              Customize Profile Link
             </Button>
           </div>
-          <Button className="w-full h-11 bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl text-xs font-bold shadow-md shadow-zinc-200 transition-all active:scale-[0.98]">
-            Customize Profile Link
-          </Button>
-        </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1">
-          <NavItem icon={<UserIcon />} label="Profile" active />
-          <NavItem icon={<Grid />} label="Appearance" />
-          <NavItem icon={<BarChart3 />} label="Analytics" />
-          <NavItem icon={<Settings />} label="Setting" />
-        </nav>
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1">
+            <NavItem icon={<UserIcon />} label="Profile" active />
+            <NavItem icon={<Grid />} label="Appearance" />
+            <NavItem icon={<BarChart3 />} label="Analytics" />
+            <NavItem icon={<Settings />} label="Setting" />
+          </nav>
+        </CardContent>
       </Card>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 lg:pl-12 lg:pr-32 overflow-y-auto max-w-[1200px] mx-auto w-full">
+      <main className="flex-1 pr-10 lg:pl-4 overflow-y-auto max-w-[1200px] mx-auto w-full">
         <div className="space-y-4">
           {/* Top Actions for Mobile */}
           <div className="lg:hidden flex items-center justify-between mb-6">

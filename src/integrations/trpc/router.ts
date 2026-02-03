@@ -1,11 +1,9 @@
 import { z } from 'zod'
-import { eq, asc, desc } from 'drizzle-orm'
-import { db } from '@/db'
-import { user, links } from '@/db/schema'
-
+import { asc, desc, eq } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
-
 import type { TRPCRouterRecord } from '@trpc/server'
+import { db } from '@/db'
+import { blocks, user } from '@/db/schema'
 
 const userRouter = {
   getByEmail: publicProcedure
@@ -51,13 +49,17 @@ const userRouter = {
       const userProfile = await db.query.user.findFirst({
         where: eq(user.username, input.username),
         with: {
-          links: {
-            orderBy: [asc(links.order)],
+          blocks: {
+            orderBy: [asc(blocks.order)],
           },
         },
       })
       if (!userProfile) return null
-      return { user: userProfile, links: userProfile.links }
+      return {
+        user: userProfile,
+        blocks: userProfile.links,
+        links: userProfile.links,
+      } // Keep links for backward compat for now or refactor frontend
     }),
   updateProfile: publicProcedure
     .input(
@@ -82,35 +84,39 @@ const userRouter = {
     }),
 } satisfies TRPCRouterRecord
 
-const linkRouter = {
+const blockRouter = {
   create: publicProcedure
     .input(
       z.object({
         userId: z.string(),
         title: z.string().default(''),
-        url: z.string().default(''),
+        url: z.string().default('').optional(), // Optional URL
+        type: z.string().default('link'),
+        content: z.string().optional(),
       }),
     )
     .mutation(async ({ input }) => {
       // Get max order
-      const userLinks = await db.query.links.findMany({
-        where: eq(links.userId, input.userId),
-        orderBy: [asc(links.order)],
+      const userBlocks = await db.query.blocks.findMany({
+        where: eq(blocks.userId, input.userId),
+        orderBy: [asc(blocks.order)],
       })
-      const maxOrder = userLinks[userLinks.length - 1]?.order ?? 0
+      const maxOrder = userBlocks[userBlocks.length - 1]?.order ?? 0
 
-      const [newLink] = await db
-        .insert(links)
+      const [newBlock] = await db
+        .insert(blocks)
         .values({
           id: crypto.randomUUID(),
           userId: input.userId,
           title: input.title,
-          url: input.url,
+          url: input.url ?? null,
+          type: input.type,
+          content: input.content ?? null,
           order: maxOrder + 1,
           isEnabled: true,
         })
         .returning()
-      return newLink
+      return newBlock
     }),
   update: publicProcedure
     .input(
@@ -118,27 +124,31 @@ const linkRouter = {
         id: z.string(),
         title: z.string().optional(),
         url: z.string().optional(),
+        type: z.string().optional(),
+        content: z.string().optional(),
         isEnabled: z.boolean().optional(),
       }),
     )
     .mutation(async ({ input }) => {
-      const [updatedLink] = await db
-        .update(links)
+      const [updatedBlock] = await db
+        .update(blocks)
         .set({
           ...(input.title !== undefined ? { title: input.title } : {}),
           ...(input.url !== undefined ? { url: input.url } : {}),
+          ...(input.type !== undefined ? { type: input.type } : {}),
+          ...(input.content !== undefined ? { content: input.content } : {}),
           ...(input.isEnabled !== undefined
             ? { isEnabled: input.isEnabled }
             : {}),
         })
-        .where(eq(links.id, input.id))
+        .where(eq(blocks.id, input.id))
         .returning()
-      return updatedLink
+      return updatedBlock
     }),
   delete: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      await db.delete(links).where(eq(links.id, input.id))
+      await db.delete(blocks).where(eq(blocks.id, input.id))
       return { success: true }
     }),
   reorder: publicProcedure
@@ -153,14 +163,14 @@ const linkRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      console.log('TRPC: Reordering links', input.items.length, 'items')
+      console.log('TRPC: Reordering blocks', input.items.length, 'items')
       // neon-http driver does not support transactions, so we run these in parallel
       await Promise.all(
         input.items.map((item) =>
           db
-            .update(links)
+            .update(blocks)
             .set({ order: item.order })
-            .where(eq(links.id, item.id)),
+            .where(eq(blocks.id, item.id)),
         ),
       )
       return { success: true }
@@ -169,6 +179,6 @@ const linkRouter = {
 
 export const trpcRouter = createTRPCRouter({
   user: userRouter,
-  link: linkRouter,
+  block: blockRouter,
 })
 export type TRPCRouter = typeof trpcRouter

@@ -1,5 +1,5 @@
+import { Briefcase, Sparkles, Users, Zap } from 'lucide-react'
 import { Button } from './ui/button'
-import { Users, Briefcase, Zap, Sparkles } from 'lucide-react'
 
 export function HeroSection() {
   return (

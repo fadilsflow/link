@@ -1,6 +1,6 @@
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Header } from '@/components/Header'
 import { HeroSection } from '@/components/HeroSection'
-import { createFileRoute, redirect } from '@tanstack/react-router'
 import { checkOnboardingStatus } from '@/lib/onboarding-server'
 
 export const Route = createFileRoute('/')({

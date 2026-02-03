@@ -1,19 +1,19 @@
 import {
   DndContext,
-  closestCenter,
-  PointerSensor,
   KeyboardSensor,
+  PointerSensor,
+  closestCenter,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from '@dnd-kit/core'
 import {
-  arrayMove,
   SortableContext,
+  arrayMove,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { SortableLinkItem } from './SortableLinkItem'
+import type { DragEndEvent } from '@dnd-kit/core'
 
 interface Link {
   id: string
@@ -25,10 +25,10 @@ interface Link {
 }
 
 interface LinkListProps {
-  links: Link[]
+  links: Array<Link>
   onUpdate: (id: string, field: string, value: any) => void
   onDelete: (id: string) => void
-  onReorder: (newLinks: Link[]) => void
+  onReorder: (newLinks: Array<Link>) => void
   onDragStart?: () => void
   onDragCancel?: () => void
 }

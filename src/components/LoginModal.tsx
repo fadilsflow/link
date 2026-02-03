@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
+import { Google } from './icon/google'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
   Dialog,
@@ -10,10 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { authClient } from '@/lib/auth-client'
-import { useState } from 'react'
 import { Spinner } from '@/components/ui/spinner'
-import { Google } from './icon/google'
-import { Link } from '@tanstack/react-router'
 
 export function LoginModal() {
   const [loading, setLoading] = useState(false)

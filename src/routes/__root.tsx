@@ -55,7 +55,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
       { rel: 'manifest', href: '/site.webmanifest', color: '#fffff' },
       { rel: 'icon', href: '/favicon.svg' },
-
     ],
   }),
 

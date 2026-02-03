@@ -1,7 +1,7 @@
-import { LoginModal } from '@/components/LoginModal'
 import { Link } from '@tanstack/react-router'
-import { authClient } from '@/lib/auth-client'
 import UserButton from './UserButton'
+import { LoginModal } from '@/components/LoginModal'
+import { authClient } from '@/lib/auth-client'
 
 export const Header = () => {
   const { data: session, isPending } = authClient.useSession()

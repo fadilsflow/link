@@ -1,11 +1,11 @@
 import { relations } from 'drizzle-orm'
 import {
+  boolean,
+  index,
+  integer,
   pgTable,
   text,
   timestamp,
-  boolean,
-  integer,
-  index,
 } from 'drizzle-orm/pg-core'
 
 export const user = pgTable('user', {
@@ -83,13 +83,15 @@ export const verification = pgTable(
   (table) => [index('verification_identifier_idx').on(table.identifier)],
 )
 
-export const links = pgTable('link', {
+export const blocks = pgTable('block', {
   id: text('id').primaryKey(),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
-  url: text('url').notNull(),
+  url: text('url'),
+  type: text('type').notNull().default('link'),
+  content: text('content'), // Storing as text for simplicity (JSON.stringify), or use jsonb if supported by neon-serverless easily but text is safer for now across drivers
   order: integer('order').notNull().default(0),
   isEnabled: boolean('is_enabled').notNull().default(true),
   isArchived: boolean('is_archived').notNull().default(false),
@@ -101,7 +103,7 @@ export const links = pgTable('link', {
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
-  links: many(links),
+  blocks: many(blocks),
 }))
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -118,9 +120,9 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }))
 
-export const linksRelations = relations(links, ({ one }) => ({
+export const blocksRelations = relations(blocks, ({ one }) => ({
   user: one(user, {
-    fields: [links.userId],
+    fields: [blocks.userId],
     references: [user.id],
   }),
 }))

@@ -1,9 +1,9 @@
-import { Menu, MenuItem, MenuPopup, MenuTrigger } from '@/components/ui/menu'
 import { UserIcon } from 'lucide-react'
-import { authClient } from '@/lib/auth-client'
 import { Link, useRouter } from '@tanstack/react-router'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { authClient } from '@/lib/auth-client'
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from '@/components/ui/menu'
 
 export default function UserButton() {
   const { data: session } = authClient.useSession()

@@ -1,40 +1,40 @@
-"use client";
+'use client'
 
-import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
+import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils'
 
-type TabsVariant = "default" | "underline";
+type TabsVariant = 'default' | 'underline'
 
 function Tabs({ className, ...props }: TabsPrimitive.Root.Props) {
   return (
     <TabsPrimitive.Root
       className={cn(
-        "flex flex-col gap-2 data-[orientation=vertical]:flex-row",
+        'flex flex-col gap-2 data-[orientation=vertical]:flex-row',
         className,
       )}
       data-slot="tabs"
       {...props}
     />
-  );
+  )
 }
 
 function TabsList({
-  variant = "default",
+  variant = 'default',
   className,
   children,
   ...props
 }: TabsPrimitive.List.Props & {
-  variant?: TabsVariant;
+  variant?: TabsVariant
 }) {
   return (
     <TabsPrimitive.List
       className={cn(
-        "relative z-0 flex w-fit items-center justify-center gap-x-0.5 text-muted-foreground",
-        "data-[orientation=vertical]:flex-col",
-        variant === "default"
-          ? "rounded-lg bg-muted p-0.5 text-muted-foreground/72"
-          : "data-[orientation=vertical]:px-1 data-[orientation=horizontal]:py-1 *:data-[slot=tabs-tab]:hover:bg-accent",
+        'relative z-0 flex w-fit items-center justify-center gap-x-0.5 text-muted-foreground',
+        'data-[orientation=vertical]:flex-col',
+        variant === 'default'
+          ? 'rounded-lg bg-muted p-0.5 text-muted-foreground/72'
+          : 'data-[orientation=vertical]:px-1 data-[orientation=horizontal]:py-1 *:data-[slot=tabs-tab]:hover:bg-accent',
         className,
       )}
       data-slot="tabs-list"
@@ -43,15 +43,15 @@ function TabsList({
       {children}
       <TabsPrimitive.Indicator
         className={cn(
-          "-translate-y-(--active-tab-bottom) absolute bottom-0 left-0 h-(--active-tab-height) w-(--active-tab-width) translate-x-(--active-tab-left) transition-[width,translate] duration-200 ease-in-out",
-          variant === "underline"
-            ? "data-[orientation=vertical]:-translate-x-px z-10 bg-primary data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:w-0.5 data-[orientation=horizontal]:translate-y-px"
-            : "-z-1 rounded-md bg-background shadow-sm/5 dark:bg-input",
+          '-translate-y-(--active-tab-bottom) absolute bottom-0 left-0 h-(--active-tab-height) w-(--active-tab-width) translate-x-(--active-tab-left) transition-[width,translate] duration-200 ease-in-out',
+          variant === 'underline'
+            ? 'data-[orientation=vertical]:-translate-x-px z-10 bg-primary data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:w-0.5 data-[orientation=horizontal]:translate-y-px'
+            : '-z-1 rounded-md bg-background shadow-sm/5 dark:bg-input',
         )}
         data-slot="tab-indicator"
       />
     </TabsPrimitive.List>
-  );
+  )
 }
 
 function TabsTab({ className, ...props }: TabsPrimitive.Tab.Props) {
@@ -64,17 +64,17 @@ function TabsTab({ className, ...props }: TabsPrimitive.Tab.Props) {
       data-slot="tabs-tab"
       {...props}
     />
-  );
+  )
 }
 
 function TabsPanel({ className, ...props }: TabsPrimitive.Panel.Props) {
   return (
     <TabsPrimitive.Panel
-      className={cn("flex-1 outline-none", className)}
+      className={cn('flex-1 outline-none', className)}
       data-slot="tabs-content"
       {...props}
     />
-  );
+  )
 }
 
 export {
@@ -84,4 +84,4 @@ export {
   TabsTab as TabsTrigger,
   TabsPanel,
   TabsPanel as TabsContent,
-};
+}

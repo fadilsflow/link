@@ -1,6 +1,6 @@
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
+import { cn } from '@/lib/utils'
 
 export type SyncStatus = 'saved' | 'saving' | 'unsaved' | 'error'
 

@@ -1,8 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
-import { db } from '@/db'
 import { eq } from 'drizzle-orm'
-import { user } from '@/db/schema'
 import { z } from 'zod'
+import { db } from '@/db'
+import { user } from '@/db/schema'
 
 export const getPublicProfile = createServerFn({ method: 'GET' })
   .inputValidator(z.string())
@@ -10,9 +10,9 @@ export const getPublicProfile = createServerFn({ method: 'GET' })
     const dbUser = await db.query.user.findFirst({
       where: eq(user.username, username),
       with: {
-        links: {
-          where: (links, { eq }) => eq(links.isEnabled, true),
-          orderBy: (links, { asc }) => [asc(links.order)],
+        blocks: {
+          where: (blocks, { eq }) => eq(blocks.isEnabled, true),
+          orderBy: (blocks, { asc }) => [asc(blocks.order)],
         },
       },
     })
@@ -23,7 +23,7 @@ export const getPublicProfile = createServerFn({ method: 'GET' })
 
     return {
       user: dbUser,
-      links: dbUser.links,
+      links: dbUser.blocks,
     }
   })
 
@@ -45,8 +45,8 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
     const dbUser = await db.query.user.findFirst({
       where: eq(user.id, session.user.id),
       with: {
-        links: {
-          orderBy: (links, { asc }) => [asc(links.order)],
+        blocks: {
+          orderBy: (blocks, { asc }) => [asc(blocks.order)],
         },
       },
     })
@@ -57,7 +57,7 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
 
     return {
       user: dbUser,
-      links: dbUser.links,
+      links: dbUser.blocks,
     }
   },
 )

@@ -1,8 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Trash2 } from 'lucide-react'
-import { StatusBadge } from './StatusBadge'
-import { Button } from '@/components/ui/button'
+import { GripVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LinkBlock } from './blocks/LinkBlock'
 import { TextBlock } from './blocks/TextBlock'
@@ -51,72 +49,63 @@ export function SortableBlockItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group relative flex items-stretch bg-background border border-border/60 rounded-2xl transition-colors duration-200 overflow-hidden',
-        isDragging && 'shadow-2xl ring-2 ring-primary/20',
-        status === 'saved' && 'border-emerald-100/50',
-        status === 'unsaved' && 'border-amber-100/50',
+        'group relative flex items-stretch bg-white border border-zinc-100 rounded-[28px] transition-[background-color,border-color,box-shadow,opacity] duration-300 overflow-hidden shadow-sm hover:shadow-md hover:border-zinc-200',
+        isDragging && 'shadow-2xl ring-2 ring-zinc-900/5',
       )}
     >
-      {/* Left Handle */}
+      {/* Drag Handle */}
       <div
         {...attributes}
         {...listeners}
-        className="flex items-center px-2 cursor-grab active:cursor-grabbing hover:bg-muted/50 border-r border-border/30 text-muted-foreground transition-colors touch-none"
+        className="flex items-center px-4 cursor-grab active:cursor-grabbing text-zinc-300 hover:text-zinc-900 transition-colors touch-none"
       >
         <GripVertical className="h-5 w-5" />
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-4 pr-3 flex flex-col gap-4">
+      {/* Main Content Area */}
+      <div className="flex-1 p-6 pl-2 flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-              {block.type === 'text' ? 'Text Block' : 'Link Block'}
-            </span>
-          </div>
-
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-muted/30 border border-border/20">
-              <span className="text-[10px] font-medium text-muted-foreground">
-                Enabled
-              </span>
-              <input
-                type="checkbox"
-                checked={block.isEnabled}
-                className="w-3.5 h-3.5 rounded-sm border-muted-foreground/30 accent-zinc-900 cursor-pointer"
-                onChange={(e) =>
-                  handleBlockUpdate?.(block.id, 'isEnabled', e.target.checked)
-                }
-              />
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-all"
-              onClick={() => handleDeleteBlock?.(block.id)}
+            <div
+              className={cn(
+                'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest',
+                block.type === 'text'
+                  ? 'bg-zinc-100 text-zinc-500'
+                  : 'bg-emerald-50 text-emerald-600',
+              )}
             >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+              {block.type === 'text' ? 'Text Content' : 'Link Content'}
+            </div>
           </div>
         </div>
 
-        {block.type === 'text' ? (
-          <TextBlock
-            block={block as any}
-            handleUpdate={handleBlockUpdate as any}
-          />
-        ) : (
-          <LinkBlock
-            block={block as any}
-            handleUpdate={handleBlockUpdate as any}
-          />
-        )}
+        <div className="bg-zinc-50/50 rounded-2xl p-2 border border-zinc-50/50">
+          {block.type === 'text' ? (
+            <TextBlock
+              block={block as any}
+              handleUpdate={handleBlockUpdate as any}
+              handleDelete={handleDeleteBlock as any}
+            />
+          ) : (
+            <LinkBlock
+              block={block as any}
+              handleUpdate={handleBlockUpdate as any}
+              handleDelete={handleDeleteBlock as any}
+            />
+          )}
+        </div>
       </div>
 
-      {/* Right Status Badge */}
-      <StatusBadge
-        status={status}
-        className="w-24 border-l border-border/30 h-auto"
+      {/* Subtle Status Line */}
+      <div
+        className={cn(
+          'w-1 transition-colors',
+          status === 'saving'
+            ? 'bg-amber-400'
+            : status === 'unsaved'
+              ? 'bg-zinc-200'
+              : 'bg-zinc-50',
+        )}
       />
     </div>
   )

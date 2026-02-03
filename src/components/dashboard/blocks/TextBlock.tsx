@@ -1,49 +1,118 @@
+'use client'
+
+import { Trash2 } from 'lucide-react'
+
 import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
+import { Switch } from '@/components/ui/switch'
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 
 interface TextBlockProps {
   block: {
     id: string
     title: string
     content?: string
-    errors?: { title?: string }
+    isEnabled: boolean
+    errors?: {
+      title?: string
+    }
   }
   handleUpdate: (id: string, field: string, value: any) => void
+  handleDelete: (id: string) => void
 }
 
-export function TextBlock({ block, handleUpdate }: TextBlockProps) {
+export function TextBlock({
+  block,
+  handleUpdate,
+  handleDelete,
+}: TextBlockProps) {
   const errors = block.errors || {}
 
   return (
-    <div className="grid gap-3">
-      <div className="space-y-1">
-        <Input
-          key={`title-${block.id}`}
-          defaultValue={block.title}
-          placeholder="Heading"
-          className={cn(
-            'h-9 bg-muted/30 border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all font-medium',
-            errors.title &&
-              'border border-destructive/50 bg-destructive/5 focus-visible:ring-destructive/30',
-          )}
-          onChange={(e) => handleUpdate(block.id, 'title', e.target.value)}
-        />
-        {errors.title && (
-          <p className="text-[10px] text-destructive font-medium px-1">
-            {errors.title}
-          </p>
-        )}
+    <div className="space-y-4">
+      {/* TITLE */}
+      <div className="flex items-center gap-3">
+        <Field className="flex-1">
+          <FieldLabel className="sr-only">Title</FieldLabel>
+
+          <Input
+            defaultValue={block.title}
+            placeholder="What's the heading?"
+            type="text"
+            onChange={(e) => handleUpdate(block.id, 'title', e.target.value)}
+          />
+
+          {errors.title && <FieldError>Heading is required</FieldError>}
+        </Field>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <Switch
+            checked={block.isEnabled}
+            onCheckedChange={(checked) =>
+              handleUpdate(block.id, 'isEnabled', checked)
+            }
+          />
+
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                />
+              }
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </AlertDialogTrigger>
+            <AlertDialogPopup>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this block?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete
+                  this text block.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogClose render={<Button variant="ghost" />}>
+                  Cancel
+                </AlertDialogClose>
+                <AlertDialogClose
+                  render={
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleDelete(block.id)}
+                    />
+                  }
+                >
+                  Delete
+                </AlertDialogClose>
+              </AlertDialogFooter>
+            </AlertDialogPopup>
+          </AlertDialog>
+        </div>
       </div>
 
-      <div className="space-y-1">
+      {/* CONTENT */}
+      <Field>
+        <FieldLabel className="sr-only">Content</FieldLabel>
         <Input
-          key={`content-${block.id}`}
           defaultValue={block.content || ''}
-          placeholder="Description"
-          className="h-9 bg-muted/30 border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all text-xs text-muted-foreground"
+          placeholder="Add some details..."
+          type="text"
           onChange={(e) => handleUpdate(block.id, 'content', e.target.value)}
         />
-      </div>
+      </Field>
     </div>
   )
 }

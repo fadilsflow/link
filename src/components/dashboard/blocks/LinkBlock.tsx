@@ -93,11 +93,7 @@ export function LinkBlock({
           <AlertDialog>
             <AlertDialogTrigger
               render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                />
+                <Button variant="ghost" size="icon" className="h-8 w-8" />
               }
             >
               <Trash2 className="h-3.5 w-3.5" />

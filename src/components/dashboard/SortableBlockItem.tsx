@@ -4,6 +4,8 @@ import { GripVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LinkBlock } from './blocks/LinkBlock'
 import { TextBlock } from './blocks/TextBlock'
+import { Card, CardContent } from '../ui/card'
+import { StatusBadge } from './StatusBadge'
 
 interface BlockItemProps {
   block: {
@@ -42,71 +44,54 @@ export function SortableBlockItem({
     zIndex: isDragging ? 50 : undefined,
   }
 
-  const status = block.syncStatus || 'saved'
-
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(
-        'group relative flex items-stretch bg-white border border-zinc-100 rounded-[28px] transition-[background-color,border-color,box-shadow,opacity] duration-300 overflow-hidden shadow-sm hover:shadow-md hover:border-zinc-200',
-        isDragging && 'shadow-2xl ring-2 ring-zinc-900/5',
-      )}
+      className="relative flex items-center w-full group"
     >
-      {/* Drag Handle */}
-      <div
-        {...attributes}
-        {...listeners}
-        className="flex items-center px-4 cursor-grab active:cursor-grabbing text-zinc-300 hover:text-zinc-900 transition-colors touch-none"
-      >
-        <GripVertical className="h-5 w-5" />
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 p-6 pl-2 flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest',
-                block.type === 'text'
-                  ? 'bg-zinc-100 text-zinc-500'
-                  : 'bg-emerald-50 text-emerald-600',
-              )}
-            >
-              {block.type === 'text' ? 'Text Content' : 'Link Content'}
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-zinc-50/50 rounded-2xl p-2 border border-zinc-50/50">
-          {block.type === 'text' ? (
-            <TextBlock
-              block={block as any}
-              handleUpdate={handleBlockUpdate as any}
-              handleDelete={handleDeleteBlock as any}
-            />
-          ) : (
-            <LinkBlock
-              block={block as any}
-              handleUpdate={handleBlockUpdate as any}
-              handleDelete={handleDeleteBlock as any}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Subtle Status Line */}
       <div
         className={cn(
-          'w-1 transition-colors',
-          status === 'saving'
-            ? 'bg-amber-400'
-            : status === 'unsaved'
-              ? 'bg-zinc-200'
-              : 'bg-zinc-50',
+          'flex-1 flex rounded-xl border overflow-hidden transition-all duration-300 bg-white shadow-sm hover:shadow-md',
+          block.syncStatus === 'error' ? 'border-red-200' : 'border-zinc-100',
+          block.type === 'text' ? 'bg-yellow-50/10' : 'bg-green-50/10',
         )}
-      />
+      >
+        <Card className="border-0 rounded-none w-full bg-transparent">
+          <CardContent className="flex items-center p-4 sm:p-6">
+            {/* Drag Handle */}
+            <div
+              {...attributes}
+              {...listeners}
+              className="flex items-center pr-4 cursor-grab touch-none"
+            >
+              <GripVertical className="h-5 w-5 text-zinc-300 group-hover:text-zinc-400 transition-colors" />
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 flex flex-col gap-6 min-w-0">
+              {block.type === 'text' ? (
+                <TextBlock
+                  block={block as any}
+                  handleUpdate={handleBlockUpdate as any}
+                  handleDelete={handleDeleteBlock as any}
+                />
+              ) : (
+                <LinkBlock
+                  block={block as any}
+                  handleUpdate={handleBlockUpdate as any}
+                  handleDelete={handleDeleteBlock as any}
+                />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* STATUS PANEL - ABSOLUTE POSITIONING */}
+      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 pointer-events-none">
+        <StatusBadge status={block.syncStatus} />
+      </div>
     </div>
   )
 }

@@ -32,6 +32,7 @@ import { ProfileEditor } from '@/components/dashboard/ProfileEditor'
 import { BlockList } from '@/components/dashboard/BlockList'
 import { z } from 'zod'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Card } from '@/components/ui/card'
 
 export const Route = createFileRoute('/$username/admin')({
   component: AdminDashboard,
@@ -177,12 +178,15 @@ function AdminDashboard() {
   })
 
   const handleProfileUpdate = (field: string, value: string) => {
-    setProfileStatus('saving')
+    // Reset status immediately to hide "Saved" badge while typing
+    setProfileStatus(undefined)
+
     if (profileDebounceRef.current) {
       clearTimeout(profileDebounceRef.current)
     }
 
     profileDebounceRef.current = setTimeout(() => {
+      setProfileStatus('saving')
       updateProfile.mutate({ userId: user!.id, [field]: value })
     }, 1000)
   }
@@ -210,7 +214,8 @@ function AdminDashboard() {
         }
 
         const hasNoErrors = Object.keys(errors).length === 0
-        const newStatus = hasNoErrors ? 'saving' : 'unsaved'
+        // Don't set saving immediately, set to undefined if no errors to hide previous status
+        const newStatus = hasNoErrors ? undefined : 'unsaved'
 
         return { ...updatedBlock, errors, syncStatus: newStatus }
       }),
@@ -238,6 +243,9 @@ function AdminDashboard() {
       }
 
       if (isValid) {
+        setLocalBlocks((prev) =>
+          prev.map((b) => (b.id === id ? { ...b, syncStatus: 'saving' } : b)),
+        )
         if (id.startsWith('temp-')) {
           createBlock.mutate({
             userId: user!.id,
@@ -309,9 +317,9 @@ function AdminDashboard() {
   if (!user) return null
 
   return (
-    <div className="flex min-h-screen bg-[#F9FAFB] font-sans selection:bg-zinc-900 selection:text-white">
+    <div className="py-10 lg:pl-20 flex min-h-screen bg-[#F9FAFB] font-sans selection:bg-zinc-900 selection:text-white">
       {/* SIDEBAR */}
-      <aside className="w-[320px] bg-white border-r border-[#E5E7EB] p-8 hidden lg:flex flex-col sticky top-0 h-screen">
+      <Card className="w-[320px] bg-white border-r border-[#E5E7EB] p-8 hidden lg:flex flex-col sticky top-0 h-screen">
         <span className="mb-10 text-2xl font-heading">link</span>
 
         {/* User Switcher Card */}
@@ -362,26 +370,11 @@ function AdminDashboard() {
           <NavItem icon={<BarChart3 />} label="Analytics" />
           <NavItem icon={<Settings />} label="Setting" />
         </nav>
-
-        {/* Bottom Card */}
-        <div className="mt-auto bg-white border-2 border-dashed border-zinc-100 rounded-2xl p-5 group cursor-pointer hover:border-zinc-200 hover:bg-[#F9FAFB] transition-all duration-300">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-[13px] font-bold text-zinc-900">
-              Create your own organization
-            </h4>
-            <div className="w-7 h-7 bg-zinc-50 rounded-full flex items-center justify-center group-hover:bg-zinc-900 transition-colors">
-              <Plus className="h-4 w-4 text-zinc-400 group-hover:text-white" />
-            </div>
-          </div>
-          <p className="text-[11px] text-zinc-400 leading-relaxed">
-            Create your organization and let it grow
-          </p>
-        </div>
-      </aside>
+      </Card>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 p-4 lg:p-12 overflow-y-auto max-w-[1200px] mx-auto w-full">
-        <div className="space-y-10">
+      <main className="flex-1 lg:pl-12 lg:pr-32 overflow-y-auto max-w-[1200px] mx-auto w-full">
+        <div className="space-y-4">
           {/* Top Actions for Mobile */}
           <div className="lg:hidden flex items-center justify-between mb-6">
             <span className="mb-10 text-2xl font-heading">link</span>
@@ -448,12 +441,12 @@ function AdminDashboard() {
           </div>
 
           {/* Blocks Section */}
-          <section className="space-y-6">
+          <section className="space-y-4">
             {/* Add Block Trigger in Dialog */}
             <Dialog open={isAddBlockOpen} onOpenChange={setIsAddBlockOpen}>
               <DialogTrigger
                 render={
-                  <Button className="w-full h-14 bg-zinc-900 text-white hover:bg-zinc-800 rounded-2xl text-sm font-bold shadow-xl shadow-zinc-200 transition-all active:scale-[0.99] flex items-center justify-center gap-2" />
+                  <Button className="w-full flex items-center justify-center gap-2" />
                 }
               >
                 <Plus className="h-5 w-5" />

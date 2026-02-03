@@ -1,4 +1,4 @@
-import { CheckCircle2, Loader2, XCircle } from 'lucide-react'
+import { CheckCircle2, Loader2, XCircle, CircleDashed } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -10,64 +10,73 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const [showSaved, setShowSaved] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
+    if (!status) {
+      setIsVisible(false)
+      return
+    }
+
     if (status === 'saved') {
-      setShowSaved(true)
-      const timer = setTimeout(() => setShowSaved(false), 2000)
+      setIsVisible(true)
+      const timer = setTimeout(() => setIsVisible(false), 3000)
       return () => clearTimeout(timer)
     }
-    setShowSaved(true)
+
+    setIsVisible(true)
   }, [status])
-
-  // Don't show anything if status is undefined
-  if (!status) {
-    return <div className={cn('w-24 border-l border-border/30', className)} />
-  }
-
-  const isVisible =
-    status === 'saving' ||
-    status === 'unsaved' ||
-    status === 'error' ||
-    (status === 'saved' && showSaved)
 
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center gap-1.5 transition-all duration-300 w-24 border-l border-border/30',
-        status === 'saved' && isVisible && 'bg-emerald-50/30 opacity-100',
-        status === 'saved' && !isVisible && 'bg-transparent opacity-0',
-        status === 'saving' && 'bg-zinc-50/50 opacity-100',
-        (status === 'unsaved' || status === 'error') &&
-          'bg-amber-50/30 opacity-100',
+        'flex flex-col items-center justify-center transition-all duration-500 overflow-hidden',
+        isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2',
         className,
       )}
     >
-      {status === 'saved' && isVisible && (
-        <>
-          <CheckCircle2 className="h-5 w-5 text-emerald-500 animate-in fade-in zoom-in duration-300" />
-          <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">
-            Saved
-          </span>
-        </>
-      )}
-      {status === 'saving' && (
-        <>
-          <Loader2 className="h-5 w-5 text-zinc-400 animate-spin" />
-          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
-            Saving
-          </span>
-        </>
-      )}
-      {(status === 'unsaved' || status === 'error') && (
-        <>
-          <XCircle className="h-5 w-5 text-amber-500" />
-          <span className="text-[10px] font-bold text-amber-600 uppercase tracking-tighter">
-            Unsaved
-          </span>
-        </>
-      )}
+      <div className="flex flex-col items-center gap-1">
+        {status === 'saved' && (
+          <>
+            <div className="p-1 bg-emerald-50 rounded-full border border-emerald-100">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+            </div>
+            <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest whitespace-nowrap">
+              Saved
+            </span>
+          </>
+        )}
+        {status === 'saving' && (
+          <>
+            <div className="p-1 bg-blue-50 rounded-full border border-blue-100">
+              <Loader2 className="h-3.5 w-3.5 text-blue-500 animate-spin" />
+            </div>
+            <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest whitespace-nowrap">
+              Saving
+            </span>
+          </>
+        )}
+        {status === 'unsaved' && (
+          <>
+            <div className="p-1 bg-amber-50 rounded-full border border-amber-100">
+              <CircleDashed className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
+            </div>
+            <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest whitespace-nowrap">
+              Syncing
+            </span>
+          </>
+        )}
+        {status === 'error' && (
+          <>
+            <div className="p-1 bg-red-50 rounded-full border border-red-100">
+              <XCircle className="h-3.5 w-3.5 text-red-500" />
+            </div>
+            <span className="text-[8px] font-black text-red-600 uppercase tracking-widest whitespace-nowrap">
+              Error
+            </span>
+          </>
+        )}
+      </div>
     </div>
   )
 }

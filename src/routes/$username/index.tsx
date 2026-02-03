@@ -19,7 +19,7 @@ export const Route = createFileRoute('/$username/')({
 })
 
 function UserProfile() {
-  const { user, links } = Route.useLoaderData()
+  const { user, blocks } = Route.useLoaderData()
 
   return (
     <div className="min-h-screen relative font-sans text-slate-900 bg-gray-50">
@@ -102,31 +102,46 @@ function UserProfile() {
           </Button>
         </div>
 
-        {/* Links List */}
-        {links.map((link) => (
-          <Card
-            key={link.id}
-            className="w-full border-none shadow-sm rounded-2xl overflow-hidden bg-white hover:scale-[1.01] hover:shadow-md transition-all cursor-pointer group"
-            onClick={() => window.open(link.url, '_blank')}
-          >
-            <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="bg-muted h-10 w-10 rounded-full flex items-center justify-center shrink-0 group-hover:bg-muted/80 transition-colors">
-                  <LinkIcon className="h-5 w-5 text-slate-600" />
-                </div>
-                <span className="font-semibold text-sm">{link.title}</span>
+        {/* Blocks List */}
+        {blocks.map((block: any) => {
+          if (block.type === 'text') {
+            return (
+              <div key={block.id} className="w-full text-center py-2 space-y-1">
+                <h2 className="font-bold text-lg text-slate-800">
+                  {block.title}
+                </h2>
+                {block.content && (
+                  <p className="text-slate-600 text-sm">{block.content}</p>
+                )}
               </div>
-              <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-            </div>
-          </Card>
-        ))}
+            )
+          }
+
+          return (
+            <Card
+              key={block.id}
+              className="w-full border-none shadow-sm rounded-2xl overflow-hidden bg-white hover:scale-[1.01] hover:shadow-md transition-all cursor-pointer group"
+              onClick={() => block.url && window.open(block.url, '_blank')}
+            >
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="bg-muted h-10 w-10 rounded-full flex items-center justify-center shrink-0 group-hover:bg-muted/80 transition-colors">
+                    <LinkIcon className="h-5 w-5 text-slate-600" />
+                  </div>
+                  <span className="font-semibold text-sm">{block.title}</span>
+                </div>
+                <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </div>
+            </Card>
+          )
+        })}
 
         {/* Footer */}
         <div className="mt-8 mb-4">
           <div className="flex items-center gap-1.5 text-slate-500">
             <span className="text-xs font-medium">Powered by</span>
             <span className="font-bold text-lg tracking-tighter text-slate-900">
-              LIN<span className="rotate-180 inline-block">K</span>E
+              BLOCKS
             </span>
           </div>
         </div>

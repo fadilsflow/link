@@ -1,46 +1,48 @@
 import {
   DndContext,
-  KeyboardSensor,
-  PointerSensor,
   closestCenter,
+  PointerSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
+  DragEndEvent,
 } from '@dnd-kit/core'
 import {
-  SortableContext,
   arrayMove,
+  SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { SortableLinkItem } from './SortableLinkItem'
-import type { DragEndEvent } from '@dnd-kit/core'
+import { SortableBlockItem } from './SortableBlockItem'
 
-interface Link {
+interface Block {
   id: string
   title: string
   url: string
+  type?: string
+  content?: string
   isEnabled: boolean
   syncStatus?: 'saved' | 'saving' | 'unsaved' | 'error'
   errors?: { title?: string; url?: string }
 }
 
-interface LinkListProps {
-  links: Array<Link>
+interface BlockListProps {
+  blocks: Block[]
   onUpdate: (id: string, field: string, value: any) => void
   onDelete: (id: string) => void
-  onReorder: (newLinks: Array<Link>) => void
+  onReorder: (newBlocks: Block[]) => void
   onDragStart?: () => void
   onDragCancel?: () => void
 }
 
-export function LinkList({
-  links,
+export function BlockList({
+  blocks,
   onUpdate,
   onDelete,
   onReorder,
   onDragStart,
   onDragCancel,
-}: LinkListProps) {
+}: BlockListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
@@ -62,10 +64,10 @@ export function LinkList({
       return
     }
 
-    const oldIndex = links.findIndex((l) => l.id === active.id)
-    const newIndex = links.findIndex((l) => l.id === over.id)
+    const oldIndex = blocks.findIndex((b) => b.id === active.id)
+    const newIndex = blocks.findIndex((b) => b.id === over.id)
 
-    onReorder(arrayMove(links, oldIndex, newIndex))
+    onReorder(arrayMove(blocks, oldIndex, newIndex))
   }
 
   return (
@@ -77,16 +79,16 @@ export function LinkList({
       onDragCancel={onDragCancel}
     >
       <SortableContext
-        items={links.map((l) => l.id)}
+        items={blocks.map((b) => b.id)}
         strategy={verticalListSortingStrategy}
       >
         <div className="flex flex-col gap-3">
-          {links.map((link) => (
-            <SortableLinkItem
-              key={link.id}
-              link={link}
-              handleLinkUpdate={onUpdate}
-              handleDeleteLink={onDelete}
+          {blocks.map((block) => (
+            <SortableBlockItem
+              key={block.id}
+              block={block}
+              handleBlockUpdate={onUpdate}
+              handleDeleteBlock={onDelete}
             />
           ))}
         </div>

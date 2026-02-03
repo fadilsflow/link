@@ -3,28 +3,31 @@ import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, Trash2 } from 'lucide-react'
 import { StatusBadge } from './StatusBadge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { LinkBlock } from './blocks/LinkBlock'
+import { TextBlock } from './blocks/TextBlock'
 
-interface LinkItemProps {
-  link: {
+interface BlockItemProps {
+  block: {
     id: string
     title: string
     url: string
+    type?: string
+    content?: string
     isEnabled: boolean
     syncStatus?: 'saved' | 'saving' | 'unsaved' | 'error'
     errors?: { title?: string; url?: string }
   }
-  handleLinkUpdate?: (id: string, field: string, value: any) => void
-  handleDeleteLink?: (id: string) => void
+  handleBlockUpdate?: (id: string, field: string, value: any) => void
+  handleDeleteBlock?: (id: string) => void
   isOverlay?: boolean
 }
 
-export function SortableLinkItem({
-  link,
-  handleLinkUpdate,
-  handleDeleteLink,
-}: LinkItemProps) {
+export function SortableBlockItem({
+  block,
+  handleBlockUpdate,
+  handleDeleteBlock,
+}: BlockItemProps) {
   const {
     attributes,
     listeners,
@@ -32,7 +35,7 @@ export function SortableLinkItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: link.id })
+  } = useSortable({ id: block.id })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -41,8 +44,7 @@ export function SortableLinkItem({
     zIndex: isDragging ? 50 : undefined,
   }
 
-  const status = link.syncStatus || 'saved'
-  const errors = link.errors || {}
+  const status = block.syncStatus || 'saved'
 
   return (
     <div
@@ -69,7 +71,7 @@ export function SortableLinkItem({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-              Link Block
+              {block.type === 'text' ? 'Text Block' : 'Link Block'}
             </span>
           </div>
 
@@ -80,10 +82,10 @@ export function SortableLinkItem({
               </span>
               <input
                 type="checkbox"
-                checked={link.isEnabled}
+                checked={block.isEnabled}
                 className="w-3.5 h-3.5 rounded-sm border-muted-foreground/30 accent-zinc-900 cursor-pointer"
                 onChange={(e) =>
-                  handleLinkUpdate?.(link.id, 'isEnabled', e.target.checked)
+                  handleBlockUpdate?.(block.id, 'isEnabled', e.target.checked)
                 }
               />
             </div>
@@ -91,56 +93,24 @@ export function SortableLinkItem({
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-all"
-              onClick={() => handleDeleteLink?.(link.id)}
+              onClick={() => handleDeleteBlock?.(block.id)}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        <div className="grid gap-3">
-          <div className="space-y-1">
-            <Input
-              key={`title-${link.id}`}
-              defaultValue={link.title}
-              placeholder="Link Title"
-              className={cn(
-                'h-9 bg-muted/30 border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all font-medium',
-                errors.title &&
-                  'border border-destructive/50 bg-destructive/5 focus-visible:ring-destructive/30',
-              )}
-              onChange={(e) =>
-                handleLinkUpdate?.(link.id, 'title', e.target.value)
-              }
-            />
-            {errors.title && (
-              <p className="text-[10px] text-destructive font-medium px-1">
-                {errors.title}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <Input
-              key={`url-${link.id}`}
-              defaultValue={link.url}
-              placeholder="url (e.g. https://github.com)"
-              className={cn(
-                'h-9 bg-muted/30 border-none shadow-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all text-xs text-muted-foreground',
-                errors.url &&
-                  'border border-destructive/50 bg-destructive/5 focus-visible:ring-destructive/30',
-              )}
-              onChange={(e) =>
-                handleLinkUpdate?.(link.id, 'url', e.target.value)
-              }
-            />
-            {errors.url && (
-              <p className="text-[10px] text-destructive font-medium px-1">
-                {errors.url}
-              </p>
-            )}
-          </div>
-        </div>
+        {block.type === 'text' ? (
+          <TextBlock
+            block={block as any}
+            handleUpdate={handleBlockUpdate as any}
+          />
+        ) : (
+          <LinkBlock
+            block={block as any}
+            handleUpdate={handleBlockUpdate as any}
+          />
+        )}
       </div>
 
       {/* Right Status Badge */}

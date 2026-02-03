@@ -57,9 +57,8 @@ const userRouter = {
       if (!userProfile) return null
       return {
         user: userProfile,
-        blocks: userProfile.links,
-        links: userProfile.links,
-      } // Keep links for backward compat for now or refactor frontend
+        blocks: userProfile.blocks,
+      }
     }),
   updateProfile: publicProcedure
     .input(

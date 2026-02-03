@@ -23,7 +23,7 @@ export const getPublicProfile = createServerFn({ method: 'GET' })
 
     return {
       user: dbUser,
-      links: dbUser.blocks,
+      blocks: dbUser.blocks,
     }
   })
 
@@ -57,7 +57,7 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
 
     return {
       user: dbUser,
-      links: dbUser.blocks,
+      blocks: dbUser.blocks,
     }
   },
 )

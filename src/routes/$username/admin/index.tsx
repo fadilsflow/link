@@ -22,7 +22,6 @@ import { getDashboardData } from '@/lib/profile-server'
 import React, { useEffect, useState, useRef } from 'react'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { cn } from '@/lib/utils'
 import { ProfileEditor } from '@/components/dashboard/ProfileEditor'
 import { BlockList } from '@/components/dashboard/BlockList'
 import { z } from 'zod'
@@ -31,8 +30,9 @@ import {
   AppHeader,
   AppHeaderActions,
   AppHeaderContent,
-  AppHeaderDescription,
 } from '@/components/app-header'
+import { ShareProfileModal } from '@/components/share-profile-modal'
+import { BASE_URL } from '@/lib/constans'
 
 export const Route = createFileRoute('/$username/admin/')({
   component: AdminDashboard,
@@ -320,10 +320,7 @@ function AdminDashboard() {
             <Eye className="h-4 w-4" />
             Preview
           </Button>
-          <Button variant="default">
-            <Share2 className="h-4 w-4" />
-            Share
-          </Button>
+          <ShareProfileModal url={`${BASE_URL}/${user.username}`} />
         </AppHeaderActions>
       </AppHeader>
       <main className="space-y-8">

@@ -17,6 +17,7 @@ import {
   User as UserIcon,
   Grid,
   Settings,
+  Package,
 } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -58,6 +59,11 @@ const data = {
       title: 'Appearance',
       url: '/$username/admin/appearance',
       icon: Grid,
+    },
+    {
+      title: 'Products',
+      url: '/$username/admin/products',
+      icon: Package,
     },
     {
       title: 'Analytics',

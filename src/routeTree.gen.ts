@@ -17,7 +17,12 @@ import { Route as UsernameAdminRouteRouteImport } from './routes/$username/admin
 import { Route as UsernameAdminIndexRouteImport } from './routes/$username/admin/index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as UsernameAdminProductsRouteImport } from './routes/$username/admin/products'
 import { Route as UsernameAdminAppearanceRouteImport } from './routes/$username/admin/appearance'
+import { Route as UsernameProductsProductIdIndexRouteImport } from './routes/$username/products/$productId/index'
+import { Route as UsernameProductsProductIdCheckoutRouteImport } from './routes/$username/products/$productId/checkout'
+import { Route as UsernameAdminProductsNewRouteImport } from './routes/$username/admin/products.new'
+import { Route as UsernameAdminProductsProductIdRouteImport } from './routes/$username/admin/products.$productId'
 
 const TestDndRoute = TestDndRouteImport.update({
   id: '/test-dnd',
@@ -59,11 +64,40 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UsernameAdminProductsRoute = UsernameAdminProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => UsernameAdminRouteRoute,
+} as any)
 const UsernameAdminAppearanceRoute = UsernameAdminAppearanceRouteImport.update({
   id: '/appearance',
   path: '/appearance',
   getParentRoute: () => UsernameAdminRouteRoute,
 } as any)
+const UsernameProductsProductIdIndexRoute =
+  UsernameProductsProductIdIndexRouteImport.update({
+    id: '/$username/products/$productId/',
+    path: '/$username/products/$productId/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UsernameProductsProductIdCheckoutRoute =
+  UsernameProductsProductIdCheckoutRouteImport.update({
+    id: '/$username/products/$productId/checkout',
+    path: '/$username/products/$productId/checkout',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UsernameAdminProductsNewRoute =
+  UsernameAdminProductsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => UsernameAdminProductsRoute,
+  } as any)
+const UsernameAdminProductsProductIdRoute =
+  UsernameAdminProductsProductIdRouteImport.update({
+    id: '/$productId',
+    path: '/$productId',
+    getParentRoute: () => UsernameAdminProductsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,9 +106,14 @@ export interface FileRoutesByFullPath {
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/$username/': typeof UsernameIndexRoute
   '/$username/admin/appearance': typeof UsernameAdminAppearanceRoute
+  '/$username/admin/products': typeof UsernameAdminProductsRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin/': typeof UsernameAdminIndexRoute
+  '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
+  '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
+  '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
+  '/$username/products/$productId/': typeof UsernameProductsProductIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -82,9 +121,14 @@ export interface FileRoutesByTo {
   '/test-dnd': typeof TestDndRoute
   '/$username': typeof UsernameIndexRoute
   '/$username/admin/appearance': typeof UsernameAdminAppearanceRoute
+  '/$username/admin/products': typeof UsernameAdminProductsRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin': typeof UsernameAdminIndexRoute
+  '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
+  '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
+  '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
+  '/$username/products/$productId': typeof UsernameProductsProductIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,9 +138,14 @@ export interface FileRoutesById {
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/$username/': typeof UsernameIndexRoute
   '/$username/admin/appearance': typeof UsernameAdminAppearanceRoute
+  '/$username/admin/products': typeof UsernameAdminProductsRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin/': typeof UsernameAdminIndexRoute
+  '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
+  '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
+  '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
+  '/$username/products/$productId/': typeof UsernameProductsProductIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,9 +156,14 @@ export interface FileRouteTypes {
     | '/$username/admin'
     | '/$username/'
     | '/$username/admin/appearance'
+    | '/$username/admin/products'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin/'
+    | '/$username/admin/products/$productId'
+    | '/$username/admin/products/new'
+    | '/$username/products/$productId/checkout'
+    | '/$username/products/$productId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,9 +171,14 @@ export interface FileRouteTypes {
     | '/test-dnd'
     | '/$username'
     | '/$username/admin/appearance'
+    | '/$username/admin/products'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin'
+    | '/$username/admin/products/$productId'
+    | '/$username/admin/products/new'
+    | '/$username/products/$productId/checkout'
+    | '/$username/products/$productId'
   id:
     | '__root__'
     | '/'
@@ -128,9 +187,14 @@ export interface FileRouteTypes {
     | '/$username/admin'
     | '/$username/'
     | '/$username/admin/appearance'
+    | '/$username/admin/products'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin/'
+    | '/$username/admin/products/$productId'
+    | '/$username/admin/products/new'
+    | '/$username/products/$productId/checkout'
+    | '/$username/products/$productId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -141,6 +205,8 @@ export interface RootRouteChildren {
   UsernameIndexRoute: typeof UsernameIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
+  UsernameProductsProductIdCheckoutRoute: typeof UsernameProductsProductIdCheckoutRoute
+  UsernameProductsProductIdIndexRoute: typeof UsernameProductsProductIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -201,6 +267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$username/admin/products': {
+      id: '/$username/admin/products'
+      path: '/products'
+      fullPath: '/$username/admin/products'
+      preLoaderRoute: typeof UsernameAdminProductsRouteImport
+      parentRoute: typeof UsernameAdminRouteRoute
+    }
     '/$username/admin/appearance': {
       id: '/$username/admin/appearance'
       path: '/appearance'
@@ -208,16 +281,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsernameAdminAppearanceRouteImport
       parentRoute: typeof UsernameAdminRouteRoute
     }
+    '/$username/products/$productId/': {
+      id: '/$username/products/$productId/'
+      path: '/$username/products/$productId'
+      fullPath: '/$username/products/$productId/'
+      preLoaderRoute: typeof UsernameProductsProductIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$username/products/$productId/checkout': {
+      id: '/$username/products/$productId/checkout'
+      path: '/$username/products/$productId/checkout'
+      fullPath: '/$username/products/$productId/checkout'
+      preLoaderRoute: typeof UsernameProductsProductIdCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$username/admin/products/new': {
+      id: '/$username/admin/products/new'
+      path: '/new'
+      fullPath: '/$username/admin/products/new'
+      preLoaderRoute: typeof UsernameAdminProductsNewRouteImport
+      parentRoute: typeof UsernameAdminProductsRoute
+    }
+    '/$username/admin/products/$productId': {
+      id: '/$username/admin/products/$productId'
+      path: '/$productId'
+      fullPath: '/$username/admin/products/$productId'
+      preLoaderRoute: typeof UsernameAdminProductsProductIdRouteImport
+      parentRoute: typeof UsernameAdminProductsRoute
+    }
   }
 }
 
+interface UsernameAdminProductsRouteChildren {
+  UsernameAdminProductsProductIdRoute: typeof UsernameAdminProductsProductIdRoute
+  UsernameAdminProductsNewRoute: typeof UsernameAdminProductsNewRoute
+}
+
+const UsernameAdminProductsRouteChildren: UsernameAdminProductsRouteChildren = {
+  UsernameAdminProductsProductIdRoute: UsernameAdminProductsProductIdRoute,
+  UsernameAdminProductsNewRoute: UsernameAdminProductsNewRoute,
+}
+
+const UsernameAdminProductsRouteWithChildren =
+  UsernameAdminProductsRoute._addFileChildren(
+    UsernameAdminProductsRouteChildren,
+  )
+
 interface UsernameAdminRouteRouteChildren {
   UsernameAdminAppearanceRoute: typeof UsernameAdminAppearanceRoute
+  UsernameAdminProductsRoute: typeof UsernameAdminProductsRouteWithChildren
   UsernameAdminIndexRoute: typeof UsernameAdminIndexRoute
 }
 
 const UsernameAdminRouteRouteChildren: UsernameAdminRouteRouteChildren = {
   UsernameAdminAppearanceRoute: UsernameAdminAppearanceRoute,
+  UsernameAdminProductsRoute: UsernameAdminProductsRouteWithChildren,
   UsernameAdminIndexRoute: UsernameAdminIndexRoute,
 }
 
@@ -232,6 +350,9 @@ const rootRouteChildren: RootRouteChildren = {
   UsernameIndexRoute: UsernameIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
+  UsernameProductsProductIdCheckoutRoute:
+    UsernameProductsProductIdCheckoutRoute,
+  UsernameProductsProductIdIndexRoute: UsernameProductsProductIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

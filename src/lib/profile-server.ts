@@ -14,6 +14,7 @@ export const getPublicProfile = createServerFn({ method: 'GET' })
           where: (blocks, { eq }) => eq(blocks.isEnabled, true),
           orderBy: (blocks, { asc }) => [asc(blocks.order)],
         },
+        products: true,
       },
     })
 
@@ -24,6 +25,7 @@ export const getPublicProfile = createServerFn({ method: 'GET' })
     return {
       user: dbUser,
       blocks: dbUser.blocks,
+      products: dbUser.products.filter((p) => p.isActive),
     }
   })
 
@@ -48,6 +50,9 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
         blocks: {
           orderBy: (blocks, { asc }) => [asc(blocks.order)],
         },
+        products: {
+          orderBy: (products, { desc }) => [desc(products.createdAt)],
+        },
       },
     })
 
@@ -58,6 +63,35 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
     return {
       user: dbUser,
       blocks: dbUser.blocks,
+      products: dbUser.products,
     }
   },
 )
+
+export const getPublicProduct = createServerFn({ method: 'GET' })
+  .inputValidator(
+    z.object({
+      username: z.string(),
+      productId: z.string(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const dbUser = await db.query.user.findFirst({
+      where: eq(user.username, data.username),
+      with: {
+        products: {
+          where: (product, { and, eq }) =>
+            and(eq(product.id, data.productId), eq(product.isActive, true)),
+        },
+      },
+    })
+
+    if (!dbUser || dbUser.products.length === 0) {
+      return null
+    }
+
+    return {
+      user: dbUser,
+      product: dbUser.products[0],
+    }
+  })

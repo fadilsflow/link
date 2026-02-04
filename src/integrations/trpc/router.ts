@@ -3,7 +3,7 @@ import { asc, desc, eq } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
-import { blocks, user } from '@/db/schema'
+import { blocks, products, user } from '@/db/schema'
 
 const userRouter = {
   getByEmail: publicProcedure
@@ -211,8 +211,148 @@ const blockRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+const priceSettingsSchema = z
+  .object({
+    payWhatYouWant: z.boolean(),
+    price: z.number().int().nonnegative().optional(),
+    salePrice: z.number().int().nonnegative().optional(),
+    minimumPrice: z.number().int().nonnegative().optional(),
+    suggestedPrice: z.number().int().nonnegative().optional(),
+  })
+  .refine(
+    (val) => {
+      if (val.payWhatYouWant) {
+        return val.minimumPrice !== undefined || val.suggestedPrice !== undefined
+      }
+      return val.price !== undefined
+    },
+    {
+      message:
+        'For pay-what-you-want products provide at least a minimum or suggested price; otherwise provide a fixed price.',
+    },
+  )
+
+const customerQuestionSchema = z.object({
+  id: z.string(),
+  label: z.string().min(1),
+  required: z.boolean().default(false),
+})
+
+const productBaseInput = z.object({
+  userId: z.string(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  productUrl: z.string().url(),
+  isActive: z.boolean().optional(),
+  totalQuantity: z.number().int().positive().optional(),
+  limitPerCheckout: z.number().int().positive().optional(),
+  priceSettings: priceSettingsSchema,
+  customerQuestions: z.array(customerQuestionSchema).optional(),
+})
+
+const productRouter = {
+  listByUser: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input }) => {
+      const rows = await db.query.products.findMany({
+        where: eq(products.userId, input.userId),
+        orderBy: [desc(products.createdAt)],
+      })
+      return rows
+    }),
+  create: publicProcedure
+    .input(productBaseInput)
+    .mutation(async ({ input }) => {
+      const id = crypto.randomUUID()
+      const price = input.priceSettings.payWhatYouWant
+        ? null
+        : input.priceSettings.price ?? null
+      const salePrice = input.priceSettings.payWhatYouWant
+        ? null
+        : input.priceSettings.salePrice ?? null
+
+      const [row] = await db
+        .insert(products)
+        .values({
+          id,
+          userId: input.userId,
+          title: input.title,
+          description: input.description ?? null,
+          productUrl: input.productUrl,
+          isActive: input.isActive ?? true,
+          totalQuantity: input.totalQuantity ?? null,
+          limitPerCheckout: input.limitPerCheckout ?? null,
+          payWhatYouWant: input.priceSettings.payWhatYouWant,
+          price,
+          salePrice,
+          minimumPrice: input.priceSettings.minimumPrice ?? null,
+          suggestedPrice: input.priceSettings.suggestedPrice ?? null,
+          customerQuestions: input.customerQuestions
+            ? JSON.stringify(input.customerQuestions)
+            : null,
+        })
+        .returning()
+
+      return row
+    }),
+  update: publicProcedure
+    .input(
+      productBaseInput.extend({
+        id: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const price = input.priceSettings.payWhatYouWant
+        ? null
+        : input.priceSettings.price ?? null
+      const salePrice = input.priceSettings.payWhatYouWant
+        ? null
+        : input.priceSettings.salePrice ?? null
+
+      const [row] = await db
+        .update(products)
+        .set({
+          title: input.title,
+          description: input.description ?? null,
+          productUrl: input.productUrl,
+          isActive: input.isActive ?? true,
+          totalQuantity: input.totalQuantity ?? null,
+          limitPerCheckout: input.limitPerCheckout ?? null,
+          payWhatYouWant: input.priceSettings.payWhatYouWant,
+          price,
+          salePrice,
+          minimumPrice: input.priceSettings.minimumPrice ?? null,
+          suggestedPrice: input.priceSettings.suggestedPrice ?? null,
+          customerQuestions: input.customerQuestions
+            ? JSON.stringify(input.customerQuestions)
+            : null,
+        })
+        .where(eq(products.id, input.id))
+        .returning()
+
+      return row
+    }),
+  delete: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      await db.delete(products).where(eq(products.id, input.id))
+      return { success: true }
+    }),
+  toggleActive: publicProcedure
+    .input(z.object({ id: z.string(), isActive: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const [row] = await db
+        .update(products)
+        .set({ isActive: input.isActive })
+        .where(eq(products.id, input.id))
+        .returning()
+      return row
+    }),
+} satisfies TRPCRouterRecord
+
 export const trpcRouter = createTRPCRouter({
   user: userRouter,
   block: blockRouter,
+  product: productRouter,
 })
 export type TRPCRouter = typeof trpcRouter

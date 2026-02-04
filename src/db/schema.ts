@@ -48,6 +48,32 @@ export const user = pgTable('user', {
     .notNull(),
 })
 
+export const products = pgTable('product', {
+  id: text('id').primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description'),
+  // Pricing
+  payWhatYouWant: boolean('pay_what_you_want').notNull().default(false),
+  price: integer('price'), // in smallest currency unit (e.g. cents)
+  salePrice: integer('sale_price'),
+  minimumPrice: integer('minimum_price'),
+  suggestedPrice: integer('suggested_price'),
+  // Quantity limits (MVP – no inventory tracking)
+  totalQuantity: integer('total_quantity'),
+  limitPerCheckout: integer('limit_per_checkout'),
+  // Delivery
+  productUrl: text('product_url').notNull(),
+  // Custom checkout questions (JSON string for simple, extendable schema)
+  customerQuestions: text('customer_questions'),
+  // Visibility
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 export const session = pgTable(
   'session',
   {
@@ -128,6 +154,7 @@ export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   blocks: many(blocks),
+  products: many(products),
 }))
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -147,6 +174,13 @@ export const accountRelations = relations(account, ({ one }) => ({
 export const blocksRelations = relations(blocks, ({ one }) => ({
   user: one(user, {
     fields: [blocks.userId],
+    references: [user.id],
+  }),
+}))
+
+export const productsRelations = relations(products, ({ one }) => ({
+  user: one(user, {
+    fields: [products.userId],
     references: [user.id],
   }),
 }))

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { getPublicProfile } from '@/lib/profile-server'
 import NotFound from '@/components/NotFound'
-import { cn } from '@/lib/utils'
+import { cn, formatPrice } from '@/lib/utils'
 
 export const Route = createFileRoute('/$username/')({
   component: UserProfile,
@@ -19,8 +19,8 @@ export const Route = createFileRoute('/$username/')({
   notFoundComponent: NotFound,
 })
 
-function UserProfile() {  
-  const { user, blocks } = Route.useLoaderData()
+function UserProfile() {
+  const { user, blocks, products } = Route.useLoaderData()
 
   type BgMode = 'banner' | 'wallpaper' | 'color' | 'image'
   type WallpaperStyle = 'flat' | 'gradient' | 'avatar' | 'image'
@@ -196,6 +196,58 @@ function UserProfile() {
             </Card>
           )
         })}
+
+        {/* Products section */}
+        {products.length > 0 && (
+          <div className="w-full mt-4 space-y-2">
+            <p className="text-xs font-semibold text-slate-600">
+              Digital products
+            </p>
+            <div className="space-y-2">
+              {products.map((product: any) => {
+                const href = `/${user.username}/products/${product.id}`
+                const price = product.payWhatYouWant
+                  ? product.minimumPrice
+                    ? `From ${formatPrice(product.minimumPrice)}`
+                    : 'Pay what you want'
+                  : product.salePrice && product.price
+                    ? formatPrice(product.salePrice)
+                    : product.price
+                      ? formatPrice(product.price)
+                      : 'No price'
+
+                return (
+                  <Card
+                    key={product.id}
+                    className={cn(
+                      'w-full overflow-hidden hover:scale-[1.01] transition-all cursor-pointer group',
+                      cardBase,
+                      radiusClass,
+                    )}
+                    style={{
+                      backgroundColor: user.appearanceBlockColor || undefined,
+                    }}
+                    onClick={() => {
+                      window.location.href = href
+                    }}
+                  >
+                    <div className="p-4 flex items-center justify-between gap-3">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-sm">
+                          {product.title}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {price}
+                        </span>
+                      </div>
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </div>
+                  </Card>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-8 mb-4">

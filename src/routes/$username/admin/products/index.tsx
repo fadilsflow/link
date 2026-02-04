@@ -22,8 +22,9 @@ import {
 } from '@/components/ui/table'
 import { getDashboardData } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
+import { Link } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/$username/admin/products')({
+export const Route = createFileRoute('/$username/admin/products/')({
   component: ProductAdminRoute,
 })
 
@@ -122,7 +123,7 @@ function getColumns(username: string): ColumnDef<ProductRow>[] {
             variant="outline"
             size="xs"
             className="rounded-full text-[11px]"
-            render={<a href={href} />}
+            render={<Link to={href} />}
           >
             Edit
           </Button>
@@ -171,7 +172,7 @@ function ProductAdminRoute() {
           variant="outline"
           size="sm"
           className="rounded-full text-xs"
-          render={<a href={newHref} />}
+          render={<Link to={newHref} />}
         >
           <Plus className="h-3.5 w-3.5 mr-1" />
           New product
@@ -219,10 +220,6 @@ function ProductAdminRoute() {
                       return (
                         <TableRow
                           key={row.id}
-                          className="cursor-pointer"
-                          onClick={() => {
-                            window.location.href = href
-                          }}
                         >
                           {row.getVisibleCells().map((cell) => (
                             <TableCell key={cell.id}>

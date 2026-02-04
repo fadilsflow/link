@@ -10,6 +10,7 @@ import {
 } from '@/components/dashboard/ProductForm'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
+import { Navigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/$username/admin/products/new')({
   component: ProductNewRoute,
@@ -46,14 +47,20 @@ function ProductNewRoute() {
         isActive: payload.isActive,
         totalQuantity: payload.totalQuantity ?? undefined,
         limitPerCheckout: payload.limitPerCheckout ?? undefined,
-        priceSettings: payload.priceSettings,
+        priceSettings: {
+          payWhatYouWant: payload.priceSettings.payWhatYouWant,
+          price: payload.priceSettings.price ?? undefined,
+          salePrice: payload.priceSettings.salePrice ?? undefined,
+          minimumPrice: payload.priceSettings.minimumPrice ?? undefined,
+          suggestedPrice: payload.priceSettings.suggestedPrice ?? undefined,
+        },
         customerQuestions: payload.customerQuestions,
       }
       return trpcClient.product.create.mutate(base)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
-      window.location.href = `/${username}/admin/products`
+      Navigate({ to: '/$username/admin/products', params: { username } })
     },
   })
 

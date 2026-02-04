@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,8 @@ import {
 } from '@/components/dashboard/ProductForm'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
-import { Navigate } from '@tanstack/react-router'
+import { toastManager } from '@/components/ui/toast'
+import { Link } from '@tanstack/react-router'
 
 export const Route = createFileRoute(
   '/$username/admin/products/$productId',
@@ -43,6 +44,7 @@ function mapProductToForm(userId: string, product: any): ProductFormValues {
 function ProductEditRoute() {
   const { username, productId } = Route.useParams()
   const queryClient = useQueryClient()
+  const router = useRouter()
 
   const { data: dashboardData } = useQuery({
     queryKey: ['dashboard', username],
@@ -66,32 +68,31 @@ function ProductEditRoute() {
 
   const updateMutation = useMutation({
     mutationKey: ['product-update', username, productId],
-    mutationFn: async (payload: ProductFormValues) => {
+    mutationFn: async (values: ProductFormValues) => {
       const base = {
-        userId: payload.userId,
-        title: payload.title,
-        description: payload.description || undefined,
-        productUrl: payload.productUrl,
-        isActive: payload.isActive,
-        totalQuantity: payload.totalQuantity ?? undefined,
-        limitPerCheckout: payload.limitPerCheckout ?? undefined,
+        id: values.id!,
+        userId: values.userId,
+        title: values.title,
+        description: values.description || undefined,
+        productUrl: values.productUrl,
+        isActive: values.isActive,
+        totalQuantity: values.totalQuantity ?? undefined,
+        limitPerCheckout: values.limitPerCheckout ?? undefined,
         priceSettings: {
-          payWhatYouWant: payload.priceSettings.payWhatYouWant,
-          price: payload.priceSettings.price ?? undefined,
-          salePrice: payload.priceSettings.salePrice ?? undefined,
-          minimumPrice: payload.priceSettings.minimumPrice ?? undefined,
-          suggestedPrice: payload.priceSettings.suggestedPrice ?? undefined,
+          payWhatYouWant: values.priceSettings.payWhatYouWant,
+          price: values.priceSettings.price ?? undefined,
+          salePrice: values.priceSettings.salePrice ?? undefined,
+          minimumPrice: values.priceSettings.minimumPrice ?? undefined,
+          suggestedPrice: values.priceSettings.suggestedPrice ?? undefined,
         },
-        customerQuestions: payload.customerQuestions,
+        customerQuestions:
+          values.customerQuestions.length > 0 ? values.customerQuestions : undefined,
       }
-      return trpcClient.product.update.mutate({
-        ...base,
-        id: payload.id!,
-      })
+      router.navigate({ to: '/$username/admin/products', params: { username } })
+      return trpcClient.product.update.mutate(base)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
-      Navigate({ to: '/$username/admin/products', params: { username } })
     },
   })
 
@@ -103,7 +104,7 @@ function ProductEditRoute() {
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
-      Navigate({ to: '/$username/admin/products', params: { username } })
+      router.navigate({ to: '/$username/admin/products', params: { username } })
     },
   })
 
@@ -117,9 +118,7 @@ function ProductEditRoute() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => {
-              window.location.href = `/${username}/admin/products`
-            }}
+            render={<Link to={`/$username/admin/products`} params={{ username }} />}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -138,8 +137,42 @@ function ProductEditRoute() {
         value={form}
         onChange={setForm}
         submitting={updateMutation.isPending || deleteMutation.isPending}
-        onSubmit={(values) => updateMutation.mutate(values)}
-        onDelete={(id) => deleteMutation.mutate(id)}
+        onSubmit={(values) => {
+          toastManager.promise(updateMutation.mutateAsync(values), {
+            loading: {
+              title: 'Saving changes…',
+              description: 'Please wait while we update your product.',
+            },
+            success: () => ({
+              title: 'Product updated',
+              description: 'Your changes have been saved successfully.',
+            }),
+            error: (error: unknown) => ({
+              title: 'Failed to update product',
+              description:
+                (error as Error)?.message ??
+                'An unexpected error occurred while updating the product.',
+            }),
+          })
+        }}
+        onDelete={(id) => {
+          toastManager.promise(deleteMutation.mutateAsync(id), {
+            loading: {
+              title: 'Deleting product…',
+              description: 'Please wait while we delete this product.',
+            },
+            success: () => ({
+              title: 'Product deleted',
+              description: 'The product has been deleted successfully.',
+            }),
+            error: (error: unknown) => ({
+              title: 'Failed to delete product',
+              description:
+                (error as Error)?.message ??
+                'An unexpected error occurred while deleting the product.',
+            }),
+          })
+        }}
       />
     </div>
   )

@@ -1,8 +1,6 @@
-/* eslint-disable react/jsx-no-useless-fragment */
-"use client";
-
 import * as React from "react";
-import { Plus, Link2, ToggleLeft, ToggleRight, Trash2 } from "lucide-react";
+import { z } from "zod";
+import { Plus, Link2, Trash2 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +37,55 @@ export type ProductFormValues = {
   priceSettings: PriceSettings;
   customerQuestions: CustomerQuestion[];
 };
+
+// Client-side validation schema (mirrors server rules but stays in client bundle)
+export const priceSettingsClientSchema = z
+  .object({
+    payWhatYouWant: z.boolean(),
+    price: z.number().int().nonnegative().nullable().optional(),
+    salePrice: z.number().int().nonnegative().nullable().optional(),
+    minimumPrice: z.number().int().nonnegative().nullable().optional(),
+    suggestedPrice: z.number().int().nonnegative().nullable().optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.payWhatYouWant) {
+      if (val.minimumPrice == null && val.suggestedPrice == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "For pay-what-you-want products, set a minimum or suggested price.",
+          path: ["minimumPrice"],
+        });
+      }
+    } else if (val.price == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Fixed-price products require a price.",
+        path: ["price"],
+      });
+    }
+  });
+
+export const customerQuestionClientSchema = z.object({
+  id: z.string(),
+  label: z.string().min(1, "Question label is required."),
+  required: z.boolean().default(false),
+});
+
+export const productFormClientSchema = z.object({
+  id: z.string().optional(),
+  userId: z.string(),
+  title: z.string().min(1, "Title is required."),
+  description: z.string().optional(),
+  productUrl: z
+    .string()
+    .url("Please enter a valid URL, including https://"),
+  isActive: z.boolean(),
+  totalQuantity: z.number().int().positive().nullable().optional(),
+  limitPerCheckout: z.number().int().positive().nullable().optional(),
+  priceSettings: priceSettingsClientSchema,
+  customerQuestions: z.array(customerQuestionClientSchema),
+});
 
 export function emptyProductForm(userId: string): ProductFormValues {
   return {
@@ -128,7 +175,21 @@ export function ProductForm(props: ProductFormProps) {
 
   const handleSubmit: React.FormEventHandler = (e) => {
     e.preventDefault();
-    onSubmit(value);
+    const result = productFormClientSchema.safeParse(value);
+    if (!result.success) {
+      // For now, surface the first error via alert; callers can add nicer UI later.
+      const flat = result.error.flatten();
+      const firstFieldError =
+        Object.values(flat.fieldErrors)
+          .flat()
+          .filter(Boolean)[0] ?? flat.formErrors[0];
+      if (typeof window !== "undefined" && firstFieldError) {
+        // eslint-disable-next-line no-alert
+        window.alert(firstFieldError as string);
+      }
+      return;
+    }
+    onSubmit({ ...result.data, description: result.data.description ?? "" });
   };
 
   const currentPriceLabel = humanPriceLabel(value.priceSettings);
@@ -358,6 +419,7 @@ export function ProductForm(props: ProductFormProps) {
                 onChange={(e) =>
                   onChange({ ...value, productUrl: e.target.value })
                 }
+                type="url"
                 placeholder="https://your-download-or-course.com"
                 required
               />

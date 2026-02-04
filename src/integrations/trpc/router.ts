@@ -222,7 +222,9 @@ const priceSettingsSchema = z
   .refine(
     (val) => {
       if (val.payWhatYouWant) {
-        return val.minimumPrice !== undefined || val.suggestedPrice !== undefined
+        return (
+          val.minimumPrice !== undefined || val.suggestedPrice !== undefined
+        )
       }
       return val.price !== undefined
     },
@@ -250,6 +252,15 @@ const productBaseInput = z.object({
   customerQuestions: z.array(customerQuestionSchema).optional(),
 })
 
+// Reusable input schemas & types for frontend and backend
+export const priceSettingsInputSchema = priceSettingsSchema
+export const customerQuestionInputSchema = customerQuestionSchema
+export const productInputSchema = productBaseInput
+
+export type PriceSettingsInput = z.infer<typeof priceSettingsInputSchema>
+export type CustomerQuestionInput = z.infer<typeof customerQuestionInputSchema>
+export type ProductInput = z.infer<typeof productInputSchema>
+
 const productRouter = {
   listByUser: publicProcedure
     .input(z.object({ userId: z.string() }))
@@ -266,10 +277,10 @@ const productRouter = {
       const id = crypto.randomUUID()
       const price = input.priceSettings.payWhatYouWant
         ? null
-        : input.priceSettings.price ?? null
+        : (input.priceSettings.price ?? null)
       const salePrice = input.priceSettings.payWhatYouWant
         ? null
-        : input.priceSettings.salePrice ?? null
+        : (input.priceSettings.salePrice ?? null)
 
       const [row] = await db
         .insert(products)
@@ -304,10 +315,10 @@ const productRouter = {
     .mutation(async ({ input }) => {
       const price = input.priceSettings.payWhatYouWant
         ? null
-        : input.priceSettings.price ?? null
+        : (input.priceSettings.price ?? null)
       const salePrice = input.priceSettings.payWhatYouWant
         ? null
-        : input.priceSettings.salePrice ?? null
+        : (input.priceSettings.salePrice ?? null)
 
       const [row] = await db
         .update(products)

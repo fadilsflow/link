@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,8 @@ import {
 } from '@/components/dashboard/ProductForm'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
-import { Navigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
+import { toastManager } from '@/components/ui/toast'
 
 export const Route = createFileRoute('/$username/admin/products/new')({
   component: ProductNewRoute,
@@ -19,6 +20,7 @@ export const Route = createFileRoute('/$username/admin/products/new')({
 function ProductNewRoute() {
   const { username } = Route.useParams()
   const queryClient = useQueryClient()
+  const router = useRouter()
 
   const { data: dashboardData } = useQuery({
     queryKey: ['dashboard', username],
@@ -38,29 +40,30 @@ function ProductNewRoute() {
 
   const createMutation = useMutation({
     mutationKey: ['product-create', username],
-    mutationFn: async (payload: ProductFormValues) => {
+    mutationFn: async (values: ProductFormValues) => {
       const base = {
-        userId: payload.userId,
-        title: payload.title,
-        description: payload.description || undefined,
-        productUrl: payload.productUrl,
-        isActive: payload.isActive,
-        totalQuantity: payload.totalQuantity ?? undefined,
-        limitPerCheckout: payload.limitPerCheckout ?? undefined,
+        userId: values.userId,
+        title: values.title,
+        description: values.description || undefined,
+        productUrl: values.productUrl,
+        isActive: values.isActive,
+        totalQuantity: values.totalQuantity ?? undefined,
+        limitPerCheckout: values.limitPerCheckout ?? undefined,
         priceSettings: {
-          payWhatYouWant: payload.priceSettings.payWhatYouWant,
-          price: payload.priceSettings.price ?? undefined,
-          salePrice: payload.priceSettings.salePrice ?? undefined,
-          minimumPrice: payload.priceSettings.minimumPrice ?? undefined,
-          suggestedPrice: payload.priceSettings.suggestedPrice ?? undefined,
+          payWhatYouWant: values.priceSettings.payWhatYouWant,
+          price: values.priceSettings.price ?? undefined,
+          salePrice: values.priceSettings.salePrice ?? undefined,
+          minimumPrice: values.priceSettings.minimumPrice ?? undefined,
+          suggestedPrice: values.priceSettings.suggestedPrice ?? undefined,
         },
-        customerQuestions: payload.customerQuestions,
+        customerQuestions:
+          values.customerQuestions.length > 0 ? values.customerQuestions : undefined,
       }
+      router.navigate({ to: '/$username/admin/products', params: { username } })
       return trpcClient.product.create.mutate(base)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
-      Navigate({ to: '/$username/admin/products', params: { username } })
     },
   })
 
@@ -74,9 +77,7 @@ function ProductNewRoute() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => {
-              window.location.href = `/${username}/admin/products`
-            }}
+            render={<Link to={`/$username/admin/products`} params={{ username }} />}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -95,9 +96,26 @@ function ProductNewRoute() {
         value={form}
         onChange={setForm}
         submitting={createMutation.isPending}
-        onSubmit={(values) => createMutation.mutate(values)}
+        onSubmit={(values) => {
+          toastManager.promise(createMutation.mutateAsync(values), {
+            loading: {
+              title: 'Creating product…',
+              description: 'Please wait while we save your product.',
+            },
+            success: () => ({
+              title: 'Product created',
+              description: 'Your product has been created successfully.',
+            }),
+            error: (error: unknown) => ({
+              title: 'Failed to create product',
+              description:
+                (error as Error)?.message ??
+                'An unexpected error occurred while creating the product.',
+            }),
+          })
+        }}
       />
-    </div>
+    </div >
   )
 }
 

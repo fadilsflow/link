@@ -8,7 +8,6 @@ import {
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Plus, ToggleLeft, ToggleRight } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Frame } from '@/components/ui/frame'
@@ -23,6 +22,7 @@ import {
 import { getDashboardData } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
 import { Link } from '@tanstack/react-router'
+import EmptyProduct from '@/components/emply-product'
 
 export const Route = createFileRoute('/$username/admin/products/')({
   component: ProductAdminRoute,
@@ -179,75 +179,59 @@ function ProductAdminRoute() {
         </Button>
       </div>
 
-      <Card className="border-zinc-100 shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center justify-between gap-3">
-            <span>Products</span>
-            <span className="text-xs text-zinc-500">
-              {products.length} product{products.length === 1 ? '' : 's'}
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {products.length === 0 ? (
-            <p className="text-xs text-zinc-500">
-              No products yet. Click &quot;New product&quot; to create your
-              first digital product.
-            </p>
-          ) : (
-            <Frame className="w-full">
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                        </TableHead>
+      {products.length === 0 ? (
+        <EmptyProduct />
+      ) : (
+        <Frame className="w-full">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.length ? (
+                table.getRowModel().rows.map((row) => {
+                  return (
+                    <TableRow
+                      key={row.id}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
                       ))}
                     </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows.length ? (
-                    table.getRowModel().rows.map((row) => {
-                      const href = `/${username}/admin/products/${row.original.id}`
-                      return (
-                        <TableRow
-                          key={row.id}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext(),
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      )
-                    })
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-24 text-center"
-                      >
-                        No products found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </Frame>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                  )
+                })
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No products found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Frame>
+      )}
+    </div >
   )
 }

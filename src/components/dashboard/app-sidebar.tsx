@@ -95,7 +95,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 text-left">
-                <h3 className="text-xs font-bold text-zinc-900 truncate">
+                <h3 className="text-xs font-bold text-foreground truncate">
                   {username || session?.user.name}
                 </h3>
                 <p className="text-[9px] font-medium text-zinc-400">Personal</p>
@@ -124,7 +124,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       />
                     }
                     isActive={isActive}
-                    className="data-[active=true]:bg-zinc-200/80 data-[active=true]:text-zinc-900"
+                    className="data-[active=true]:bg-zinc-200/80 text-foreground"
                   >
                     <item.icon className=" h-4 w-4" />
                     <span>{item.title}</span>
@@ -141,17 +141,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               render={<Link to={'/$username'} params={{ username } as any} />}
+              className="text-foreground"
             >
               <ExternalLink />
               View Public page
             </SidebarMenuButton>
-            <SidebarMenuButton onClick={handleCopyLink}>
+            <SidebarMenuButton
+              onClick={handleCopyLink}
+              className="text-foreground"
+            >
               <Copy />
               Copy Public page link
             </SidebarMenuButton>
-            {data.navBottom.map((item) => (
+          </SidebarMenuItem>
+          {data.navBottom.map((item) => (
+            <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
-                key={item.title}
                 size={'default'}
                 render={
                   <Link to={item.url as any} params={{ username } as any} />
@@ -160,14 +165,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   location.pathname ===
                   item.url.replace('/$username', `/${username}`)
                 }
-                className="data-[active=true]:bg-zinc-200/80 data-[active=true]:text-zinc-900"
+                className="data-[active=true]:bg-zinc-200/80 text-foreground"
               >
                 <item.icon className=" h-4 w-4" />
                 <span>{item.title}</span>
               </SidebarMenuButton>
-            ))}
+            </SidebarMenuItem>
+          ))}
+          <SidebarMenuItem>
+            <Credits />
           </SidebarMenuItem>
-          <Credits />
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>

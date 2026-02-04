@@ -13,7 +13,8 @@ import { Route as TestDndRouteImport } from './routes/test-dnd'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsernameIndexRouteImport } from './routes/$username/index'
-import { Route as UsernameAdminRouteImport } from './routes/$username/admin'
+import { Route as UsernameAdminRouteRouteImport } from './routes/$username/admin/route'
+import { Route as UsernameAdminIndexRouteImport } from './routes/$username/admin/index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -37,10 +38,15 @@ const UsernameIndexRoute = UsernameIndexRouteImport.update({
   path: '/$username/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UsernameAdminRoute = UsernameAdminRouteImport.update({
+const UsernameAdminRouteRoute = UsernameAdminRouteRouteImport.update({
   id: '/$username/admin',
   path: '/$username/admin',
   getParentRoute: () => rootRouteImport,
+} as any)
+const UsernameAdminIndexRoute = UsernameAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => UsernameAdminRouteRoute,
 } as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
@@ -57,29 +63,31 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/test-dnd': typeof TestDndRoute
-  '/$username/admin': typeof UsernameAdminRoute
+  '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/$username/': typeof UsernameIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/$username/admin/': typeof UsernameAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/test-dnd': typeof TestDndRoute
-  '/$username/admin': typeof UsernameAdminRoute
   '/$username': typeof UsernameIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/$username/admin': typeof UsernameAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/test-dnd': typeof TestDndRoute
-  '/$username/admin': typeof UsernameAdminRoute
+  '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/$username/': typeof UsernameIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/$username/admin/': typeof UsernameAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,15 +99,16 @@ export interface FileRouteTypes {
     | '/$username/'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/$username/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/onboarding'
     | '/test-dnd'
-    | '/$username/admin'
     | '/$username'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/$username/admin'
   id:
     | '__root__'
     | '/'
@@ -109,13 +118,14 @@ export interface FileRouteTypes {
     | '/$username/'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/$username/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OnboardingRoute: typeof OnboardingRoute
   TestDndRoute: typeof TestDndRoute
-  UsernameAdminRoute: typeof UsernameAdminRoute
+  UsernameAdminRouteRoute: typeof UsernameAdminRouteRouteWithChildren
   UsernameIndexRoute: typeof UsernameIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
@@ -155,8 +165,15 @@ declare module '@tanstack/react-router' {
       id: '/$username/admin'
       path: '/$username/admin'
       fullPath: '/$username/admin'
-      preLoaderRoute: typeof UsernameAdminRouteImport
+      preLoaderRoute: typeof UsernameAdminRouteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/$username/admin/': {
+      id: '/$username/admin/'
+      path: '/'
+      fullPath: '/$username/admin/'
+      preLoaderRoute: typeof UsernameAdminIndexRouteImport
+      parentRoute: typeof UsernameAdminRouteRoute
     }
     '/api/trpc/$': {
       id: '/api/trpc/$'
@@ -175,11 +192,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface UsernameAdminRouteRouteChildren {
+  UsernameAdminIndexRoute: typeof UsernameAdminIndexRoute
+}
+
+const UsernameAdminRouteRouteChildren: UsernameAdminRouteRouteChildren = {
+  UsernameAdminIndexRoute: UsernameAdminIndexRoute,
+}
+
+const UsernameAdminRouteRouteWithChildren =
+  UsernameAdminRouteRoute._addFileChildren(UsernameAdminRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardingRoute: OnboardingRoute,
   TestDndRoute: TestDndRoute,
-  UsernameAdminRoute: UsernameAdminRoute,
+  UsernameAdminRouteRoute: UsernameAdminRouteRouteWithChildren,
   UsernameIndexRoute: UsernameIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,

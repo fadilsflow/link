@@ -22,7 +22,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { authClient } from '@/lib/auth-client'
-import { Link, useParams } from '@tanstack/react-router'
+import { Link, useParams, useRouterState } from '@tanstack/react-router'
 import Credits from '../Credits'
 import { BASE_URL } from '@/lib/constans'
 import { toastManager } from '../ui/toast'
@@ -63,9 +63,17 @@ const data = {
     },
   ],
 }
+const isAdminpage = (path: string, currentPath: string) => {
+  if (path === '/$username/admin') {
+    return currentPath.endsWith('/admin') || currentPath.endsWith('/admin/')
+  }
+  return currentPath.includes(path.replace('/$username', ''))
+}
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = authClient.useSession()
   const { username } = useParams({ strict: false })
+  const location = useRouterState({ select: (s) => s.location })
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(`${BASE_URL}/${username}`)
@@ -100,19 +108,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {data.navMain.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton
-                  size={'default'}
-                  render={<Link to={item.url} />}
-                  isActive={false}
-                  className="data-[status=active]:bg-zinc-200/80 data-[status=active]:text-zinc-900"
-                >
-                  <item.icon className=" h-4 w-4" />
-                  <span>{item.title}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
+            {data.navMain.map((item) => {
+              const isActive = isAdminpage(item.url, location.pathname)
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    size={'default'}
+                    render={
+                      <Link
+                        to={item.url as any}
+                        params={{ username } as any}
+                        activeOptions={{
+                          exact: item.url === '/$username/admin',
+                        }}
+                      />
+                    }
+                    isActive={isActive}
+                    className="data-[active=true]:bg-zinc-200/80 data-[active=true]:text-zinc-900"
+                  >
+                    <item.icon className=" h-4 w-4" />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )
+            })}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
@@ -134,9 +153,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenuButton
                 key={item.title}
                 size={'default'}
-                render={<Link to={item.url} />}
-                isActive={false}
-                className="data-[status=active]:bg-zinc-200/80 data-[status=active]:text-zinc-900"
+                render={
+                  <Link to={item.url as any} params={{ username } as any} />
+                }
+                isActive={
+                  location.pathname ===
+                  item.url.replace('/$username', `/${username}`)
+                }
+                className="data-[active=true]:bg-zinc-200/80 data-[active=true]:text-zinc-900"
               >
                 <item.icon className=" h-4 w-4" />
                 <span>{item.title}</span>

@@ -19,27 +19,48 @@ export const Route = createFileRoute('/$username/')({
   notFoundComponent: NotFound,
 })
 
-function UserProfile() {
+function UserProfile() {  
   const { user, blocks } = Route.useLoaderData()
 
-  const bgType = (user.appearanceBgType as 'banner' | 'color' | 'image') ?? 'banner'
+  type BgMode = 'banner' | 'wallpaper' | 'color' | 'image'
+  type WallpaperStyle = 'flat' | 'gradient' | 'avatar' | 'image'
+
+  const bgType = (user.appearanceBgType as BgMode) ?? 'banner'
+  const wallpaperStyle =
+    (user.appearanceBgWallpaperStyle as WallpaperStyle) ?? 'flat'
   const bgColor = user.appearanceBgColor
   const bgImage = user.appearanceBgImageUrl
 
-  const backgroundStyles =
-    bgType === 'color'
+  const isBanner = bgType === 'banner' || !bgType
+
+  const backgroundStyles = isBanner
+    ? {
+      backgroundImage:
+        "url('" +
+        (bgImage ||
+          'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop') +
+        "')",
+    }
+    : wallpaperStyle === 'image' || bgType === 'image'
       ? {
-        background:
-          bgColor ||
-          'radial-gradient(circle at top, #1f2937, #020617)',
-      }
-      : {
         backgroundImage:
           "url('" +
           (bgImage ||
-            'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop') +
+            'https://images.unsplash.com/photo-1517976487492-5750f3195933?q=80&w=1200&auto=format&fit=crop') +
           "')",
       }
+      : wallpaperStyle === 'avatar'
+        ? {
+          background:
+            'radial-gradient(circle at center, rgba(15,23,42,0.1), #020617)',
+        }
+        : {
+          background:
+            bgColor ||
+            (wallpaperStyle === 'gradient' || bgType === 'color'
+              ? 'linear-gradient(135deg,#22c55e,#3b82f6,#a855f7)'
+              : 'radial-gradient(circle at top, #1f2937, #020617)'),
+        }
 
   const blockStyle = (user.appearanceBlockStyle as
     | 'basic'
@@ -158,6 +179,9 @@ function UserProfile() {
                 cardBase,
                 radiusClass,
               )}
+              style={{
+                backgroundColor: user.appearanceBlockColor || undefined,
+              }}
               onClick={() => block.url && window.open(block.url, '_blank')}
             >
               <div className="p-4 flex items-center justify-between">

@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-table'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Plus, SearchIcon, ToggleLeft, ToggleRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Frame } from '@/components/ui/frame'
@@ -23,7 +23,17 @@ import { getDashboardData } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
 import { Link } from '@tanstack/react-router'
 import EmptyProduct from '@/components/emply-product'
-
+import {
+  AppHeader,
+  AppHeaderActions,
+  AppHeaderContent,
+  AppHeaderDescription,
+} from '@/components/app-header'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group'
 export const Route = createFileRoute('/$username/admin/products/')({
   component: ProductAdminRoute,
 })
@@ -158,8 +168,31 @@ function ProductAdminRoute() {
   const newHref = `/${username}/admin/products/new`
 
   return (
-    <div className="flex-1 w-full max-w-5xl mx-auto p-6 lg:p-10 space-y-8">
-      <div className="flex items-center justify-between gap-4">
+    <>
+      <AppHeader>
+        <AppHeaderContent title="Products">
+          <AppHeaderDescription>
+            Manage the products that appear on your public profile.
+          </AppHeaderDescription>
+        </AppHeaderContent>
+        <AppHeaderActions>
+          <InputGroup>
+            <InputGroupInput
+              aria-label="Search"
+              placeholder="Search…"
+              type="search"
+            />
+            <InputGroupAddon>
+              <SearchIcon />
+            </InputGroupAddon>
+          </InputGroup>
+          <Button size="sm" render={<Link to={newHref} />}>
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            New product
+          </Button>
+        </AppHeaderActions>
+      </AppHeader>
+      {/* <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
             Digital products
@@ -177,7 +210,7 @@ function ProductAdminRoute() {
           <Plus className="h-3.5 w-3.5 mr-1" />
           New product
         </Button>
-      </div>
+      </div> */}
 
       {products.length === 0 ? (
         <EmptyProduct />
@@ -192,9 +225,9 @@ function ProductAdminRoute() {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -204,9 +237,7 @@ function ProductAdminRoute() {
               {table.getRowModel().rows.length ? (
                 table.getRowModel().rows.map((row) => {
                   return (
-                    <TableRow
-                      key={row.id}
-                    >
+                    <TableRow key={row.id}>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
                           {flexRender(
@@ -232,6 +263,6 @@ function ProductAdminRoute() {
           </Table>
         </Frame>
       )}
-    </div >
+    </>
   )
 }

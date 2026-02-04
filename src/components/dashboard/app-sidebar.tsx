@@ -82,11 +82,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { username } = useParams({ strict: false })
 
   return (
-    <Sidebar variant="inset" {...props} collapsible="icon">
+    <Sidebar {...props} collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg">
+            <SidebarMenuButton size="default">
               <Avatar className="h-7 w-7 border border-white ring-1 ring-zinc-100 shadow-sm">
                 <AvatarImage src={session?.user.image || ''} />
                 <AvatarFallback className="bg-zinc-900 text-white text-[9px] font-bold">
@@ -110,7 +110,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {data.navMain.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
-                  size={'lg'}
+                  size={'default'}
                   render={<Link to={item.url} />}
                   isActive={false}
                   className="data-[status=active]:bg-zinc-100/80 data-[status=active]:text-zinc-900"

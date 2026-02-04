@@ -33,21 +33,31 @@ function UserProfile() {
 
   const isBanner = bgType === 'banner' || !bgType
 
+  // Helper to determine if image is local (starts with /) or external
+  const getImageUrl = (imageUrl?: string | null, fallback?: string) => {
+    if (imageUrl) {
+      // Local images start with /, external URLs start with http:// or https://
+      return imageUrl.startsWith('/') ? imageUrl : imageUrl
+    }
+    return fallback
+  }
+
   const backgroundStyles = isBanner
     ? {
-      backgroundImage:
-        "url('" +
-        (bgImage ||
-          'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop') +
-        "')",
+      backgroundImage: bgImage
+        ? `url('${getImageUrl(bgImage)}')`
+        : `url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundColor: bgColor || undefined,
     }
     : wallpaperStyle === 'image' || bgType === 'image'
       ? {
-        backgroundImage:
-          "url('" +
-          (bgImage ||
-            'https://images.unsplash.com/photo-1517976487492-5750f3195933?q=80&w=1200&auto=format&fit=crop') +
-          "')",
+        backgroundImage: bgImage
+          ? `url('${getImageUrl(bgImage)}')`
+          : `url('https://images.unsplash.com/photo-1517976487492-5750f3195933?q=80&w=1200&auto=format&fit=crop')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
       }
       : wallpaperStyle === 'avatar'
         ? {
@@ -62,13 +72,10 @@ function UserProfile() {
               : 'radial-gradient(circle at top, #1f2937, #020617)'),
         }
 
-  const blockStyle = (user.appearanceBlockStyle as
-    | 'basic'
-    | 'flat'
-    | 'shadow') ?? 'basic'
-  const blockRadius = (user.appearanceBlockRadius as
-    | 'rounded'
-    | 'square') ?? 'rounded'
+  const blockStyle =
+    (user.appearanceBlockStyle as 'basic' | 'flat' | 'shadow') ?? 'basic'
+  const blockRadius =
+    (user.appearanceBlockRadius as 'rounded' | 'square') ?? 'rounded'
 
   const cardBase =
     blockStyle === 'flat'
@@ -236,9 +243,7 @@ function UserProfile() {
                         <span className="font-semibold text-sm">
                           {product.title}
                         </span>
-                        <span className="text-xs text-slate-500">
-                          {price}
-                        </span>
+                        <span className="text-xs text-slate-500">{price}</span>
                       </div>
                       <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                     </div>

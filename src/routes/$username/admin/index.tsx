@@ -27,6 +27,12 @@ import { ProfileEditor } from '@/components/dashboard/ProfileEditor'
 import { BlockList } from '@/components/dashboard/BlockList'
 import { z } from 'zod'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  AppHeader,
+  AppHeaderActions,
+  AppHeaderContent,
+  AppHeaderDescription,
+} from '@/components/app-header'
 
 export const Route = createFileRoute('/$username/admin/')({
   component: AdminDashboard,
@@ -299,7 +305,27 @@ function AdminDashboard() {
   if (!user) return null
 
   return (
-    <div className="flex-1 w-full max-w-5xl mx-auto p-6 lg:p-10">
+    <>
+      <AppHeader>
+        <AppHeaderContent title="Profile">
+          {/* <AppHeaderDescription>
+            Manage the products that appear on your public profile.
+          </AppHeaderDescription> */}
+        </AppHeaderContent>
+        <AppHeaderActions>
+          <Button
+            variant="secondary"
+            render={<a href={`/${user.username}`} target="_blank" />}
+          >
+            <Eye className="h-4 w-4" />
+            Preview
+          </Button>
+          <Button variant="default">
+            <Share2 className="h-4 w-4" />
+            Share
+          </Button>
+        </AppHeaderActions>
+      </AppHeader>
       <main className="space-y-8">
         {/* Top Actions for Mobile */}
         <div className="lg:hidden flex items-center justify-between mb-6">
@@ -334,23 +360,6 @@ function AdminDashboard() {
                 </h1>
                 <p className="text-zinc-500 font-medium">@{user.username}</p>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                className="rounded-xl px-5 h-11 border-zinc-200 text-zinc-900 font-bold text-xs gap-2 hover:bg-white hover:shadow-sm"
-                render={<a href={`/${user.username}`} target="_blank" />}
-              >
-                <Eye className="h-4 w-4" />
-                Preview
-              </Button>
-              <Button
-                variant="outline"
-                className="rounded-xl px-5 h-11 border-zinc-200 text-zinc-900 font-bold text-xs gap-2 hover:bg-white hover:shadow-sm"
-              >
-                <Share2 className="h-4 w-4" />
-                Share
-              </Button>
             </div>
           </div>
 
@@ -447,6 +456,6 @@ function AdminDashboard() {
           />
         </section>
       </main>
-    </div>
+    </>
   )
 }

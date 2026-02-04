@@ -3,16 +3,12 @@ import { Link } from '@tanstack/react-router'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogPanel,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Ghost, Link2Icon } from 'lucide-react'
-import { toastManager } from './ui/toast'
 import { XformerlyTwitter } from './icon/x'
 import { Facebook } from './icon/facebook'
 import { LinkedIn } from './icon/linkedin'

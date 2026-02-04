@@ -1,17 +1,5 @@
 import {
-  Activity,
   BarChart3,
-  Compass,
-  Folder,
-  Gift,
-  Globe,
-  LayoutGrid,
-  Link2,
-  Search,
-  Tag,
-  Users,
-  FileText,
-  ChevronRight,
   CircleHelp,
   ArrowRightLeft,
   User as UserIcon,
@@ -23,7 +11,6 @@ import {
 } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
 import {
   Sidebar,
   SidebarContent,
@@ -37,6 +24,8 @@ import {
 import { authClient } from '@/lib/auth-client'
 import { Link, useParams } from '@tanstack/react-router'
 import Credits from '../Credits'
+import { BASE_URL } from '@/lib/constans'
+import { toastManager } from '../ui/toast'
 
 const data = {
   navBottom: [
@@ -78,12 +67,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = authClient.useSession()
   const { username } = useParams({ strict: false })
 
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(`${BASE_URL}/${username}`)
+    toastManager.add({
+      title: 'Copied!',
+      description: 'Link copied to clipboard',
+    })
+  }
   return (
     <Sidebar {...props} collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="default" className='mt-3'>
+            <SidebarMenuButton size="default" className="mt-3">
               <Avatar className="h-7 w-7 border border-white ring-1 ring-zinc-100 shadow-sm">
                 <AvatarImage src={session?.user.image || ''} />
                 <AvatarFallback className="bg-zinc-900 text-white text-[9px] font-bold">
@@ -124,11 +120,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton>
+            <SidebarMenuButton
+              render={<Link to={'/$username'} params={{ username } as any} />}
+            >
               <ExternalLink />
               View Public page
             </SidebarMenuButton>
-            <SidebarMenuButton>
+            <SidebarMenuButton onClick={handleCopyLink}>
               <Copy />
               Copy Public page link
             </SidebarMenuButton>

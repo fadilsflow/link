@@ -17,6 +17,7 @@ import { Route as UsernameAdminRouteRouteImport } from './routes/$username/admin
 import { Route as UsernameAdminIndexRouteImport } from './routes/$username/admin/index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as UsernameAdminAppearanceRouteImport } from './routes/$username/admin/appearance'
 
 const TestDndRoute = TestDndRouteImport.update({
   id: '/test-dnd',
@@ -58,6 +59,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UsernameAdminAppearanceRoute = UsernameAdminAppearanceRouteImport.update({
+  id: '/appearance',
+  path: '/appearance',
+  getParentRoute: () => UsernameAdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/test-dnd': typeof TestDndRoute
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/$username/': typeof UsernameIndexRoute
+  '/$username/admin/appearance': typeof UsernameAdminAppearanceRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin/': typeof UsernameAdminIndexRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/test-dnd': typeof TestDndRoute
   '/$username': typeof UsernameIndexRoute
+  '/$username/admin/appearance': typeof UsernameAdminAppearanceRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin': typeof UsernameAdminIndexRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/test-dnd': typeof TestDndRoute
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/$username/': typeof UsernameIndexRoute
+  '/$username/admin/appearance': typeof UsernameAdminAppearanceRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin/': typeof UsernameAdminIndexRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/test-dnd'
     | '/$username/admin'
     | '/$username/'
+    | '/$username/admin/appearance'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin/'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/test-dnd'
     | '/$username'
+    | '/$username/admin/appearance'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/test-dnd'
     | '/$username/admin'
     | '/$username/'
+    | '/$username/admin/appearance'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin/'
@@ -189,14 +201,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/$username/admin/appearance': {
+      id: '/$username/admin/appearance'
+      path: '/appearance'
+      fullPath: '/$username/admin/appearance'
+      preLoaderRoute: typeof UsernameAdminAppearanceRouteImport
+      parentRoute: typeof UsernameAdminRouteRoute
+    }
   }
 }
 
 interface UsernameAdminRouteRouteChildren {
+  UsernameAdminAppearanceRoute: typeof UsernameAdminAppearanceRoute
   UsernameAdminIndexRoute: typeof UsernameAdminIndexRoute
 }
 
 const UsernameAdminRouteRouteChildren: UsernameAdminRouteRouteChildren = {
+  UsernameAdminAppearanceRoute: UsernameAdminAppearanceRoute,
   UsernameAdminIndexRoute: UsernameAdminIndexRoute,
 }
 

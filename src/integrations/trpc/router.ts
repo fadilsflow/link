@@ -67,6 +67,20 @@ const userRouter = {
         name: z.string().optional(),
         title: z.string().optional(),
         bio: z.string().optional(),
+        // Appearance settings
+        // Keep backward compatibility with existing values ('color', 'image')
+        // while allowing a future 'wallpaper' mode if needed.
+        appearanceBgType: z
+          .enum(['banner', 'color', 'image', 'wallpaper'])
+          .optional(),
+        appearanceBgWallpaperStyle: z
+          .enum(['flat', 'gradient', 'avatar', 'image'])
+          .optional(),
+        appearanceBgColor: z.string().optional(),
+        appearanceBgImageUrl: z.string().optional(),
+        appearanceBlockStyle: z.enum(['basic', 'flat', 'shadow']).optional(),
+        appearanceBlockRadius: z.enum(['rounded', 'square']).optional(),
+        appearanceBlockColor: z.string().optional(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -76,6 +90,27 @@ const userRouter = {
           ...(input.name ? { name: input.name } : {}),
           ...(input.title ? { title: input.title } : {}),
           ...(input.bio ? { bio: input.bio } : {}),
+          ...(input.appearanceBgType
+            ? { appearanceBgType: input.appearanceBgType }
+            : {}),
+          ...(input.appearanceBgWallpaperStyle
+            ? { appearanceBgWallpaperStyle: input.appearanceBgWallpaperStyle }
+            : {}),
+          ...(input.appearanceBgColor !== undefined
+            ? { appearanceBgColor: input.appearanceBgColor }
+            : {}),
+          ...(input.appearanceBgImageUrl !== undefined
+            ? { appearanceBgImageUrl: input.appearanceBgImageUrl }
+            : {}),
+          ...(input.appearanceBlockStyle
+            ? { appearanceBlockStyle: input.appearanceBlockStyle }
+            : {}),
+          ...(input.appearanceBlockRadius
+            ? { appearanceBlockRadius: input.appearanceBlockRadius }
+            : {}),
+          ...(input.appearanceBlockColor !== undefined
+            ? { appearanceBlockColor: input.appearanceBlockColor }
+            : {}),
         })
         .where(eq(user.id, input.userId))
         .returning()

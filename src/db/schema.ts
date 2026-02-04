@@ -15,8 +15,32 @@ export const user = pgTable('user', {
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
   username: text('username').unique(),
-  bio: text('bio'),
+  bio: text('bio'), 
   title: text('title'),
+  // Appearance settings
+  //
+  // Background:
+  // - appearanceBgType:
+  //   - 'banner'    => hero banner image + background color
+  //   - 'wallpaper' => full-screen wallpaper (flat / gradient / avatar blur / image)
+  // - appearanceBgWallpaperStyle (when type = 'wallpaper'):
+  //   - 'flat' | 'gradient' | 'avatar' | 'image'
+  // - appearanceBgColor: hex or CSS gradient
+  // - appearanceBgImageUrl: image URL for banner or wallpaper
+  appearanceBgType: text('appearance_bg_type').default('banner').notNull(),
+  appearanceBgWallpaperStyle: text('appearance_bg_wallpaper_style'),
+  appearanceBgColor: text('appearance_bg_color'),
+  appearanceBgImageUrl: text('appearance_bg_image_url'),
+  // Block styling:
+  // - appearanceBlockStyle: 'basic' | 'flat' | 'shadow'
+  // - appearanceBlockRadius: 'rounded' | 'square'
+  appearanceBlockStyle: text('appearance_block_style')
+    .default('basic')
+    .notNull(),
+  appearanceBlockRadius: text('appearance_block_radius')
+    .default('rounded')
+    .notNull(),
+  appearanceBlockColor: text('appearance_block_color'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()

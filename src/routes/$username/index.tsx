@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { getPublicProfile } from '@/lib/profile-server'
 import NotFound from '@/components/NotFound'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/$username/')({
   component: UserProfile,
@@ -21,15 +22,48 @@ export const Route = createFileRoute('/$username/')({
 function UserProfile() {
   const { user, blocks } = Route.useLoaderData()
 
+  const bgType = (user.appearanceBgType as 'banner' | 'color' | 'image') ?? 'banner'
+  const bgColor = user.appearanceBgColor
+  const bgImage = user.appearanceBgImageUrl
+
+  const backgroundStyles =
+    bgType === 'color'
+      ? {
+        background:
+          bgColor ||
+          'radial-gradient(circle at top, #1f2937, #020617)',
+      }
+      : {
+        backgroundImage:
+          "url('" +
+          (bgImage ||
+            'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop') +
+          "')",
+      }
+
+  const blockStyle = (user.appearanceBlockStyle as
+    | 'basic'
+    | 'flat'
+    | 'shadow') ?? 'basic'
+  const blockRadius = (user.appearanceBlockRadius as
+    | 'rounded'
+    | 'square') ?? 'rounded'
+
+  const cardBase =
+    blockStyle === 'flat'
+      ? 'bg-white border border-slate-200'
+      : blockStyle === 'shadow'
+        ? 'bg-white border-none shadow-md'
+        : 'bg-white border border-slate-100 shadow-sm'
+
+  const radiusClass = blockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-md'
+
   return (
     <div className="min-h-screen relative font-sans text-slate-900 bg-gray-50">
       {/* Background Image Header */}
       <div
         className="h-[280px] w-full bg-cover bg-center relative"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop')",
-        }}
+        style={backgroundStyles}
       >
         <div className="absolute inset-0 bg-black/10"></div>
 
@@ -71,14 +105,13 @@ function UserProfile() {
                   {user.name}
                 </h1>
                 <p className="text-muted-foreground font-medium text-sm mt-1">
-                  Software Engineer
+                  {user.title || 'Software Engineer'}
                 </p>
               </div>
 
               <p className="text-muted-foreground text-sm leading-relaxed max-w-lg">
-                Full Stack Developer from Indonesia passionate about creating
-                efficient, user-centric web solutions from front-end to
-                back-end.
+                {user.bio ||
+                  'Full Stack Developer passionate about creating efficient, user-centric web solutions.'}
               </p>
             </div>
           </CardContent>
@@ -120,7 +153,11 @@ function UserProfile() {
           return (
             <Card
               key={block.id}
-              className="w-full border-none shadow-sm rounded-2xl overflow-hidden bg-white hover:scale-[1.01] hover:shadow-md transition-all cursor-pointer group"
+              className={cn(
+                'w-full overflow-hidden hover:scale-[1.01] transition-all cursor-pointer group',
+                cardBase,
+                radiusClass,
+              )}
               onClick={() => block.url && window.open(block.url, '_blank')}
             >
               <div className="p-4 flex items-center justify-between">

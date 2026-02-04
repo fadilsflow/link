@@ -8,6 +8,20 @@
       "when": 1770134475795,
       "tag": "0000_equal_shadow_king",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770199497292,
+      "tag": "0001_overconfident_johnny_blaze",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770201053019,
+      "tag": "0002_careful_red_shift",
+      "breakpoints": true
     }
   ]
 }

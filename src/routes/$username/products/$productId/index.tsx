@@ -4,10 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { getPublicProduct } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
+import { Link } from '@tanstack/react-router'
 
-export const Route = createFileRoute(
-  '/$username/products/$productId/',
-)({
+export const Route = createFileRoute('/$username/products/$productId/')({
   component: ProductDetailPage,
   loader: async ({ params }) => {
     const data = await getPublicProduct({
@@ -22,13 +21,8 @@ export const Route = createFileRoute(
 })
 
 function priceLabel(product: any): string {
-  const {
-    payWhatYouWant,
-    price,
-    salePrice,
-    minimumPrice,
-    suggestedPrice,
-  } = product
+  const { payWhatYouWant, price, salePrice, minimumPrice, suggestedPrice } =
+    product
 
   if (payWhatYouWant) {
     if (minimumPrice) {
@@ -65,9 +59,7 @@ function ProductDetailPage() {
             <ArrowLeft className="h-3.5 w-3.5 mr-1" />
             Back
           </Button>
-          <span className="text-[11px] text-slate-500">
-            @{user.username}
-          </span>
+          <span className="text-[11px] text-slate-500">@{user.username}</span>
         </div>
 
         <Card className="shadow-md border border-slate-200 rounded-2xl overflow-hidden">
@@ -99,9 +91,7 @@ function ProductDetailPage() {
               className={cn(
                 'w-full rounded-full text-sm font-semibold mt-2 flex items-center justify-center gap-1.5',
               )}
-              render={
-                <a href={checkoutHref} />
-              }
+              render={<Link to={checkoutHref} />}
             >
               Buy now
               <ArrowUpRight className="h-4 w-4" />
@@ -116,4 +106,3 @@ function ProductDetailPage() {
     </div>
   )
 }
-

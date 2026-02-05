@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from '@tanstack/react-router'
+import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { ArrowUpRight, Globe, Link as LinkIcon, X as XIcon } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -44,33 +44,33 @@ function UserProfile() {
 
   const backgroundStyles = isBanner
     ? {
-      backgroundImage: bgImage
-        ? `url('${getImageUrl(bgImage)}')`
-        : `url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop')`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundColor: bgColor || undefined,
-    }
-    : wallpaperStyle === 'image' || bgType === 'image'
-      ? {
         backgroundImage: bgImage
           ? `url('${getImageUrl(bgImage)}')`
-          : `url('https://images.unsplash.com/photo-1517976487492-5750f3195933?q=80&w=1200&auto=format&fit=crop')`,
+          : `url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundColor: bgColor || undefined,
       }
+    : wallpaperStyle === 'image' || bgType === 'image'
+      ? {
+          backgroundImage: bgImage
+            ? `url('${getImageUrl(bgImage)}')`
+            : `url('https://images.unsplash.com/photo-1517976487492-5750f3195933?q=80&w=1200&auto=format&fit=crop')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }
       : wallpaperStyle === 'avatar'
         ? {
-          background:
-            'radial-gradient(circle at center, rgba(15,23,42,0.1), #020617)',
-        }
+            background:
+              'radial-gradient(circle at center, rgba(15,23,42,0.1), #020617)',
+          }
         : {
-          background:
-            bgColor ||
-            (wallpaperStyle === 'gradient' || bgType === 'color'
-              ? 'linear-gradient(135deg,#22c55e,#3b82f6,#a855f7)'
-              : 'radial-gradient(circle at top, #1f2937, #020617)'),
-        }
+            background:
+              bgColor ||
+              (wallpaperStyle === 'gradient' || bgType === 'color'
+                ? 'linear-gradient(135deg,#22c55e,#3b82f6,#a855f7)'
+                : 'radial-gradient(circle at top, #1f2937, #020617)'),
+          }
 
   const blockStyle =
     (user.appearanceBlockStyle as 'basic' | 'flat' | 'shadow') ?? 'basic'
@@ -234,9 +234,7 @@ function UserProfile() {
                     style={{
                       backgroundColor: user.appearanceBlockColor || undefined,
                     }}
-                    onClick={() => {
-                      window.location.href = href
-                    }}
+                    render={<Link to={href} />}
                   >
                     <div className="p-4 flex items-center justify-between gap-3">
                       <div className="flex flex-col">

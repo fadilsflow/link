@@ -1,15 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import {
-  ChevronRight,
   Eye,
   Layout,
   Menu,
   Plus,
-  Settings,
-  Share2,
   User as UserIcon,
 } from 'lucide-react'
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -32,6 +29,7 @@ import {
 } from '@/components/app-header'
 import { ShareProfileModal } from '@/components/share-profile-modal'
 import { BASE_URL } from '@/lib/constans'
+import SocialEditor from '@/components/dashboard/SocialEditor'
 
 export const Route = createFileRoute('/$username/admin/')({
   component: AdminDashboard,
@@ -324,7 +322,7 @@ function AdminDashboard() {
       </AppHeader>
       {/* left */}
       <main className="grid grid-cols-1 lg:grid-cols-[2.2fr_1.4fr]">
-        <div className=" space-y-8 min-h-screen pr-6">
+        <div className=" space-y-4 min-h-screen pr-6">
           {/* Top Actions for Mobile */}
           <div className="lg:hidden flex items-center justify-between mb-6">
             <span className="text-2xl font-bold font-heading text-zinc-900 focus:outline-none">
@@ -344,21 +342,9 @@ function AdminDashboard() {
             />
           </section>
 
-          {/* Social Icons Placeholder
-          <div className="flex justify-center items-center gap-4 py-4">
-            <div className="w-12 h-12 rounded-full border border-zinc-100 flex items-center justify-center bg-white shadow-sm hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer group">
-              <span className="text-lg font-bold text-zinc-900 group-hover:scale-110 transition-transform">
-                𝕏
-              </span>
-            </div>
-            <div className="w-12 h-12 rounded-full border border-zinc-100 flex items-center justify-center bg-white shadow-sm hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer group text-zinc-400">
-              <Settings className="h-5 w-5 group-hover:text-zinc-900 group-hover:rotate-45 transition-all" />
-            </div>
-            <div className="w-12 h-12 rounded-full border-2 border-dashed border-zinc-200 flex items-center justify-center bg-zinc-50/50 hover:bg-white hover:border-zinc-300 transition-all cursor-pointer">
-              <Plus className="h-5 w-5 text-zinc-400 hover:text-zinc-600" />
-            </div>
-          </div> */}
-
+          <section>
+            <SocialEditor />
+          </section>
           {/* Blocks Section */}
           <section className="space-y-6">
 

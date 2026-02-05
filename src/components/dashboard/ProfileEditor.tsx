@@ -1,6 +1,4 @@
-import { useState } from 'react'
-import { StatusBadge } from './StatusBadge'
-import type { SyncStatus } from './StatusBadge'
+import { useState, useEffect } from 'react'
 
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -20,10 +18,12 @@ import {
 
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { XformerlyTwitter } from '../icon/x'
-import { LinkedIn } from '../icon/linkedin'
-import { Gmail } from '../icon/gmail'
-import { PlusIcon } from 'lucide-react'
+
+interface ProfileData {
+  name: string
+  title?: string | null
+  bio?: string | null
+}
 
 interface ProfileEditorProps {
   user: {
@@ -32,12 +32,39 @@ interface ProfileEditorProps {
     bio?: string | null
     image?: string | null
   }
-  status?: SyncStatus
-  onUpdate: (field: string, value: string) => void
+  onSave: (data: ProfileData) => Promise<unknown>
 }
 
-export function ProfileEditor({ user, onUpdate, status }: ProfileEditorProps) {
+export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
+
+  // Local form state
+  const [formData, setFormData] = useState<ProfileData>({
+    name: user.name,
+    title: user.title || '',
+    bio: user.bio || '',
+  })
+
+  // Reset form when user data changes or dialog opens
+  useEffect(() => {
+    if (dialogOpen) {
+      setFormData({
+        name: user.name,
+        title: user.title || '',
+        bio: user.bio || '',
+      })
+    }
+  }, [dialogOpen, user.name, user.title, user.bio])
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setDialogOpen(false)
+    onSave(formData)
+  }
+
+  const handleFieldChange = (field: keyof ProfileData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
 
   return (
     <div className="relative flex flex-col gap-2">
@@ -77,10 +104,9 @@ export function ProfileEditor({ user, onUpdate, status }: ProfileEditorProps) {
         </div>
       </div>
 
-
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogPopup className="sm:max-w-sm">
-          <Form className="contents">
+          <Form className="contents" onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>Edit profile</DialogTitle>
               <DialogDescription>
@@ -93,27 +119,28 @@ export function ProfileEditor({ user, onUpdate, status }: ProfileEditorProps) {
                 <FieldLabel>Name</FieldLabel>
                 <Input
                   className="font-heading text-2xl"
-                  defaultValue={user.name}
-                  onChange={(e) => onUpdate('name', e.target.value)}
+                  value={formData.name}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                  required
                 />
               </Field>
 
               <Field>
                 <FieldLabel>Title</FieldLabel>
                 <Input
-                  defaultValue={user.title || ''}
+                  value={formData.title || ''}
                   maxLength={30}
                   placeholder="Software Engineer"
-                  onChange={(e) => onUpdate('title', e.target.value)}
+                  onChange={(e) => handleFieldChange('title', e.target.value)}
                 />
               </Field>
 
               <Field>
                 <FieldLabel>Bio</FieldLabel>
                 <Textarea
-                  defaultValue={user.bio || ''}
+                  value={formData.bio || ''}
                   placeholder="Tell us about yourself..."
-                  onChange={(e) => onUpdate('bio', e.target.value)}
+                  onChange={(e) => handleFieldChange('bio', e.target.value)}
                 />
               </Field>
             </DialogPanel>
@@ -126,11 +153,7 @@ export function ProfileEditor({ user, onUpdate, status }: ProfileEditorProps) {
             </DialogFooter>
           </Form>
         </DialogPopup>
-      </Dialog >
-
-      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 pointer-events-none">
-        <StatusBadge status={status} />
-      </div>
-    </div >
+      </Dialog>
+    </div>
   )
 }

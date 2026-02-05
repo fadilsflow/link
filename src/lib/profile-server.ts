@@ -15,6 +15,10 @@ export const getPublicProfile = createServerFn({ method: 'GET' })
           orderBy: (blocks, { asc }) => [asc(blocks.order)],
         },
         products: true,
+        socialLinks: {
+          where: (socialLinks, { eq }) => eq(socialLinks.isEnabled, true),
+          orderBy: (socialLinks, { asc }) => [asc(socialLinks.order)],
+        },
       },
     })
 
@@ -26,6 +30,7 @@ export const getPublicProfile = createServerFn({ method: 'GET' })
       user: dbUser,
       blocks: dbUser.blocks,
       products: dbUser.products.filter((p) => p.isActive),
+      socialLinks: dbUser.socialLinks,
     }
   })
 
@@ -53,6 +58,9 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
         products: {
           orderBy: (products, { desc }) => [desc(products.createdAt)],
         },
+        socialLinks: {
+          orderBy: (socialLinks, { asc }) => [asc(socialLinks.order)],
+        },
       },
     })
 
@@ -64,6 +72,7 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
       user: dbUser,
       blocks: dbUser.blocks,
       products: dbUser.products,
+      socialLinks: dbUser.socialLinks,
     }
   },
 )

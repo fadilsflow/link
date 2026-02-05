@@ -3,7 +3,7 @@ import { asc, desc, eq } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
-import { blocks, products, user } from '@/db/schema'
+import { blocks, products, socialLinks, user } from '@/db/schema'
 
 const userRouter = {
   getByEmail: publicProcedure
@@ -52,12 +52,16 @@ const userRouter = {
           blocks: {
             orderBy: [asc(blocks.order)],
           },
+          socialLinks: {
+            orderBy: [asc(socialLinks.order)],
+          },
         },
       })
       if (!userProfile) return null
       return {
         user: userProfile,
         blocks: userProfile.blocks,
+        socialLinks: userProfile.socialLinks,
       }
     }),
   updateProfile: publicProcedure
@@ -361,9 +365,93 @@ const productRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+const socialLinkRouter = {
+  create: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        platform: z.string(),
+        url: z.string(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      // Get max order
+      const userSocialLinks = await db.query.socialLinks.findMany({
+        where: eq(socialLinks.userId, input.userId),
+        orderBy: [asc(socialLinks.order)],
+      })
+      const maxOrder = userSocialLinks[userSocialLinks.length - 1]?.order ?? 0
+
+      const [newSocialLink] = await db
+        .insert(socialLinks)
+        .values({
+          id: crypto.randomUUID(),
+          userId: input.userId,
+          platform: input.platform,
+          url: input.url,
+          order: maxOrder + 1,
+          isEnabled: true,
+        })
+        .returning()
+      return newSocialLink
+    }),
+  update: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        platform: z.string().optional(),
+        url: z.string().optional(),
+        isEnabled: z.boolean().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const [updatedSocialLink] = await db
+        .update(socialLinks)
+        .set({
+          ...(input.platform !== undefined ? { platform: input.platform } : {}),
+          ...(input.url !== undefined ? { url: input.url } : {}),
+          ...(input.isEnabled !== undefined
+            ? { isEnabled: input.isEnabled }
+            : {}),
+        })
+        .where(eq(socialLinks.id, input.id))
+        .returning()
+      return updatedSocialLink
+    }),
+  delete: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      await db.delete(socialLinks).where(eq(socialLinks.id, input.id))
+      return { success: true }
+    }),
+  reorder: publicProcedure
+    .input(
+      z.object({
+        items: z.array(
+          z.object({
+            id: z.string(),
+            order: z.number(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      await Promise.all(
+        input.items.map((item) =>
+          db
+            .update(socialLinks)
+            .set({ order: item.order })
+            .where(eq(socialLinks.id, item.id)),
+        ),
+      )
+      return { success: true }
+    }),
+} satisfies TRPCRouterRecord
+
 export const trpcRouter = createTRPCRouter({
   user: userRouter,
   block: blockRouter,
   product: productRouter,
+  socialLink: socialLinkRouter,
 })
 export type TRPCRouter = typeof trpcRouter

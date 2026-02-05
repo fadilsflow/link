@@ -1,11 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  Eye,
-  Layout,
-  Menu,
-  Plus,
-  User as UserIcon,
-} from 'lucide-react'
+import { Eye, Layout, Menu, Plus, User as UserIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -30,6 +24,7 @@ import {
 import { ShareProfileModal } from '@/components/share-profile-modal'
 import { BASE_URL } from '@/lib/constans'
 import SocialEditor from '@/components/dashboard/SocialEditor'
+import { toastManager } from '@/components/ui/toast'
 
 export const Route = createFileRoute('/$username/admin/')({
   component: AdminDashboard,
@@ -49,13 +44,9 @@ function AdminDashboard() {
   const hasHydratedRef = useRef(false)
 
   const [localBlocks, setLocalBlocks] = useState<Array<any>>([])
-  const [profileStatus, setProfileStatus] = useState<
-    'saved' | 'saving' | 'error' | 'unsaved' | undefined
-  >(undefined)
   const [isAddBlockOpen, setIsAddBlockOpen] = useState(false)
 
   const isManipulatingRef = useRef(false)
-  const profileDebounceRef = useRef<NodeJS.Timeout | null>(null)
   const blockDebounceRefs = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
   const { data: dashboardData } = useQuery({
@@ -89,10 +80,7 @@ function AdminDashboard() {
       bio?: string
     }) => trpcClient.user.updateProfile.mutate(data),
     onSuccess: () => {
-      setProfileStatus('saved')
-    },
-    onError: () => {
-      setProfileStatus('error')
+      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
     },
   })
 
@@ -109,9 +97,9 @@ function AdminDashboard() {
       setLocalBlocks((prev) =>
         prev.map((b) =>
           b.id.startsWith('temp-') &&
-            b.title === newBlock.title &&
-            b.url === newBlock.url &&
-            b.type === newBlock.type
+          b.title === newBlock.title &&
+          b.url === newBlock.url &&
+          b.type === newBlock.type
             ? { ...newBlock, syncStatus: 'saved', errors: {} }
             : b,
         ),
@@ -164,17 +152,34 @@ function AdminDashboard() {
     },
   })
 
-  const handleProfileUpdate = (field: string, value: string) => {
-    setProfileStatus(undefined)
-
-    if (profileDebounceRef.current) {
-      clearTimeout(profileDebounceRef.current)
-    }
-
-    profileDebounceRef.current = setTimeout(() => {
-      setProfileStatus('saving')
-      updateProfile.mutate({ userId: user!.id, [field]: value })
-    }, 1000)
+  const handleProfileSave = async (data: {
+    name: string
+    title?: string | null
+    bio?: string | null
+  }) => {
+    return toastManager.promise(
+      updateProfile.mutateAsync({
+        userId: user!.id,
+        name: data.name,
+        title: data.title || undefined,
+        bio: data.bio || undefined,
+      }),
+      {
+        loading: {
+          title: 'Saving profile...',
+          description: 'Please wait while we update your profile.',
+        },
+        success: () => ({
+          title: 'Profile saved!',
+          description: 'Your profile has been updated successfully.',
+        }),
+        error: (err: unknown) => ({
+          title: 'Failed to save profile',
+          description:
+            (err as Error)?.message || 'An unexpected error occurred.',
+        }),
+      },
+    )
   }
 
   const handleBlockUpdate = (id: string, field: string, value: any) => {
@@ -335,42 +340,44 @@ function AdminDashboard() {
 
           {/* Profile Section */}
           <section>
-            <ProfileEditor
-              user={user}
-              onUpdate={handleProfileUpdate}
-              status={profileStatus}
-            />
+            <ProfileEditor user={user} onSave={handleProfileSave} />
           </section>
 
           <section>
-            <SocialEditor />
+            <SocialEditor
+              userId={user.id}
+              username={username}
+              socialLinks={dashboardData?.socialLinks || []}
+            />
           </section>
           {/* Blocks Section */}
           <section className="space-y-6">
-
             {/* Add Block Trigger in Dialog */}
             <Dialog open={isAddBlockOpen} onOpenChange={setIsAddBlockOpen}>
               <DialogTrigger
                 render={
-                  <Button size={"lg"} className="w-full flex active:scale-[0.98]" />
+                  <Button
+                    size={'lg'}
+                    className="w-full flex active:scale-[0.98]"
+                  />
                 }
               >
                 <Plus className="h-5 w-5" />
                 Add
               </DialogTrigger>
-              <DialogContent className="max-w-md p-0 overflow-hidden rounded-[32px] border-none shadow-2xl">
-                <DialogHeader className="p-8 pb-4">
-                  <DialogTitle className="text-2xl font-black text-zinc-900 tracking-tight">
+              <DialogContent className="overflow-hidden  border-none shadow-2xl">
+                <DialogHeader>
+                  <DialogTitle className="font-heading">
                     Add a Block
                   </DialogTitle>
                 </DialogHeader>
-                <DialogPanel className="p-8 pt-2 grid grid-cols-2 gap-4">
+                <DialogPanel className="grid grid-cols-2 gap-4">
                   <div
                     onClick={() => handleAddBlock('link')}
-                    className="p-6 bg-white border border-zinc-100 rounded-3xl flex flex-col items-center gap-3 hover:border-zinc-900/10 hover:bg-zinc-50 transition-all cursor-pointer group"
+                    className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:border-border cursor-pointer group"
                   >
-                    <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center group-hover:bg-zinc-900 transition-colors">
-                      <Layout className="h-6 w-6 text-zinc-400 group-hover:text-white" />
+                    <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center">
+                      <Layout className="h-6 w-6 text-zinc-400 group-hover:text-zinc-900" />
                     </div>
                     <span className="text-sm font-bold text-zinc-900">
                       Link Block
@@ -381,10 +388,10 @@ function AdminDashboard() {
                   </div>
                   <div
                     onClick={() => handleAddBlock('text')}
-                    className="p-6 bg-white border border-zinc-100 rounded-3xl flex flex-col items-center gap-3 hover:border-zinc-900/10 hover:bg-zinc-50 transition-all cursor-pointer group"
+                    className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:border-border cursor-pointer group"
                   >
-                    <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center group-hover:bg-zinc-900 transition-colors">
-                      <UserIcon className="h-6 w-6 text-zinc-400 group-hover:text-white" />
+                    <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center">
+                      <UserIcon className="h-6 w-6 text-zinc-400 group-hover:text-zinc-900" />
                     </div>
                     <span className="text-sm font-bold text-zinc-900">
                       Text Block
@@ -415,7 +422,7 @@ function AdminDashboard() {
         <div className=" min-h-screen bg-muted rounded-2xl">
           <div className="sticky top-24"></div>
         </div>
-      </main >
+      </main>
     </>
   )
 }

@@ -150,11 +150,25 @@ export const blocks = pgTable('block', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+export const socialLinks = pgTable('social_link', {
+  id: text('id').primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  platform: text('platform').notNull(), // e.g., 'twitter', 'linkedin', 'email', 'instagram', 'github', etc.
+  url: text('url').notNull(),
+  order: integer('order').notNull().default(0),
+  isEnabled: boolean('is_enabled').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   blocks: many(blocks),
   products: many(products),
+  socialLinks: many(socialLinks),
 }))
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -181,6 +195,13 @@ export const blocksRelations = relations(blocks, ({ one }) => ({
 export const productsRelations = relations(products, ({ one }) => ({
   user: one(user, {
     fields: [products.userId],
+    references: [user.id],
+  }),
+}))
+
+export const socialLinksRelations = relations(socialLinks, ({ one }) => ({
+  user: one(user, {
+    fields: [socialLinks.userId],
     references: [user.id],
   }),
 }))

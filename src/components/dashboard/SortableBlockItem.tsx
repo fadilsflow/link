@@ -53,7 +53,7 @@ export function SortableBlockItem({
       <div
         className={cn(
           'flex-1 flex rounded-xl border overflow-hidden transition-all duration-300 bg-white shadow-sm hover:shadow-md',
-          block.syncStatus === 'error' ? 'border-red-200' : 'border-zinc-100',
+          block.syncStatus === 'error' ? 'border-red-500' : 'border-zinc-100',
           block.type === 'text' ? 'bg-yellow-50/10' : 'bg-green-50/10',
         )}
       >

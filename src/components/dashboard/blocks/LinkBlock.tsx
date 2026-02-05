@@ -82,7 +82,7 @@ export function LinkBlock({
           {errors.title && <FieldError>Title is required</FieldError>}
         </Field>
 
-        <div className="flex items-center gap-4 w-[84px] justify-end shrink-0">
+        <div className="flex items-center gap-4 w-21 justify-end shrink-0">
           <Switch
             checked={block.isEnabled}
             onCheckedChange={(checked) =>
@@ -127,22 +127,14 @@ export function LinkBlock({
       </div>
 
       {/* URL FIELD */}
-      <Field>
+      <Field className="flex-1">
         <FieldLabel className="sr-only">URL</FieldLabel>
-
-        <div className="relative">
-          <div className="absolute left-2 top-1/2 -translate-y-1/2 text-zinc-300">
-            <Link2 className="h-3.5 w-3.5" />
-          </div>
-
-          <Input
-            defaultValue={block.url}
-            placeholder="Paste your link here..."
-            type="url"
-            onChange={(e) => handleUpdate(block.id, 'url', e.target.value)}
-          />
-        </div>
-
+        <Input
+          defaultValue={block.url}
+          placeholder="Paste your link here..."
+          type="url"
+          onChange={(e) => handleUpdate(block.id, 'url', e.target.value)}
+        />
         <FieldError>Invalid URL</FieldError>
       </Field>
     </div>

@@ -83,7 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     })
   }
   return (
-    <Sidebar {...props} collapsible="icon">
+    <Sidebar {...props} collapsible="icon" variant='sidebar' >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

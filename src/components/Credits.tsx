@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { LINK_VERSION, COMPANY_NAME } from '@/lib/constans'
+import { COMPANY_NAME, LINK_VERSION } from '@/lib/constans'
 
 // eslint-disable-next-line turbo/no-undeclared-env-vars
 const vercelCommitHash = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA

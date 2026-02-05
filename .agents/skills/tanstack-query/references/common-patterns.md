@@ -32,14 +32,14 @@ Fetch multiple resources in parallel:
 ```tsx
 function TodoDetails({ ids }) {
   const results = useQueries({
-    queries: ids.map(id => ({
+    queries: ids.map((id) => ({
       queryKey: ['todos', id],
       queryFn: () => fetchTodo(id),
     })),
   })
 
-  const isLoading = results.some(r => r.isPending)
-  const data = results.map(r => r.data)
+  const isLoading = results.some((r) => r.isPending)
+  const data = results.map((r) => r.data)
 }
 ```
 
@@ -82,7 +82,7 @@ function InfiniteList() {
   const ref = useRef()
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => entry.isIntersecting && hasNextPage && fetchNextPage()
+      ([entry]) => entry.isIntersecting && hasNextPage && fetchNextPage(),
     )
     if (ref.current) observer.observe(ref.current)
     return () => observer.disconnect()
@@ -90,7 +90,7 @@ function InfiniteList() {
 
   return (
     <>
-      {data.pages.map(page => page.data.map(item => <div>{item}</div>))}
+      {data.pages.map((page) => page.data.map((item) => <div>{item}</div>))}
       <div ref={ref}>Loading...</div>
     </>
   )
@@ -114,7 +114,7 @@ function useOptimisticToggle() {
       const previous = queryClient.getQueryData(['todos'])
 
       queryClient.setQueryData(['todos'], (old) =>
-        old.map(todo => todo.id === updated.id ? updated : todo)
+        old.map((todo) => (todo.id === updated.id ? updated : todo)),
       )
 
       return { previous }
@@ -148,7 +148,7 @@ function TodoList() {
 
   return (
     <ul>
-      {todos.map(todo => (
+      {todos.map((todo) => (
         <li onMouseEnter={() => prefetch(todo.id)}>
           <Link to={`/todos/${todo.id}`}>{todo.title}</Link>
         </li>
@@ -174,7 +174,9 @@ function Search() {
   const { data } = useQuery({
     queryKey: ['search', deferredSearch],
     queryFn: ({ signal }) =>
-      fetch(`/api/search?q=${deferredSearch}`, { signal }).then(r => r.json()),
+      fetch(`/api/search?q=${deferredSearch}`, { signal }).then((r) =>
+        r.json(),
+      ),
     enabled: deferredSearch.length >= 2,
   })
 }
@@ -220,9 +222,7 @@ const { data: todo } = useQuery({
   queryKey: ['todos', id],
   queryFn: () => fetchTodo(id),
   initialData: () => {
-    return queryClient
-      .getQueryData(['todos'])
-      ?.find(t => t.id === id)
+    return queryClient.getQueryData(['todos'])?.find((t) => t.id === id)
   },
 })
 ```

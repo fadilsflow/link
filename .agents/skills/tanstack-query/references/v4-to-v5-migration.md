@@ -9,6 +9,7 @@
 ### 1. Object Syntax Required ⚠️
 
 **v4** allowed multiple signatures:
+
 ```tsx
 useQuery(['todos'], fetchTodos, { staleTime: 5000 })
 useQuery(['todos'], fetchTodos)
@@ -16,15 +17,17 @@ useQuery(queryOptions)
 ```
 
 **v5** only supports object syntax:
+
 ```tsx
 useQuery({
   queryKey: ['todos'],
   queryFn: fetchTodos,
-  staleTime: 5000
+  staleTime: 5000,
 })
 ```
 
 **Migration**: Use codemod or manual update
+
 ```bash
 npx @tanstack/react-query-codemod v5/remove-overloads
 ```
@@ -32,20 +35,23 @@ npx @tanstack/react-query-codemod v5/remove-overloads
 ### 2. Query Callbacks Removed ⚠️
 
 **Removed from queries** (still work in mutations):
+
 - `onSuccess`
 - `onError`
 - `onSettled`
 
 **v4**:
+
 ```tsx
 useQuery({
   queryKey: ['todos'],
   queryFn: fetchTodos,
-  onSuccess: (data) => console.log(data) // ❌ Removed
+  onSuccess: (data) => console.log(data), // ❌ Removed
 })
 ```
 
 **v5** - Use `useEffect`:
+
 ```tsx
 const { data } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos })
 
@@ -57,10 +63,11 @@ useEffect(() => {
 ```
 
 **Mutation callbacks still work**:
+
 ```tsx
 useMutation({
   mutationFn: addTodo,
-  onSuccess: () => {} // ✅ Still works
+  onSuccess: () => {}, // ✅ Still works
 })
 ```
 
@@ -139,6 +146,7 @@ throwOnError: (error) => error.status >= 500
 **v5**: `error: Error`
 
 If throwing non-Error types:
+
 ```tsx
 const { error } = useQuery<DataType, string>({
   queryKey: ['data'],
@@ -181,6 +189,7 @@ npx @tanstack/react-query-codemod v5/rename-properties
 ### Step 4: TypeScript Fixes
 
 Update type imports:
+
 ```tsx
 // v4
 import type { UseQueryResult } from 'react-query'
@@ -202,18 +211,22 @@ import type { UseQueryResult } from '@tanstack/react-query'
 ## Common Migration Issues
 
 ### Issue: Callbacks not firing
+
 **Cause**: Query callbacks removed
 **Fix**: Use useEffect or move to mutations
 
 ### Issue: isLoading always false
+
 **Cause**: Meaning changed
 **Fix**: Use isPending for initial load
 
 ### Issue: cacheTime not recognized
+
 **Cause**: Renamed
 **Fix**: Use gcTime
 
 ### Issue: infinite query type error
+
 **Cause**: initialPageParam required
 **Fix**: Add initialPageParam
 

@@ -1,13 +1,14 @@
 import * as React from 'react'
 import {
-  type ColumnDef,
+  
   flexRender,
   getCoreRowModel,
-  useReactTable,
+  useReactTable
 } from '@tanstack/react-table'
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute  } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Plus, SearchIcon, ToggleLeft, ToggleRight } from 'lucide-react'
+import type {ColumnDef} from '@tanstack/react-table';
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Frame } from '@/components/ui/frame'
@@ -21,7 +22,6 @@ import {
 } from '@/components/ui/table'
 import { getDashboardData } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
-import { Link } from '@tanstack/react-router'
 import EmptyProduct from '@/components/emply-product'
 import {
   AppHeader,
@@ -34,6 +34,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group'
+
 export const Route = createFileRoute('/$username/admin/products/')({
   component: ProductAdminRoute,
 })
@@ -64,7 +65,7 @@ function productPriceLabel(product: ProductRow): string {
   return 'No price'
 }
 
-function getColumns(username: string): ColumnDef<ProductRow>[] {
+function getColumns(username: string): Array<ColumnDef<ProductRow>> {
   return [
     {
       accessorKey: 'title',
@@ -154,7 +155,7 @@ function ProductAdminRoute() {
   })
 
   const user = dashboardData?.user
-  const products = (dashboardData?.products ?? []) as ProductRow[]
+  const products = (dashboardData?.products ?? []) as Array<ProductRow>
 
   const columns = React.useMemo(() => getColumns(username), [username])
   const table = useReactTable({

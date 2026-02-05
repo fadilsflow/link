@@ -1,30 +1,30 @@
 import { createFileRoute } from '@tanstack/react-router'
 import {
+  ChevronRight,
+  Eye,
+  Layout,
+  Menu,
   Plus,
   Settings,
-  User as UserIcon,
-  Layout,
-  ChevronRight,
   Share2,
-  Eye,
-  Menu,
+  User as UserIcon,
 } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogPanel,
   DialogTitle,
   DialogTrigger,
-  DialogPanel,
 } from '@/components/ui/dialog'
 import { getDashboardData } from '@/lib/profile-server'
-import React, { useEffect, useState, useRef } from 'react'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ProfileEditor } from '@/components/dashboard/ProfileEditor'
 import { BlockList } from '@/components/dashboard/BlockList'
-import { z } from 'zod'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   AppHeader,
@@ -51,7 +51,7 @@ function AdminDashboard() {
   const { username } = Route.useParams()
   const hasHydratedRef = useRef(false)
 
-  const [localBlocks, setLocalBlocks] = useState<any[]>([])
+  const [localBlocks, setLocalBlocks] = useState<Array<any>>([])
   const [profileStatus, setProfileStatus] = useState<
     'saved' | 'saving' | 'error' | 'unsaved' | undefined
   >(undefined)
@@ -125,7 +125,7 @@ function AdminDashboard() {
 
   const reorderBlocks = useMutation({
     mutationKey: ['reorderBlocks', username],
-    mutationFn: (data: { items: { id: string; order: number }[] }) =>
+    mutationFn: (data: { items: Array<{ id: string; order: number }> }) =>
       trpcClient.block.reorder.mutate(data),
     onSuccess: () => {
       setLocalBlocks((prev) =>
@@ -259,9 +259,9 @@ function AdminDashboard() {
     }
   }
 
-  const handleReorder = (newBlocks: any[]) => {
+  const handleReorder = (newBlocks: Array<any>) => {
     isManipulatingRef.current = true
-    const updates: { id: string; order: number }[] = []
+    const updates: Array<{ id: string; order: number }> = []
     const updatedLocalBlocks = newBlocks.map((block, index) => {
       const newOrder = index + 1
       if (block.order !== newOrder) {

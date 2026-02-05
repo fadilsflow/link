@@ -40,7 +40,7 @@ async function updateTodo({ id, ...updates }: UpdateTodoInput): Promise<Todo> {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
-    }
+    },
   )
 
   if (!response.ok) {
@@ -55,7 +55,7 @@ async function deleteTodo(id: number): Promise<void> {
     `https://jsonplaceholder.typicode.com/todos/${id}`,
     {
       method: 'DELETE',
-    }
+    },
   )
 
   if (!response.ok) {
@@ -134,7 +134,7 @@ export function useDeleteTodo() {
     onSuccess: (_, deletedId) => {
       // Remove from list cache
       queryClient.setQueryData<Todo[]>(['todos'], (old = []) =>
-        old.filter((todo) => todo.id !== deletedId)
+        old.filter((todo) => todo.id !== deletedId),
       )
 
       // Remove individual todo cache
@@ -162,7 +162,7 @@ export function AddTodoForm() {
           e.currentTarget.reset()
           console.log('Todo added successfully!')
         },
-      }
+      },
     )
   }
 

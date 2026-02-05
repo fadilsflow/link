@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { XformerlyTwitter } from './icon/x'
+import { Facebook } from './icon/facebook'
+import { LinkedIn } from './icon/linkedin'
+import { WhatsApp } from './icon/whatsapp'
+import { Gmail } from './icon/gmail'
 import {
   Dialog,
   DialogContent,
@@ -9,11 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { XformerlyTwitter } from './icon/x'
-import { Facebook } from './icon/facebook'
-import { LinkedIn } from './icon/linkedin'
-import { WhatsApp } from './icon/whatsapp'
-import { Gmail } from './icon/gmail'
+import { Button, buttonVariants } from '@/components/ui/button'
 
 export function ShareProfileModal({ url }: { url: string }) {
   const [copyText, setCopyText] = useState('Copy')

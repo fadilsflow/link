@@ -1,15 +1,18 @@
 import {
+  ArrowRightLeft,
   BarChart3,
   CircleHelp,
-  ArrowRightLeft,
-  User as UserIcon,
-  Grid,
-  Settings,
-  Package,
   Copy,
   ExternalLink,
+  Grid,
+  Package,
+  Settings,
+  User as UserIcon,
 } from 'lucide-react'
 
+import { Link, useParams, useRouterState } from '@tanstack/react-router'
+import Credits from '../Credits'
+import { toastManager } from '../ui/toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Sidebar,
@@ -22,10 +25,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { authClient } from '@/lib/auth-client'
-import { Link, useParams, useRouterState } from '@tanstack/react-router'
-import Credits from '../Credits'
 import { BASE_URL } from '@/lib/constans'
-import { toastManager } from '../ui/toast'
 
 const data = {
   navBottom: [

@@ -15,5 +15,3 @@ export function formatPrice(cents: number): string {
     maximumFractionDigits: 2,
   }).format(amount)
 }
-
-

@@ -1,9 +1,9 @@
 import React from 'react'
+import type { WallpaperStyle } from './types'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { WallpaperStyle } from './types'
 
 interface WallpaperSelectorProps {
   wallpaperStyle: WallpaperStyle
@@ -76,7 +76,10 @@ export function WallpaperSelector({
 
       {/* Background Color */}
       <div className="space-y-2 pt-2 border-t border-zinc-100">
-        <Label htmlFor="wallpaper-color" className="text-xs font-medium text-zinc-700">
+        <Label
+          htmlFor="wallpaper-color"
+          className="text-xs font-medium text-zinc-700"
+        >
           Color
         </Label>
         <div className="flex items-center gap-3">
@@ -93,9 +96,7 @@ export function WallpaperSelector({
           <Input
             id="wallpaper-color"
             placeholder={
-              wallpaperStyle === 'gradient'
-                ? 'linear-gradient(...)'
-                : '#FAFAFA'
+              wallpaperStyle === 'gradient' ? 'linear-gradient(...)' : '#FAFAFA'
             }
             defaultValue={currentBgColor ?? ''}
             onBlur={(e) => onColorChange(e.target.value || undefined)}
@@ -116,7 +117,10 @@ export function WallpaperSelector({
       {/* Image URL (only for image style) */}
       {wallpaperStyle === 'image' && (
         <div className="space-y-2">
-          <Label htmlFor="wallpaper-image" className="text-xs font-medium text-zinc-700">
+          <Label
+            htmlFor="wallpaper-image"
+            className="text-xs font-medium text-zinc-700"
+          >
             Image URL
           </Label>
           <Input

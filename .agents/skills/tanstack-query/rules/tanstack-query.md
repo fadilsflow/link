@@ -16,7 +16,7 @@ useQuery(['todos'], fetchTodos, { staleTime: 5000 })
 useQuery({
   queryKey: ['todos'],
   queryFn: fetchTodos,
-  staleTime: 5000
+  staleTime: 5000,
 })
 ```
 
@@ -115,12 +115,12 @@ useInfiniteQuery({
 
 ## Quick Fixes
 
-| If Claude suggests... | Use instead... |
-|----------------------|----------------|
-| `useQuery(['key'], fn, opts)` | `useQuery({ queryKey, queryFn, ...opts })` |
-| `onSuccess` in useQuery | `useEffect` watching data |
-| `cacheTime` | `gcTime` |
-| `isLoading` for initial load | `isPending` |
-| `keepPreviousData: true` | `placeholderData: keepPreviousData` |
-| Missing `initialPageParam` | Add `initialPageParam: 0` (or appropriate value) |
-| `useErrorBoundary` | `throwOnError` |
+| If Claude suggests...         | Use instead...                                   |
+| ----------------------------- | ------------------------------------------------ |
+| `useQuery(['key'], fn, opts)` | `useQuery({ queryKey, queryFn, ...opts })`       |
+| `onSuccess` in useQuery       | `useEffect` watching data                        |
+| `cacheTime`                   | `gcTime`                                         |
+| `isLoading` for initial load  | `isPending`                                      |
+| `keepPreviousData: true`      | `placeholderData: keepPreviousData`              |
+| Missing `initialPageParam`    | Add `initialPageParam: 0` (or appropriate value) |
+| `useErrorBoundary`            | `throwOnError`                                   |

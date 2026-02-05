@@ -1,16 +1,16 @@
 import * as React from 'react'
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { Link, createFileRoute, useRouter  } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
+import type {ProductFormValues} from '@/components/dashboard/ProductForm';
 import { Button } from '@/components/ui/button'
 import {
   ProductForm,
-  emptyProductForm,
-  type ProductFormValues,
+  
+  emptyProductForm
 } from '@/components/dashboard/ProductForm'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
-import { Link } from '@tanstack/react-router'
 import { toastManager } from '@/components/ui/toast'
 
 export const Route = createFileRoute('/$username/admin/products/new')({
@@ -57,7 +57,9 @@ function ProductNewRoute() {
           suggestedPrice: values.priceSettings.suggestedPrice ?? undefined,
         },
         customerQuestions:
-          values.customerQuestions.length > 0 ? values.customerQuestions : undefined,
+          values.customerQuestions.length > 0
+            ? values.customerQuestions
+            : undefined,
       }
       router.navigate({ to: '/$username/admin/products', params: { username } })
       return trpcClient.product.create.mutate(base)
@@ -77,7 +79,9 @@ function ProductNewRoute() {
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            render={<Link to={`/$username/admin/products`} params={{ username }} />}
+            render={
+              <Link to={`/$username/admin/products`} params={{ username }} />
+            }
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -115,7 +119,6 @@ function ProductNewRoute() {
           })
         }}
       />
-    </div >
+    </div>
   )
 }
-

@@ -53,7 +53,7 @@ export function useTodos() {
  */
 async function fetchTodoById(id: number): Promise<Todo> {
   const response = await fetch(
-    `https://jsonplaceholder.typicode.com/todos/${id}`
+    `https://jsonplaceholder.typicode.com/todos/${id}`,
   )
 
   if (!response.ok) {

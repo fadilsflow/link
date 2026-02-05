@@ -1,10 +1,9 @@
-import { createFileRoute, notFound } from '@tanstack/react-router'
+import { Link, createFileRoute, notFound  } from '@tanstack/react-router'
 import { ArrowLeft, ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { getPublicProduct } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
-import { Link } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/$username/products/$productId/')({
   component: ProductDetailPage,

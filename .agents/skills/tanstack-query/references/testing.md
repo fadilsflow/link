@@ -36,9 +36,7 @@ export function createTestQueryClient() {
 export function renderWithClient(ui: React.ReactElement) {
   const testQueryClient = createTestQueryClient()
   return render(
-    <QueryClientProvider client={testQueryClient}>
-      {ui}
-    </QueryClientProvider>
+    <QueryClientProvider client={testQueryClient}>{ui}</QueryClientProvider>,
   )
 }
 ```
@@ -73,9 +71,7 @@ describe('useTodos', () => {
 
   it('handles errors', async () => {
     // Mock fetch to fail
-    global.fetch = vi.fn(() =>
-      Promise.reject(new Error('API error'))
-    )
+    global.fetch = vi.fn(() => Promise.reject(new Error('API error')))
 
     const { result } = renderHook(() => useTodos())
 
@@ -95,10 +91,8 @@ import { setupServer } from 'msw/node'
 
 const server = setupServer(
   http.get('/api/todos', () => {
-    return HttpResponse.json([
-      { id: 1, title: 'Test todo', completed: false },
-    ])
-  })
+    return HttpResponse.json([{ id: 1, title: 'Test todo', completed: false }])
+  }),
 )
 
 beforeAll(() => server.listen())
@@ -119,7 +113,7 @@ test('handles server error', async () => {
   server.use(
     http.get('/api/todos', () => {
       return new HttpResponse(null, { status: 500 })
-    })
+    }),
   )
 
   const { result } = renderHook(() => useTodos())
@@ -142,7 +136,7 @@ test('adds todo successfully', async () => {
 
   await waitFor(() => expect(result.current.isSuccess).toBe(true))
   expect(result.current.data).toEqual(
-    expect.objectContaining({ title: 'New todo' })
+    expect.objectContaining({ title: 'New todo' }),
   )
 })
 
@@ -150,7 +144,7 @@ test('handles mutation error', async () => {
   server.use(
     http.post('/api/todos', () => {
       return new HttpResponse(null, { status: 400 })
-    })
+    }),
   )
 
   const { result } = renderHook(() => useAddTodo())
@@ -210,14 +204,15 @@ test('uses prefilled cache', () => {
   const queryClient = createTestQueryClient()
 
   // Prefill cache
-  queryClient.setQueryData(['todos'], [
-    { id: 1, title: 'Cached todo', completed: false },
-  ])
+  queryClient.setQueryData(
+    ['todos'],
+    [{ id: 1, title: 'Cached todo', completed: false }],
+  )
 
   render(
     <QueryClientProvider client={queryClient}>
       <TodoList />
-    </QueryClientProvider>
+    </QueryClientProvider>,
   )
 
   // Should immediately show cached data
@@ -232,14 +227,15 @@ test('uses prefilled cache', () => {
 ```tsx
 test('optimistic update rollback on error', async () => {
   const queryClient = createTestQueryClient()
-  queryClient.setQueryData(['todos'], [
-    { id: 1, title: 'Original', completed: false },
-  ])
+  queryClient.setQueryData(
+    ['todos'],
+    [{ id: 1, title: 'Original', completed: false }],
+  )
 
   server.use(
     http.patch('/api/todos/1', () => {
       return new HttpResponse(null, { status: 500 })
-    })
+    }),
   )
 
   const { result } = renderHook(() => useUpdateTodo(), {

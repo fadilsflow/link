@@ -1,7 +1,13 @@
 import React from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Palette, Image as ImageIcon, SearchIcon } from 'lucide-react'
+import { Image as ImageIcon, Palette, SearchIcon } from 'lucide-react'
+import type {
+  BgMode,
+  BlockRadius,
+  BlockStyle,
+  WallpaperStyle,
+} from '@/components/dashboard/appearance/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -11,12 +17,6 @@ import { BannerSelector } from '@/components/dashboard/appearance/BannerSelector
 import { WallpaperSelector } from '@/components/dashboard/appearance/WallpaperSelector'
 import { BlockStyleSelector } from '@/components/dashboard/appearance/BlockStyleSelector'
 import { AppearancePreview } from '@/components/dashboard/appearance/AppearancePreview'
-import {
-  BgMode,
-  WallpaperStyle,
-  BlockStyle,
-  BlockRadius,
-} from '@/components/dashboard/appearance/types'
 import { LOCAL_BANNER_IMAGES } from '@/components/dashboard/appearance/banner-presets'
 import {
   AppHeader,
@@ -24,15 +24,16 @@ import {
   AppHeaderContent,
   AppHeaderDescription,
 } from '@/components/app-header'
-export const Route = createFileRoute('/$username/admin/appearance' as any)({
-  component: AppearanceRouteComponent,
-})
 
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group'
+
+export const Route = createFileRoute('/$username/admin/appearance' as any)({
+  component: AppearanceRouteComponent,
+})
 function AppearanceRouteComponent() {
   const { username } = Route.useParams()
 

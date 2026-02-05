@@ -19,6 +19,7 @@
 ---
 
 **Note**: This file is NOT loaded into context by default. Claude will only load it when:
+
 - It determines the information is needed
 - You explicitly ask Claude to reference it
 - The SKILL.md instructions direct Claude to read it

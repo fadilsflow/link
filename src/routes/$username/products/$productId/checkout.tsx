@@ -9,21 +9,21 @@ import { Textarea } from '@/components/ui/textarea'
 import { getPublicProduct } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
 
-export const Route = createFileRoute(
-  '/$username/products/$productId/checkout',
-)({
-  component: CheckoutPage,
-  loader: async ({ params }) => {
-    const data = await getPublicProduct({
-      data: {
-        username: params.username,
-        productId: params.productId,
-      },
-    })
-    if (!data) throw notFound()
-    return data
+export const Route = createFileRoute('/$username/products/$productId/checkout')(
+  {
+    component: CheckoutPage,
+    loader: async ({ params }) => {
+      const data = await getPublicProduct({
+        data: {
+          username: params.username,
+          productId: params.productId,
+        },
+      })
+      if (!data) throw notFound()
+      return data
+    },
   },
-})
+)
 
 type Question = {
   id: string
@@ -31,7 +31,7 @@ type Question = {
   required: boolean
 }
 
-function parseQuestions(raw: unknown): Question[] {
+function parseQuestions(raw: unknown): Array<Question> {
   if (typeof raw !== 'string') return []
   try {
     const parsed = JSON.parse(raw)
@@ -166,10 +166,7 @@ function CheckoutPage() {
                   {product.title}
                 </span>{' '}
                 from @{user.username} for{' '}
-                <span className="font-semibold">
-                  {formatPrice(unitPrice)}
-                </span>
-                .
+                <span className="font-semibold">{formatPrice(unitPrice)}</span>.
               </p>
             </CardContent>
           </Card>
@@ -191,9 +188,7 @@ function CheckoutPage() {
             <ArrowLeft className="h-3.5 w-3.5 mr-1" />
             Back
           </Button>
-          <span className="text-[11px] text-slate-500">
-            @{user.username}
-          </span>
+          <span className="text-[11px] text-slate-500">@{user.username}</span>
         </div>
 
         <Card className="border-slate-200 rounded-2xl shadow-md">
@@ -272,9 +267,7 @@ function CheckoutPage() {
                     <div key={q.id} className="space-y-1.5">
                       <Label htmlFor={`q-${q.id}`}>
                         {q.label}{' '}
-                        {q.required && (
-                          <span className="text-rose-500">*</span>
-                        )}
+                        {q.required && <span className="text-rose-500">*</span>}
                       </Label>
                       <Input
                         id={`q-${q.id}`}
@@ -332,4 +325,3 @@ function parseAmount(value: string): number | null {
   if (Number.isNaN(num) || num < 0) return null
   return Math.round(num * 100)
 }
-

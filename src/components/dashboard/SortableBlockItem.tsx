@@ -1,11 +1,11 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Card, CardContent } from '../ui/card'
 import { LinkBlock } from './blocks/LinkBlock'
 import { TextBlock } from './blocks/TextBlock'
-import { Card, CardContent } from '../ui/card'
 import { StatusBadge } from './StatusBadge'
+import { cn } from '@/lib/utils'
 
 interface BlockItemProps {
   block: {

@@ -29,10 +29,7 @@ const { data } = useQuery({
 ## 2. Generic Query Hook
 
 ```tsx
-function useEntity<T>(
-  endpoint: string,
-  id: number
-) {
+function useEntity<T>(endpoint: string, id: number) {
   return useQuery({
     queryKey: [endpoint, id],
     queryFn: async (): Promise<T> => {
@@ -106,7 +103,7 @@ class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public code: string
+    public code: string,
   ) {
     super(message)
   }
@@ -117,11 +114,7 @@ const { data, error } = useQuery<Todo[], ApiError>({
   queryFn: async () => {
     const response = await fetch('/api/todos')
     if (!response.ok) {
-      throw new ApiError(
-        'Failed to fetch',
-        response.status,
-        'FETCH_ERROR'
-      )
+      throw new ApiError('Failed to fetch', response.status, 'FETCH_ERROR')
     }
     return response.json()
   },
@@ -169,7 +162,7 @@ type QueryState<T> =
 
 function useTypedQuery<T>(
   queryKey: string[],
-  queryFn: () => Promise<T>
+  queryFn: () => Promise<T>,
 ): QueryState<T> {
   const { data, status, error } = useQuery({ queryKey, queryFn })
 
@@ -206,8 +199,7 @@ const queryKeys = {
     list: (filters: TodoFilters) =>
       [...queryKeys.todos.lists(), filters] as const,
     details: () => [...queryKeys.todos.all, 'detail'] as const,
-    detail: (id: number) =>
-      [...queryKeys.todos.details(), id] as const,
+    detail: (id: number) => [...queryKeys.todos.details(), id] as const,
   },
 }
 
@@ -218,7 +210,7 @@ useQuery({
 })
 
 queryClient.invalidateQueries({
-  queryKey: queryKeys.todos.all
+  queryKey: queryKeys.todos.all,
 })
 ```
 
@@ -234,11 +226,7 @@ type TodosQuery = UseQueryResult<Todo[]>
 type TodoData = TodosQuery['data'] // Todo[] | undefined
 
 // Extract mutation types
-type AddTodoMutation = UseMutationResult<
-  Todo,
-  Error,
-  CreateTodoInput
->
+type AddTodoMutation = UseMutationResult<Todo, Error, CreateTodoInput>
 ```
 
 ---
@@ -275,7 +263,7 @@ const { data } = useSuspenseQuery({
 
 // data is ALWAYS Todo[], never undefined
 // No need for undefined checks with suspense
-data.map(todo => todo.title) // ✅ Safe
+data.map((todo) => todo.title) // ✅ Safe
 ```
 
 ---

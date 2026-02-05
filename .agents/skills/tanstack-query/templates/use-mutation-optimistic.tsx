@@ -43,7 +43,7 @@ export function useOptimisticAddTodo() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...newTodo, userId: 1, completed: false }),
-        }
+        },
       )
 
       if (!response.ok) throw new Error('Failed to add todo')
@@ -107,7 +107,7 @@ export function useOptimisticUpdateTodo() {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ completed }),
-        }
+        },
       )
 
       if (!response.ok) throw new Error('Failed to update todo')
@@ -122,9 +122,7 @@ export function useOptimisticUpdateTodo() {
 
       // Optimistic update
       queryClient.setQueryData<Todo[]>(['todos'], (old = []) =>
-        old.map((todo) =>
-          todo.id === id ? { ...todo, completed } : todo
-        )
+        old.map((todo) => (todo.id === id ? { ...todo, completed } : todo)),
       )
 
       return { previousTodos }
@@ -158,7 +156,7 @@ export function useOptimisticDeleteTodo() {
         `https://jsonplaceholder.typicode.com/todos/${id}`,
         {
           method: 'DELETE',
-        }
+        },
       )
 
       if (!response.ok) throw new Error('Failed to delete todo')
@@ -171,7 +169,7 @@ export function useOptimisticDeleteTodo() {
 
       // Optimistically remove from cache
       queryClient.setQueryData<Todo[]>(['todos'], (old = []) =>
-        old.filter((todo) => todo.id !== deletedId)
+        old.filter((todo) => todo.id !== deletedId),
       )
 
       return { previousTodos }
@@ -194,15 +192,19 @@ export function useOptimisticDeleteTodo() {
  * Component usage example:
  */
 export function OptimisticTodoItem({ todo }: { todo: Todo }) {
-  const { mutate: updateTodo, isPending: isUpdating } = useOptimisticUpdateTodo()
-  const { mutate: deleteTodo, isPending: isDeleting } = useOptimisticDeleteTodo()
+  const { mutate: updateTodo, isPending: isUpdating } =
+    useOptimisticUpdateTodo()
+  const { mutate: deleteTodo, isPending: isDeleting } =
+    useOptimisticDeleteTodo()
 
   return (
     <li style={{ opacity: isUpdating || isDeleting ? 0.5 : 1 }}>
       <input
         type="checkbox"
         checked={todo.completed}
-        onChange={(e) => updateTodo({ id: todo.id, completed: e.target.checked })}
+        onChange={(e) =>
+          updateTodo({ id: todo.id, completed: e.target.checked })
+        }
         disabled={isUpdating || isDeleting}
       />
       <span>{todo.title}</span>

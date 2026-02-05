@@ -1,10 +1,10 @@
 import React from 'react'
+import { GRADIENT_PRESETS, LOCAL_BANNER_IMAGES } from './banner-presets'
+import type { BannerPreset } from './types'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { BannerPreset } from './types'
-import { LOCAL_BANNER_IMAGES, GRADIENT_PRESETS } from './banner-presets'
 
 interface BannerSelectorProps {
   currentBannerUrl?: string
@@ -24,9 +24,14 @@ export function BannerSelector({
   const isCustomBanner = React.useMemo(() => {
     if (!currentBannerUrl) return false
     // Check if it's a local banner
-    if (LOCAL_BANNER_IMAGES.some((b) => b.image === currentBannerUrl)) return false
+    if (LOCAL_BANNER_IMAGES.some((b) => b.image === currentBannerUrl))
+      return false
     // Check if it's a gradient (no imageUrl but has color)
-    if (currentBannerId && (currentBannerId === 'gradient-blue' || currentBannerId === 'gradient-purple')) {
+    if (
+      currentBannerId &&
+      (currentBannerId === 'gradient-blue' ||
+        currentBannerId === 'gradient-purple')
+    ) {
       return false
     }
     // Otherwise it's a custom URL
@@ -41,10 +46,14 @@ export function BannerSelector({
   const handleGradientSelect = (preset: BannerPreset) => {
     if (preset.id === 'gradient-blue') {
       onBannerSelect('', preset.id)
-      onColorChange('linear-gradient(to right, rgb(14, 165, 233), rgb(56, 189, 248), rgb(52, 211, 153))')
+      onColorChange(
+        'linear-gradient(to right, rgb(14, 165, 233), rgb(56, 189, 248), rgb(52, 211, 153))',
+      )
     } else if (preset.id === 'gradient-purple') {
       onBannerSelect('', preset.id)
-      onColorChange('linear-gradient(to right, rgb(139, 92, 246), rgb(217, 70, 239), rgb(251, 191, 36))')
+      onColorChange(
+        'linear-gradient(to right, rgb(139, 92, 246), rgb(217, 70, 239), rgb(251, 191, 36))',
+      )
     }
     setCustomUrl('')
     setShowCustomUrl(false)
@@ -67,10 +76,13 @@ export function BannerSelector({
     <div className="space-y-6">
       {/* Local Banner Images Grid */}
       <div className="space-y-3">
-        <Label className="text-xs font-medium text-zinc-700">Banner Images</Label>
+        <Label className="text-xs font-medium text-zinc-700">
+          Banner Images
+        </Label>
         <div className="grid grid-cols-3 gap-2">
           {LOCAL_BANNER_IMAGES.map((preset) => {
-            const isSelected = currentBannerId === preset.id || currentBannerUrl === preset.image
+            const isSelected =
+              currentBannerId === preset.id || currentBannerUrl === preset.image
             return (
               <button
                 key={preset.id}
@@ -98,7 +110,9 @@ export function BannerSelector({
 
       {/* Gradient Presets */}
       <div className="space-y-3">
-        <Label className="text-xs font-medium text-zinc-700">Gradient Presets</Label>
+        <Label className="text-xs font-medium text-zinc-700">
+          Gradient Presets
+        </Label>
         <div className="grid grid-cols-2 gap-3">
           {GRADIENT_PRESETS.map((preset) => {
             const isSelected = currentBannerId === preset.id
@@ -118,7 +132,12 @@ export function BannerSelector({
                   isSelected && 'border-emerald-500 ring-1 ring-emerald-500/40',
                 )}
               >
-                <div className={cn('absolute inset-0 rounded-[11px]', gradientClass)} />
+                <div
+                  className={cn(
+                    'absolute inset-0 rounded-[11px]',
+                    gradientClass,
+                  )}
+                />
                 <span className="relative z-10 text-white drop-shadow-sm">
                   {preset.label}
                 </span>
@@ -131,7 +150,10 @@ export function BannerSelector({
       {/* Custom URL Input */}
       <div className="space-y-3 pt-2 border-t border-zinc-100">
         <div className="flex items-center justify-between">
-          <Label htmlFor="custom-banner-url" className="text-xs font-medium text-zinc-700">
+          <Label
+            htmlFor="custom-banner-url"
+            className="text-xs font-medium text-zinc-700"
+          >
             Custom Image URL
           </Label>
           {!showCustomUrl && (
@@ -205,7 +227,10 @@ export function BannerSelector({
 
       {/* Background Color */}
       <div className="space-y-2 pt-2 border-t border-zinc-100">
-        <Label htmlFor="banner-bg-color" className="text-xs font-medium text-zinc-700">
+        <Label
+          htmlFor="banner-bg-color"
+          className="text-xs font-medium text-zinc-700"
+        >
           Background Color
         </Label>
         <div className="flex items-center gap-3">

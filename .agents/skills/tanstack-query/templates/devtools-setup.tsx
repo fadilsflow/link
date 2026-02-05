@@ -32,13 +32,10 @@ createRoot(document.getElementById('root')!).render(
       <ReactQueryDevtools
         // Start collapsed (default: false)
         initialIsOpen={false}
-
         // Button position on screen
         buttonPosition="bottom-right" // "top-left" | "top-right" | "bottom-left" | "bottom-right"
-
         // Panel position when open
         position="bottom" // "top" | "bottom" | "left" | "right"
-
         // Custom styles for toggle button
         toggleButtonProps={{
           style: {
@@ -46,7 +43,6 @@ createRoot(document.getElementById('root')!).render(
             marginRight: '1rem',
           },
         }}
-
         // Custom styles for panel
         panelProps={{
           style: {
@@ -58,7 +54,7 @@ createRoot(document.getElementById('root')!).render(
         // Default: None, but you can add custom handler
       />
     </QueryClientProvider>
-  </StrictMode>
+  </StrictMode>,
 )
 
 /**
@@ -70,11 +66,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <App />
-      {import.meta.env.DEV && (
-        <ReactQueryDevtools initialIsOpen={false} />
-      )}
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
-  </StrictMode>
+  </StrictMode>,
 )
 
 /**

@@ -7,6 +7,7 @@
 ## Error #1: Object Syntax Required
 
 **Error Message**:
+
 ```
 TypeError: useQuery is not a function
 Property 'queryKey' does not exist on type...
@@ -16,6 +17,7 @@ Property 'queryKey' does not exist on type...
 v5 removed function overloads, only object syntax works
 
 **Fix**:
+
 ```tsx
 // ❌ v4 syntax
 useQuery(['todos'], fetchTodos)
@@ -31,6 +33,7 @@ useQuery({ queryKey: ['todos'], queryFn: fetchTodos })
 ## Error #2: Query Callbacks Not Working
 
 **Error Message**:
+
 ```
 Property 'onSuccess' does not exist on type 'UseQueryOptions'
 ```
@@ -39,12 +42,13 @@ Property 'onSuccess' does not exist on type 'UseQueryOptions'
 `onSuccess`, `onError`, `onSettled` removed from queries (still work in mutations)
 
 **Fix**:
+
 ```tsx
 // ❌ v4
 useQuery({
   queryKey: ['todos'],
   queryFn: fetchTodos,
-  onSuccess: (data) => console.log(data)
+  onSuccess: (data) => console.log(data),
 })
 
 // ✅ v5 - Use useEffect
@@ -67,6 +71,7 @@ No error, but `isLoading` is false during initial fetch
 v5 changed `isLoading` meaning: now `isPending && isFetching`
 
 **Fix**:
+
 ```tsx
 // ❌ v4
 const { isLoading } = useQuery(...)
@@ -84,6 +89,7 @@ if (isPending) return <Loading />
 ## Error #4: cacheTime Not Recognized
 
 **Error Message**:
+
 ```
 Property 'cacheTime' does not exist on type 'UseQueryOptions'
 ```
@@ -92,6 +98,7 @@ Property 'cacheTime' does not exist on type 'UseQueryOptions'
 Renamed to `gcTime` (garbage collection time)
 
 **Fix**:
+
 ```tsx
 // ❌ v4
 cacheTime: 1000 * 60 * 60
@@ -107,6 +114,7 @@ gcTime: 1000 * 60 * 60
 ## Error #5: useSuspenseQuery + enabled
 
 **Error Message**:
+
 ```
 Property 'enabled' does not exist on type 'UseSuspenseQueryOptions'
 ```
@@ -115,6 +123,7 @@ Property 'enabled' does not exist on type 'UseSuspenseQueryOptions'
 Suspense guarantees data is available, can't conditionally disable
 
 **Fix**:
+
 ```tsx
 // ❌ Wrong
 useSuspenseQuery({
@@ -124,7 +133,9 @@ useSuspenseQuery({
 })
 
 // ✅ Correct: Conditional rendering
-{id ? <TodoComponent id={id} /> : <div>No ID</div>}
+{
+  id ? <TodoComponent id={id} /> : <div>No ID</div>
+}
 ```
 
 **Source**: [GitHub Discussion #6206](https://github.com/TanStack/query/discussions/6206)
@@ -134,6 +145,7 @@ useSuspenseQuery({
 ## Error #6: initialPageParam Required
 
 **Error Message**:
+
 ```
 Property 'initialPageParam' is missing in type 'UseInfiniteQueryOptions'
 ```
@@ -142,6 +154,7 @@ Property 'initialPageParam' is missing in type 'UseInfiniteQueryOptions'
 v5 requires explicit `initialPageParam` for infinite queries
 
 **Fix**:
+
 ```tsx
 // ❌ v4
 useInfiniteQuery({
@@ -166,6 +179,7 @@ useInfiniteQuery({
 ## Error #7: keepPreviousData Not Working
 
 **Error Message**:
+
 ```
 Property 'keepPreviousData' does not exist on type 'UseQueryOptions'
 ```
@@ -174,6 +188,7 @@ Property 'keepPreviousData' does not exist on type 'UseQueryOptions'
 Replaced with `placeholderData` function
 
 **Fix**:
+
 ```tsx
 // ❌ v4
 keepPreviousData: true
@@ -197,6 +212,7 @@ Type errors when handling non-Error objects
 v5 defaults to `Error` type instead of `unknown`
 
 **Fix**:
+
 ```tsx
 // If throwing non-Error types, specify explicitly:
 const { error } = useQuery<DataType, string>({
@@ -224,6 +240,7 @@ Data never updates even when stale
 Usually config issue - check staleTime, refetch options
 
 **Fix**:
+
 ```tsx
 // Check these settings
 useQuery({
@@ -254,6 +271,7 @@ UI doesn't update after mutation
 Forgot to invalidate queries
 
 **Fix**:
+
 ```tsx
 useMutation({
   mutationFn: addTodo,
@@ -274,6 +292,7 @@ App crashes on network errors
 Not handling errors properly
 
 **Fix**:
+
 ```tsx
 // Always handle errors
 const { data, error, isError } = useQuery({
@@ -301,6 +320,7 @@ Mutation callbacks use old data
 Closure captures stale values
 
 **Fix**:
+
 ```tsx
 // ❌ Stale closure
 const [value, setValue] = useState(0)
@@ -313,7 +333,7 @@ useMutation({
 // ✅ Use functional update
 useMutation({
   onSuccess: () => {
-    setValue(prev => prev + 1) // Fresh value
+    setValue((prev) => prev + 1) // Fresh value
   },
 })
 ```

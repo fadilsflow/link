@@ -1,5 +1,5 @@
+import type { BgMode, BlockRadius, BlockStyle, WallpaperStyle } from './types'
 import { cn } from '@/lib/utils'
-import { BgMode, WallpaperStyle, BlockStyle, BlockRadius } from './types'
 
 interface AppearancePreviewProps {
   user: {

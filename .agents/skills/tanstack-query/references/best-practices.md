@@ -61,9 +61,7 @@ function GoodUserProfile({ userId }) {
 
 ```tsx
 // Global
-['todos'] // All todos
-['todos', { status: 'done' }] // Filtered todos
-['todos', 123] // Single todo
+;['todos'][('todos', { status: 'done' })][('todos', 123)] // All todos // Filtered todos // Single todo
 
 // Invalidation hierarchy
 queryClient.invalidateQueries({ queryKey: ['todos'] }) // Invalidates ALL todos
@@ -74,13 +72,13 @@ queryClient.invalidateQueries({ queryKey: ['todos', { status: 'done' }] }) // On
 
 ```tsx
 // ✅ Good: Stable, serializable keys
-['users', userId, { sort: 'name', filter: 'active' }]
-
-// ❌ Bad: Functions in keys (not serializable)
-['users', () => userId]
-
-// ❌ Bad: Changing order
-['users', { filter: 'active', sort: 'name' }] // Different key!
+;['users', userId, { sort: 'name', filter: 'active' }][
+  // ❌ Bad: Functions in keys (not serializable)
+  ('users', () => userId)
+][
+  // ❌ Bad: Changing order
+  ('users', { filter: 'active', sort: 'name' })
+] // Different key!
 
 // ✅ Good: Consistent ordering
 const userFilters = { filter: 'active', sort: 'name' }
@@ -176,7 +174,7 @@ function CompletedTodos() {
   const { data } = useQuery({
     queryKey: ['todos'],
     queryFn: fetchTodos,
-    select: (data) => data.filter(todo => todo.completed),
+    select: (data) => data.filter((todo) => todo.completed),
   })
 }
 ```
@@ -200,7 +198,7 @@ function TodoList() {
 
   return (
     <ul>
-      {todos.map(todo => (
+      {todos.map((todo) => (
         <li key={todo.id} onMouseEnter={() => prefetch(todo.id)}>
           <Link to={`/todos/${todo.id}`}>{todo.title}</Link>
         </li>
@@ -215,10 +213,12 @@ function TodoList() {
 ## 7. Optimistic Updates
 
 Use for:
+
 - ✅ Low-risk actions (toggle, like)
 - ✅ Frequent actions (better UX)
 
 Avoid for:
+
 - ❌ Critical operations (payments)
 - ❌ Complex validations
 

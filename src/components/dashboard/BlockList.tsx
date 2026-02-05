@@ -1,19 +1,20 @@
 import {
   DndContext,
-  closestCorners,
-  PointerSensor,
   KeyboardSensor,
+  PointerSensor,
+  closestCorners,
   useSensor,
-  useSensors,
-  DragEndEvent,
+  useSensors
 } from '@dnd-kit/core'
 import {
-  arrayMove,
   SortableContext,
+  arrayMove,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { SortableBlockItem } from './SortableBlockItem'
+import type {
+  DragEndEvent} from '@dnd-kit/core';
 
 interface Block {
   id: string
@@ -27,10 +28,10 @@ interface Block {
 }
 
 interface BlockListProps {
-  blocks: Block[]
+  blocks: Array<Block>
   onUpdate: (id: string, field: string, value: any) => void
   onDelete: (id: string) => void
-  onReorder: (newBlocks: Block[]) => void
+  onReorder: (newBlocks: Array<Block>) => void
   onDragStart?: () => void
   onDragCancel?: () => void
 }

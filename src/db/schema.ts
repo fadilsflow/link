@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   integer,
+  json,
   pgTable,
   text,
   timestamp,
@@ -65,7 +66,10 @@ export const products = pgTable('product', {
   totalQuantity: integer('total_quantity'),
   limitPerCheckout: integer('limit_per_checkout'),
   // Delivery
-  productUrl: text('product_url').notNull(),
+  // Delivery
+  productUrl: text('product_url'),
+  productFiles: json('product_files'), // Array of file objects
+  images: text('images').array(), // Array of image URLs
   // Custom checkout questions (JSON string for simple, extendable schema)
   customerQuestions: text('customer_questions'),
   // Visibility

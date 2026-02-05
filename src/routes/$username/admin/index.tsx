@@ -78,6 +78,7 @@ function AdminDashboard() {
       name?: string
       title?: string
       bio?: string
+      image?: string | null
     }) => trpcClient.user.updateProfile.mutate(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
@@ -156,6 +157,7 @@ function AdminDashboard() {
     name: string
     title?: string | null
     bio?: string | null
+    image?: string | null
   }) => {
     return toastManager.promise(
       updateProfile.mutateAsync({
@@ -163,6 +165,7 @@ function AdminDashboard() {
         name: data.name,
         title: data.title || undefined,
         bio: data.bio || undefined,
+        image: data.image || undefined,
       }),
       {
         loading: {

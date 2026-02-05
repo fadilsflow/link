@@ -36,6 +36,13 @@
       "when": 1770288789939,
       "tag": "0004_tiny_the_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1770315704512,
+      "tag": "0005_sour_dakota_north",
+      "breakpoints": true
     }
   ]
 }

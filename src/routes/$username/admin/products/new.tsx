@@ -1,13 +1,12 @@
 import * as React from 'react'
-import { Link, createFileRoute, useRouter  } from '@tanstack/react-router'
+import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
-import type {ProductFormValues} from '@/components/dashboard/ProductForm';
+import type { ProductFormValues } from '@/components/dashboard/ProductForm'
 import { Button } from '@/components/ui/button'
 import {
   ProductForm,
-  
-  emptyProductForm
+  emptyProductForm,
 } from '@/components/dashboard/ProductForm'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
@@ -46,6 +45,8 @@ function ProductNewRoute() {
         title: values.title,
         description: values.description || undefined,
         productUrl: values.productUrl,
+        images: values.images,
+        productFiles: values.productFiles,
         isActive: values.isActive,
         totalQuantity: values.totalQuantity ?? undefined,
         limitPerCheckout: values.limitPerCheckout ?? undefined,

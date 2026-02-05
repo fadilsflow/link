@@ -4,6 +4,7 @@ import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
 import { blocks, products, socialLinks, user } from '@/db/schema'
+import { StorageService } from '@/lib/storage'
 
 const userRouter = {
   getByEmail: publicProcedure
@@ -71,6 +72,7 @@ const userRouter = {
         name: z.string().optional(),
         title: z.string().optional(),
         bio: z.string().optional(),
+        image: z.string().nullable().optional(),
         // Appearance settings
         // Keep backward compatibility with existing values ('color', 'image')
         // while allowing a future 'wallpaper' mode if needed.
@@ -94,6 +96,7 @@ const userRouter = {
           ...(input.name ? { name: input.name } : {}),
           ...(input.title ? { title: input.title } : {}),
           ...(input.bio ? { bio: input.bio } : {}),
+          ...(input.image !== undefined ? { image: input.image } : {}),
           ...(input.appearanceBgType
             ? { appearanceBgType: input.appearanceBgType }
             : {}),
@@ -248,7 +251,9 @@ const productBaseInput = z.object({
   userId: z.string(),
   title: z.string().min(1),
   description: z.string().optional(),
-  productUrl: z.string().url(),
+  productUrl: z.string().url().optional().or(z.literal('')),
+  images: z.array(z.string()).optional(),
+  productFiles: z.array(z.any()).optional(), // JSON content
   isActive: z.boolean().optional(),
   totalQuantity: z.number().int().positive().optional(),
   limitPerCheckout: z.number().int().positive().optional(),
@@ -293,7 +298,9 @@ const productRouter = {
           userId: input.userId,
           title: input.title,
           description: input.description ?? null,
-          productUrl: input.productUrl,
+          productUrl: input.productUrl || null,
+          images: input.images || null,
+          productFiles: input.productFiles || null,
           isActive: input.isActive ?? true,
           totalQuantity: input.totalQuantity ?? null,
           limitPerCheckout: input.limitPerCheckout ?? null,
@@ -329,7 +336,9 @@ const productRouter = {
         .set({
           title: input.title,
           description: input.description ?? null,
-          productUrl: input.productUrl,
+          productUrl: input.productUrl || null,
+          images: input.images || null,
+          productFiles: input.productFiles || null,
           isActive: input.isActive ?? true,
           totalQuantity: input.totalQuantity ?? null,
           limitPerCheckout: input.limitPerCheckout ?? null,
@@ -448,10 +457,19 @@ const socialLinkRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+export const storageRouter = {
+  getUploadUrl: publicProcedure
+    .input(z.object({ key: z.string(), contentType: z.string() }))
+    .mutation(async ({ input }) => {
+      return await StorageService.getUploadUrl(input.key, input.contentType)
+    }),
+} satisfies TRPCRouterRecord
+
 export const trpcRouter = createTRPCRouter({
   user: userRouter,
   block: blockRouter,
   product: productRouter,
   socialLink: socialLinkRouter,
+  storage: storageRouter,
 })
 export type TRPCRouter = typeof trpcRouter

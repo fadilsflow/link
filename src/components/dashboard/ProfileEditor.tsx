@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react'
+import { Camera, X } from 'lucide-react'
+import { uploadFile } from '@/lib/upload-client'
+import { useFileUpload } from '@/hooks/use-file-upload'
 
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,6 +26,7 @@ interface ProfileData {
   name: string
   title?: string | null
   bio?: string | null
+  image?: string | null
 }
 
 interface ProfileEditorProps {
@@ -43,7 +47,39 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
     name: user.name,
     title: user.title || '',
     bio: user.bio || '',
+    image: user.image || '',
   })
+
+  const [
+    { files: avatarFiles },
+    {
+      openFileDialog,
+      removeFile,
+      getInputProps,
+      handleDrop,
+      handleDragOver,
+      handleDragEnter,
+      handleDragLeave,
+    },
+  ] = useFileUpload({
+    accept: 'image/*',
+    maxFiles: 1,
+    multiple: false,
+    initialFiles: user.image
+      ? [
+          {
+            id: 'current-avatar',
+            name: 'Current Avatar',
+            url: user.image,
+            size: 0,
+            type: 'image/ping',
+          },
+        ]
+      : [],
+  })
+
+  // State to track if we are uploading
+  const [isUploading, setIsUploading] = useState(false)
 
   // Reset form when user data changes or dialog opens
   useEffect(() => {
@@ -52,14 +88,36 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
         name: user.name,
         title: user.title || '',
         bio: user.bio || '',
+        image: user.image || '',
       })
+      // Note: we don't reset file upload hook here easily, assuming dialog isn't reused across different users without unmount
     }
-  }, [dialogOpen, user.name, user.title, user.bio])
+  }, [dialogOpen, user.name, user.title, user.bio, user.image])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setDialogOpen(false)
-    onSave(formData)
+    setIsUploading(true)
+
+    try {
+      let imageUrl = formData.image
+
+      // If we have a new file selection (File object), upload it
+      const newFile = avatarFiles[0]?.file
+      if (newFile instanceof File) {
+        imageUrl = await uploadFile(newFile, 'avatars')
+      } else if (avatarFiles.length === 0) {
+        // If file removed
+        imageUrl = null
+      }
+
+      await onSave({ ...formData, image: imageUrl })
+      setDialogOpen(false)
+    } catch (error) {
+      console.error('Failed to save profile:', error)
+      alert('Failed to save profile. Please try again.')
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const handleFieldChange = (field: keyof ProfileData, value: string) => {
@@ -115,6 +173,51 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
             </DialogHeader>
 
             <DialogPanel className="grid gap-4">
+              {/* Avatar Upload in Dialog */}
+              <div className="flex justify-center">
+                <div className="relative group">
+                  <div
+                    className="relative h-24 w-24 rounded-full overflow-hidden ring-4 ring-zinc-100 cursor-pointer"
+                    onClick={openFileDialog}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                  >
+                    <Avatar className="h-24 w-24">
+                      <AvatarImage
+                        src={avatarFiles[0]?.preview || formData.image || ''}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="bg-zinc-100 text-zinc-400 text-2xl font-bold">
+                        {formData.name.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+
+                  {avatarFiles.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const id = avatarFiles[0].id
+                        removeFile(id)
+                      }}
+                      className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow-sm border border-zinc-200 hover:bg-zinc-100"
+                    >
+                      <X className="h-4 w-4 text-zinc-500" />
+                    </button>
+                  )}
+
+                  <input {...getInputProps()} className="hidden" />
+                </div>
+              </div>
+
               <Field>
                 <FieldLabel>Name</FieldLabel>
                 <Input
@@ -149,7 +252,9 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
               <DialogClose render={<Button variant="ghost" />}>
                 Cancel
               </DialogClose>
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={isUploading}>
+                {isUploading ? 'Saving...' : 'Save'}
+              </Button>
             </DialogFooter>
           </Form>
         </DialogPopup>

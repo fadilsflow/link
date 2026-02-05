@@ -1,6 +1,17 @@
 import * as React from 'react'
 import { z } from 'zod'
-import { Link2, Plus, Trash2 } from 'lucide-react'
+import {
+  Link2,
+  Plus,
+  Trash2,
+  Image as ImageIcon,
+  FileText,
+  Upload,
+  X,
+  Loader2,
+} from 'lucide-react'
+import { useFileUpload, type FileWithPreview } from '@/hooks/use-file-upload'
+import { uploadFile } from '@/lib/upload-client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -25,12 +36,22 @@ export type CustomerQuestion = {
   required: boolean
 }
 
+export type ProductFile = {
+  id: string
+  name: string
+  size: number
+  type: string
+  url: string
+}
+
 export type ProductFormValues = {
   id?: string
   userId: string
   title: string
   description: string
   productUrl: string
+  images: string[]
+  productFiles: ProductFile[]
   isActive: boolean
   totalQuantity?: number | null
   limitPerCheckout?: number | null
@@ -77,7 +98,14 @@ export const productFormClientSchema = z.object({
   userId: z.string(),
   title: z.string().min(1, 'Title is required.'),
   description: z.string().optional(),
-  productUrl: z.string().url('Please enter a valid URL, including https://'),
+  productUrl: z
+    .string()
+    .url('Please enter a valid URL')
+    .optional()
+    .or(z.literal('')),
+  images: z.array(z.string()).optional(),
+  // productFiles validation is looser on client, mostly handled by UI state
+  productFiles: z.array(z.any()).optional(),
   isActive: z.boolean(),
   totalQuantity: z.number().int().positive().nullable().optional(),
   limitPerCheckout: z.number().int().positive().nullable().optional(),
@@ -91,6 +119,8 @@ export function emptyProductForm(userId: string): ProductFormValues {
     title: '',
     description: '',
     productUrl: '',
+    images: [],
+    productFiles: [],
     isActive: true,
     totalQuantity: null,
     limitPerCheckout: 1,
@@ -169,22 +199,113 @@ export interface ProductFormProps {
 export function ProductForm(props: ProductFormProps) {
   const { value, onChange, onSubmit, submitting, onDelete } = props
 
-  const handleSubmit: React.FormEventHandler = (e) => {
+  const [isUploading, setIsUploading] = React.useState(false)
+
+  // Carousel Images Hook
+  const [
+    { files: imageFiles },
+    {
+      getInputProps: getImageInputProps,
+      openFileDialog: openImageDialog,
+      removeFile: removeImage,
+      handleDrop: handleImageDrop,
+      handleDragOver: handleImageDragOver,
+      handleDragEnter: handleImageDragEnter,
+      handleDragLeave: handleImageDragLeave,
+    },
+  ] = useFileUpload({
+    accept: 'image/*',
+    multiple: true,
+    initialFiles: value.images.map((url) => ({
+      id: url,
+      name: 'Image',
+      url,
+      size: 0,
+      type: 'image/jpeg',
+    })),
+  })
+
+  // Digital Files Hook
+  const [
+    { files: digitalFiles },
+    {
+      getInputProps: getFileInputProps,
+      openFileDialog: openFileDialog,
+      removeFile: removeDigitalFile,
+      handleDrop: handleFileDrop,
+      handleDragOver: handleFileDragOver,
+      handleDragEnter: handleFileDragEnter,
+      handleDragLeave: handleFileDragLeave,
+    },
+  ] = useFileUpload({
+    accept: '*', // Accept any file type for digital products
+    multiple: true,
+    initialFiles: value.productFiles.map((f) => ({
+      ...f,
+      url: f.url, // Ensure url is present
+    })),
+  })
+
+  const handleSubmit: React.FormEventHandler = async (e) => {
     e.preventDefault()
-    const result = productFormClientSchema.safeParse(value)
-    if (!result.success) {
-      // For now, surface the first error via alert; callers can add nicer UI later.
-      const flat = result.error.flatten()
-      const firstFieldError =
-        Object.values(flat.fieldErrors).flat().filter(Boolean)[0] ??
-        flat.formErrors[0]
-      if (typeof window !== 'undefined' && firstFieldError) {
-         
-        window.alert(firstFieldError)
+    setIsUploading(true)
+
+    try {
+      const result = productFormClientSchema.safeParse(value)
+      if (!result.success) {
+        const flat = result.error.flatten()
+        const firstFieldError =
+          Object.values(flat.fieldErrors).flat().filter(Boolean)[0] ??
+          flat.formErrors[0]
+        if (typeof window !== 'undefined' && firstFieldError) {
+          window.alert(firstFieldError)
+        }
+        setIsUploading(false)
+        return
       }
-      return
+
+      // 1. Upload new images
+      const finalImages: string[] = []
+      for (const fileItem of imageFiles) {
+        if (fileItem.file instanceof File) {
+          const url = await uploadFile(fileItem.file, 'products/images')
+          finalImages.push(url)
+        } else {
+          // Existing file (FileMetadata)
+          finalImages.push(fileItem.file.url)
+        }
+      }
+
+      // 2. Upload new digital files
+      const finalProductFiles: ProductFile[] = []
+      for (const fileItem of digitalFiles) {
+        if (fileItem.file instanceof File) {
+          const url = await uploadFile(fileItem.file, 'products/files')
+          finalProductFiles.push({
+            id: crypto.randomUUID(),
+            name: fileItem.file.name,
+            size: fileItem.file.size,
+            type: fileItem.file.type,
+            url,
+          })
+        } else {
+          // Existing
+          finalProductFiles.push(fileItem.file as ProductFile)
+        }
+      }
+
+      onSubmit({
+        ...result.data,
+        description: result.data.description ?? '',
+        images: finalImages,
+        productFiles: finalProductFiles,
+      })
+    } catch (err) {
+      console.error('Upload failed', err)
+      window.alert('Failed to upload files. Please try again.')
+    } finally {
+      setIsUploading(false)
     }
-    onSubmit({ ...result.data, description: result.data.description ?? '' })
   }
 
   const currentPriceLabel = humanPriceLabel(value.priceSettings)
@@ -227,6 +348,102 @@ export function ProductForm(props: ProductFormProps) {
               placeholder="Short description that appears on the product detail and checkout pages."
               rows={3}
             />
+          </div>
+
+          <div className="space-y-3">
+            <Label>Product Images</Label>
+            <div
+              className="grid grid-cols-4 gap-3"
+              onDrop={handleImageDrop}
+              onDragOver={handleImageDragOver}
+              onDragEnter={handleImageDragEnter}
+              onDragLeave={handleImageDragLeave}
+            >
+              {imageFiles.map((file, i) => (
+                <div
+                  key={file.id}
+                  className="relative aspect-square rounded-lg overflow-hidden border border-zinc-200 group"
+                >
+                  <img
+                    src={file.preview}
+                    alt="Product"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(file.id)}
+                    className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+
+              <div
+                onClick={openImageDialog}
+                className="aspect-square flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 text-zinc-500 hover:bg-zinc-50 cursor-pointer transition-colors"
+              >
+                <ImageIcon className="h-6 w-6 mb-1 opacity-50" />
+                <span className="text-[10px]">Add Image</span>
+                <input {...getImageInputProps()} className="hidden" />
+              </div>
+            </div>
+            <p className="text-[11px] text-zinc-500">
+              Drag and drop images or click to upload. First image is the cover.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <Label>Digital Files</Label>
+            <div
+              className="space-y-2"
+              onDrop={handleFileDrop}
+              onDragOver={handleFileDragOver}
+              onDragEnter={handleFileDragEnter}
+              onDragLeave={handleFileDragLeave}
+            >
+              {digitalFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center gap-3 p-2 rounded-lg border border-zinc-200 bg-zinc-50/50"
+                >
+                  <div className="h-8 w-8 rounded flex items-center justify-center bg-zinc-100 text-zinc-500">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">
+                      {file.file instanceof File
+                        ? file.file.name
+                        : file.file.name}
+                    </p>
+                    <p className="text-[10px] text-zinc-400">
+                      {file.file instanceof File
+                        ? (file.file.size / 1024).toFixed(0)
+                        : (file.file.size / 1024).toFixed(0)}{' '}
+                      KB
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-zinc-400"
+                    onClick={() => removeDigitalFile(file.id)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+
+              <div
+                onClick={openFileDialog}
+                className="flex items-center justify-center gap-2 p-4 rounded-lg border border-dashed border-zinc-300 text-zinc-500 hover:bg-zinc-50 cursor-pointer transition-colors"
+              >
+                <Upload className="h-4 w-4 opacity-50" />
+                <span className="text-xs">Upload digital files</span>
+                <input {...getFileInputProps()} className="hidden" />
+              </div>
+            </div>
           </div>
 
           <Separator />
@@ -414,12 +631,10 @@ export function ProductForm(props: ProductFormProps) {
                 }
                 type="url"
                 placeholder="https://your-download-or-course.com"
-                required
               />
             </div>
             <p className="text-[11px] text-zinc-500">
-              External delivery link only for now. File delivery will be added
-              later.
+              Optional external link (e.g. if you host files elsewhere).
             </p>
           </div>
 
@@ -561,13 +776,18 @@ export function ProductForm(props: ProductFormProps) {
                 type="submit"
                 size="sm"
                 className={cn('rounded-full text-xs')}
-                disabled={submitting}
+                disabled={submitting || isUploading}
               >
-                {submitting
-                  ? 'Saving...'
-                  : value.id
-                    ? 'Save changes'
-                    : 'Create product'}
+                {submitting || isUploading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>{isUploading ? 'Uploading...' : 'Saving...'}</span>
+                  </div>
+                ) : value.id ? (
+                  'Save changes'
+                ) : (
+                  'Create product'
+                )}
               </Button>
             </div>
           </div>

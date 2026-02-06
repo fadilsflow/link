@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Header } from '@/components/Header'
 import HeroSection from '@/components/HeroSection'
 import { checkOnboardingStatus } from '@/lib/onboarding-server'
+import { SiteFooter } from '@/components/FooterSection'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -34,6 +35,7 @@ function App() {
         <main className="container mb-16 w-full flex-1 lg:mb-20 mx-auto">
           <HeroSection />
         </main>
+        <SiteFooter />
       </div>
     </>
   )

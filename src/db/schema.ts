@@ -31,7 +31,13 @@ export const user = pgTable('user', {
   appearanceBgType: text('appearance_bg_type').default('banner').notNull(),
   appearanceBgWallpaperStyle: text('appearance_bg_wallpaper_style'),
   appearanceBgColor: text('appearance_bg_color'),
-  appearanceBgImageUrl: text('appearance_bg_image_url'),
+  appearanceBgImageUrl: text('appearance_bg_image_url'), // Used for BANNER image
+  appearanceWallpaperImageUrl: text('appearance_wallpaper_image_url'),
+  appearanceWallpaperColor: text('appearance_wallpaper_color'), // For flat wallpaper
+  appearanceWallpaperGradientTop: text('appearance_wallpaper_gradient_top'),
+  appearanceWallpaperGradientBottom: text(
+    'appearance_wallpaper_gradient_bottom',
+  ),
   // Block styling:
   // - appearanceBlockStyle: 'basic' | 'flat' | 'shadow'
   // - appearanceBlockRadius: 'rounded' | 'square'

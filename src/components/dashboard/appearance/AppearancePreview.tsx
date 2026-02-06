@@ -16,6 +16,10 @@ interface AppearancePreviewProps {
     appearanceBgWallpaperStyle?: WallpaperStyle
     appearanceBgColor?: string
     appearanceBgImageUrl?: string
+    appearanceWallpaperImageUrl?: string
+    appearanceWallpaperColor?: string
+    appearanceWallpaperGradientTop?: string
+    appearanceWallpaperGradientBottom?: string
     appearanceBlockStyle?: BlockStyle
     appearanceBlockRadius?: BlockRadius
     appearanceBlockColor?: string
@@ -36,6 +40,10 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
     appearanceBgWallpaperStyle,
     appearanceBgColor,
     appearanceBgImageUrl,
+    appearanceWallpaperImageUrl,
+    appearanceWallpaperColor,
+    appearanceWallpaperGradientTop,
+    appearanceWallpaperGradientBottom,
     appearanceBlockStyle,
     appearanceBlockRadius,
     appearanceBlockColor,
@@ -53,21 +61,29 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
     return fallback
   }
 
-  const bgStyle = {
+  // Separate styles for banner (image only) and wallpaper (image + color)
+  const bannerImageStyle = {
     backgroundImage: appearanceBgImageUrl
       ? `url('${getImageUrl(appearanceBgImageUrl)}')`
       : undefined,
-    backgroundColor: appearanceBgColor || undefined,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   }
 
-  const wallpaperGradient = {
-    background:
-      appearanceBgColor ||
-      (wallpaperStyle === 'gradient'
-        ? 'linear-gradient(135deg,#22c55e,#3b82f6,#a855f7)'
-        : '#FAFAFA'),
+  const wallpaperImageStyle = {
+    backgroundImage: appearanceWallpaperImageUrl
+      ? `url('${getImageUrl(appearanceWallpaperImageUrl)}')`
+      : undefined,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  }
+
+  const wallpaperFlatColorStyle = {
+    backgroundColor: appearanceWallpaperColor || '#F8FAFC',
+  }
+
+  const wallpaperGradientStyle = {
+    background: `linear-gradient(180deg, ${appearanceWallpaperGradientTop || '#ffffff'} 0%, ${appearanceWallpaperGradientBottom || '#000000'} 100%)`,
   }
 
   const avatarGradient = {
@@ -80,16 +96,20 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
   let headerStyle = {}
 
   if (isBanner) {
-    headerStyle = bgStyle
-    containerStyle = { backgroundColor: '#F8FAFC' } // Default light background for banner mode
+    headerStyle = bannerImageStyle
+    // key change: Use appearanceBgColor for container in banner mode
+    containerStyle = { backgroundColor: appearanceBgColor || '#F8FAFC' }
   } else {
     // Wallpaper mode
     if (wallpaperStyle === 'image') {
-      containerStyle = bgStyle
+      containerStyle = wallpaperImageStyle
+    } else if (wallpaperStyle === 'flat') {
+      containerStyle = wallpaperFlatColorStyle
     } else if (wallpaperStyle === 'avatar') {
       containerStyle = avatarGradient
     } else {
-      containerStyle = wallpaperGradient
+      // gradient
+      containerStyle = wallpaperGradientStyle
     }
   }
 

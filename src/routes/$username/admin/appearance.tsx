@@ -74,6 +74,10 @@ function AppearanceEditor({
       appearanceBgWallpaperStyle?: WallpaperStyle
       appearanceBgColor?: string
       appearanceBgImageUrl?: string
+      appearanceWallpaperImageUrl?: string
+      appearanceWallpaperColor?: string
+      appearanceWallpaperGradientTop?: string
+      appearanceWallpaperGradientBottom?: string
       appearanceBlockStyle?: BlockStyle
       appearanceBlockRadius?: BlockRadius
       appearanceBlockColor?: string
@@ -106,12 +110,27 @@ function AppearanceEditor({
   )
 
   // Track current images and colors for instant preview
-  const [currentBgImageUrl, setCurrentBgImageUrl] = React.useState<
+  const [currentBannerUrl, setCurrentBannerUrl] = React.useState<
     string | undefined
   >(user.appearanceBgImageUrl ?? undefined)
   const [currentBgColor, setCurrentBgColor] = React.useState<
     string | undefined
   >(user.appearanceBgColor ?? undefined)
+
+  // New Wallpaper State
+  const [currentWallpaperImageUrl, setCurrentWallpaperImageUrl] =
+    React.useState<string | undefined>(
+      user.appearanceWallpaperImageUrl ?? undefined,
+    )
+  const [currentWallpaperColor, setCurrentWallpaperColor] = React.useState<
+    string | undefined
+  >(user.appearanceWallpaperColor ?? undefined)
+  const [currentGradientTop, setCurrentGradientTop] = React.useState<
+    string | undefined
+  >(user.appearanceWallpaperGradientTop ?? undefined)
+  const [currentGradientBottom, setCurrentGradientBottom] = React.useState<
+    string | undefined
+  >(user.appearanceWallpaperGradientBottom ?? undefined)
 
   // Track current banner selection
   const [currentBannerId, setCurrentBannerId] = React.useState<
@@ -125,33 +144,27 @@ function AppearanceEditor({
       // If it's an external URL, mark as custom
       return 'custom'
     }
-    // Check if it's a gradient based on color
-    if (user.appearanceBgColor?.includes('gradient')) {
-      if (
-        user.appearanceBgColor.includes('rgb(14, 165, 233)') ||
-        user.appearanceBgColor.includes('sky')
-      ) {
-        return 'gradient-blue'
-      }
-      if (
-        user.appearanceBgColor.includes('rgb(139, 92, 246)') ||
-        user.appearanceBgColor.includes('violet')
-      ) {
-        return 'gradient-purple'
-      }
-    }
     return undefined
   })
 
-  // Update effect to sync with user prop if it changes externally (e.g. refetch)
+  // Update effect to sync with user prop if it changes externally
   React.useEffect(() => {
-    if (user.appearanceBgImageUrl !== undefined) {
-      setCurrentBgImageUrl(user.appearanceBgImageUrl ?? undefined)
-    }
-    if (user.appearanceBgColor !== undefined) {
-      setCurrentBgColor(user.appearanceBgColor ?? undefined)
-    }
-  }, [user.appearanceBgImageUrl, user.appearanceBgColor])
+    setCurrentBannerUrl(user.appearanceBgImageUrl ?? undefined)
+    setCurrentBgColor(user.appearanceBgColor ?? undefined)
+    setCurrentWallpaperImageUrl(user.appearanceWallpaperImageUrl ?? undefined)
+    setCurrentWallpaperColor(user.appearanceWallpaperColor ?? undefined)
+    setCurrentGradientTop(user.appearanceWallpaperGradientTop ?? undefined)
+    setCurrentGradientBottom(
+      user.appearanceWallpaperGradientBottom ?? undefined,
+    )
+  }, [
+    user.appearanceBgImageUrl,
+    user.appearanceBgColor,
+    user.appearanceWallpaperImageUrl,
+    user.appearanceWallpaperColor,
+    user.appearanceWallpaperGradientTop,
+    user.appearanceWallpaperGradientBottom,
+  ])
 
   const handleChange = (
     patch: Omit<
@@ -167,7 +180,7 @@ function AppearanceEditor({
 
   const handleBannerSelect = (imageUrl: string, bannerId?: string) => {
     setCurrentBannerId(bannerId)
-    setCurrentBgImageUrl(imageUrl || undefined)
+    setCurrentBannerUrl(imageUrl || undefined)
     handleChange({
       appearanceBgType: 'banner',
       appearanceBgImageUrl: imageUrl ? imageUrl : undefined,
@@ -190,16 +203,28 @@ function AppearanceEditor({
   }
 
   const handleWallpaperColorChange = (color: string | undefined) => {
-    setCurrentBgColor(color)
+    setCurrentWallpaperColor(color)
     handleChange({
-      appearanceBgColor: color,
+      appearanceWallpaperColor: color,
+    })
+  }
+
+  const handleWallpaperGradientChange = (
+    top: string | undefined,
+    bottom: string | undefined,
+  ) => {
+    setCurrentGradientTop(top)
+    setCurrentGradientBottom(bottom)
+    handleChange({
+      appearanceWallpaperGradientTop: top,
+      appearanceWallpaperGradientBottom: bottom,
     })
   }
 
   const handleWallpaperImageChange = (url: string | undefined) => {
-    setCurrentBgImageUrl(url)
+    setCurrentWallpaperImageUrl(url)
     handleChange({
-      appearanceBgImageUrl: url,
+      appearanceWallpaperImageUrl: url,
     })
   }
 
@@ -288,7 +313,7 @@ function AppearanceEditor({
                   className="mt-0 animate-in fade-in-0 slide-in-from-left-1 duration-300"
                 >
                   <BannerSelector
-                    currentBannerUrl={currentBgImageUrl}
+                    currentBannerUrl={currentBannerUrl}
                     currentBannerId={currentBannerId}
                     currentBgColor={currentBgColor}
                     onBannerSelect={handleBannerSelect}
@@ -302,10 +327,13 @@ function AppearanceEditor({
                 >
                   <WallpaperSelector
                     wallpaperStyle={wallpaperStyle}
-                    currentBgColor={currentBgColor}
-                    currentImageUrl={currentBgImageUrl}
+                    wallpaperColor={currentWallpaperColor}
+                    gradientTop={currentGradientTop}
+                    gradientBottom={currentGradientBottom}
+                    currentImageUrl={currentWallpaperImageUrl}
                     onStyleChange={handleWallpaperStyleChange}
-                    onColorChange={handleWallpaperColorChange}
+                    onWallpaperColorChange={handleWallpaperColorChange}
+                    onGradientChange={handleWallpaperGradientChange}
                     onImageUrlChange={handleWallpaperImageChange}
                   />
                 </TabsContent>
@@ -370,8 +398,15 @@ function AppearanceEditor({
                   appearanceBgWallpaperStyle: wallpaperStyle,
                   appearanceBlockStyle: blockStyle,
                   appearanceBlockRadius: blockRadius,
-                  appearanceBgImageUrl: currentBgImageUrl || undefined,
+                  appearanceBgImageUrl: currentBannerUrl || undefined,
                   appearanceBgColor: currentBgColor || undefined,
+                  appearanceWallpaperImageUrl:
+                    currentWallpaperImageUrl || undefined,
+                  appearanceWallpaperColor: currentWallpaperColor || undefined,
+                  appearanceWallpaperGradientTop:
+                    currentGradientTop || undefined,
+                  appearanceWallpaperGradientBottom:
+                    currentGradientBottom || undefined,
                 }}
                 blocks={blocks}
               />

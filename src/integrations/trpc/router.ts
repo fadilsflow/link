@@ -84,6 +84,10 @@ const userRouter = {
           .optional(),
         appearanceBgColor: z.string().optional(),
         appearanceBgImageUrl: z.string().optional(),
+        appearanceWallpaperImageUrl: z.string().optional(),
+        appearanceWallpaperColor: z.string().optional(),
+        appearanceWallpaperGradientTop: z.string().optional(),
+        appearanceWallpaperGradientBottom: z.string().optional(),
         appearanceBlockStyle: z.enum(['basic', 'flat', 'shadow']).optional(),
         appearanceBlockRadius: z.enum(['rounded', 'square']).optional(),
         appearanceBlockColor: z.string().optional(),
@@ -108,6 +112,24 @@ const userRouter = {
             : {}),
           ...(input.appearanceBgImageUrl !== undefined
             ? { appearanceBgImageUrl: input.appearanceBgImageUrl }
+            : {}),
+          ...(input.appearanceWallpaperImageUrl !== undefined
+            ? { appearanceWallpaperImageUrl: input.appearanceWallpaperImageUrl }
+            : {}),
+          ...(input.appearanceWallpaperColor !== undefined
+            ? { appearanceWallpaperColor: input.appearanceWallpaperColor }
+            : {}),
+          ...(input.appearanceWallpaperGradientTop !== undefined
+            ? {
+                appearanceWallpaperGradientTop:
+                  input.appearanceWallpaperGradientTop,
+              }
+            : {}),
+          ...(input.appearanceWallpaperGradientBottom !== undefined
+            ? {
+                appearanceWallpaperGradientBottom:
+                  input.appearanceWallpaperGradientBottom,
+              }
             : {}),
           ...(input.appearanceBlockStyle
             ? { appearanceBlockStyle: input.appearanceBlockStyle }

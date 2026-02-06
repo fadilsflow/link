@@ -2,16 +2,21 @@ import React from 'react'
 import type { WallpaperStyle } from './types'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { ImageUploader } from './ImageUploader'
 import { cn } from '@/lib/utils'
 
 interface WallpaperSelectorProps {
   wallpaperStyle: WallpaperStyle
-  currentBgColor?: string
+  wallpaperColor?: string
+  gradientTop?: string
+  gradientBottom?: string
   currentImageUrl?: string
   onStyleChange: (style: WallpaperStyle) => void
-  onColorChange: (color: string | undefined) => void
+  onWallpaperColorChange: (color: string | undefined) => void
+  onGradientChange: (
+    top: string | undefined,
+    bottom: string | undefined,
+  ) => void
   onImageUrlChange: (url: string | undefined) => void
 }
 
@@ -39,10 +44,13 @@ function WallpaperOption(props: {
 
 export function WallpaperSelector({
   wallpaperStyle,
-  currentBgColor,
+  wallpaperColor,
+  gradientTop,
+  gradientBottom,
   currentImageUrl,
   onStyleChange,
-  onColorChange,
+  onWallpaperColorChange,
+  onGradientChange,
   onImageUrlChange,
 }: WallpaperSelectorProps) {
   return (
@@ -75,49 +83,98 @@ export function WallpaperSelector({
         />
       </div>
 
-      {/* Background Color */}
-      <div className="space-y-2 pt-2 border-t border-zinc-100">
-        <Label
-          htmlFor="wallpaper-color"
-          className="text-xs font-medium text-zinc-700"
-        >
-          Color
-        </Label>
-        <div className="flex items-center gap-3">
-          <div
-            className="h-9 w-9 rounded-lg border border-zinc-200 shrink-0"
-            style={{
-              background:
-                currentBgColor ||
-                (wallpaperStyle === 'gradient'
-                  ? 'linear-gradient(90deg,#6EE7B7,#3B82F6,#A855F7)'
-                  : '#FAFAFA'),
-            }}
-          />
-          <Input
-            id="wallpaper-color"
-            placeholder={
-              wallpaperStyle === 'gradient' ? 'linear-gradient(...)' : '#FAFAFA'
-            }
-            defaultValue={currentBgColor ?? ''}
-            onBlur={(e) => onColorChange(e.target.value || undefined)}
-            className="text-xs"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="ml-auto h-8 w-8 rounded-full text-xs text-zinc-500 shrink-0"
-            onClick={() => onColorChange(undefined)}
-          >
-            ↻
-          </Button>
+      {/* Flat Color Picker */}
+      {wallpaperStyle === 'flat' && (
+        <div className="space-y-3 pt-2 border-t border-zinc-100">
+          <Label className="text-xs font-medium text-zinc-700">
+            Background Color
+          </Label>
+          <div className="flex gap-3">
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-zinc-200 shadow-sm focus-within:ring-2 focus-within:ring-zinc-900/20">
+              <input
+                type="color"
+                className="absolute inset-0 h-[150%] w-[150%] -translate-x-1/4 -translate-y-1/4 cursor-pointer border-none p-0 opacity-100"
+                value={wallpaperColor || '#F8FAFC'}
+                onChange={(e) => onWallpaperColorChange(e.target.value)}
+              />
+            </div>
+            <div className="relative flex-1">
+              <Input
+                placeholder="#F8FAFC"
+                value={wallpaperColor ?? ''}
+                onChange={(e) => onWallpaperColorChange(e.target.value)}
+                className="h-10 text-xs font-mono uppercase"
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Gradient Pickers */}
+      {wallpaperStyle === 'gradient' && (
+        <div className="space-y-3 pt-2 border-t border-zinc-100">
+          <Label className="text-xs font-medium text-zinc-700">
+            Gradient Colors
+          </Label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                Top Color
+              </Label>
+              <div className="flex gap-2">
+                <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-zinc-200 shadow-sm">
+                  <input
+                    type="color"
+                    className="absolute inset-0 h-[150%] w-[150%] -translate-x-1/4 -translate-y-1/4 cursor-pointer border-none p-0 opacity-100"
+                    value={gradientTop || '#FFFFFF'}
+                    onChange={(e) =>
+                      onGradientChange(e.target.value, gradientBottom)
+                    }
+                  />
+                </div>
+                <Input
+                  placeholder="#FFFFFF"
+                  value={gradientTop ?? ''}
+                  onChange={(e) =>
+                    onGradientChange(e.target.value, gradientBottom)
+                  }
+                  className="h-8 text-xs font-mono uppercase"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                Bottom Color
+              </Label>
+              <div className="flex gap-2">
+                <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-zinc-200 shadow-sm">
+                  <input
+                    type="color"
+                    className="absolute inset-0 h-[150%] w-[150%] -translate-x-1/4 -translate-y-1/4 cursor-pointer border-none p-0 opacity-100"
+                    value={gradientBottom || '#000000'}
+                    onChange={(e) =>
+                      onGradientChange(gradientTop, e.target.value)
+                    }
+                  />
+                </div>
+                <Input
+                  placeholder="#000000"
+                  value={gradientBottom ?? ''}
+                  onChange={(e) =>
+                    onGradientChange(gradientTop, e.target.value)
+                  }
+                  className="h-8 text-xs font-mono uppercase"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Image URL (only for image style) */}
       {wallpaperStyle === 'image' && (
-        <div className="space-y-2">
+        <div className="space-y-2 pt-2 border-t border-zinc-100">
           <Label className="text-xs font-medium text-zinc-700">
             Wallpaper Image
           </Label>

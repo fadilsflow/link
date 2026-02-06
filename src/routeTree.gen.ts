@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TestDndRouteImport } from './routes/test-dnd'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsernameIndexRouteImport } from './routes/$username/index'
@@ -26,11 +25,6 @@ import { Route as UsernameAdminProductsProductIdRouteImport } from './routes/$us
 import { Route as UsernameAdminEditorProfilesRouteImport } from './routes/$username/admin/editor/profiles'
 import { Route as UsernameAdminEditorAppearanceRouteImport } from './routes/$username/admin/editor/appearance'
 
-const TestDndRoute = TestDndRouteImport.update({
-  id: '/test-dnd',
-  path: '/test-dnd',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -118,7 +112,6 @@ const UsernameAdminEditorAppearanceRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
-  '/test-dnd': typeof TestDndRoute
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/$username/': typeof UsernameIndexRoute
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
@@ -136,7 +129,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
-  '/test-dnd': typeof TestDndRoute
   '/$username': typeof UsernameIndexRoute
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -154,7 +146,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
-  '/test-dnd': typeof TestDndRoute
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/$username/': typeof UsernameIndexRoute
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
@@ -174,7 +165,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/onboarding'
-    | '/test-dnd'
     | '/$username/admin'
     | '/$username/'
     | '/$username/admin/editor'
@@ -192,7 +182,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/onboarding'
-    | '/test-dnd'
     | '/$username'
     | '/$username/admin/editor'
     | '/api/auth/$'
@@ -209,7 +198,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/onboarding'
-    | '/test-dnd'
     | '/$username/admin'
     | '/$username/'
     | '/$username/admin/editor'
@@ -228,7 +216,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OnboardingRoute: typeof OnboardingRoute
-  TestDndRoute: typeof TestDndRoute
   UsernameAdminRouteRoute: typeof UsernameAdminRouteRouteWithChildren
   UsernameIndexRoute: typeof UsernameIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -239,13 +226,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/test-dnd': {
-      id: '/test-dnd'
-      path: '/test-dnd'
-      fullPath: '/test-dnd'
-      preLoaderRoute: typeof TestDndRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -392,7 +372,6 @@ const UsernameAdminRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardingRoute: OnboardingRoute,
-  TestDndRoute: TestDndRoute,
   UsernameAdminRouteRoute: UsernameAdminRouteRouteWithChildren,
   UsernameIndexRoute: UsernameIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

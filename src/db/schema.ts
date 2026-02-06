@@ -74,7 +74,16 @@ export const products = pgTable('product', {
   // Delivery
   // Delivery
   productUrl: text('product_url'),
-  productFiles: json('product_files'), // Array of file objects
+  productFiles:
+    json('product_files').$type<
+      Array<{
+        id: string
+        name: string
+        size: number
+        type: string
+        url: string
+      }>
+    >(), // Array of file objects
   images: text('images').array(), // Array of image URLs
   // Custom checkout questions (JSON string for simple, extendable schema)
   customerQuestions: text('customer_questions'),

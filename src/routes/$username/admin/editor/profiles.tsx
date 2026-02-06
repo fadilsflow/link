@@ -25,7 +25,7 @@ import { ShareProfileModal } from '@/components/share-profile-modal'
 import { BASE_URL } from '@/lib/constans'
 import SocialEditor from '@/components/dashboard/SocialEditor'
 import { toastManager } from '@/components/ui/toast'
-import { usePreview } from '@/lib/preview-context'
+import { usePreview, type PreviewUser } from '@/lib/preview-context'
 
 export const Route = createFileRoute('/$username/admin/editor/profiles')({
   component: AdminDashboard,
@@ -61,7 +61,7 @@ function AdminDashboard() {
   // Sync data to preview context
   useEffect(() => {
     if (dashboardData?.user) {
-      setUser(dashboardData.user)
+      setUser(dashboardData.user as unknown as PreviewUser)
     }
   }, [dashboardData?.user, setUser])
 
@@ -111,9 +111,9 @@ function AdminDashboard() {
       setLocalBlocks((prev) =>
         prev.map((b) =>
           b.id.startsWith('temp-') &&
-          b.title === newBlock.title &&
-          b.url === newBlock.url &&
-          b.type === newBlock.type
+            b.title === newBlock.title &&
+            b.url === newBlock.url &&
+            b.type === newBlock.type
             ? { ...newBlock, syncStatus: 'saved', errors: {} }
             : b,
         ),

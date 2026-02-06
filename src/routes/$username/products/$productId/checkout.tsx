@@ -1,11 +1,12 @@
 import * as React from 'react'
-import { createFileRoute, notFound } from '@tanstack/react-router'
-import { ArrowLeft, Lock } from 'lucide-react'
+import { createFileRoute, notFound, Link } from '@tanstack/react-router'
+import { ArrowLeft, CheckCircle2, Lock, ShoppingBag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getPublicProduct } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
 
@@ -67,11 +68,21 @@ function effectiveUnitPrice(product: any, customAmountCents: number | null) {
   return product.price ?? 0
 }
 
+function parseAmount(value: string): number | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  const num = Number(trimmed.replace(',', '.'))
+  if (Number.isNaN(num) || num < 0) return null
+  return Math.round(num * 100)
+}
+
 function CheckoutPage() {
   const { username } = Route.useParams()
   const { product, user } = Route.useLoaderData()
 
   const questions = parseQuestions(product.customerQuestions)
+  const productImages = (product.images as string[] | null) || []
+  const hasImage = productImages.length > 0
 
   const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')
@@ -118,8 +129,6 @@ function CheckoutPage() {
     setTimeout(() => {
       setSubmitting(false)
       setSubmitted(true)
-      // Mock payment – later this can redirect to a real provider.
-      // We do not expose productUrl here.
       console.log('Mock checkout payload', {
         productId: product.id,
         username,
@@ -132,196 +141,298 @@ function CheckoutPage() {
     }, 800)
   }
 
+  // Success State
   if (submitted) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center">
-        <div className="max-w-md mx-auto px-4 py-10 space-y-6">
-          <div className="flex items-center justify-between gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-slate-600"
-              onClick={() => window.history.back()}
-            >
-              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-              Back
-            </Button>
-          </div>
-          <Card className="border-slate-200 rounded-2xl shadow-md">
-            <CardContent className="p-6 space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700">
-                <Lock className="h-3.5 w-3.5" />
-                Mock payment complete
-              </div>
-              <h1 className="text-lg font-semibold text-slate-900">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-xl border-0 rounded-2xl overflow-hidden">
+          <CardContent className="p-8 text-center space-y-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100">
+              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            </div>
+
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold text-slate-900">
                 Thank you, {name || 'friend'}!
               </h1>
-              <p className="text-sm text-slate-600">
-                This is a placeholder checkout flow. Payment processing and
-                delivery will be wired up later.
-              </p>
-              <p className="text-xs text-slate-500 pt-1">
-                You purchased{' '}
-                <span className="font-semibold text-slate-800">
+              <p className="text-slate-500">Your purchase was successful</p>
+            </div>
+
+            <div className="bg-slate-50 rounded-xl p-4 flex items-center gap-4">
+              {hasImage ? (
+                <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
+                  <img
+                    src={productImages[0]}
+                    alt={product.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-14 h-14 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0">
+                  <ShoppingBag className="h-6 w-6 text-slate-400" />
+                </div>
+              )}
+              <div className="text-left min-w-0">
+                <p className="font-semibold text-slate-900 truncate">
                   {product.title}
-                </span>{' '}
-                from @{user.username} for{' '}
-                <span className="font-semibold">{formatPrice(unitPrice)}</span>.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-md mx-auto px-4 py-10 space-y-6">
-        <div className="flex items-center justify-between gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs text-slate-600"
-            onClick={() => window.history.back()}
-          >
-            <ArrowLeft className="h-3.5 w-3.5 mr-1" />
-            Back
-          </Button>
-          <span className="text-[11px] text-slate-500">@{user.username}</span>
-        </div>
-
-        <Card className="border-slate-200 rounded-2xl shadow-md">
-          <CardContent className="p-6 space-y-5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="space-y-0.5">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-slate-400">
-                  Checkout
                 </p>
-                <h1 className="text-lg font-semibold text-slate-900">
-                  {product.title}
-                </h1>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-slate-500">Total</p>
-                <p className="text-sm font-semibold text-slate-900">
+                <p className="text-sm text-slate-500">
                   {formatPrice(unitPrice)}
                 </p>
               </div>
             </div>
 
-            <form className="space-y-4 text-sm" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-
-              {product.payWhatYouWant && (
-                <div className="space-y-1.5">
-                  <Label htmlFor="amount">Amount</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500">$</span>
-                    <Input
-                      id="amount"
-                      inputMode="decimal"
-                      placeholder={
-                        product.suggestedPrice
-                          ? (product.suggestedPrice / 100).toString()
-                          : '0.00'
-                      }
-                      value={customAmount}
-                      onChange={(e) => setCustomAmount(e.target.value)}
-                    />
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    {product.minimumPrice
-                      ? `Minimum ${formatPrice(product.minimumPrice)}`
-                      : 'No minimum amount.'}
-                  </p>
-                </div>
-              )}
-
-              {questions.length > 0 && (
-                <div className="space-y-3 pt-1">
-                  <p className="text-xs font-medium text-slate-700">
-                    Additional questions
-                  </p>
-                  {questions.map((q) => (
-                    <div key={q.id} className="space-y-1.5">
-                      <Label htmlFor={`q-${q.id}`}>
-                        {q.label}{' '}
-                        {q.required && <span className="text-rose-500">*</span>}
-                      </Label>
-                      <Input
-                        id={`q-${q.id}`}
-                        value={answers[q.id] ?? ''}
-                        onChange={(e) =>
-                          setAnswers((prev) => ({
-                            ...prev,
-                            [q.id]: e.target.value,
-                          }))
-                        }
-                        required={q.required}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <Label htmlFor="note">Note to seller (optional)</Label>
-                <Textarea
-                  id="note"
-                  rows={2}
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className={cn(
-                  'w-full rounded-full text-sm font-semibold flex items-center justify-center gap-1.5 mt-2',
-                )}
-                disabled={submitting}
-              >
-                <Lock className="h-3.5 w-3.5" />
-                {submitting ? 'Processing...' : 'Complete checkout'}
-              </Button>
-
-              <p className="text-[11px] text-slate-400 pt-1">
-                Payments and file delivery are not connected yet. This flow just
-                simulates a purchase for now.
+            <div className="pt-2 space-y-3">
+              <p className="text-xs text-slate-400">
+                This is a mock checkout. Payment integration coming soon.
               </p>
-            </form>
+              <Button
+                variant="outline"
+                onClick={() => window.history.back()}
+                className="rounded-xl"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Go Back
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-100">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs text-slate-600 -ml-2 hover:bg-slate-100"
+            onClick={() => window.history.back()}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            Back
+          </Button>
+          <div className="flex items-center gap-1.5 text-slate-400">
+            <Lock className="h-3.5 w-3.5" />
+            <span className="text-xs font-medium">Secure Checkout</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-lg mx-auto px-4 py-8">
+        <div className="space-y-6">
+          {/* Product Summary Card */}
+          <Card className="shadow-lg border-0 rounded-2xl overflow-hidden bg-white">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-4">
+                {/* Product Image */}
+                {hasImage ? (
+                  <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
+                    <img
+                      src={productImages[0]}
+                      alt={product.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <ShoppingBag className="h-8 w-8 text-slate-300" />
+                  </div>
+                )}
+
+                {/* Product Info */}
+                <div className="flex-1 min-w-0">
+                  <span className="inline-flex text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium mb-1.5">
+                    Digital Product
+                  </span>
+                  <h1 className="text-lg font-bold text-slate-900 leading-tight">
+                    {product.title}
+                  </h1>
+                  <Link
+                    to={`/${user.username}`}
+                    className="flex items-center gap-1.5 mt-2 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                  >
+                    <Avatar className="h-4 w-4">
+                      <AvatarImage
+                        src={user.image || '/avatar-placeholder.png'}
+                      />
+                      <AvatarFallback className="bg-slate-900 text-white text-[8px]">
+                        {user.name.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    by {user.name}
+                  </Link>
+                </div>
+
+                {/* Price */}
+                <div className="text-right flex-shrink-0">
+                  <p className="text-xs text-slate-400">Total</p>
+                  <p className="text-lg font-bold text-slate-900">
+                    {formatPrice(unitPrice)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Checkout Form Card */}
+          <Card className="shadow-lg border-0 rounded-2xl overflow-hidden bg-white">
+            <CardContent className="p-6">
+              <form className="space-y-5" onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    Your Information
+                  </h2>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="name"
+                      className="text-xs font-medium text-slate-600"
+                    >
+                      Name
+                    </Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                      required
+                      className="h-11 rounded-xl border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="email"
+                      className="text-xs font-medium text-slate-600"
+                    >
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                      className="h-11 rounded-xl border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Pay What You Want */}
+                {product.payWhatYouWant && (
+                  <div className="space-y-2 pt-2">
+                    <Label
+                      htmlFor="amount"
+                      className="text-xs font-medium text-slate-600"
+                    >
+                      Your Price
+                    </Label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+                        $
+                      </span>
+                      <Input
+                        id="amount"
+                        inputMode="decimal"
+                        placeholder={
+                          product.suggestedPrice
+                            ? (product.suggestedPrice / 100).toString()
+                            : '0.00'
+                        }
+                        value={customAmount}
+                        onChange={(e) => setCustomAmount(e.target.value)}
+                        className="h-11 rounded-xl border-slate-200 pl-8 focus:border-slate-400 focus:ring-slate-400"
+                      />
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      {product.minimumPrice
+                        ? `Minimum ${formatPrice(product.minimumPrice)}`
+                        : 'No minimum — pay what you feel is fair'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Custom Questions */}
+                {questions.length > 0 && (
+                  <div className="space-y-4 pt-2">
+                    <h2 className="text-sm font-semibold text-slate-900">
+                      Additional Questions
+                    </h2>
+                    {questions.map((q) => (
+                      <div key={q.id} className="space-y-2">
+                        <Label
+                          htmlFor={`q-${q.id}`}
+                          className="text-xs font-medium text-slate-600"
+                        >
+                          {q.label}{' '}
+                          {q.required && (
+                            <span className="text-rose-500">*</span>
+                          )}
+                        </Label>
+                        <Input
+                          id={`q-${q.id}`}
+                          value={answers[q.id] ?? ''}
+                          onChange={(e) =>
+                            setAnswers((prev) => ({
+                              ...prev,
+                              [q.id]: e.target.value,
+                            }))
+                          }
+                          required={q.required}
+                          className="h-11 rounded-xl border-slate-200 focus:border-slate-400 focus:ring-slate-400"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Note */}
+                <div className="space-y-2 pt-2">
+                  <Label
+                    htmlFor="note"
+                    className="text-xs font-medium text-slate-600"
+                  >
+                    Note to seller{' '}
+                    <span className="text-slate-400">(optional)</span>
+                  </Label>
+                  <Textarea
+                    id="note"
+                    rows={2}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Any special requests..."
+                    className="rounded-xl border-slate-200 focus:border-slate-400 focus:ring-slate-400 resize-none"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  className={cn(
+                    'w-full h-12 rounded-xl text-base font-semibold flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 hover:shadow-xl hover:shadow-slate-900/15 transition-all',
+                  )}
+                  disabled={submitting}
+                >
+                  <Lock className="h-4 w-4" />
+                  {submitting
+                    ? 'Processing...'
+                    : `Pay ${formatPrice(unitPrice)}`}
+                </Button>
+
+                <p className="text-center text-[11px] text-slate-400">
+                  This is a demo checkout. Payment processing will be integrated
+                  soon.
+                </p>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
-}
-
-function parseAmount(value: string): number | null {
-  const trimmed = value.trim()
-  if (!trimmed) return null
-  const num = Number(trimmed.replace(',', '.'))
-  if (Number.isNaN(num) || num < 0) return null
-  return Math.round(num * 100)
 }

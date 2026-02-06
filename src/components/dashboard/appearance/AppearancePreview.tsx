@@ -1,23 +1,36 @@
+import { ArrowUpRight, Globe, Link as LinkIcon, X as XIcon } from 'lucide-react'
 import type { BgMode, BlockRadius, BlockStyle, WallpaperStyle } from './types'
 import { cn } from '@/lib/utils'
+import { Card } from '@/components/ui/card'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 
 interface AppearancePreviewProps {
   user: {
+    username: string
     name: string
     title?: string | null
     bio?: string | null
     image?: string | null
-    appearanceBgType: BgMode
-    appearanceBgWallpaperStyle: WallpaperStyle
+    appearanceBgType?: BgMode | 'color' | 'image'
+    appearanceBgWallpaperStyle?: WallpaperStyle
     appearanceBgColor?: string
     appearanceBgImageUrl?: string
-    appearanceBlockStyle: BlockStyle
-    appearanceBlockRadius: BlockRadius
+    appearanceBlockStyle?: BlockStyle
+    appearanceBlockRadius?: BlockRadius
     appearanceBlockColor?: string
   }
+  blocks: Array<{
+    id: string
+    title: string
+    url: string
+    type?: string
+    content?: string
+    isEnabled: boolean
+  }>
 }
 
-export function AppearancePreview(props: AppearancePreviewProps) {
+export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
   const {
     appearanceBgType,
     appearanceBgWallpaperStyle,
@@ -26,96 +39,164 @@ export function AppearancePreview(props: AppearancePreviewProps) {
     appearanceBlockStyle,
     appearanceBlockRadius,
     appearanceBlockColor,
-  } = props.user
+  } = user
 
-  const bgStyle =
-    appearanceBgType === 'banner'
+  const bgType = (appearanceBgType as BgMode) ?? 'banner'
+  const wallpaperStyle =
+    (appearanceBgWallpaperStyle as WallpaperStyle) ?? 'flat'
+  const isBanner = bgType === 'banner' || !bgType
+
+  const getImageUrl = (imageUrl?: string | null, fallback?: string) => {
+    if (imageUrl) {
+      return imageUrl.startsWith('/') ? imageUrl : imageUrl
+    }
+    return fallback
+  }
+
+  const bgStyle = isBanner
+    ? {
+        backgroundImage: appearanceBgImageUrl
+          ? `url('${getImageUrl(appearanceBgImageUrl)}')`
+          : undefined,
+        backgroundColor: appearanceBgColor || undefined,
+        backgroundSize: appearanceBgImageUrl ? 'cover' : undefined,
+        backgroundPosition: appearanceBgImageUrl ? 'center' : undefined,
+      }
+    : wallpaperStyle === 'image' || bgType === 'image'
       ? {
           backgroundImage: appearanceBgImageUrl
-            ? `url('${appearanceBgImageUrl}')`
+            ? `url('${getImageUrl(appearanceBgImageUrl)}')`
             : undefined,
-          backgroundColor: appearanceBgColor || undefined,
-          backgroundSize: appearanceBgImageUrl ? 'cover' : undefined,
-          backgroundPosition: appearanceBgImageUrl ? 'center' : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
         }
-      : appearanceBgWallpaperStyle === 'image'
+      : wallpaperStyle === 'avatar'
         ? {
-            backgroundImage: appearanceBgImageUrl
-              ? `url('${appearanceBgImageUrl}')`
-              : undefined,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            background:
+              'radial-gradient(circle at center, rgba(15,23,42,0.1), #020617)',
           }
-        : appearanceBgWallpaperStyle === 'avatar'
-          ? {
-              background:
-                'radial-gradient(circle at center, rgba(15,23,42,0.1), #020617)',
-            }
-          : {
-              background:
-                appearanceBgColor ||
-                (appearanceBgWallpaperStyle === 'gradient'
-                  ? 'linear-gradient(135deg,#22c55e,#3b82f6,#a855f7)'
-                  : '#FAFAFA'),
-            }
+        : {
+            background:
+              appearanceBgColor ||
+              (wallpaperStyle === 'gradient'
+                ? 'linear-gradient(135deg,#22c55e,#3b82f6,#a855f7)'
+                : '#FAFAFA'),
+          }
+
+  const blockStyle = (appearanceBlockStyle as BlockStyle) ?? 'basic'
+  const blockRadius = (appearanceBlockRadius as BlockRadius) ?? 'rounded'
 
   const cardBase =
-    appearanceBlockStyle === 'flat'
-      ? 'bg-zinc-50 border-transparent shadow-none'
-      : appearanceBlockStyle === 'shadow'
-        ? 'bg-white border border-zinc-900/80 shadow-[0_4px_0_rgba(0,0,0,0.9)]'
-        : 'bg-white border border-zinc-200 shadow-sm'
+    blockStyle === 'flat'
+      ? 'bg-white border border-slate-200'
+      : blockStyle === 'shadow'
+        ? 'bg-white border-none shadow-md'
+        : 'bg-white border border-slate-100 shadow-sm'
 
-  const radiusClass =
-    appearanceBlockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-md'
+  const radiusClass = blockRadius === 'rounded' ? 'rounded-xl' : 'rounded-sm'
 
   return (
-    <div className="w-full bg-slate-900/5 p-4">
-      <div className="mx-auto aspect-9/16 w-full max-w-[260px] overflow-hidden rounded-[32px] border border-zinc-200 bg-white shadow-xl">
-        <div className="relative h-32 w-full" style={bgStyle}>
-          <div className="absolute inset-0 bg-black/15" />
-        </div>
-        <div className="px-4 -mt-8 pb-4 space-y-3">
-          <div
-            className={cn(
-              'inline-flex h-14 w-14 items-center justify-center border-4 border-white bg-zinc-900 text-white text-lg font-bold shadow-md',
-              'rounded-full',
-            )}
-          >
-            {props.user.name.slice(0, 2).toUpperCase()}
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-zinc-900">
-              {props.user.name}
-            </p>
-            {props.user.title && (
-              <p className="text-xs text-zinc-500">{props.user.title}</p>
-            )}
-          </div>
-          <div className="space-y-2 pt-2">
-            <div
-              className={cn(
-                'px-4 py-3 text-xs font-medium text-zinc-900 flex items-center justify-between',
-                cardBase,
-                radiusClass,
-              )}
-              style={{
-                backgroundColor: appearanceBlockColor || undefined,
-              }}
-            >
-              <span>My portfolio</span>
+    <div className="w-full h-full flex items-center justify-center p-4">
+      <div className="aspect-9/18 w-full max-w-[320px] overflow-hidden rounded-[32px] border-8 border-zinc-900 bg-gray-50 shadow-2xl relative">
+        {/* Scrollable Content Area */}
+        <div className="h-full w-full overflow-y-auto overflow-x-hidden thin-scrollbar">
+          <div className="min-h-full pb-8">
+            {/* Header/Banner */}
+            <div className="relative h-32 w-full" style={bgStyle}>
+              {/* Optional overlay if needed, matching public profile */}
+              <div className="absolute inset-0 bg-black/5" />
             </div>
-            <div
-              className={cn(
-                'px-4 py-3 text-xs font-medium text-zinc-900 flex items-center justify-between',
-                cardBase,
-                radiusClass,
+
+            {/* Profile Section */}
+            <div className="px-4 -mt-10 mb-6 flex flex-col items-center relative z-10">
+              <Avatar className="h-20 w-20 ring-4 ring-white shadow-md bg-white">
+                <AvatarImage src={user.image || ''} />
+                <AvatarFallback className="bg-zinc-900 text-white text-lg font-bold">
+                  {user.name.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="mt-3 text-center space-y-1 w-full">
+                <h3 className="font-bold text-zinc-900 text-lg leading-tight truncate px-2">
+                  {user.name}
+                </h3>
+                {user.title && (
+                  <p className="text-xs text-zinc-500 font-medium truncate px-4">
+                    {user.title}
+                  </p>
+                )}
+                {user.bio && (
+                  <p className="text-[10px] items-center text-zinc-400 leading-relaxed mt-2 line-clamp-3 px-2">
+                    {user.bio}
+                  </p>
+                )}
+              </div>
+
+              {/* Socials Placeholder */}
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <div className="h-8 w-8 rounded-full bg-white border border-zinc-200 flex items-center justify-center">
+                  <Globe className="h-4 w-4 text-zinc-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Blocks List */}
+            <div className="px-4 space-y-3">
+              {blocks
+                .filter((b) => b.isEnabled !== false)
+                .map((block) => {
+                  if (block.type === 'text') {
+                    return (
+                      <div
+                        key={block.id}
+                        className="w-full text-center py-1 space-y-0.5"
+                      >
+                        <h4 className="font-bold text-sm text-slate-800">
+                          {block.title}
+                        </h4>
+                        {block.content && (
+                          <p className="text-[10px] text-slate-600">
+                            {block.content}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div
+                      key={block.id}
+                      className={cn(
+                        'w-full p-3 flex items-center justify-between transition-all bg-white',
+                        cardBase,
+                        radiusClass,
+                      )}
+                      style={{
+                        backgroundColor: appearanceBlockColor || undefined,
+                      }}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className="bg-zinc-100 h-8 w-8 rounded-full flex items-center justify-center shrink-0">
+                          <LinkIcon className="h-3.5 w-3.5 text-zinc-500" />
+                        </div>
+                        <span className="font-semibold text-xs truncate max-w-[120px] text-zinc-800">
+                          {block.title}
+                        </span>
+                      </div>
+                      <ArrowUpRight className="h-3.5 w-3.5 text-zinc-400" />
+                    </div>
+                  )
+                })}
+
+              {blocks.length === 0 && (
+                <div className="text-center py-8 opacity-50">
+                  <p className="text-xs text-zinc-400">No blocks added yet</p>
+                </div>
               )}
-              style={{
-                backgroundColor: appearanceBlockColor || undefined,
-              }}
-            >
-              <span>Contact</span>
+            </div>
+
+            <div className="mt-8 mb-4 flex justify-center pb-4">
+              <span className="text-[10px] font-bold text-zinc-300">link.</span>
             </div>
           </div>
         </div>

@@ -21,6 +21,7 @@ import {
   AppHeaderActions,
   AppHeaderContent,
 } from '@/components/app-header'
+import { AppearancePreview } from '@/components/dashboard/appearance/AppearancePreview'
 import { ShareProfileModal } from '@/components/share-profile-modal'
 import { BASE_URL } from '@/lib/constans'
 import SocialEditor from '@/components/dashboard/SocialEditor'
@@ -421,9 +422,17 @@ function AdminDashboard() {
             />
           </section>
         </div>
-        {/* TODO: PREVIEW Section */}
-        <div className=" min-h-screen bg-muted rounded-2xl">
-          <div className="sticky top-24"></div>
+
+        {/* PREVIEW Section */}
+        <div className="hidden lg:block min-h-screen bg-muted/30 border-l border-zinc-200">
+          <div className="sticky top-24 pt-8">
+            <div className="flex flex-col items-center">
+              <span className="text-xs font-semibold text-zinc-400 mb-6 uppercase tracking-wider">
+                Live Preview
+              </span>
+              <AppearancePreview user={user} blocks={localBlocks} />
+            </div>
+          </div>
         </div>
       </main>
     </>

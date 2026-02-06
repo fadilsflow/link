@@ -48,10 +48,24 @@ function AppearanceRouteComponent() {
 
   if (!user) return null
 
-  return <AppearanceEditor user={user} username={username} />
+  return (
+    <AppearanceEditor
+      user={user}
+      username={username}
+      blocks={dashboardData.blocks || []}
+    />
+  )
 }
 
-function AppearanceEditor({ user, username }: { user: any; username: string }) {
+function AppearanceEditor({
+  user,
+  username,
+  blocks,
+}: {
+  user: any
+  username: string
+  blocks: any[]
+}) {
   const updateAppearance = useMutation({
     mutationKey: ['updateProfile', username],
     mutationFn: (data: {
@@ -217,9 +231,8 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
         </AppHeaderActions>
       </AppHeader>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)] items-start">
-        {/* Controls */}
-        <div className="space-y-6">
+      <main className="grid grid-cols-1 lg:grid-cols-[2.2fr_1.4fr]">
+        <div className=" space-y-4 min-h-screen pr-6">
           {/* Background */}
           <Card className="border-zinc-100 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -303,38 +316,43 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
           </Card>
         </div>
 
-        {/* Live preview */}
-        <div className="space-y-4">
-          <Card className="border-zinc-100 shadow-sm overflow-hidden">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm text-zinc-500 font-medium">
-                Preview
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="border border-zinc-100 rounded-xl overflow-hidden p-0">
+        {/* PREVIEW Section */}
+        <div className="hidden lg:block min-h-screen bg-muted/30 border-l border-zinc-200">
+          <div className="sticky top-24 pt-8">
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-2 mb-6">
+                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                  Live Preview
+                </span>
+                {updateAppearance.status === 'pending' && (
+                  <span className="text-xs text-amber-500 font-medium animate-pulse">
+                    Saving...
+                  </span>
+                )}
+                {updateAppearance.status === 'success' && (
+                  <span className="text-xs text-green-500 font-medium">
+                    Saved
+                  </span>
+                )}
+              </div>
               <AppearancePreview
                 user={{
-                  name: user.name,
-                  title: user.title,
-                  bio: user.bio,
-                  image: user.image,
+                  ...user,
                   appearanceBgType: bgMode,
                   appearanceBgWallpaperStyle: wallpaperStyle,
-                  appearanceBgColor: user.appearanceBgColor ?? undefined,
-                  appearanceBgImageUrl: user.appearanceBgImageUrl ?? undefined,
                   appearanceBlockStyle: blockStyle,
                   appearanceBlockRadius: blockRadius,
-                  appearanceBlockColor: user.appearanceBlockColor ?? undefined,
+                  appearanceBgImageUrl:
+                    bgMode === 'banner'
+                      ? user.appearanceBgImageUrl
+                      : user.appearanceBgImageUrl || undefined,
                 }}
+                blocks={blocks}
               />
-            </CardContent>
-          </Card>
-
-          {updateAppearance.status === 'pending' && (
-            <p className="text-xs text-zinc-500">Saving changes…</p>
-          )}
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

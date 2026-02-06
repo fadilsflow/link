@@ -104,3 +104,30 @@ export const getPublicProduct = createServerFn({ method: 'GET' })
       product: dbUser.products[0],
     }
   })
+
+export const getOrderByToken = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ token: z.string() }))
+  .handler(async ({ data }) => {
+    // Lazy load orders to avoid circular deps if any, or just import at top?
+    // Importing at top is fine since this is server-only file
+    const { orders } = await import('@/db/schema')
+
+    // Find order by token
+    const order = await db.query.orders.findFirst({
+      where: eq(orders.deliveryToken, data.token),
+      with: {
+        product: true,
+        creator: true,
+      },
+    })
+
+    if (!order) {
+      return null
+    }
+
+    return {
+      order,
+      product: order.product,
+      creator: order.creator,
+    }
+  })

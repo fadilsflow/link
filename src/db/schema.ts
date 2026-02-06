@@ -9,6 +9,15 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core'
 
+// Order status enum values
+export const ORDER_STATUS = {
+  COMPLETED: 'completed',
+  PENDING: 'pending',
+  CANCELLED: 'cancelled',
+} as const
+
+export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS]
+
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -74,16 +83,15 @@ export const products = pgTable('product', {
   // Delivery
   // Delivery
   productUrl: text('product_url'),
-  productFiles:
-    json('product_files').$type<
-      Array<{
-        id: string
-        name: string
-        size: number
-        type: string
-        url: string
-      }>
-    >(), // Array of file objects
+  productFiles: json('product_files').$type<
+    Array<{
+      id: string
+      name: string
+      size: number
+      type: string
+      url: string
+    }>
+  >(), // Array of file objects
   images: text('images').array(), // Array of image URLs
   // Custom checkout questions (JSON string for simple, extendable schema)
   customerQuestions: text('customer_questions'),
@@ -182,12 +190,55 @@ export const socialLinks = pgTable('social_link', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+// Orders table for checkout management
+export const orders = pgTable(
+  'order',
+  {
+    id: text('id').primaryKey(),
+    // Creator (seller) reference
+    creatorId: text('creator_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // Product reference
+    productId: text('product_id')
+      .notNull()
+      .references(() => products.id, { onDelete: 'cascade' }),
+    // Buyer information
+    buyerEmail: text('buyer_email').notNull(),
+    buyerName: text('buyer_name'),
+    // Amount paid (in cents) - stored for historical record
+    amountPaid: integer('amount_paid').notNull().default(0),
+    // Checkout answers (JSON: { questionId: answer })
+    checkoutAnswers: json('checkout_answers').$type<Record<string, string>>(),
+    // Note to seller
+    note: text('note'),
+    // Order status
+    status: text('status').notNull().default('completed'),
+    // Delivery token for secure access
+    deliveryToken: text('delivery_token').notNull().unique(),
+    // Email tracking
+    emailSent: boolean('email_sent').notNull().default(false),
+    emailSentAt: timestamp('email_sent_at'),
+    // Idempotency key to prevent duplicate orders
+    idempotencyKey: text('idempotency_key').unique(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('order_creator_id_idx').on(table.creatorId),
+    index('order_product_id_idx').on(table.productId),
+    index('order_buyer_email_idx').on(table.buyerEmail),
+    index('order_delivery_token_idx').on(table.deliveryToken),
+  ],
+)
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   blocks: many(blocks),
   products: many(products),
   socialLinks: many(socialLinks),
+  orders: many(orders, { relationName: 'creatorOrders' }),
 }))
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -211,16 +262,29 @@ export const blocksRelations = relations(blocks, ({ one }) => ({
   }),
 }))
 
-export const productsRelations = relations(products, ({ one }) => ({
+export const productsRelations = relations(products, ({ one, many }) => ({
   user: one(user, {
     fields: [products.userId],
     references: [user.id],
   }),
+  orders: many(orders),
 }))
 
 export const socialLinksRelations = relations(socialLinks, ({ one }) => ({
   user: one(user, {
     fields: [socialLinks.userId],
     references: [user.id],
+  }),
+}))
+
+export const ordersRelations = relations(orders, ({ one }) => ({
+  creator: one(user, {
+    fields: [orders.creatorId],
+    references: [user.id],
+    relationName: 'creatorOrders',
+  }),
+  product: one(products, {
+    fields: [orders.productId],
+    references: [products.id],
   }),
 }))

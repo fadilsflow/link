@@ -3,8 +3,10 @@ import { asc, desc, eq } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
-import { blocks, products, socialLinks, user } from '@/db/schema'
+import { blocks, orders, products, socialLinks, user } from '@/db/schema'
 import { StorageService } from '@/lib/storage'
+import { sendOrderEmail } from '@/lib/email'
+import { BASE_URL } from '@/lib/constans'
 
 const userRouter = {
   getByEmail: publicProcedure
@@ -487,11 +489,159 @@ export const storageRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+const orderRouter = {
+  create: publicProcedure
+    .input(
+      z.object({
+        productId: z.string(),
+        buyerEmail: z.string().email(),
+        buyerName: z.string().optional(),
+        amountPaid: z.number().int().nonnegative(),
+        answers: z.any().optional(),
+        note: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      // 1. Get product and creator
+      const product = await db.query.products.findFirst({
+        where: eq(products.id, input.productId),
+        with: {
+          user: true, // creator
+        },
+      })
+
+      if (!product) {
+        throw new Error('Product not found')
+      }
+
+      if (!product.isActive) {
+        throw new Error('Product is not active')
+      }
+
+      // Check quantity limits if applicable (simple check)
+      if (
+        product.totalQuantity !== null &&
+        product.totalQuantity !== undefined &&
+        product.totalQuantity <= 0
+      ) {
+        throw new Error('Product sold out')
+      }
+
+      const creator = product.user
+
+      // 2. Create Order
+      const deliveryToken = crypto.randomUUID()
+      const orderId = crypto.randomUUID()
+
+      const [newOrder] = await db
+        .insert(orders)
+        .values({
+          id: orderId,
+          creatorId: creator.id,
+          productId: product.id,
+          buyerEmail: input.buyerEmail,
+          buyerName: input.buyerName ?? '',
+          amountPaid: input.amountPaid,
+          checkoutAnswers: input.answers ?? {},
+          note: input.note ?? null,
+          status: 'completed', // No payment gateway yet, so auto-complete
+          deliveryToken,
+          emailSent: false,
+        })
+        .returning()
+
+      // 3. Send Email (async / fire and forget, but update status)
+      // In a real message queue, this would be separate.
+      // Here we await it to report status early, or we can background it.
+      // For MVP, we'll await it to ensure it works.
+      const deliveryUrl = `${BASE_URL}/d/${deliveryToken}`
+      const emailResult = await sendOrderEmail({
+        to: input.buyerEmail,
+        buyerName: input.buyerName ?? '',
+        creatorName: creator.name,
+        creatorUsername: creator.username || '',
+        productName: product.title,
+        deliveryUrl,
+        supportEmail: creator.email,
+      })
+
+      if (emailResult.success) {
+        await db
+          .update(orders)
+          .set({ emailSent: true, emailSentAt: new Date() })
+          .where(eq(orders.id, newOrder.id))
+      } else {
+        console.error(
+          'Email failed to send for order:',
+          newOrder.id,
+          emailResult.error,
+        )
+      }
+
+      return {
+        ...newOrder,
+        deliveryUrl,
+      }
+    }),
+
+  listByCreator: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input }) => {
+      const rows = await db.query.orders.findMany({
+        where: eq(orders.creatorId, input.userId),
+        with: {
+          product: true,
+        },
+        orderBy: [desc(orders.createdAt)],
+      })
+      return rows
+    }),
+
+  resendEmail: publicProcedure
+    .input(z.object({ orderId: z.string(), userId: z.string() }))
+    .mutation(async ({ input }) => {
+      // 1. Get order with details
+      const order = await db.query.orders.findFirst({
+        where: eq(orders.id, input.orderId),
+        with: {
+          product: true,
+          creator: true,
+        },
+      })
+
+      if (!order) throw new Error('Order not found')
+      if (order.creatorId !== input.userId) throw new Error('Unauthorized')
+
+      const deliveryUrl = `${BASE_URL}/d/${order.deliveryToken}`
+
+      const emailResult = await sendOrderEmail({
+        to: order.buyerEmail,
+        buyerName: order.buyerName ?? '',
+        creatorName: order.creator.name,
+        creatorUsername: order.creator.username || '',
+        productName: order.product.title,
+        deliveryUrl,
+        supportEmail: order.creator.email,
+      })
+
+      if (emailResult.success) {
+        await db
+          .update(orders)
+          .set({ emailSent: true, emailSentAt: new Date() })
+          .where(eq(orders.id, order.id))
+        return { success: true }
+      } else {
+        throw new Error('Failed to send email')
+      }
+    }),
+} satisfies TRPCRouterRecord
+
 export const trpcRouter = createTRPCRouter({
   user: userRouter,
   block: blockRouter,
   product: productRouter,
   socialLink: socialLinkRouter,
   storage: storageRouter,
+  order: orderRouter,
 })
 export type TRPCRouter = typeof trpcRouter

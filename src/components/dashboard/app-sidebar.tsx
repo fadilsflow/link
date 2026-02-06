@@ -7,6 +7,7 @@ import {
   Grid,
   Package,
   Settings,
+  ShoppingBag,
   User as UserIcon,
 } from 'lucide-react'
 
@@ -55,6 +56,11 @@ const data = {
       title: 'Products',
       url: '/$username/admin/products',
       icon: Package,
+    },
+    {
+      title: 'Orders',
+      url: '/$username/admin/orders',
+      icon: ShoppingBag,
     },
     {
       title: 'Analytics',

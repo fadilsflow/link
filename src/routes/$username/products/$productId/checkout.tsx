@@ -1,6 +1,7 @@
 import * as React from 'react'
-import { createFileRoute, notFound, Link } from '@tanstack/react-router'
-import { ArrowLeft, CheckCircle2, Lock, ShoppingBag } from 'lucide-react'
+import { Link, createFileRoute, notFound } from '@tanstack/react-router'
+import { ArrowLeft, Lock, ShoppingBag } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -9,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getPublicProduct } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
+import { trpcClient } from '@/integrations/tanstack-query/root-provider'
+import { toastManager } from '@/components/ui/toast'
 
 export const Route = createFileRoute('/$username/products/$productId/checkout')(
   {
@@ -77,8 +80,8 @@ function parseAmount(value: string): number | null {
 }
 
 function CheckoutPage() {
-  const { username } = Route.useParams()
   const { product, user } = Route.useLoaderData()
+  const { username } = Route.useParams()
 
   const questions = parseQuestions(product.customerQuestions)
   const productImages = (product.images as string[] | null) || []
@@ -89,17 +92,34 @@ function CheckoutPage() {
   const [customAmount, setCustomAmount] = React.useState('')
   const [answers, setAnswers] = React.useState<Record<string, string>>({})
   const [note, setNote] = React.useState('')
-  const [submitting, setSubmitting] = React.useState(false)
-  const [submitted, setSubmitted] = React.useState(false)
 
   const unitPrice = effectiveUnitPrice(
     product,
     customAmount ? parseAmount(customAmount) : null,
   )
 
+  const checkoutMutation = useMutation({
+    mutationKey: ['checkout-order'],
+    mutationFn: async (payload: any) => {
+      console.log('Sending checkout payload:', payload)
+      return await trpcClient.order.create.mutate(payload)
+    },
+    onSuccess: (data) => {
+      window.location.href = data.deliveryUrl
+    },
+    onError: (error) => {
+      console.error('Checkout error:', error)
+      toastManager.add({
+        title: 'Checkout Failed',
+        description: error.message,
+        type: 'error',
+      })
+    },
+  })
+
   const handleSubmit: React.FormEventHandler = (e) => {
     e.preventDefault()
-    if (submitting) return
+    if (checkoutMutation.isPending) return
 
     const amountCents = unitPrice
     if (product.payWhatYouWant && amountCents <= 0) {
@@ -124,79 +144,26 @@ function CheckoutPage() {
       }
     }
 
-    setSubmitting(true)
+    const payload = {
+      productId: product.id,
+      buyerEmail: email,
+      buyerName: name,
+      amountPaid: unitPrice,
+      answers,
+      note,
+    }
 
-    setTimeout(() => {
-      setSubmitting(false)
-      setSubmitted(true)
-      console.log('Mock checkout payload', {
-        productId: product.id,
-        username,
-        name,
-        email,
-        amountCents,
-        answers,
-        note,
-      })
-    }, 800)
+    checkoutMutation.mutate(payload)
   }
 
-  // Success State
-  if (submitted) {
+  // Loading state after success (before redirect completes)
+  if (checkoutMutation.isSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-xl border-0 rounded-2xl overflow-hidden">
-          <CardContent className="p-8 text-center space-y-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100">
-              <CheckCircle2 className="h-8 w-8 text-emerald-600" />
-            </div>
-
-            <div className="space-y-2">
-              <h1 className="text-2xl font-bold text-slate-900">
-                Thank you, {name || 'friend'}!
-              </h1>
-              <p className="text-slate-500">Your purchase was successful</p>
-            </div>
-
-            <div className="bg-slate-50 rounded-xl p-4 flex items-center gap-4">
-              {hasImage ? (
-                <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
-                  <img
-                    src={productImages[0]}
-                    alt={product.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-14 h-14 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0">
-                  <ShoppingBag className="h-6 w-6 text-slate-400" />
-                </div>
-              )}
-              <div className="text-left min-w-0">
-                <p className="font-semibold text-slate-900 truncate">
-                  {product.title}
-                </p>
-                <p className="text-sm text-slate-500">
-                  {formatPrice(unitPrice)}
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-2 space-y-3">
-              <p className="text-xs text-slate-400">
-                This is a mock checkout. Payment integration coming soon.
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => window.history.back()}
-                className="rounded-xl"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Go Back
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-slate-500">Redirecting to your order...</p>
+        </div>
       </div>
     )
   }
@@ -252,7 +219,8 @@ function CheckoutPage() {
                     {product.title}
                   </h1>
                   <Link
-                    to={`/${user.username}`}
+                    to="/$username"
+                    params={username}
                     className="flex items-center gap-1.5 mt-2 text-xs text-slate-500 hover:text-slate-700 transition-colors"
                   >
                     <Avatar className="h-4 w-4">
@@ -416,10 +384,10 @@ function CheckoutPage() {
                   className={cn(
                     'w-full h-12 rounded-xl text-base font-semibold flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 hover:shadow-xl hover:shadow-slate-900/15 transition-all',
                   )}
-                  disabled={submitting}
+                  disabled={checkoutMutation.isPending}
                 >
                   <Lock className="h-4 w-4" />
-                  {submitting
+                  {checkoutMutation.isPending
                     ? 'Processing...'
                     : `Pay ${formatPrice(unitPrice)}`}
                 </Button>

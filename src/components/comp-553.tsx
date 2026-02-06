@@ -110,7 +110,7 @@ const _getFilePreview = (file: {
       alt={fileName}
       className="size-full rounded-t-[inherit] object-cover"
       src={src}
-    />
+    />  
   );
 
   return (

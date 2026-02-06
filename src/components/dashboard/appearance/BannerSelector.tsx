@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { ImageUploader } from './ImageUploader'
 
 interface BannerSelectorProps {
   currentBannerUrl?: string
@@ -38,11 +39,6 @@ export function BannerSelector({
     return true
   }, [currentBannerUrl, currentBannerId])
 
-  const [showCustomUrl, setShowCustomUrl] = React.useState(false)
-  const [customUrl, setCustomUrl] = React.useState(
-    isCustomBanner ? currentBannerUrl || '' : '',
-  )
-
   const handleGradientSelect = (preset: BannerPreset) => {
     if (preset.id === 'gradient-blue') {
       onBannerSelect('', preset.id)
@@ -55,21 +51,10 @@ export function BannerSelector({
         'linear-gradient(to right, rgb(139, 92, 246), rgb(217, 70, 239), rgb(251, 191, 36))',
       )
     }
-    setCustomUrl('')
-    setShowCustomUrl(false)
   }
 
   const handleLocalImageSelect = (preset: BannerPreset) => {
     onBannerSelect(preset.image, preset.id)
-    setCustomUrl('')
-    setShowCustomUrl(false)
-  }
-
-  const handleCustomUrlSubmit = () => {
-    if (customUrl.trim()) {
-      onBannerSelect(customUrl.trim(), 'custom')
-      setShowCustomUrl(false)
-    }
   }
 
   return (
@@ -147,82 +132,24 @@ export function BannerSelector({
         </div>
       </div>
 
-      {/* Custom URL Input */}
+      {/* Custom Image */}
       <div className="space-y-3 pt-2 border-t border-zinc-100">
-        <div className="flex items-center justify-between">
-          <Label
-            htmlFor="custom-banner-url"
-            className="text-xs font-medium text-zinc-700"
-          >
-            Custom Image URL
-          </Label>
-          {!showCustomUrl && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => setShowCustomUrl(true)}
-            >
-              + Add URL
-            </Button>
-          )}
-        </div>
-        {showCustomUrl && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Input
-                id="custom-banner-url"
-                placeholder="https://example.com/image.jpg"
-                value={customUrl}
-                onChange={(e) => setCustomUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleCustomUrlSubmit()
-                  }
-                  if (e.key === 'Escape') {
-                    setShowCustomUrl(false)
-                    setCustomUrl('')
-                  }
-                }}
-                className="text-xs"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCustomUrlSubmit}
-                disabled={!customUrl.trim()}
-              >
-                Add
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowCustomUrl(false)
-                  setCustomUrl('')
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
-            {isCustomBanner && currentBannerUrl && !showCustomUrl && (
-              <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-zinc-200">
-                <img
-                  src={currentBannerUrl}
-                  alt="Custom banner"
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement
-                    target.style.display = 'none'
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        )}
+        <Label className="text-xs font-medium text-zinc-700">
+          Custom Image
+        </Label>
+
+        <ImageUploader
+          value={isCustomBanner ? currentBannerUrl : undefined}
+          onChange={(url) => {
+            if (url) {
+              onBannerSelect(url, 'custom')
+            } else {
+              onBannerSelect('', 'custom')
+            }
+          }}
+          aspectRatio="wide"
+          folder="banners"
+        />
       </div>
 
       {/* Background Color */}

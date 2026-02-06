@@ -3,6 +3,7 @@ import type { WallpaperStyle } from './types'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { ImageUploader } from './ImageUploader'
 import { cn } from '@/lib/utils'
 
 interface WallpaperSelectorProps {
@@ -117,32 +118,15 @@ export function WallpaperSelector({
       {/* Image URL (only for image style) */}
       {wallpaperStyle === 'image' && (
         <div className="space-y-2">
-          <Label
-            htmlFor="wallpaper-image"
-            className="text-xs font-medium text-zinc-700"
-          >
-            Image URL
+          <Label className="text-xs font-medium text-zinc-700">
+            Wallpaper Image
           </Label>
-          <Input
-            id="wallpaper-image"
-            placeholder="https://..."
-            defaultValue={currentImageUrl ?? ''}
-            onBlur={(e) => onImageUrlChange(e.target.value || undefined)}
-            className="text-xs"
+          <ImageUploader
+            value={currentImageUrl}
+            onChange={(url) => onImageUrlChange(url || undefined)}
+            folder="wallpapers"
+            aspectRatio="square"
           />
-          {currentImageUrl && (
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-zinc-200 mt-2">
-              <img
-                src={currentImageUrl}
-                alt="Wallpaper preview"
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement
-                  target.style.display = 'none'
-                }}
-              />
-            </div>
-          )}
         </div>
       )}
     </div>

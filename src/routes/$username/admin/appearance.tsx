@@ -10,7 +10,7 @@ import type {
 } from '@/components/dashboard/appearance/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { BannerSelector } from '@/components/dashboard/appearance/BannerSelector'
@@ -234,55 +234,61 @@ function AppearanceEditor({
       <main className="grid grid-cols-1 lg:grid-cols-[2.2fr_1.4fr]">
         <div className=" space-y-4 min-h-screen pr-6">
           {/* Background */}
-          <Card className="border-zinc-100 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between gap-4">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-base">
+          <Card className="border-zinc-100 shadow-sm overflow-hidden">
+            <div className="border-b border-zinc-100 bg-zinc-50/50 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
                   <Palette className="h-4 w-4 text-zinc-500" />
                   Background
                 </CardTitle>
               </div>
-              <RadioGroup
-                className="flex items-center gap-4"
-                value={bgMode}
-                onValueChange={(value) => {
-                  const mode = value as BgMode
-                  setBgMode(mode)
-                  handleChange({
-                    appearanceBgType: mode,
-                  })
-                }}
-              >
-                <label className="flex items-center gap-2 text-xs font-medium text-zinc-700 cursor-pointer">
-                  <RadioGroupItem value="banner" />
-                  Banner
-                </label>
-                <label className="flex items-center gap-2 text-xs font-medium text-zinc-700 cursor-pointer">
-                  <RadioGroupItem value="wallpaper" />
-                  Wallpaper
-                </label>
-              </RadioGroup>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {bgMode === 'banner' ? (
-                <BannerSelector
-                  currentBannerUrl={user.appearanceBgImageUrl ?? undefined}
-                  currentBannerId={currentBannerId}
-                  currentBgColor={user.appearanceBgColor ?? undefined}
-                  onBannerSelect={handleBannerSelect}
-                  onColorChange={handleBannerColorChange}
-                />
-              ) : (
-                <WallpaperSelector
-                  wallpaperStyle={wallpaperStyle}
-                  currentBgColor={user.appearanceBgColor ?? undefined}
-                  currentImageUrl={user.appearanceBgImageUrl ?? undefined}
-                  onStyleChange={handleWallpaperStyleChange}
-                  onColorChange={handleWallpaperColorChange}
-                  onImageUrlChange={handleWallpaperImageChange}
-                />
-              )}
-            </CardContent>
+            </div>
+
+            <Tabs
+              value={bgMode}
+              onValueChange={(v) => {
+                const mode = v as BgMode
+                setBgMode(mode)
+                handleChange({ appearanceBgType: mode })
+              }}
+              className="w-full"
+            >
+              <div className="px-6 py-3 border-b border-zinc-100">
+                <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+                  <TabsTrigger value="banner">Banner Layout</TabsTrigger>
+                  <TabsTrigger value="wallpaper">Full Wallpaper</TabsTrigger>
+                </TabsList>
+              </div>
+
+              <CardContent className="p-6">
+                <TabsContent
+                  value="banner"
+                  className="mt-0 animate-in fade-in-0 slide-in-from-left-1 duration-300"
+                >
+                  <BannerSelector
+                    currentBannerUrl={user.appearanceBgImageUrl ?? undefined}
+                    currentBannerId={currentBannerId}
+                    currentBgColor={user.appearanceBgColor ?? undefined}
+                    onBannerSelect={handleBannerSelect}
+                    onColorChange={handleBannerColorChange}
+                  />
+                </TabsContent>
+
+                <TabsContent
+                  value="wallpaper"
+                  className="mt-0 animate-in fade-in-0 slide-in-from-right-1 duration-300"
+                >
+                  <WallpaperSelector
+                    wallpaperStyle={wallpaperStyle}
+                    currentBgColor={user.appearanceBgColor ?? undefined}
+                    currentImageUrl={user.appearanceBgImageUrl ?? undefined}
+                    onStyleChange={handleWallpaperStyleChange}
+                    onColorChange={handleWallpaperColorChange}
+                    onImageUrlChange={handleWallpaperImageChange}
+                  />
+                </TabsContent>
+              </CardContent>
+            </Tabs>
           </Card>
 
           {/* Block style */}

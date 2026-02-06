@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1770134475795,
-      "tag": "0000_equal_shadow_king",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1770199497292,
-      "tag": "0001_overconfident_johnny_blaze",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1770201053019,
-      "tag": "0002_careful_red_shift",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1770205815955,
-      "tag": "0003_abandoned_pandemic",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1770288789939,
-      "tag": "0004_tiny_the_stranger",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1770315704512,
-      "tag": "0005_sour_dakota_north",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1770371751455,
-      "tag": "0006_tearful_pet_avengers",
+      "when": 1770379719930,
+      "tag": "0000_polite_taskmaster",
       "breakpoints": true
     }
   ]

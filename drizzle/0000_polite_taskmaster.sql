@@ -29,6 +29,27 @@ CREATE TABLE "block" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "product" (
+	"id" text PRIMARY KEY NOT NULL,
+	"user_id" text NOT NULL,
+	"title" text NOT NULL,
+	"description" text,
+	"pay_what_you_want" boolean DEFAULT false NOT NULL,
+	"price" integer,
+	"sale_price" integer,
+	"minimum_price" integer,
+	"suggested_price" integer,
+	"total_quantity" integer,
+	"limit_per_checkout" integer,
+	"product_url" text,
+	"product_files" json,
+	"images" text[],
+	"customer_questions" text,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "session" (
 	"id" text PRIMARY KEY NOT NULL,
 	"expires_at" timestamp NOT NULL,
@@ -41,6 +62,17 @@ CREATE TABLE "session" (
 	CONSTRAINT "session_token_unique" UNIQUE("token")
 );
 --> statement-breakpoint
+CREATE TABLE "social_link" (
+	"id" text PRIMARY KEY NOT NULL,
+	"user_id" text NOT NULL,
+	"platform" text NOT NULL,
+	"url" text NOT NULL,
+	"order" integer DEFAULT 0 NOT NULL,
+	"is_enabled" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "user" (
 	"id" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
@@ -50,6 +82,17 @@ CREATE TABLE "user" (
 	"username" text,
 	"bio" text,
 	"title" text,
+	"appearance_bg_type" text DEFAULT 'banner' NOT NULL,
+	"appearance_bg_wallpaper_style" text,
+	"appearance_bg_color" text,
+	"appearance_bg_image_url" text,
+	"appearance_wallpaper_image_url" text,
+	"appearance_wallpaper_color" text,
+	"appearance_wallpaper_gradient_top" text,
+	"appearance_wallpaper_gradient_bottom" text,
+	"appearance_block_style" text DEFAULT 'basic' NOT NULL,
+	"appearance_block_radius" text DEFAULT 'rounded' NOT NULL,
+	"appearance_block_color" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "user_email_unique" UNIQUE("email"),
@@ -67,7 +110,9 @@ CREATE TABLE "verification" (
 --> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "block" ADD CONSTRAINT "block_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "product" ADD CONSTRAINT "product_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "social_link" ADD CONSTRAINT "social_link_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");

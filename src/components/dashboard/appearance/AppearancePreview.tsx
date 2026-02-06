@@ -1,9 +1,7 @@
 import { ArrowUpRight, Globe, Link as LinkIcon, X as XIcon } from 'lucide-react'
 import type { BgMode, BlockRadius, BlockStyle, WallpaperStyle } from './types'
 import { cn } from '@/lib/utils'
-import { Card } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
 
 interface AppearancePreviewProps {
   user: {

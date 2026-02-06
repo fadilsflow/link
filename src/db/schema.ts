@@ -18,7 +18,7 @@ export const user = pgTable('user', {
   username: text('username').unique(),
   bio: text('bio'),
   title: text('title'),
-  // Appearance settings
+  // Appearance settingsa
   //
   // Background:
   // - appearanceBgType:

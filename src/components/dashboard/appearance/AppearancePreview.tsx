@@ -5,22 +5,22 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface AppearancePreviewProps {
   user: {
-    username: string
+    username: string | null
     name: string
     title?: string | null
     bio?: string | null
     image?: string | null
     appearanceBgType?: BgMode | 'color' | 'image'
-    appearanceBgWallpaperStyle?: WallpaperStyle
-    appearanceBgColor?: string
-    appearanceBgImageUrl?: string
-    appearanceWallpaperImageUrl?: string
-    appearanceWallpaperColor?: string
-    appearanceWallpaperGradientTop?: string
-    appearanceWallpaperGradientBottom?: string
-    appearanceBlockStyle?: BlockStyle
-    appearanceBlockRadius?: BlockRadius
-    appearanceBlockColor?: string
+    appearanceBgWallpaperStyle?: WallpaperStyle | null
+    appearanceBgColor?: string | null
+    appearanceBgImageUrl?: string | null
+    appearanceWallpaperImageUrl?: string | null
+    appearanceWallpaperColor?: string | null
+    appearanceWallpaperGradientTop?: string | null
+    appearanceWallpaperGradientBottom?: string | null
+    appearanceBlockStyle?: BlockStyle | null
+    appearanceBlockRadius?: BlockRadius | null
+    appearanceBlockColor?: string | null
   }
   blocks: Array<{
     id: string

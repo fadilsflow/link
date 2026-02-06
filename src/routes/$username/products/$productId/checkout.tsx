@@ -220,7 +220,7 @@ function CheckoutPage() {
                   </h1>
                   <Link
                     to="/$username"
-                    params={username}
+                    params={{ username: user.username || '' }}
                     className="flex items-center gap-1.5 mt-2 text-xs text-slate-500 hover:text-slate-700 transition-colors"
                   >
                     <Avatar className="h-4 w-4">
@@ -228,7 +228,7 @@ function CheckoutPage() {
                         src={user.image || '/avatar-placeholder.png'}
                       />
                       <AvatarFallback className="bg-slate-900 text-white text-[8px]">
-                        {user.name.slice(0, 2).toUpperCase()}
+                        {(user.name ?? 'U').slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     by {user.name}

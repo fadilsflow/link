@@ -1,13 +1,11 @@
 import { useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
-  Download,
   ExternalLink,
   Mail,
   MoreHorizontal,
   Search,
-  RefreshCcw,
   ShoppingBag,
   FileText,
 } from 'lucide-react'

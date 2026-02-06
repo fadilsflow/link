@@ -1,4 +1,4 @@
-import * as React from 'react'
+
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import {
   Download,
@@ -8,11 +8,11 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { getOrderByToken } from '@/lib/profile-server'
-import { formatPrice, cn } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 
 export const Route = createFileRoute('/d/$token')({
   component: OrderDeliveryPage,
@@ -210,8 +210,8 @@ function OrderDeliveryPage() {
         {/* Footer Actions */}
         <div className="flex justify-center gap-4">
           <Button variant="ghost" render={<Link
-            to={`/$username`}
-            params={{ username: creator.username }}
+            to="/$username"
+            params={{ username: creator.username ?? creator.name }}
           />}>
             More from {creator.name}
           </Button>

@@ -70,8 +70,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
+
         <ToastProvider>
-          <AnchoredToastProvider>{children}</AnchoredToastProvider>
+          <AnchoredToastProvider>
+            {children}
+          </AnchoredToastProvider>
         </ToastProvider>
         <TanStackDevtools
           config={{

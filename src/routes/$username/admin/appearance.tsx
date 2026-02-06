@@ -105,6 +105,14 @@ function AppearanceEditor({
     (user.appearanceBlockRadius as BlockRadius) ?? 'rounded',
   )
 
+  // Track current images and colors for instant preview
+  const [currentBgImageUrl, setCurrentBgImageUrl] = React.useState<
+    string | undefined
+  >(user.appearanceBgImageUrl ?? undefined)
+  const [currentBgColor, setCurrentBgColor] = React.useState<
+    string | undefined
+  >(user.appearanceBgColor ?? undefined)
+
   // Track current banner selection
   const [currentBannerId, setCurrentBannerId] = React.useState<
     string | undefined
@@ -135,6 +143,16 @@ function AppearanceEditor({
     return undefined
   })
 
+  // Update effect to sync with user prop if it changes externally (e.g. refetch)
+  React.useEffect(() => {
+    if (user.appearanceBgImageUrl !== undefined) {
+      setCurrentBgImageUrl(user.appearanceBgImageUrl ?? undefined)
+    }
+    if (user.appearanceBgColor !== undefined) {
+      setCurrentBgColor(user.appearanceBgColor ?? undefined)
+    }
+  }, [user.appearanceBgImageUrl, user.appearanceBgColor])
+
   const handleChange = (
     patch: Omit<
       Partial<Parameters<typeof updateAppearance.mutate>[0]>,
@@ -149,6 +167,7 @@ function AppearanceEditor({
 
   const handleBannerSelect = (imageUrl: string, bannerId?: string) => {
     setCurrentBannerId(bannerId)
+    setCurrentBgImageUrl(imageUrl || undefined)
     handleChange({
       appearanceBgType: 'banner',
       appearanceBgImageUrl: imageUrl ? imageUrl : undefined,
@@ -156,6 +175,7 @@ function AppearanceEditor({
   }
 
   const handleBannerColorChange = (color: string | undefined) => {
+    setCurrentBgColor(color)
     handleChange({
       appearanceBgColor: color,
     })
@@ -170,12 +190,14 @@ function AppearanceEditor({
   }
 
   const handleWallpaperColorChange = (color: string | undefined) => {
+    setCurrentBgColor(color)
     handleChange({
       appearanceBgColor: color,
     })
   }
 
   const handleWallpaperImageChange = (url: string | undefined) => {
+    setCurrentBgImageUrl(url)
     handleChange({
       appearanceBgImageUrl: url,
     })
@@ -266,9 +288,9 @@ function AppearanceEditor({
                   className="mt-0 animate-in fade-in-0 slide-in-from-left-1 duration-300"
                 >
                   <BannerSelector
-                    currentBannerUrl={user.appearanceBgImageUrl ?? undefined}
+                    currentBannerUrl={currentBgImageUrl}
                     currentBannerId={currentBannerId}
-                    currentBgColor={user.appearanceBgColor ?? undefined}
+                    currentBgColor={currentBgColor}
                     onBannerSelect={handleBannerSelect}
                     onColorChange={handleBannerColorChange}
                   />
@@ -280,8 +302,8 @@ function AppearanceEditor({
                 >
                   <WallpaperSelector
                     wallpaperStyle={wallpaperStyle}
-                    currentBgColor={user.appearanceBgColor ?? undefined}
-                    currentImageUrl={user.appearanceBgImageUrl ?? undefined}
+                    currentBgColor={currentBgColor}
+                    currentImageUrl={currentBgImageUrl}
                     onStyleChange={handleWallpaperStyleChange}
                     onColorChange={handleWallpaperColorChange}
                     onImageUrlChange={handleWallpaperImageChange}
@@ -348,10 +370,8 @@ function AppearanceEditor({
                   appearanceBgWallpaperStyle: wallpaperStyle,
                   appearanceBlockStyle: blockStyle,
                   appearanceBlockRadius: blockRadius,
-                  appearanceBgImageUrl:
-                    bgMode === 'banner'
-                      ? user.appearanceBgImageUrl
-                      : user.appearanceBgImageUrl || undefined,
+                  appearanceBgImageUrl: currentBgImageUrl || undefined,
+                  appearanceBgColor: currentBgColor || undefined,
                 }}
                 blocks={blocks}
               />

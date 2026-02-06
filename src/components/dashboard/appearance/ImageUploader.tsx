@@ -151,27 +151,33 @@ export function ImageUploader({
                       ? 'aspect-video'
                       : aspectRatio === 'square'
                         ? 'aspect-square'
-                        : 'aspect-[3/1]',
+                        : 'aspect-3/1',
                   )}
                   style={{ backgroundImage: `url(${value})` }}
                 />
 
-                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                   <Button
                     size="icon"
                     variant="secondary"
                     className="h-8 w-8 rounded-full shadow-sm"
-                    onClick={() => onChange('')}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onChange('')
+                    }}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
 
                 {/* Reuse button overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-0">
                   <div
-                    className="bg-black/50 text-white text-xs px-3 py-1.5 rounded-full font-medium pointer-events-auto cursor-pointer"
-                    onClick={() => onChange('')}
+                    className="bg-black/50 text-white text-xs px-3 py-1.5 rounded-full font-medium pointer-events-auto cursor-pointer z-20 hover:bg-black/70 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onChange('')
+                    }}
                   >
                     Change Image
                   </div>

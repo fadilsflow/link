@@ -53,35 +53,45 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
     return fallback
   }
 
-  const bgStyle = isBanner
-    ? {
-        backgroundImage: appearanceBgImageUrl
-          ? `url('${getImageUrl(appearanceBgImageUrl)}')`
-          : undefined,
-        backgroundColor: appearanceBgColor || undefined,
-        backgroundSize: appearanceBgImageUrl ? 'cover' : undefined,
-        backgroundPosition: appearanceBgImageUrl ? 'center' : undefined,
-      }
-    : wallpaperStyle === 'image' || bgType === 'image'
-      ? {
-          backgroundImage: appearanceBgImageUrl
-            ? `url('${getImageUrl(appearanceBgImageUrl)}')`
-            : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }
-      : wallpaperStyle === 'avatar'
-        ? {
-            background:
-              'radial-gradient(circle at center, rgba(15,23,42,0.1), #020617)',
-          }
-        : {
-            background:
-              appearanceBgColor ||
-              (wallpaperStyle === 'gradient'
-                ? 'linear-gradient(135deg,#22c55e,#3b82f6,#a855f7)'
-                : '#FAFAFA'),
-          }
+  const bgStyle = {
+    backgroundImage: appearanceBgImageUrl
+      ? `url('${getImageUrl(appearanceBgImageUrl)}')`
+      : undefined,
+    backgroundColor: appearanceBgColor || undefined,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  }
+
+  const wallpaperGradient = {
+    background:
+      appearanceBgColor ||
+      (wallpaperStyle === 'gradient'
+        ? 'linear-gradient(135deg,#22c55e,#3b82f6,#a855f7)'
+        : '#FAFAFA'),
+  }
+
+  const avatarGradient = {
+    background:
+      'radial-gradient(circle at center, rgba(15,23,42,0.1), #020617)',
+  }
+
+  // Determine container style (full page) vs header style (banner only)
+  let containerStyle = {}
+  let headerStyle = {}
+
+  if (isBanner) {
+    headerStyle = bgStyle
+    containerStyle = { backgroundColor: '#F8FAFC' } // Default light background for banner mode
+  } else {
+    // Wallpaper mode
+    if (wallpaperStyle === 'image') {
+      containerStyle = bgStyle
+    } else if (wallpaperStyle === 'avatar') {
+      containerStyle = avatarGradient
+    } else {
+      containerStyle = wallpaperGradient
+    }
+  }
 
   const blockStyle = (appearanceBlockStyle as BlockStyle) ?? 'basic'
   const blockRadius = (appearanceBlockRadius as BlockRadius) ?? 'rounded'
@@ -98,14 +108,24 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
   return (
     <div className="w-full h-full flex items-center justify-center p-4">
       <div className="aspect-9/18 w-full max-w-[320px] overflow-hidden rounded-[32px] border-8 border-zinc-900 bg-gray-50 shadow-2xl relative">
-        {/* Scrollable Content Area */}
-        <div className="h-full w-full overflow-y-auto overflow-x-hidden thin-scrollbar">
+        {/* Scrollable Content Area - Applies wallpaper here if active */}
+        <div
+          className="h-full w-full overflow-y-auto overflow-x-hidden thin-scrollbar transition-all duration-300"
+          style={containerStyle}
+        >
           <div className="min-h-full pb-8">
-            {/* Header/Banner */}
-            <div className="relative h-32 w-full" style={bgStyle}>
-              {/* Optional overlay if needed, matching public profile */}
-              <div className="absolute inset-0 bg-black/5" />
-            </div>
+            {/* Header/Banner - Only visible/styled if isBanner */}
+            {isBanner && (
+              <div
+                className="relative h-32 w-full transition-all duration-300"
+                style={headerStyle}
+              >
+                <div className="absolute inset-0 bg-black/5" />
+              </div>
+            )}
+
+            {/* Spacer for wallpaper mode to push content down a bit if needed, or simply rely on padding */}
+            {!isBanner && <div className="h-24 w-full" />}
 
             {/* Profile Section */}
             <div className="px-4 -mt-10 mb-6 flex flex-col items-center relative z-10">

@@ -35,13 +35,24 @@ export default function UserButton() {
         <MenuItem
           render={
             <Link
-              to={`/$username/admin`}
+              to={`/$username/admin/editor/profiles`}
               params={{ username: (session.user as any).username }}
             />
           }
         >
           {/* < className="mr-2 h-4 w-4" /> */}
           Edit Profile
+        </MenuItem>
+        <MenuItem
+          render={
+            <Link
+              to={`/$username/admin/editor/appearance`}
+              params={{ username: (session.user as any).username }}
+            />
+          }
+        >
+          {/* < className="mr-2 h-4 w-4" /> */}
+          Edit Appearance
         </MenuItem>
         <MenuItem
           onClick={async () => {

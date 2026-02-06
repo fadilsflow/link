@@ -17,12 +17,14 @@ import { Route as UsernameAdminRouteRouteImport } from './routes/$username/admin
 import { Route as UsernameAdminIndexRouteImport } from './routes/$username/admin/index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as UsernameAdminAppearanceRouteImport } from './routes/$username/admin/appearance'
+import { Route as UsernameAdminEditorRouteRouteImport } from './routes/$username/admin/editor/route'
 import { Route as UsernameProductsProductIdIndexRouteImport } from './routes/$username/products/$productId/index'
 import { Route as UsernameAdminProductsIndexRouteImport } from './routes/$username/admin/products/index'
 import { Route as UsernameProductsProductIdCheckoutRouteImport } from './routes/$username/products/$productId/checkout'
 import { Route as UsernameAdminProductsNewRouteImport } from './routes/$username/admin/products/new'
 import { Route as UsernameAdminProductsProductIdRouteImport } from './routes/$username/admin/products/$productId'
+import { Route as UsernameAdminEditorProfilesRouteImport } from './routes/$username/admin/editor/profiles'
+import { Route as UsernameAdminEditorAppearanceRouteImport } from './routes/$username/admin/editor/appearance'
 
 const TestDndRoute = TestDndRouteImport.update({
   id: '/test-dnd',
@@ -64,11 +66,12 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UsernameAdminAppearanceRoute = UsernameAdminAppearanceRouteImport.update({
-  id: '/appearance',
-  path: '/appearance',
-  getParentRoute: () => UsernameAdminRouteRoute,
-} as any)
+const UsernameAdminEditorRouteRoute =
+  UsernameAdminEditorRouteRouteImport.update({
+    id: '/editor',
+    path: '/editor',
+    getParentRoute: () => UsernameAdminRouteRoute,
+  } as any)
 const UsernameProductsProductIdIndexRoute =
   UsernameProductsProductIdIndexRouteImport.update({
     id: '/$username/products/$productId/',
@@ -99,6 +102,18 @@ const UsernameAdminProductsProductIdRoute =
     path: '/products/$productId',
     getParentRoute: () => UsernameAdminRouteRoute,
   } as any)
+const UsernameAdminEditorProfilesRoute =
+  UsernameAdminEditorProfilesRouteImport.update({
+    id: '/profiles',
+    path: '/profiles',
+    getParentRoute: () => UsernameAdminEditorRouteRoute,
+  } as any)
+const UsernameAdminEditorAppearanceRoute =
+  UsernameAdminEditorAppearanceRouteImport.update({
+    id: '/appearance',
+    path: '/appearance',
+    getParentRoute: () => UsernameAdminEditorRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -106,10 +121,12 @@ export interface FileRoutesByFullPath {
   '/test-dnd': typeof TestDndRoute
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/$username/': typeof UsernameIndexRoute
-  '/$username/admin/appearance': typeof UsernameAdminAppearanceRoute
+  '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin/': typeof UsernameAdminIndexRoute
+  '/$username/admin/editor/appearance': typeof UsernameAdminEditorAppearanceRoute
+  '/$username/admin/editor/profiles': typeof UsernameAdminEditorProfilesRoute
   '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
   '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
   '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
@@ -121,10 +138,12 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/test-dnd': typeof TestDndRoute
   '/$username': typeof UsernameIndexRoute
-  '/$username/admin/appearance': typeof UsernameAdminAppearanceRoute
+  '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin': typeof UsernameAdminIndexRoute
+  '/$username/admin/editor/appearance': typeof UsernameAdminEditorAppearanceRoute
+  '/$username/admin/editor/profiles': typeof UsernameAdminEditorProfilesRoute
   '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
   '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
   '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
@@ -138,10 +157,12 @@ export interface FileRoutesById {
   '/test-dnd': typeof TestDndRoute
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/$username/': typeof UsernameIndexRoute
-  '/$username/admin/appearance': typeof UsernameAdminAppearanceRoute
+  '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin/': typeof UsernameAdminIndexRoute
+  '/$username/admin/editor/appearance': typeof UsernameAdminEditorAppearanceRoute
+  '/$username/admin/editor/profiles': typeof UsernameAdminEditorProfilesRoute
   '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
   '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
   '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
@@ -156,10 +177,12 @@ export interface FileRouteTypes {
     | '/test-dnd'
     | '/$username/admin'
     | '/$username/'
-    | '/$username/admin/appearance'
+    | '/$username/admin/editor'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin/'
+    | '/$username/admin/editor/appearance'
+    | '/$username/admin/editor/profiles'
     | '/$username/admin/products/$productId'
     | '/$username/admin/products/new'
     | '/$username/products/$productId/checkout'
@@ -171,10 +194,12 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/test-dnd'
     | '/$username'
-    | '/$username/admin/appearance'
+    | '/$username/admin/editor'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin'
+    | '/$username/admin/editor/appearance'
+    | '/$username/admin/editor/profiles'
     | '/$username/admin/products/$productId'
     | '/$username/admin/products/new'
     | '/$username/products/$productId/checkout'
@@ -187,10 +212,12 @@ export interface FileRouteTypes {
     | '/test-dnd'
     | '/$username/admin'
     | '/$username/'
-    | '/$username/admin/appearance'
+    | '/$username/admin/editor'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin/'
+    | '/$username/admin/editor/appearance'
+    | '/$username/admin/editor/profiles'
     | '/$username/admin/products/$productId'
     | '/$username/admin/products/new'
     | '/$username/products/$productId/checkout'
@@ -268,11 +295,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/$username/admin/appearance': {
-      id: '/$username/admin/appearance'
-      path: '/appearance'
-      fullPath: '/$username/admin/appearance'
-      preLoaderRoute: typeof UsernameAdminAppearanceRouteImport
+    '/$username/admin/editor': {
+      id: '/$username/admin/editor'
+      path: '/editor'
+      fullPath: '/$username/admin/editor'
+      preLoaderRoute: typeof UsernameAdminEditorRouteRouteImport
       parentRoute: typeof UsernameAdminRouteRoute
     }
     '/$username/products/$productId/': {
@@ -310,11 +337,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsernameAdminProductsProductIdRouteImport
       parentRoute: typeof UsernameAdminRouteRoute
     }
+    '/$username/admin/editor/profiles': {
+      id: '/$username/admin/editor/profiles'
+      path: '/profiles'
+      fullPath: '/$username/admin/editor/profiles'
+      preLoaderRoute: typeof UsernameAdminEditorProfilesRouteImport
+      parentRoute: typeof UsernameAdminEditorRouteRoute
+    }
+    '/$username/admin/editor/appearance': {
+      id: '/$username/admin/editor/appearance'
+      path: '/appearance'
+      fullPath: '/$username/admin/editor/appearance'
+      preLoaderRoute: typeof UsernameAdminEditorAppearanceRouteImport
+      parentRoute: typeof UsernameAdminEditorRouteRoute
+    }
   }
 }
 
+interface UsernameAdminEditorRouteRouteChildren {
+  UsernameAdminEditorAppearanceRoute: typeof UsernameAdminEditorAppearanceRoute
+  UsernameAdminEditorProfilesRoute: typeof UsernameAdminEditorProfilesRoute
+}
+
+const UsernameAdminEditorRouteRouteChildren: UsernameAdminEditorRouteRouteChildren =
+  {
+    UsernameAdminEditorAppearanceRoute: UsernameAdminEditorAppearanceRoute,
+    UsernameAdminEditorProfilesRoute: UsernameAdminEditorProfilesRoute,
+  }
+
+const UsernameAdminEditorRouteRouteWithChildren =
+  UsernameAdminEditorRouteRoute._addFileChildren(
+    UsernameAdminEditorRouteRouteChildren,
+  )
+
 interface UsernameAdminRouteRouteChildren {
-  UsernameAdminAppearanceRoute: typeof UsernameAdminAppearanceRoute
+  UsernameAdminEditorRouteRoute: typeof UsernameAdminEditorRouteRouteWithChildren
   UsernameAdminIndexRoute: typeof UsernameAdminIndexRoute
   UsernameAdminProductsProductIdRoute: typeof UsernameAdminProductsProductIdRoute
   UsernameAdminProductsNewRoute: typeof UsernameAdminProductsNewRoute
@@ -322,7 +379,7 @@ interface UsernameAdminRouteRouteChildren {
 }
 
 const UsernameAdminRouteRouteChildren: UsernameAdminRouteRouteChildren = {
-  UsernameAdminAppearanceRoute: UsernameAdminAppearanceRoute,
+  UsernameAdminEditorRouteRoute: UsernameAdminEditorRouteRouteWithChildren,
   UsernameAdminIndexRoute: UsernameAdminIndexRoute,
   UsernameAdminProductsProductIdRoute: UsernameAdminProductsProductIdRoute,
   UsernameAdminProductsNewRoute: UsernameAdminProductsNewRoute,

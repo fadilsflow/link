@@ -43,12 +43,12 @@ const data = {
   navMain: [
     {
       title: 'Profile',
-      url: '/$username/admin',
+      url: '/$username/admin/editor/profiles',
       icon: UserIcon,
     },
     {
       title: 'Appearance',
-      url: '/$username/admin/appearance',
+      url: '/$username/admin/editor/appearance',
       icon: Grid,
     },
     {
@@ -83,7 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     })
   }
   return (
-    <Sidebar {...props} collapsible="icon" variant='inset' >
+    <Sidebar {...props} collapsible="icon" variant="inset">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

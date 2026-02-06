@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Image as ImageIcon, Palette, SearchIcon } from 'lucide-react'
 import type {
   BgMode,
@@ -16,7 +16,6 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { BannerSelector } from '@/components/dashboard/appearance/BannerSelector'
 import { WallpaperSelector } from '@/components/dashboard/appearance/WallpaperSelector'
 import { BlockStyleSelector } from '@/components/dashboard/appearance/BlockStyleSelector'
-import { AppearancePreview } from '@/components/dashboard/appearance/AppearancePreview'
 import { LOCAL_BANNER_IMAGES } from '@/components/dashboard/appearance/banner-presets'
 import {
   AppHeader,
@@ -24,16 +23,17 @@ import {
   AppHeaderContent,
   AppHeaderDescription,
 } from '@/components/app-header'
-
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group'
+import { usePreview } from '@/lib/preview-context'
 
-export const Route = createFileRoute('/$username/admin/appearance' as any)({
+export const Route = createFileRoute('/$username/admin/editor/appearance')({
   component: AppearanceRouteComponent,
 })
+
 function AppearanceRouteComponent() {
   const { username } = Route.useParams()
 
@@ -66,6 +66,20 @@ function AppearanceEditor({
   username: string
   blocks: any[]
 }) {
+  const queryClient = useQueryClient()
+  const { setUser, setBlocks, updateUser, setStatus } = usePreview()
+
+  // Sync initial data to preview context
+  useEffect(() => {
+    if (user) {
+      setUser(user)
+    }
+  }, [user, setUser])
+
+  useEffect(() => {
+    setBlocks(blocks)
+  }, [blocks, setBlocks])
+
   const updateAppearance = useMutation({
     mutationKey: ['updateProfile', username],
     mutationFn: (data: {
@@ -82,6 +96,17 @@ function AppearanceEditor({
       appearanceBlockRadius?: BlockRadius
       appearanceBlockColor?: string
     }) => trpcClient.user.updateProfile.mutate(data),
+    onMutate: () => {
+      setStatus({ isSaving: true, isSaved: false })
+    },
+    onSuccess: () => {
+      setStatus({ isSaving: false, isSaved: true })
+      // Invalidate dashboard cache so other pages get fresh data
+      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+    },
+    onError: () => {
+      setStatus({ isSaving: false, isSaved: false })
+    },
   })
 
   // Map legacy values ('color' | 'image') to wallpaper mode
@@ -172,6 +197,10 @@ function AppearanceEditor({
       'userId'
     >,
   ) => {
+    // Update preview context for instant visual feedback
+    updateUser(patch as any)
+
+    // Save to server
     updateAppearance.mutate({
       userId: user.id,
       ...patch,
@@ -253,7 +282,7 @@ function AppearanceEditor({
   }
 
   return (
-    <div>
+    <>
       <AppHeader>
         <AppHeaderContent title="Appearance">
           <AppHeaderDescription>
@@ -271,149 +300,99 @@ function AppearanceEditor({
               <SearchIcon />
             </InputGroupAddon>
           </InputGroup>
-          {/* <AddEventTypeDialog>
-            <PlusIcon className="-ms-1" />
-            New
-          </AddEventTypeDialog> */}
         </AppHeaderActions>
       </AppHeader>
 
-      <main className="grid grid-cols-1 lg:grid-cols-[2.2fr_1.4fr]">
-        <div className=" space-y-4 min-h-screen pr-6">
-          {/* Background */}
-          <Card className="border-zinc-100 shadow-sm overflow-hidden">
-            <div className="border-b border-zinc-100 bg-zinc-50/50 px-6 py-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <Palette className="h-4 w-4 text-zinc-500" />
-                  Background
-                </CardTitle>
-              </div>
-            </div>
-
-            <Tabs
-              value={bgMode}
-              onValueChange={(v) => {
-                const mode = v as BgMode
-                setBgMode(mode)
-                handleChange({ appearanceBgType: mode })
-              }}
-              className="w-full"
-            >
-              <div className="px-6 py-3 border-b border-zinc-100">
-                <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-                  <TabsTrigger value="banner">Banner Layout</TabsTrigger>
-                  <TabsTrigger value="wallpaper">Full Wallpaper</TabsTrigger>
-                </TabsList>
-              </div>
-
-              <CardContent className="p-6">
-                <TabsContent
-                  value="banner"
-                  className="mt-0 animate-in fade-in-0 slide-in-from-left-1 duration-300"
-                >
-                  <BannerSelector
-                    currentBannerUrl={currentBannerUrl}
-                    currentBannerId={currentBannerId}
-                    currentBgColor={currentBgColor}
-                    onBannerSelect={handleBannerSelect}
-                    onColorChange={handleBannerColorChange}
-                  />
-                </TabsContent>
-
-                <TabsContent
-                  value="wallpaper"
-                  className="mt-0 animate-in fade-in-0 slide-in-from-right-1 duration-300"
-                >
-                  <WallpaperSelector
-                    wallpaperStyle={wallpaperStyle}
-                    wallpaperColor={currentWallpaperColor}
-                    gradientTop={currentGradientTop}
-                    gradientBottom={currentGradientBottom}
-                    currentImageUrl={currentWallpaperImageUrl}
-                    onStyleChange={handleWallpaperStyleChange}
-                    onWallpaperColorChange={handleWallpaperColorChange}
-                    onGradientChange={handleWallpaperGradientChange}
-                    onImageUrlChange={handleWallpaperImageChange}
-                  />
-                </TabsContent>
-              </CardContent>
-            </Tabs>
-          </Card>
-
-          {/* Block style */}
-          <Card className="border-zinc-100 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between gap-4">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <ImageIcon className="h-4 w-4 text-zinc-500" />
-                Block
-              </CardTitle>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full text-xs text-zinc-500"
-                onClick={handleBlockReset}
-              >
-                ↻
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <BlockStyleSelector
-                blockStyle={blockStyle}
-                blockRadius={blockRadius}
-                currentBlockColor={user.appearanceBlockColor ?? undefined}
-                onStyleChange={handleBlockStyleChange}
-                onRadiusChange={handleBlockRadiusChange}
-                onColorChange={handleBlockColorChange}
-                onReset={handleBlockReset}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* PREVIEW Section */}
-        <div className="hidden lg:block min-h-screen bg-muted/30 border-l border-zinc-200">
-          <div className="sticky top-24 pt-8">
-            <div className="flex flex-col items-center">
-              <div className="flex items-center gap-2 mb-6">
-                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                  Live Preview
-                </span>
-                {updateAppearance.status === 'pending' && (
-                  <span className="text-xs text-amber-500 font-medium animate-pulse">
-                    Saving...
-                  </span>
-                )}
-                {updateAppearance.status === 'success' && (
-                  <span className="text-xs text-green-500 font-medium">
-                    Saved
-                  </span>
-                )}
-              </div>
-              <AppearancePreview
-                user={{
-                  ...user,
-                  appearanceBgType: bgMode,
-                  appearanceBgWallpaperStyle: wallpaperStyle,
-                  appearanceBlockStyle: blockStyle,
-                  appearanceBlockRadius: blockRadius,
-                  appearanceBgImageUrl: currentBannerUrl || undefined,
-                  appearanceBgColor: currentBgColor || undefined,
-                  appearanceWallpaperImageUrl:
-                    currentWallpaperImageUrl || undefined,
-                  appearanceWallpaperColor: currentWallpaperColor || undefined,
-                  appearanceWallpaperGradientTop:
-                    currentGradientTop || undefined,
-                  appearanceWallpaperGradientBottom:
-                    currentGradientBottom || undefined,
-                }}
-                blocks={blocks}
-              />
-            </div>
+      {/* Background */}
+      <Card className="border-zinc-100 shadow-sm overflow-hidden">
+        <div className="border-b border-zinc-100 bg-zinc-50/50 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <Palette className="h-4 w-4 text-zinc-500" />
+              Background
+            </CardTitle>
           </div>
         </div>
-      </main>
-    </div>
+
+        <Tabs
+          value={bgMode}
+          onValueChange={(v) => {
+            const mode = v as BgMode
+            setBgMode(mode)
+            handleChange({ appearanceBgType: mode })
+          }}
+          className="w-full"
+        >
+          <div className="px-6 py-3 border-b border-zinc-100">
+            <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+              <TabsTrigger value="banner">Banner Layout</TabsTrigger>
+              <TabsTrigger value="wallpaper">Full Wallpaper</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <CardContent className="p-6">
+            <TabsContent
+              value="banner"
+              className="mt-0 animate-in fade-in-0 slide-in-from-left-1 duration-300"
+            >
+              <BannerSelector
+                currentBannerUrl={currentBannerUrl}
+                currentBannerId={currentBannerId}
+                currentBgColor={currentBgColor}
+                onBannerSelect={handleBannerSelect}
+                onColorChange={handleBannerColorChange}
+              />
+            </TabsContent>
+
+            <TabsContent
+              value="wallpaper"
+              className="mt-0 animate-in fade-in-0 slide-in-from-right-1 duration-300"
+            >
+              <WallpaperSelector
+                wallpaperStyle={wallpaperStyle}
+                wallpaperColor={currentWallpaperColor}
+                gradientTop={currentGradientTop}
+                gradientBottom={currentGradientBottom}
+                currentImageUrl={currentWallpaperImageUrl}
+                onStyleChange={handleWallpaperStyleChange}
+                onWallpaperColorChange={handleWallpaperColorChange}
+                onGradientChange={handleWallpaperGradientChange}
+                onImageUrlChange={handleWallpaperImageChange}
+              />
+            </TabsContent>
+          </CardContent>
+        </Tabs>
+      </Card>
+
+      {/* Block style */}
+      <Card className="border-zinc-100 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ImageIcon className="h-4 w-4 text-zinc-500" />
+            Block
+          </CardTitle>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full text-xs text-zinc-500"
+            onClick={handleBlockReset}
+          >
+            ↻
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <BlockStyleSelector
+            blockStyle={blockStyle}
+            blockRadius={blockRadius}
+            currentBlockColor={user.appearanceBlockColor ?? undefined}
+            onStyleChange={handleBlockStyleChange}
+            onRadiusChange={handleBlockRadiusChange}
+            onColorChange={handleBlockColorChange}
+            onReset={handleBlockReset}
+          />
+        </CardContent>
+      </Card>
+    </>
   )
 }

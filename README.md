@@ -1,12 +1,33 @@
-# Link
+<!-- PROJECT LOGO -->
+<p align="center">
+  <a href="https://github.com/calcom/cal.com">
+   <img src="./public/readme-image.png" alt="Logo">
+  </a>
 
-> **Your digital identity, unified.**
+  <h3 align="center">Link</h3>
+
+  <p align="center">
+    The professional, open-source Link-in-Bio platform built for creators who value design and performance.
+    <br />
+    <a href="https://https://link.kreeasi.web.id/"><strong>Learn more »</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/fadilsflow/link/discussions">Discussions</a>
+    ·
+    <a href="https://https://link.kreeasi.web.id/">Website</a>
+    ·
+    <a href="https://github.com/fadilsflow/link/issues">Issues</a>
+  </p>
+</p>
+
+## **Your digital identity, unified.**
+
 > The professional, open-source Link-in-Bio platform built for creators who value design and performance.
 
 | 🚧  | **Project Under Active Development**<br>Link is currently in **Beta**. Features and schemas may change before v1.0. |
 | :-- | :------------------------------------------------------------------------------------------------------------------ |
 
-![Link Preview](./public/logo512.png)
+</p>
 
 ## Why Link?
 
@@ -19,22 +40,6 @@ Most link-in-bio tools are restrictive and expensive. **Link** gives you the fre
 - **🧱 Block-Based Builder**: Go beyond simple buttons. Add text, headers, and rich media blocks.
 
 > **Our Vision**: Link is designed to be a sustainable open-source project. While the core software is free to self-host, we are working on a managed **Cloud Version** (with a free tier and premium features) for those who prefer a hassle-free experience.
-
----
-
-## Roadmap
-
-We are working towards a stable v1.0 release.
-
-- [x] **Core Platform** (Auth, Profile Builder, Theming)
-- [x] **Block Editor** (Drag & Drop, Text, Links)
-- [ ] **Analytics Dashboard** (Pageviews, Click-through rates)
-- [ ] **Social Integrations** (Embed Tweets, Instagram posts, Videos)
-- [ ] **Monetization** (Digital Products, Tips/Donations)
-- [ ] **Custom Domains** (For the cloud version and advanced self-hosting)
-- [ ] **v1.0 Stable Release**
-
----
 
 ## Tech Stack
 

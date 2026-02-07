@@ -14,7 +14,7 @@ import type { QueryClient } from '@tanstack/react-query'
 
 import type { TRPCRouter } from '@/integrations/trpc/router'
 import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query'
-import NotFound from '@/components/NotFound'
+import NotFound from '@/components/not-found'
 import { AnchoredToastProvider, ToastProvider } from '@/components/ui/toast'
 
 interface MyRouterContext {

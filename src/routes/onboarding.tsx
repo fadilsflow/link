@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { OnboardingDialog } from '@/components/OnboardingDialog'
+import { OnboardingDialog } from '@/components/onboarding-modal'
 import { checkOnboardingStatus } from '@/lib/onboarding-server'
 import { authClient } from '@/lib/auth-client'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'

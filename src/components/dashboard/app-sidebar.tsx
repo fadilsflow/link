@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 
 import { Link, useParams, useRouterState } from '@tanstack/react-router'
-import Credits from '../Credits'
+import Credits from '../credits'
 import { toastManager } from '../ui/toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {

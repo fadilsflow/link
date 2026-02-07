@@ -1,25 +1,15 @@
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import {
-  ArrowUpRight,
-  Globe,
-  Link as LinkIcon,
-  Mail,
-  Instagram,
-  Github,
-  Youtube,
-  Facebook,
-} from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { ArrowUpRight, Link as LinkIcon } from 'lucide-react'
+import { Card } from '@/components/ui/card'
 import { getPublicProfile } from '@/lib/profile-server'
-import NotFound from '@/components/NotFound'
+import NotFound from '@/components/not-found'
 import { cn, formatPrice } from '@/lib/utils'
 
-import { Gmail } from '@/components/icon/gmail'
-import { LinkedIn } from '@/components/icon/linkedin'
-import { XformerlyTwitter } from '@/components/icon/x'
-import { WhatsApp } from '@/components/icon/whatsapp'
+import SiteUserProfileHeader, {
+  ProfileBanner,
+  ProfileCard,
+  SocialLinks,
+} from '@/components/site-user-profile-header'
 
 export const Route = createFileRoute('/$username/')({
   component: UserProfile,
@@ -32,42 +22,6 @@ export const Route = createFileRoute('/$username/')({
   },
   notFoundComponent: NotFound,
 })
-
-// Platform icon mapping
-const PLATFORM_ICONS: Record<
-  string,
-  { icon: any; color?: string; className?: string }
-> = {
-  twitter: { icon: XformerlyTwitter, className: 'invert' },
-  linkedin: { icon: LinkedIn },
-  email: { icon: Gmail },
-  instagram: { icon: Instagram, color: '#E4405F' },
-  github: { icon: Github },
-  youtube: { icon: Youtube, color: '#FF0000' },
-  facebook: { icon: Facebook, color: '#1877F2' },
-  whatsapp: { icon: WhatsApp },
-}
-
-function getSocialIcon(platform: string) {
-  const config = PLATFORM_ICONS[platform]
-  if (config) {
-    const Icon = config.icon
-    return (
-      <Icon
-        className={cn('h-5 w-5', config.className)}
-        style={config.color ? { color: config.color } : undefined}
-      />
-    )
-  }
-  return <Globe className="h-5 w-5" />
-}
-
-function getSocialUrl(link: { platform: string; url: string }) {
-  if (link.platform === 'email') {
-    return link.url.startsWith('mailto:') ? link.url : `mailto:${link.url}`
-  }
-  return link.url
-}
 
 function UserProfile() {
   const { user, blocks, products, socialLinks } = Route.useLoaderData()
@@ -187,118 +141,41 @@ function UserProfile() {
 
   return (
     <div
-      className="min-h-screen relative font-sans text-slate-900"
+      className="relative min-h-screen font-sans text-slate-900"
       style={isFullPageBg ? backgroundStyles : { backgroundColor: '#f8fafc' }}
     >
+      <SiteUserProfileHeader
+        avatarUrl={user.image || '/avatar-placeholder.png'}
+        username={user.name}
+      />
       {/* Background Header - Only for banner mode */}
-      {isBanner && (
-        <div
-          className="h-[280px] w-full bg-cover bg-center relative"
-          style={backgroundStyles}
-        >
-          <div className="absolute inset-0 bg-black/10"></div>
-        </div>
-      )}
-
-      {/* Top Right User Badge */}
-      <div className="absolute top-6 right-6 z-10">
-        <Button
-          variant="secondary"
-          className="rounded-full bg-white/90 backdrop-blur-sm hover:bg-white text-xs font-semibold h-8 gap-2 shadow-sm border border-black/5"
-        >
-          <Avatar className="h-4 w-4">
-            <AvatarImage src={user.image || '/avatar-placeholder.png'} />
-            <AvatarFallback className="bg-black text-white text-[8px]">
-              {user.name.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          {user.username}
-        </Button>
-      </div>
+      <ProfileBanner isBanner={isBanner} backgroundStyles={backgroundStyles} />
 
       {/* Main Content Container */}
       <div
         className={cn(
-          'max-w-[680px] mx-auto px-4 pb-16 relative z-20 flex flex-col items-center gap-6',
+          'relative z-20 mx-auto flex max-w-[680px] flex-col items-center gap-6 px-4 pb-16',
           isBanner ? '-mt-24' : 'pt-20',
         )}
       >
         {/* Profile Card */}
-        <Card
-          className={cn(
-            'w-full overflow-visible',
-            isFullPageBg
-              ? 'shadow-2xl border-none rounded-2xl bg-white/95 backdrop-blur-md'
-              : 'shadow-lg border-none rounded-2xl',
-          )}
-        >
-          <CardContent className="pt-0 pb-8 px-6 lg:px-8 relative bg-white rounded-2xl">
-            {/* Avatar - Overlapping top */}
-            <div className="-mt-12 mb-4 flex justify-start">
-              <Avatar className="h-24 w-24 border-4 border-white shadow-md bg-black ring-4 ring-white/50">
-                <AvatarImage src={user.image || '/avatar-placeholder.png'} />
-                <AvatarFallback className="bg-black text-white text-2xl font-bold">
-                  {user.name.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <h1 className="text-2xl font-bold leading-tight flex items-center gap-2">
-                  {user.name}
-                </h1>
-                {user.title && (
-                  <p className="text-muted-foreground font-medium text-sm mt-1">
-                    {user.title}
-                  </p>
-                )}
-              </div>
-
-              {user.bio && (
-                <p className="text-muted-foreground text-sm leading-relaxed max-w-lg">
-                  {user.bio}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <ProfileCard
+          user={user}
+          isFullPageBg={isFullPageBg}
+          id="profile-card-section"
+        />
 
         {/* Social Links */}
-        {socialLinks && socialLinks.length > 0 && (
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            {socialLinks.map((link: any) => (
-              <a
-                key={link.id}
-                href={getSocialUrl(link)}
-                target={link.platform === 'email' ? undefined : '_blank'}
-                rel="noopener noreferrer"
-              >
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className={cn(
-                    'rounded-full h-12 w-12 border-none shadow-sm transition-all hover:scale-105 active:scale-95',
-                    isFullPageBg
-                      ? 'bg-white/90 backdrop-blur-sm hover:bg-white text-slate-700'
-                      : 'bg-white hover:bg-gray-50 text-slate-700',
-                  )}
-                >
-                  {getSocialIcon(link.platform)}
-                </Button>
-              </a>
-            ))}
-          </div>
-        )}
+        <SocialLinks socialLinks={socialLinks} isFullPageBg={isFullPageBg} />
 
         {/* Blocks List */}
         {blocks.map((block: any) => {
           if (block.type === 'text') {
             return (
-              <div key={block.id} className="w-full text-center py-2 space-y-1">
+              <div key={block.id} className="w-full space-y-1 py-2 text-center">
                 <h2
                   className={cn(
-                    'font-bold text-lg',
+                    'text-lg font-bold',
                     isFullPageBg && isDarkBg ? 'text-white' : 'text-slate-800',
                   )}
                 >
@@ -324,7 +201,7 @@ function UserProfile() {
             <Card
               key={block.id}
               className={cn(
-                'w-full overflow-hidden hover:scale-[1.01] transition-all cursor-pointer group',
+                'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
                 cardBase,
                 radiusClass,
               )}
@@ -333,14 +210,14 @@ function UserProfile() {
               }}
               onClick={() => block.url && window.open(block.url, '_blank')}
             >
-              <div className="p-4 flex items-center justify-between">
+              <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-4">
-                  <div className="bg-muted h-10 w-10 rounded-full flex items-center justify-center shrink-0 group-hover:bg-muted/80 transition-colors">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
                     <LinkIcon className="h-5 w-5 text-slate-600" />
                   </div>
-                  <span className="font-semibold text-sm">{block.title}</span>
+                  <span className="text-sm font-semibold">{block.title}</span>
                 </div>
-                <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </div>
             </Card>
           )
@@ -348,7 +225,7 @@ function UserProfile() {
 
         {/* Products section */}
         {products.length > 0 && (
-          <div className="w-full mt-4 space-y-3">
+          <div className="mt-4 w-full space-y-3">
             <p
               className={cn(
                 'text-xs font-semibold uppercase tracking-wider',
@@ -377,7 +254,7 @@ function UserProfile() {
                   <Card
                     key={product.id}
                     className={cn(
-                      'w-full overflow-hidden hover:scale-[1.01] transition-all cursor-pointer group',
+                      'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
                       cardBase,
                       radiusClass,
                     )}
@@ -389,26 +266,26 @@ function UserProfile() {
                     <div className="flex items-stretch">
                       {/* Product Image */}
                       {hasImage && (
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-slate-100 overflow-hidden">
+                        <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
                           <img
                             src={productImages[0]}
                             alt={product.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                         </div>
                       )}
 
                       {/* Product Info */}
-                      <div className="flex-1 p-4 flex items-center justify-between gap-3">
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-semibold text-sm truncate">
+                      <div className="flex flex-1 items-center justify-between gap-3 p-4">
+                        <div className="flex min-w-0 flex-col">
+                          <span className="truncate text-sm font-semibold">
                             {product.title}
                           </span>
-                          <span className="text-xs text-slate-500 mt-0.5">
+                          <span className="mt-0.5 text-xs text-slate-500">
                             {price}
                           </span>
                         </div>
-                        <ArrowUpRight className="h-4 w-4 text-muted-foreground flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                        <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                       </div>
                     </div>
                   </Card>
@@ -419,7 +296,7 @@ function UserProfile() {
         )}
 
         {/* Footer */}
-        <div className="mt-8 mb-4">
+        <div className="mb-4 mt-8">
           <div
             className={cn(
               'flex items-center gap-1.5',
@@ -429,7 +306,7 @@ function UserProfile() {
             <span className="text-xs font-medium">Powered by</span>
             <span
               className={cn(
-                'font-bold text-lg tracking-tighter',
+                'text-lg font-bold tracking-tighter',
                 isFullPageBg && isDarkBg ? 'text-white' : 'text-slate-900',
               )}
             >

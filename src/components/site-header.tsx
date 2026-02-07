@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
-import UserButton from './UserButton'
-import { LoginModal } from '@/components/LoginModal'
+import UserButton from './user-button'
+import { LoginModal } from '@/components/login-modal'
 import { authClient } from '@/lib/auth-client'
 
 export const Header = () => {

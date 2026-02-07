@@ -6,14 +6,14 @@ import {
   ExternalLink,
   Grid,
   Package,
-  Settings, 
+  Settings,
   ShoppingBag,
   User as UserIcon,
 } from 'lucide-react'
 
 import { Link, useParams, useRouterState } from '@tanstack/react-router'
-import Credits from '../credits'
-import { toastManager } from '../ui/toast'
+import Credits from '@/components/credits'
+import { toastManager } from '@/components/ui/toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Sidebar,

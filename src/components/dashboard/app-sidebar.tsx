@@ -12,7 +12,6 @@ import {
 } from 'lucide-react'
 
 import { Link, useParams, useRouterState } from '@tanstack/react-router'
-import Credits from '@/components/credits'
 import { toastManager } from '@/components/ui/toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -27,6 +26,7 @@ import {
 } from '@/components/ui/sidebar'
 import { authClient } from '@/lib/auth-client'
 import { BASE_URL } from '@/lib/constans'
+import Credits from '../credits'
 
 const data = {
   navBottom: [

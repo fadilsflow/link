@@ -125,7 +125,7 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
 
   return (
     <div className="w-full h-full flex items-center justify-center p-4">
-      <div className="aspect-9/18 w-full max-w-[320px] overflow-hidden rounded-[32px] border-8 border-zinc-900 bg-gray-50 shadow-2xl relative">
+      <div className="aspect-9/18 w-full max-w-[300px] overflow-hidden rounded-[32px] border-8 border-zinc-900 bg-gray-50 shadow-2xl relative">
         {/* Scrollable Content Area - Applies wallpaper here if active */}
         <div
           className="h-full w-full overflow-y-auto overflow-x-hidden thin-scrollbar transition-all duration-300"

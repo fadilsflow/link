@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { Share } from 'lucide-react'
 
 export function ShareProfileModal({ url }: { url: string }) {
   const [copyText, setCopyText] = useState('Copy')
@@ -56,11 +57,14 @@ export function ShareProfileModal({ url }: { url: string }) {
   return (
     <Dialog>
       <DialogTrigger
-        className={buttonVariants({ variant: 'default', size: 'sm' })}
+        render={<Button className='rounded-full py-6 px-6' variant={"outline"} size={"lg"} />}
       >
-        Share
+        <span className="truncate max-w-40">
+          {url}
+        </span>
+        <Share className="ml-2" />
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[325px]">
+      <DialogContent className="sm:max-w-81.25">
         <DialogHeader>
           <DialogTitle className="font-heading">
             Share Your Profile{' '}
@@ -69,9 +73,9 @@ export function ShareProfileModal({ url }: { url: string }) {
         <DialogPanel className="flex flex-col gap-4 py-4">
           <Button
             onClick={handleCopyLink}
-            variant="link"
+            variant="outline"
             size={'lg'}
-            className="flex justify-between"
+            className="flex justify-between py-6 px-6"
           >
             <span className="truncate">{url}</span>
             <Button size={'sm'}>{copyText}</Button>

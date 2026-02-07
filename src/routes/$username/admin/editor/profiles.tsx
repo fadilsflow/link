@@ -16,13 +16,7 @@ import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { ProfileEditor } from '@/components/dashboard/ProfileEditor'
 import { BlockList } from '@/components/dashboard/BlockList'
-import {
-  AppHeader,
-  AppHeaderActions,
-  AppHeaderContent,
-} from '@/components/app-header'
-import { ShareProfileModal } from '@/components/share-profile-modal'
-import { BASE_URL } from '@/lib/constans'
+import { AppHeader, AppHeaderContent } from '@/components/app-header'
 import SocialEditor from '@/components/dashboard/SocialEditor'
 import { toastManager } from '@/components/ui/toast'
 import { usePreview, type PreviewUser } from '@/lib/preview-context'
@@ -111,9 +105,9 @@ function AdminDashboard() {
       setLocalBlocks((prev) =>
         prev.map((b) =>
           b.id.startsWith('temp-') &&
-            b.title === newBlock.title &&
-            b.url === newBlock.url &&
-            b.type === newBlock.type
+          b.title === newBlock.title &&
+          b.url === newBlock.url &&
+          b.type === newBlock.type
             ? { ...newBlock, syncStatus: 'saved', errors: {} }
             : b,
         ),
@@ -323,36 +317,15 @@ function AdminDashboard() {
   if (!user) return null
 
   return (
-    <>
-      <AppHeader>
+    <div className="p-6 space-y-8 pb-20">
+      <AppHeader className="mb-4">
         <AppHeaderContent title="Profile">
           {/* <AppHeaderDescription>
-            Manage the products that appear on your public profile.
-          </AppHeaderDescription> */}
+          Manage the products that appear on your public profile.
+        </AppHeaderDescription> */}
         </AppHeaderContent>
-        <AppHeaderActions>
-          <Button
-            variant="secondary"
-            render={<a href={`/${user.username}`} target="_blank" />}
-          >
-            <Eye className="h-4 w-4" />
-            Preview
-          </Button>
-          <ShareProfileModal url={`${BASE_URL}/${user.username}`} />
-        </AppHeaderActions>
       </AppHeader>
 
-      {/* Top Actions for Mobile */}
-      <div className="lg:hidden flex items-center justify-between mb-6">
-        <span className="text-2xl font-bold font-heading text-zinc-900 focus:outline-none">
-          link.
-        </span>
-        <Button variant="ghost" size="icon">
-          <Menu className="h-6 w-6" />
-        </Button>
-      </div>
-
-      {/* Profile Section */}
       <section>
         <ProfileEditor user={user} onSave={handleProfileSave} />
       </section>
@@ -427,6 +400,6 @@ function AdminDashboard() {
           }}
         />
       </section>
-    </>
+    </div>
   )
 }

@@ -14,7 +14,6 @@ export default function UserButton() {
   return (
     <Menu>
       <MenuTrigger render={<Button
-
         className='hover:bg-background/80'
         variant={'outline'} size={'default'} />}>
         {session.user.image ? (

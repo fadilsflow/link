@@ -18,7 +18,7 @@ function AdminLayout() {
       }
     >
       <AppSidebar />
-      <SidebarInset className="p-6">
+      <SidebarInset>
         <Outlet />
       </SidebarInset>
     </SidebarProvider>

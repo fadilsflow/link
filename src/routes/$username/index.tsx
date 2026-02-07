@@ -175,7 +175,7 @@ function UserProfile() {
               <div key={block.id} className="w-full space-y-1 py-2 text-center">
                 <h2
                   className={cn(
-                    'text-lg font-bold',
+                    'text-2xl font-bold',
                     isFullPageBg && isDarkBg ? 'text-white' : 'text-slate-800',
                   )}
                 >

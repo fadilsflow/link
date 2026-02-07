@@ -10,7 +10,7 @@ export const Header = () => {
     <header className="sticky top-0 z-40 w-full bg-background  before:absolute before:inset-x-0 before:bottom-0 before:h-px before:bg-border/64">
       <nav
         // data-state={menuState && "active"}
-        className={"w-full transition-all duration-300"}
+        className={'w-full transition-all duration-300'}
       >
         <div className="container py-4">
           <div className="flex flex-wrap items-center justify-between gap-6  lg:gap-0">

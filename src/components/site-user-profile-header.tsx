@@ -94,34 +94,27 @@ export function ProfileCard({
           : 'rounded-2xl border-none',
       )}
     >
-      <CardContent className="relative rounded-2xl bg-white px-6 pb-8 pt-0 lg:px-8">
+      <CardContent className="relative rounded-2xl bg-white ">
         {/* Avatar - Overlapping top */}
-        <div className="-mt-12 mb-4 flex justify-start">
-          <Avatar className="h-24 w-24 border-4 border-white shadow-md ring-4 ring-white/50 bg-black">
+        <div className="flex justify-between">
+          <div className="space-y-4">
+            <div>
+              <h1 className="flex items-center gap-2 text-2xl font-bold leading-tight">
+                {user.name}
+              </h1>
+              {user.title && <p className="mt-1 text-">{user.title}</p>}
+            </div>
+
+            {user.bio && (
+              <p className="max-w-lg text-sm leading-relaxed ">{user.bio}</p>
+            )}
+          </div>
+          <Avatar className="h-24 w-24 border-4 ring-4 ring-white/50 bg-black">
             <AvatarImage src={user.image || '/avatar-placeholder.png'} />
             <AvatarFallback className="bg-black text-2xl font-bold text-white">
               {user.name?.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold leading-tight">
-              {user.name}
-            </h1>
-            {user.title && (
-              <p className="mt-1 text-sm font-medium text-muted-foreground">
-                {user.title}
-              </p>
-            )}
-          </div>
-
-          {user.bio && (
-            <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-              {user.bio}
-            </p>
-          )}
         </div>
       </CardContent>
 

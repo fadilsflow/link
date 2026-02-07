@@ -317,7 +317,7 @@ function AdminDashboard() {
   if (!user) return null
 
   return (
-    <div className="p-6 space-y-8 pb-20">
+    <div className="space-y-8 pb-20">
       <AppHeader className="mb-4">
         <AppHeaderContent title="Profile">
           {/* <AppHeaderDescription>

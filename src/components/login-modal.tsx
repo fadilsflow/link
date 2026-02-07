@@ -23,6 +23,7 @@ export function LoginModal() {
     try {
       await authClient.signIn.social({
         provider: 'google',
+        callbackURL: '/auth/callback',
       })
     } catch (error) {
       console.error('Login failed:', error)

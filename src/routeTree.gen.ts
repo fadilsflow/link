@@ -13,6 +13,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsernameIndexRouteImport } from './routes/$username/index'
 import { Route as DTokenRouteImport } from './routes/d/$token'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as UsernameAdminRouteRouteImport } from './routes/$username/admin/route'
 import { Route as UsernameAdminIndexRouteImport } from './routes/$username/admin/index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
@@ -45,6 +46,11 @@ const UsernameIndexRoute = UsernameIndexRouteImport.update({
 const DTokenRoute = DTokenRouteImport.update({
   id: '/d/$token',
   path: '/d/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UsernameAdminRouteRoute = UsernameAdminRouteRouteImport.update({
@@ -126,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
   '/d/$token': typeof DTokenRoute
   '/$username/': typeof UsernameIndexRoute
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
@@ -144,6 +151,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/d/$token': typeof DTokenRoute
   '/$username': typeof UsernameIndexRoute
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
   '/d/$token': typeof DTokenRoute
   '/$username/': typeof UsernameIndexRoute
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/'
     | '/onboarding'
     | '/$username/admin'
+    | '/auth/callback'
     | '/d/$token'
     | '/$username/'
     | '/$username/admin/editor'
@@ -203,6 +213,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/onboarding'
+    | '/auth/callback'
     | '/d/$token'
     | '/$username'
     | '/$username/admin/editor'
@@ -222,6 +233,7 @@ export interface FileRouteTypes {
     | '/'
     | '/onboarding'
     | '/$username/admin'
+    | '/auth/callback'
     | '/d/$token'
     | '/$username/'
     | '/$username/admin/editor'
@@ -242,6 +254,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OnboardingRoute: typeof OnboardingRoute
   UsernameAdminRouteRoute: typeof UsernameAdminRouteRouteWithChildren
+  AuthCallbackRoute: typeof AuthCallbackRoute
   DTokenRoute: typeof DTokenRoute
   UsernameIndexRoute: typeof UsernameIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/d/$token'
       fullPath: '/d/$token'
       preLoaderRoute: typeof DTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$username/admin': {
@@ -415,6 +435,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardingRoute: OnboardingRoute,
   UsernameAdminRouteRoute: UsernameAdminRouteRouteWithChildren,
+  AuthCallbackRoute: AuthCallbackRoute,
   DTokenRoute: DTokenRoute,
   UsernameIndexRoute: UsernameIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

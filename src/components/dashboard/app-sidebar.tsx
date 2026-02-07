@@ -6,7 +6,7 @@ import {
   ExternalLink,
   Grid,
   Package,
-  Settings,
+  Settings, 
   ShoppingBag,
   User as UserIcon,
 } from 'lucide-react'

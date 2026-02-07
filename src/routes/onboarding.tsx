@@ -15,10 +15,13 @@ export const Route = createFileRoute('/onboarding')({
       throw redirect({ to: '/' })
     }
 
-    // If already has username, redirect to home
-    if (status.hasUsername) {
-      console.log('User already has username')
-      throw redirect({ to: '/' })
+    // If already has username, redirect to admin
+    if (status.hasUsername && status.user?.username) {
+      console.log('User already has username, redirecting to admin')
+      throw redirect({
+        to: '/$username/admin/editor/profiles',
+        params: { username: status.user.username },
+      })
     }
   },
 })
@@ -40,10 +43,14 @@ function OnboardingPage() {
       })
 
       // Refresh session to get updated user data
-      await authClient.getSession()
+      const { data: updatedSession } = await authClient.getSession()
+      const newUsername = (updatedSession?.user as any)?.username || username
 
-      // Redirect to home
-      navigate({ to: '/' })
+      // Redirect to admin
+      navigate({
+        to: '/$username/admin/editor/profiles',
+        params: { username: newUsername },
+      })
     } catch (error) {
       throw error
     }

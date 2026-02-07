@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/sidebar'
 import { authClient } from '@/lib/auth-client'
 import { BASE_URL } from '@/lib/constans'
-import Credits from '../credits'
+import Credits from '../Credits'
 
 const data = {
   navBottom: [

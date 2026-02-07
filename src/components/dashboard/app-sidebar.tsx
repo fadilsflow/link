@@ -120,6 +120,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     size={'default'}
+                    variant={'default'}
                     render={
                       <Link
                         to={item.url as any}

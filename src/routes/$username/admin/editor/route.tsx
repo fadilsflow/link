@@ -23,14 +23,14 @@ function EditorLayout() {
   return (
     <main className="grid grid-cols-1 lg:grid-cols-[2.2fr_1.4fr] h-screen overflow-hidden text-zinc-900">
       {/* Content Area - Outlet renders child routes */}
-      <div className="h-full overflow-y-auto  scroll-smooth">
+      <div className="h-full overflow-y-auto no-scrollbar scroll-smooth">
         <div className="p-6">
           <Outlet />
         </div>
       </div>
 
       {/* PREVIEW Section - Shared across all editor routes */}
-      <div className="hidden lg:block sticky top-0 h-screen bg-muted/30 border-l border-zinc-200 overflow-hidden">
+      <div className="hidden lg:block sticky top-0 h-screen border-l overflow-hidden">
         <div className="h-full flex flex-col items-center pt-10">
           <div className="flex items-center gap-2 mb-6 shrink-0">
             <ShareProfileModal url={`${BASE_URL}/${user?.username || ''}`} />

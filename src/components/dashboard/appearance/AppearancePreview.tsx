@@ -128,7 +128,7 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
       <div className="aspect-9/18 w-full max-w-[280px] overflow-hidden rounded-[32px] border-3 bg-muted relative">
         {/* Scrollable Content Area - Applies wallpaper here if active */}
         <div
-          className="h-full w-full overflow-y-auto overflow-x-hidden thin-scrollbar transition-all duration-300"
+          className="h-full w-full no-scrollbar overflow-y-auto overflow-x-hidden transition-all duration-300"
           style={containerStyle}
         >
           <div className="min-h-full pb-8">

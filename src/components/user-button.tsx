@@ -13,7 +13,10 @@ export default function UserButton() {
 
   return (
     <Menu>
-      <MenuTrigger render={<Button variant={'outline'} size={'default'} />}>
+      <MenuTrigger render={<Button
+
+        className='hover:bg-background/80'
+        variant={'outline'} size={'default'} />}>
         {session.user.image ? (
           <Avatar className="size-5">
             <AvatarImage

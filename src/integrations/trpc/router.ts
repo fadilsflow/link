@@ -576,12 +576,10 @@ const orderRouter = {
       const deliveryUrl = `${BASE_URL}/d/${deliveryToken}`
       const emailResult = await sendOrderEmail({
         to: input.buyerEmail,
-        buyerName: input.buyerName ?? '',
-        creatorName: creator.name,
-        creatorUsername: creator.username || '',
-        productName: product.title,
         deliveryUrl,
-        supportEmail: creator.email,
+        order: newOrder,
+        product,
+        creator,
       })
 
       if (emailResult.success) {
@@ -696,12 +694,10 @@ const orderRouter = {
         const deliveryUrl = `${BASE_URL}/d/${deliveryToken}`
         const emailResult = await sendOrderEmail({
           to: input.buyerEmail,
-          buyerName: input.buyerName ?? '',
-          creatorName: creator.name,
-          creatorUsername: creator.username || '',
-          productName: product.title,
           deliveryUrl,
-          supportEmail: creator.email,
+          order: newOrder,
+          product,
+          creator,
         })
 
         if (emailResult.success) {
@@ -753,12 +749,10 @@ const orderRouter = {
 
       const emailResult = await sendOrderEmail({
         to: order.buyerEmail,
-        buyerName: order.buyerName ?? '',
-        creatorName: order.creator.name,
-        creatorUsername: order.creator.username || '',
-        productName: order.product.title,
         deliveryUrl,
-        supportEmail: order.creator.email,
+        order,
+        product: order.product,
+        creator: order.creator,
       })
 
       if (emailResult.success) {

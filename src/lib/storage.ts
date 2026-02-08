@@ -2,6 +2,7 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
@@ -61,5 +62,49 @@ export class StorageService {
       Key: key,
     })
     await s3Client.send(command)
+  }
+
+  static getKeyFromUrl(url: string): string | null {
+    try {
+      const urlObj = new URL(url)
+      // If using custom domain
+      if (R2_PUBLIC_URL && url.startsWith(R2_PUBLIC_URL)) {
+        return url.slice(R2_PUBLIC_URL.length).replace(/^\//, '')
+      }
+      // If using R2 domain
+      if (url.includes('r2.cloudflarestorage.com')) {
+        const pathParts = urlObj.pathname.split('/').filter(Boolean)
+        // format: /bucketName/key
+        // pathParts[0] is bucketName
+        if (pathParts[0] === R2_BUCKET_NAME) {
+          return pathParts.slice(1).join('/')
+        }
+      }
+      // Fallback: assume path is key (minus leading slash)
+      return urlObj.pathname.replace(/^\//, '')
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Generates a presigned URL for downloading a file from R2.
+   * Forces the browser to download the file instead of opening it.
+   * @param key The key (path) of the file.
+   * @param fileName The name of the file when downloaded.
+   * @param expiresIn Expiration time in seconds (default: 3600).
+   */
+  static async getDownloadUrl(
+    key: string,
+    fileName: string,
+    expiresIn = 3600,
+  ): Promise<string> {
+    const command = new GetObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+      ResponseContentDisposition: `attachment; filename="${fileName}"`,
+    })
+
+    return getSignedUrl(s3Client, command, { expiresIn })
   }
 }

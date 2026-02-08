@@ -125,9 +125,38 @@ export const getOrderByToken = createServerFn({ method: 'GET' })
       return null
     }
 
+    // Generate download URLs for product files
+    const { StorageService } = await import('@/lib/storage')
+    const productFiles = (order.product.productFiles as any[]) || []
+
+    const filesWithDownloadUrls = await Promise.all(
+      productFiles.map(async (file) => {
+        const key = StorageService.getKeyFromUrl(file.url)
+        if (key) {
+          try {
+            const downloadUrl = await StorageService.getDownloadUrl(
+              key,
+              file.name,
+            )
+            return {
+              ...file,
+              url: downloadUrl,
+            }
+          } catch (e) {
+            console.error('Failed to sign url', e)
+            return file
+          }
+        }
+        return file
+      }),
+    )
+
     return {
       order,
-      product: order.product,
+      product: {
+        ...order.product,
+        productFiles: filesWithDownloadUrls,
+      },
       creator: order.creator,
     }
   })

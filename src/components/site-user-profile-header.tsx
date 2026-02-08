@@ -7,6 +7,7 @@ import {
   Github,
   Youtube,
   Facebook,
+  ShoppingCart,
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -96,6 +97,12 @@ export function ProfileCard({
     >
       <CardContent className="relative rounded-2xl bg-white ">
         {/* Avatar - Overlapping top */}
+        <Avatar className="mb-2 rounded-lg h-12 w-12  md:h-24 md:w-24 border-2 ring-2 ring-white/50 bg-black">
+          <AvatarImage src={user.image || '/avatar-placeholder.png'} />
+          <AvatarFallback className="bg-black text-2xl font-bold text-white">
+            {user.name?.slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
         <div className="flex justify-between">
           <div className="space-y-4">
             <div>
@@ -109,12 +116,7 @@ export function ProfileCard({
               <p className="max-w-lg text-sm leading-relaxed ">{user.bio}</p>
             )}
           </div>
-          <Avatar className="h-24 w-24 border-4 ring-4 ring-white/50 bg-black">
-            <AvatarImage src={user.image || '/avatar-placeholder.png'} />
-            <AvatarFallback className="bg-black text-2xl font-bold text-white">
-              {user.name?.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+
         </div>
       </CardContent>
 
@@ -224,13 +226,14 @@ export default function SiteUserProfileHeader({
             show ? 'opacity-100' : 'opacity-0 pointer-events-none',
           )}
         >
-          <Avatar>
+          <Avatar className=" h-8 w-8 rounded-md border-2 ring-2 ring-white/50 bg-black">
             <AvatarImage src={avatarUrl || '/avatar-placeholder.png'} />
             <AvatarFallback>{username}</AvatarFallback>
           </Avatar>
           <span className="ml-2 font-medium">{username}</span>
         </Link>
-        <UserButton />
+        {/* <UserButton /> */}
+        <Button variant="outline" size="icon" className="h-8 w-8"><ShoppingCart /></Button>
       </div>
     </SiteHeaderWrapper>
   )

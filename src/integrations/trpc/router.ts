@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { asc, desc, eq } from 'drizzle-orm'
+import { asc, desc, eq, sql } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
@@ -550,7 +550,26 @@ const orderRouter = {
         })
         .returning()
 
-      // 3. Send Email (async / fire and forget, but update status)
+      // 3. Update analytics counters
+      // Update product analytics (salesCount, totalRevenue)
+      await db
+        .update(products)
+        .set({
+          salesCount: sql`${products.salesCount} + 1`,
+          totalRevenue: sql`${products.totalRevenue} + ${input.amountPaid}`,
+        })
+        .where(eq(products.id, product.id))
+
+      // Update creator/profile analytics (totalSalesCount, totalRevenue)
+      await db
+        .update(user)
+        .set({
+          totalSalesCount: sql`${user.totalSalesCount} + 1`,
+          totalRevenue: sql`${user.totalRevenue} + ${input.amountPaid}`,
+        })
+        .where(eq(user.id, creator.id))
+
+      // 4. Send Email (async / fire and forget, but update status)
       // In a real message queue, this would be separate.
       // Here we await it to report status early, or we can background it.
       // For MVP, we'll await it to ensure it works.
@@ -636,6 +655,62 @@ const orderRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+const analyticsRouter = {
+  // Get profile-level analytics (total revenue, total sales count)
+  getProfileAnalytics: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input }) => {
+      const profile = await db.query.user.findFirst({
+        where: eq(user.id, input.userId),
+        columns: {
+          totalRevenue: true,
+          totalSalesCount: true,
+        },
+      })
+
+      if (!profile) {
+        return {
+          totalRevenue: 0,
+          totalSalesCount: 0,
+        }
+      }
+
+      return {
+        totalRevenue: profile.totalRevenue,
+        totalSalesCount: profile.totalSalesCount,
+      }
+    }),
+
+  // Get per-product analytics
+  getProductAnalytics: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input }) => {
+      const productRows = await db.query.products.findMany({
+        where: eq(products.userId, input.userId),
+        columns: {
+          id: true,
+          title: true,
+          images: true,
+          salesCount: true,
+          totalRevenue: true,
+          isActive: true,
+          createdAt: true,
+        },
+        orderBy: [desc(products.totalRevenue)],
+      })
+
+      return productRows.map((p) => ({
+        id: p.id,
+        title: p.title,
+        image: p.images?.[0] ?? null,
+        salesCount: p.salesCount,
+        totalRevenue: p.totalRevenue,
+        isActive: p.isActive,
+        createdAt: p.createdAt,
+      }))
+    }),
+} satisfies TRPCRouterRecord
+
 export const trpcRouter = createTRPCRouter({
   user: userRouter,
   block: blockRouter,
@@ -643,5 +718,6 @@ export const trpcRouter = createTRPCRouter({
   socialLink: socialLinkRouter,
   storage: storageRouter,
   order: orderRouter,
+  analytics: analyticsRouter,
 })
 export type TRPCRouter = typeof trpcRouter

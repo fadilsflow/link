@@ -21,9 +21,11 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as UsernameAdminProductsRouteRouteImport } from './routes/$username/admin/products/route'
 import { Route as UsernameAdminOrdersRouteRouteImport } from './routes/$username/admin/orders/route'
 import { Route as UsernameAdminEditorRouteRouteImport } from './routes/$username/admin/editor/route'
+import { Route as UsernameAdminAnalyticsRouteRouteImport } from './routes/$username/admin/analytics/route'
 import { Route as UsernameProductsProductIdIndexRouteImport } from './routes/$username/products/$productId/index'
 import { Route as UsernameAdminProductsIndexRouteImport } from './routes/$username/admin/products/index'
 import { Route as UsernameAdminOrdersIndexRouteImport } from './routes/$username/admin/orders/index'
+import { Route as UsernameAdminAnalyticsIndexRouteImport } from './routes/$username/admin/analytics/index'
 import { Route as UsernameProductsProductIdCheckoutRouteImport } from './routes/$username/products/$productId/checkout'
 import { Route as UsernameAdminProductsNewRouteImport } from './routes/$username/admin/products/new'
 import { Route as UsernameAdminProductsProductIdRouteImport } from './routes/$username/admin/products/$productId'
@@ -93,6 +95,12 @@ const UsernameAdminEditorRouteRoute =
     path: '/editor',
     getParentRoute: () => UsernameAdminRouteRoute,
   } as any)
+const UsernameAdminAnalyticsRouteRoute =
+  UsernameAdminAnalyticsRouteRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => UsernameAdminRouteRoute,
+  } as any)
 const UsernameProductsProductIdIndexRoute =
   UsernameProductsProductIdIndexRouteImport.update({
     id: '/$username/products/$productId/',
@@ -110,6 +118,12 @@ const UsernameAdminOrdersIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => UsernameAdminOrdersRouteRoute,
+  } as any)
+const UsernameAdminAnalyticsIndexRoute =
+  UsernameAdminAnalyticsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => UsernameAdminAnalyticsRouteRoute,
   } as any)
 const UsernameProductsProductIdCheckoutRoute =
   UsernameProductsProductIdCheckoutRouteImport.update({
@@ -149,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/d/$token': typeof DTokenRoute
   '/$username/': typeof UsernameIndexRoute
+  '/$username/admin/analytics': typeof UsernameAdminAnalyticsRouteRouteWithChildren
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
   '/$username/admin/orders': typeof UsernameAdminOrdersRouteRouteWithChildren
   '/$username/admin/products': typeof UsernameAdminProductsRouteRouteWithChildren
@@ -160,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
   '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
   '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
+  '/$username/admin/analytics/': typeof UsernameAdminAnalyticsIndexRoute
   '/$username/admin/orders/': typeof UsernameAdminOrdersIndexRoute
   '/$username/admin/products/': typeof UsernameAdminProductsIndexRoute
   '/$username/products/$productId/': typeof UsernameProductsProductIdIndexRoute
@@ -179,6 +195,7 @@ export interface FileRoutesByTo {
   '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
   '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
   '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
+  '/$username/admin/analytics': typeof UsernameAdminAnalyticsIndexRoute
   '/$username/admin/orders': typeof UsernameAdminOrdersIndexRoute
   '/$username/admin/products': typeof UsernameAdminProductsIndexRoute
   '/$username/products/$productId': typeof UsernameProductsProductIdIndexRoute
@@ -191,6 +208,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/d/$token': typeof DTokenRoute
   '/$username/': typeof UsernameIndexRoute
+  '/$username/admin/analytics': typeof UsernameAdminAnalyticsRouteRouteWithChildren
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
   '/$username/admin/orders': typeof UsernameAdminOrdersRouteRouteWithChildren
   '/$username/admin/products': typeof UsernameAdminProductsRouteRouteWithChildren
@@ -202,6 +220,7 @@ export interface FileRoutesById {
   '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
   '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
   '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
+  '/$username/admin/analytics/': typeof UsernameAdminAnalyticsIndexRoute
   '/$username/admin/orders/': typeof UsernameAdminOrdersIndexRoute
   '/$username/admin/products/': typeof UsernameAdminProductsIndexRoute
   '/$username/products/$productId/': typeof UsernameProductsProductIdIndexRoute
@@ -215,6 +234,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/d/$token'
     | '/$username/'
+    | '/$username/admin/analytics'
     | '/$username/admin/editor'
     | '/$username/admin/orders'
     | '/$username/admin/products'
@@ -226,6 +246,7 @@ export interface FileRouteTypes {
     | '/$username/admin/products/$productId'
     | '/$username/admin/products/new'
     | '/$username/products/$productId/checkout'
+    | '/$username/admin/analytics/'
     | '/$username/admin/orders/'
     | '/$username/admin/products/'
     | '/$username/products/$productId/'
@@ -245,6 +266,7 @@ export interface FileRouteTypes {
     | '/$username/admin/products/$productId'
     | '/$username/admin/products/new'
     | '/$username/products/$productId/checkout'
+    | '/$username/admin/analytics'
     | '/$username/admin/orders'
     | '/$username/admin/products'
     | '/$username/products/$productId'
@@ -256,6 +278,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/d/$token'
     | '/$username/'
+    | '/$username/admin/analytics'
     | '/$username/admin/editor'
     | '/$username/admin/orders'
     | '/$username/admin/products'
@@ -267,6 +290,7 @@ export interface FileRouteTypes {
     | '/$username/admin/products/$productId'
     | '/$username/admin/products/new'
     | '/$username/products/$productId/checkout'
+    | '/$username/admin/analytics/'
     | '/$username/admin/orders/'
     | '/$username/admin/products/'
     | '/$username/products/$productId/'
@@ -371,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsernameAdminEditorRouteRouteImport
       parentRoute: typeof UsernameAdminRouteRoute
     }
+    '/$username/admin/analytics': {
+      id: '/$username/admin/analytics'
+      path: '/analytics'
+      fullPath: '/$username/admin/analytics'
+      preLoaderRoute: typeof UsernameAdminAnalyticsRouteRouteImport
+      parentRoute: typeof UsernameAdminRouteRoute
+    }
     '/$username/products/$productId/': {
       id: '/$username/products/$productId/'
       path: '/$username/products/$productId'
@@ -391,6 +422,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$username/admin/orders/'
       preLoaderRoute: typeof UsernameAdminOrdersIndexRouteImport
       parentRoute: typeof UsernameAdminOrdersRouteRoute
+    }
+    '/$username/admin/analytics/': {
+      id: '/$username/admin/analytics/'
+      path: '/'
+      fullPath: '/$username/admin/analytics/'
+      preLoaderRoute: typeof UsernameAdminAnalyticsIndexRouteImport
+      parentRoute: typeof UsernameAdminAnalyticsRouteRoute
     }
     '/$username/products/$productId/checkout': {
       id: '/$username/products/$productId/checkout'
@@ -429,6 +467,20 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface UsernameAdminAnalyticsRouteRouteChildren {
+  UsernameAdminAnalyticsIndexRoute: typeof UsernameAdminAnalyticsIndexRoute
+}
+
+const UsernameAdminAnalyticsRouteRouteChildren: UsernameAdminAnalyticsRouteRouteChildren =
+  {
+    UsernameAdminAnalyticsIndexRoute: UsernameAdminAnalyticsIndexRoute,
+  }
+
+const UsernameAdminAnalyticsRouteRouteWithChildren =
+  UsernameAdminAnalyticsRouteRoute._addFileChildren(
+    UsernameAdminAnalyticsRouteRouteChildren,
+  )
 
 interface UsernameAdminEditorRouteRouteChildren {
   UsernameAdminEditorAppearanceRoute: typeof UsernameAdminEditorAppearanceRoute
@@ -479,6 +531,7 @@ const UsernameAdminProductsRouteRouteWithChildren =
   )
 
 interface UsernameAdminRouteRouteChildren {
+  UsernameAdminAnalyticsRouteRoute: typeof UsernameAdminAnalyticsRouteRouteWithChildren
   UsernameAdminEditorRouteRoute: typeof UsernameAdminEditorRouteRouteWithChildren
   UsernameAdminOrdersRouteRoute: typeof UsernameAdminOrdersRouteRouteWithChildren
   UsernameAdminProductsRouteRoute: typeof UsernameAdminProductsRouteRouteWithChildren
@@ -486,6 +539,8 @@ interface UsernameAdminRouteRouteChildren {
 }
 
 const UsernameAdminRouteRouteChildren: UsernameAdminRouteRouteChildren = {
+  UsernameAdminAnalyticsRouteRoute:
+    UsernameAdminAnalyticsRouteRouteWithChildren,
   UsernameAdminEditorRouteRoute: UsernameAdminEditorRouteRouteWithChildren,
   UsernameAdminOrdersRouteRoute: UsernameAdminOrdersRouteRouteWithChildren,
   UsernameAdminProductsRouteRoute: UsernameAdminProductsRouteRouteWithChildren,

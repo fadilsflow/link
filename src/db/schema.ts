@@ -57,6 +57,9 @@ export const user = pgTable('user', {
     .default('rounded')
     .notNull(),
   appearanceBlockColor: text('appearance_block_color'),
+  // Analytics fields
+  totalRevenue: integer('total_revenue').notNull().default(0), // in cents
+  totalSalesCount: integer('total_sales_count').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()
@@ -95,6 +98,9 @@ export const products = pgTable('product', {
   images: text('images').array(), // Array of image URLs
   // Custom checkout questions (JSON string for simple, extendable schema)
   customerQuestions: text('customer_questions'),
+  // Analytics fields
+  salesCount: integer('sales_count').notNull().default(0),
+  totalRevenue: integer('total_revenue').notNull().default(0), // in cents
   // Visibility
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),

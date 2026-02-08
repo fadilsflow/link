@@ -6,5 +6,9 @@ export const Route = createFileRoute('/$username/admin/analytics')({
 })
 
 function AnalyticsLayout() {
-  return <Outlet />
+  return (
+    <div className="p-6">
+      <Outlet />
+    </div>
+  )
 }

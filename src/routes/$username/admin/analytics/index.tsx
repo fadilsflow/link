@@ -1,12 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import {
-  DollarSign,
-  Package,
-  ShoppingBag,
-  TrendingUp,
-  BarChart3,
-} from 'lucide-react'
 
 import {
   Card,
@@ -27,6 +20,8 @@ import {
 import { authClient } from '@/lib/auth-client'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { formatPrice, cn } from '@/lib/utils'
+import { Package } from 'lucide-react'
+import { Spinner } from '@/components/ui/spinner'
 
 export const Route = createFileRoute('/$username/admin/analytics/')({
   component: AnalyticsPage,
@@ -64,8 +59,7 @@ function AnalyticsPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-slate-200 border-t-slate-600 rounded-full animate-spin" />
-          <p className="text-sm text-slate-500">Loading analytics...</p>
+          <Spinner />
         </div>
       </div>
     )
@@ -103,9 +97,6 @@ function AnalyticsPage() {
             <CardTitle className="text-sm font-medium text-slate-600">
               Total Revenue
             </CardTitle>
-            <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
-              <DollarSign className="h-4 w-4 text-emerald-600" />
-            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-900">
@@ -113,7 +104,6 @@ function AnalyticsPage() {
             </div>
             <p className="text-xs text-slate-500 mt-1">Lifetime earnings</p>
           </CardContent>
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600" />
         </Card>
 
         {/* Total Sales Card */}
@@ -122,9 +112,6 @@ function AnalyticsPage() {
             <CardTitle className="text-sm font-medium text-slate-600">
               Total Sales
             </CardTitle>
-            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-              <ShoppingBag className="h-4 w-4 text-blue-600" />
-            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-900">
@@ -132,7 +119,6 @@ function AnalyticsPage() {
             </div>
             <p className="text-xs text-slate-500 mt-1">Successful checkouts</p>
           </CardContent>
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-blue-600" />
         </Card>
 
         {/* Average Order Value Card */}
@@ -141,9 +127,6 @@ function AnalyticsPage() {
             <CardTitle className="text-sm font-medium text-slate-600">
               Avg Order Value
             </CardTitle>
-            <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-purple-600" />
-            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-900">
@@ -151,7 +134,6 @@ function AnalyticsPage() {
             </div>
             <p className="text-xs text-slate-500 mt-1">Per transaction</p>
           </CardContent>
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-400 to-purple-600" />
         </Card>
 
         {/* Products Card */}
@@ -160,9 +142,6 @@ function AnalyticsPage() {
             <CardTitle className="text-sm font-medium text-slate-600">
               Products
             </CardTitle>
-            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
-              <Package className="h-4 w-4 text-amber-600" />
-            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-slate-900">
@@ -172,7 +151,6 @@ function AnalyticsPage() {
               {activeProducts} active
             </p>
           </CardContent>
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-amber-600" />
         </Card>
       </div>
 
@@ -180,7 +158,6 @@ function AnalyticsPage() {
       <Card className="border-0 shadow-sm ring-1 ring-slate-200">
         <CardHeader className="pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-slate-400" />
             <div>
               <CardTitle className="text-base font-semibold">
                 Product Performance

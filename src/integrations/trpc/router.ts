@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { asc, desc, eq, sql } from 'drizzle-orm'
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
@@ -601,6 +601,124 @@ const orderRouter = {
         ...newOrder,
         deliveryUrl,
       }
+    }),
+
+  createMultiple: publicProcedure
+    .input(
+      z.object({
+        items: z.array(
+          z.object({
+            productId: z.string(),
+            quantity: z.number().min(1).default(1),
+            amountPaidPerUnit: z.number().min(0),
+          }),
+        ),
+        buyerEmail: z.string().email(),
+        buyerName: z.string().optional(),
+        note: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      if (input.items.length === 0) {
+        throw new Error('No items in cart')
+      }
+
+      const productIds = input.items.map((i) => i.productId)
+      const productsList = await db.query.products.findMany({
+        where: inArray(products.id, productIds),
+        with: { user: true },
+      })
+
+      const productMap = new Map(productsList.map((p) => [p.id, p]))
+      const ordersCreated: any[] = []
+
+      for (const item of input.items) {
+        const product = productMap.get(item.productId)
+        if (!product) continue // Skip if not found
+        if (!product.isActive) continue // Skip if inactive
+
+        // Check quantity limits if applicable (simple check)
+        if (
+          product.totalQuantity !== null &&
+          product.totalQuantity !== undefined &&
+          product.totalQuantity < item.quantity
+        ) {
+          throw new Error(
+            `Product ${product.title} sold out or not enough stock`,
+          )
+        }
+
+        const creator = product.user
+        const totalAmount = item.amountPaidPerUnit * item.quantity
+
+        // Create orders based on quantity?
+        // No, create one order record with quantity field.
+
+        const deliveryToken = crypto.randomUUID()
+        const orderId = crypto.randomUUID()
+
+        const [newOrder] = await db
+          .insert(orders)
+          .values({
+            id: orderId,
+            creatorId: creator.id,
+            productId: product.id,
+            buyerEmail: input.buyerEmail,
+            buyerName: input.buyerName ?? '',
+            amountPaid: totalAmount,
+            quantity: item.quantity,
+            checkoutAnswers: {},
+            note: input.note ?? null,
+            status: 'completed',
+            deliveryToken,
+            emailSent: false,
+          })
+          .returning()
+
+        // Update analytics
+        await db
+          .update(products)
+          .set({
+            salesCount: sql`${products.salesCount} + ${item.quantity}`,
+            totalRevenue: sql`${products.totalRevenue} + ${totalAmount}`,
+          })
+          .where(eq(products.id, product.id))
+
+        await db
+          .update(user)
+          .set({
+            totalSalesCount: sql`${user.totalSalesCount} + ${item.quantity}`,
+            totalRevenue: sql`${user.totalRevenue} + ${totalAmount}`,
+          })
+          .where(eq(user.id, creator.id))
+
+        // Send email
+        const deliveryUrl = `${BASE_URL}/d/${deliveryToken}`
+        const emailResult = await sendOrderEmail({
+          to: input.buyerEmail,
+          buyerName: input.buyerName ?? '',
+          creatorName: creator.name,
+          creatorUsername: creator.username || '',
+          productName: product.title,
+          deliveryUrl,
+          supportEmail: creator.email,
+        })
+
+        if (emailResult.success) {
+          await db
+            .update(orders)
+            .set({ emailSent: true, emailSentAt: new Date() })
+            .where(eq(orders.id, newOrder.id))
+        }
+
+        ordersCreated.push({
+          ...newOrder,
+          deliveryUrl,
+          productTitle: product.title,
+        })
+      }
+
+      return ordersCreated
     }),
 
   listByCreator: publicProcedure

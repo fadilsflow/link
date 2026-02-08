@@ -212,6 +212,8 @@ export const orders = pgTable(
     // Buyer information
     buyerEmail: text('buyer_email').notNull(),
     buyerName: text('buyer_name'),
+    // Quantity of items purchased
+    quantity: integer('quantity').notNull().default(1),
     // Amount paid (in cents) - stored for historical record
     amountPaid: integer('amount_paid').notNull().default(0),
     // Checkout answers (JSON: { questionId: answer })

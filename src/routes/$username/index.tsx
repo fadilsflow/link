@@ -1,9 +1,13 @@
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import { ArrowUpRight, Link as LinkIcon } from 'lucide-react'
+import { ArrowUpRight, Link as LinkIcon, ShoppingCart } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { getPublicProfile } from '@/lib/profile-server'
 import NotFound from '@/components/not-found'
 import { cn, formatPrice } from '@/lib/utils'
+import { useCartStore } from '@/store/cart-store'
+import { toastManager } from '@/components/ui/toast'
+import { FloatingCartButton } from '@/components/floating-cart-button'
 
 import SiteUserProfileHeader, {
   ProfileBanner,
@@ -139,6 +143,8 @@ function UserProfile() {
       (bgType === 'color' && bgColor?.includes('#0')) ||
       bgColor?.includes('rgb(0'))
 
+  const { addItem } = useCartStore()
+
   return (
     <div
       className="relative min-h-screen font-sans text-slate-900"
@@ -250,6 +256,35 @@ function UserProfile() {
                 const productImages = product.images as string[] | null
                 const hasImage = productImages && productImages.length > 0
 
+                const handleAddToCart = (e: React.MouseEvent) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+
+                  // Calculate price for cart (default to minimum price or sale price or price)
+                  const cartPrice = product.payWhatYouWant
+                    ? product.minimumPrice || 0
+                    : product.salePrice || product.price || 0
+
+                  // For Pay What You Want without minimum, allowing adding to cart might be tricky
+                  // as user usually sets price. For now, we'll allow it with 0 or min price,
+                  // and maybe checkout needs to handle price changes.
+                  // But simple MVP: just add with default price.
+
+                  addItem({
+                    productId: product.id,
+                    title: product.title,
+                    price: cartPrice,
+                    image: hasImage ? productImages![0] : null,
+                    maxQuantity: product.totalQuantity,
+                    limitPerCheckout: product.limitPerCheckout,
+                  })
+
+                  toastManager.add({
+                    title: 'Added to cart',
+                    description: `${product.title} added to your cart`,
+                  })
+                }
+
                 return (
                   <Card
                     key={product.id}
@@ -285,7 +320,19 @@ function UserProfile() {
                             {price}
                           </span>
                         </div>
-                        <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+
+                        <div className="flex items-center gap-3">
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-8 w-8 rounded-full shadow-sm hover:scale-110 transition-transform md:h-9 md:w-9"
+                            onClick={handleAddToCart}
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                            <span className="sr-only">Add to Cart</span>
+                          </Button>
+                          <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -315,6 +362,8 @@ function UserProfile() {
           </div>
         </div>
       </div>
+
+      <FloatingCartButton />
     </div>
   )
 }

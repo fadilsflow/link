@@ -13,6 +13,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsernameIndexRouteImport } from './routes/$username/index'
 import { Route as DTokenRouteImport } from './routes/d/$token'
+import { Route as CartCheckoutRouteImport } from './routes/cart/checkout'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as UsernameAdminRouteRouteImport } from './routes/$username/admin/route'
 import { Route as UsernameAdminIndexRouteImport } from './routes/$username/admin/index'
@@ -50,6 +51,11 @@ const UsernameIndexRoute = UsernameIndexRouteImport.update({
 const DTokenRoute = DTokenRouteImport.update({
   id: '/d/$token',
   path: '/d/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartCheckoutRoute = CartCheckoutRouteImport.update({
+  id: '/cart/checkout',
+  path: '/cart/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/cart/checkout': typeof CartCheckoutRoute
   '/d/$token': typeof DTokenRoute
   '/$username/': typeof UsernameIndexRoute
   '/$username/admin/analytics': typeof UsernameAdminAnalyticsRouteRouteWithChildren
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/cart/checkout': typeof CartCheckoutRoute
   '/d/$token': typeof DTokenRoute
   '/$username': typeof UsernameIndexRoute
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/cart/checkout': typeof CartCheckoutRoute
   '/d/$token': typeof DTokenRoute
   '/$username/': typeof UsernameIndexRoute
   '/$username/admin/analytics': typeof UsernameAdminAnalyticsRouteRouteWithChildren
@@ -232,6 +241,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/$username/admin'
     | '/auth/callback'
+    | '/cart/checkout'
     | '/d/$token'
     | '/$username/'
     | '/$username/admin/analytics'
@@ -255,6 +265,7 @@ export interface FileRouteTypes {
     | '/'
     | '/onboarding'
     | '/auth/callback'
+    | '/cart/checkout'
     | '/d/$token'
     | '/$username'
     | '/$username/admin/editor'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/$username/admin'
     | '/auth/callback'
+    | '/cart/checkout'
     | '/d/$token'
     | '/$username/'
     | '/$username/admin/analytics'
@@ -301,6 +313,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   UsernameAdminRouteRoute: typeof UsernameAdminRouteRouteWithChildren
   AuthCallbackRoute: typeof AuthCallbackRoute
+  CartCheckoutRoute: typeof CartCheckoutRoute
   DTokenRoute: typeof DTokenRoute
   UsernameIndexRoute: typeof UsernameIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -337,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/d/$token'
       fullPath: '/d/$token'
       preLoaderRoute: typeof DTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart/checkout': {
+      id: '/cart/checkout'
+      path: '/cart/checkout'
+      fullPath: '/cart/checkout'
+      preLoaderRoute: typeof CartCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -555,6 +575,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   UsernameAdminRouteRoute: UsernameAdminRouteRouteWithChildren,
   AuthCallbackRoute: AuthCallbackRoute,
+  CartCheckoutRoute: CartCheckoutRoute,
   DTokenRoute: DTokenRoute,
   UsernameIndexRoute: UsernameIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

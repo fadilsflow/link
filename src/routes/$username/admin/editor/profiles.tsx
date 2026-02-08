@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Eye, Layout, Menu, Plus, User as UserIcon } from 'lucide-react'
+import { Layout, Plus, User as UserIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -16,7 +16,11 @@ import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { ProfileEditor } from '@/components/dashboard/ProfileEditor'
 import { BlockList } from '@/components/dashboard/BlockList'
-import { AppHeader, AppHeaderContent } from '@/components/app-header'
+import {
+  AppHeader,
+  AppHeaderContent,
+  AppHeaderDescription,
+} from '@/components/app-header'
 import SocialEditor from '@/components/dashboard/SocialEditor'
 import { toastManager } from '@/components/ui/toast'
 import { usePreview, type PreviewUser } from '@/lib/preview-context'
@@ -317,16 +321,15 @@ function AdminDashboard() {
   if (!user) return null
 
   return (
-    <div className="space-y-8 pb-20">
-      <AppHeader className="mb-4">
+    <div className="space-y-4 pb-20">
+      <AppHeader>
         <AppHeaderContent title="Profile">
-          {/* <AppHeaderDescription>
-          Manage the products that appear on your public profile.
-        </AppHeaderDescription> */}
+          <AppHeaderDescription>
+            Manage the products that appear on your public profile.
+          </AppHeaderDescription>
         </AppHeaderContent>
       </AppHeader>
-
-      <section>
+      <section >
         <ProfileEditor user={user} onSave={handleProfileSave} />
       </section>
 
@@ -344,7 +347,10 @@ function AdminDashboard() {
         <Dialog open={isAddBlockOpen} onOpenChange={setIsAddBlockOpen}>
           <DialogTrigger
             render={
-              <Button size={'lg'} className="w-full flex active:scale-[0.98]" />
+              <Button
+                size={'lg'}
+                className="w-full rounded-full flex active:scale-[0.98]"
+              />
             }
           >
             <Plus className="h-5 w-5" />

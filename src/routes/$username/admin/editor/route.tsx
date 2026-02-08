@@ -21,17 +21,17 @@ function EditorLayout() {
   const { user, blocks, status } = usePreview()
 
   return (
-    <main className="grid grid-cols-1 lg:grid-cols-[2.2fr_1.4fr] h-screen overflow-hidden text-zinc-900">
+    <main className="grid grid-cols-1 lg:grid-cols-[2.2fr_1.4fr] min-h-screen lg:h-screen lg:overflow-hidden text-zinc-900">
       {/* Content Area - Outlet renders child routes */}
-      <div className="h-full overflow-y-auto no-scrollbar scroll-smooth">
+      <div className="lg:h-full lg:overflow-y-auto no-scrollbar scroll-smooth">
         <div className="p-6">
           <Outlet />
         </div>
       </div>
 
       {/* PREVIEW Section - Shared across all editor routes */}
-      <div className="hidden lg:block sticky top-0 h-screen border-l overflow-hidden">
-        <div className="h-full flex flex-col items-center pt-10">
+      <div className="block border-t lg:border-t-0 lg:border-l lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden bg-zinc-50/50 lg:bg-transparent">
+        <div className="lg:h-full flex flex-col items-center py-10 lg:pt-10">
           <div className="flex items-center gap-2 mb-6 shrink-0">
             <ShareProfileModal url={`${BASE_URL}/${user?.username || ''}`} />
             {status.isSaving && (

@@ -304,11 +304,11 @@ function AppearanceEditor({
       </AppHeader>
 
       {/* Background */}
-      <Card className="border-zinc-100 shadow-sm overflow-hidden">
-        <div className="border-b border-zinc-100 bg-zinc-50/50 px-6 py-4">
+      <Card className="shadow-sm overflow-hidden">
+        <div className="border-b px-6 py-4">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Palette className="h-4 w-4 text-zinc-500" />
+              <Palette className="h-4 w-4" />
               Background
             </CardTitle>
           </div>
@@ -323,7 +323,7 @@ function AppearanceEditor({
           }}
           className="w-full"
         >
-          <div className="px-6 py-3 border-b border-zinc-100">
+          <div className="px-6 py-3 border-b">
             <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
               <TabsTrigger value="banner">Banner Layout</TabsTrigger>
               <TabsTrigger value="wallpaper">Full Wallpaper</TabsTrigger>
@@ -365,17 +365,17 @@ function AppearanceEditor({
       </Card>
 
       {/* Block style */}
-      <Card className="border-zinc-100 shadow-sm">
+      <Card className="shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle className="flex items-center gap-2 text-base">
-            <ImageIcon className="h-4 w-4 text-zinc-500" />
+            <ImageIcon className="h-4 w-4" />
             Block
           </CardTitle>
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full text-xs text-zinc-500"
+            className="h-8 w-8 rounded-full text-xs"
             onClick={handleBlockReset}
           >
             ↻

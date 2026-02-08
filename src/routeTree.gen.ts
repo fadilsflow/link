@@ -19,6 +19,7 @@ import { Route as UsernameAdminRouteRouteImport } from './routes/$username/admin
 import { Route as UsernameAdminIndexRouteImport } from './routes/$username/admin/index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as UsernameAdminSettingsRouteImport } from './routes/$username/admin/settings'
 import { Route as UsernameAdminProductsRouteRouteImport } from './routes/$username/admin/products/route'
 import { Route as UsernameAdminOrdersRouteRouteImport } from './routes/$username/admin/orders/route'
 import { Route as UsernameAdminEditorRouteRouteImport } from './routes/$username/admin/editor/route'
@@ -82,6 +83,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
+} as any)
+const UsernameAdminSettingsRoute = UsernameAdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => UsernameAdminRouteRoute,
 } as any)
 const UsernameAdminProductsRouteRoute =
   UsernameAdminProductsRouteRouteImport.update({
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
   '/$username/admin/orders': typeof UsernameAdminOrdersRouteRouteWithChildren
   '/$username/admin/products': typeof UsernameAdminProductsRouteRouteWithChildren
+  '/$username/admin/settings': typeof UsernameAdminSettingsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin/': typeof UsernameAdminIndexRoute
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/d/$token': typeof DTokenRoute
   '/$username': typeof UsernameIndexRoute
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
+  '/$username/admin/settings': typeof UsernameAdminSettingsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin': typeof UsernameAdminIndexRoute
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
   '/$username/admin/orders': typeof UsernameAdminOrdersRouteRouteWithChildren
   '/$username/admin/products': typeof UsernameAdminProductsRouteRouteWithChildren
+  '/$username/admin/settings': typeof UsernameAdminSettingsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/$username/admin/': typeof UsernameAdminIndexRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/$username/admin/editor'
     | '/$username/admin/orders'
     | '/$username/admin/products'
+    | '/$username/admin/settings'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin/'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/d/$token'
     | '/$username'
     | '/$username/admin/editor'
+    | '/$username/admin/settings'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/$username/admin/editor'
     | '/$username/admin/orders'
     | '/$username/admin/products'
+    | '/$username/admin/settings'
     | '/api/auth/$'
     | '/api/trpc/$'
     | '/$username/admin/'
@@ -393,6 +405,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/$username/admin/settings': {
+      id: '/$username/admin/settings'
+      path: '/settings'
+      fullPath: '/$username/admin/settings'
+      preLoaderRoute: typeof UsernameAdminSettingsRouteImport
+      parentRoute: typeof UsernameAdminRouteRoute
     }
     '/$username/admin/products': {
       id: '/$username/admin/products'
@@ -555,6 +574,7 @@ interface UsernameAdminRouteRouteChildren {
   UsernameAdminEditorRouteRoute: typeof UsernameAdminEditorRouteRouteWithChildren
   UsernameAdminOrdersRouteRoute: typeof UsernameAdminOrdersRouteRouteWithChildren
   UsernameAdminProductsRouteRoute: typeof UsernameAdminProductsRouteRouteWithChildren
+  UsernameAdminSettingsRoute: typeof UsernameAdminSettingsRoute
   UsernameAdminIndexRoute: typeof UsernameAdminIndexRoute
 }
 
@@ -564,6 +584,7 @@ const UsernameAdminRouteRouteChildren: UsernameAdminRouteRouteChildren = {
   UsernameAdminEditorRouteRoute: UsernameAdminEditorRouteRouteWithChildren,
   UsernameAdminOrdersRouteRoute: UsernameAdminOrdersRouteRouteWithChildren,
   UsernameAdminProductsRouteRoute: UsernameAdminProductsRouteRouteWithChildren,
+  UsernameAdminSettingsRoute: UsernameAdminSettingsRoute,
   UsernameAdminIndexRoute: UsernameAdminIndexRoute,
 }
 

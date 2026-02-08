@@ -348,7 +348,7 @@ export default function SocialEditor({
   }
 
   return (
-    <div className="flex gap-3 pt-2 flex-wrap items-center">
+    <div className="flex gap-3 flex-wrap items-center">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}

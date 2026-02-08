@@ -127,7 +127,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
   return (
     <div className="relative flex flex-col gap-2">
       <div className="flex gap-4">
-        <Avatar className="h-24 w-24 ring-4 ring-white shadow-2xl shadow-zinc-200">
+        <Avatar className="h-16 w-16 border">
           <AvatarImage src={user.image || ''} />
           <AvatarFallback className="bg-zinc-900 text-white text-2xl font-bold">
             {user.name.slice(0, 2).toUpperCase()}
@@ -154,7 +154,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
           {user.bio && (
             <p
               onClick={() => setDialogOpen(true)}
-              className="text-sm text-muted-foreground cursor-pointer hover:underline"
+              className="text-sm text-muted-foreground cursor-pointer hover:underline  line-clamp-1"
             >
               {user.bio}
             </p>

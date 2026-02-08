@@ -18,6 +18,8 @@ import { LinkedIn } from '@/components/icon/linkedin'
 import { XformerlyTwitter } from '@/components/icon/x'
 import { WhatsApp } from '@/components/icon/whatsapp'
 import { SiteHeaderWrapper } from './site-header-wrapper'
+import { CartDrawer } from '@/components/cart-drawer'
+import { useCartStore } from '@/store/cart-store'
 import { useEffect, useState } from 'react'
 import UserButton from './user-button'
 
@@ -116,7 +118,6 @@ export function ProfileCard({
               <p className="max-w-lg text-sm leading-relaxed ">{user.bio}</p>
             )}
           </div>
-
         </div>
       </CardContent>
 
@@ -176,6 +177,8 @@ export default function SiteUserProfileHeader({
   username?: string
 }) {
   const [show, setShow] = useState(false)
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const totalItems = useCartStore((state) => state.getTotalItems())
 
   useEffect(() => {
     const handleScroll = () => {
@@ -204,37 +207,52 @@ export default function SiteUserProfileHeader({
   }, [])
 
   return (
-    <SiteHeaderWrapper
-      className={cn(
-        'fixed left-0 right-0 top-0 z-50 max-w-screen overflow-x-hidden px-2 transition-all duration-300',
-        show
-          ? 'bg-background shadow-[0_0_16px_0_black]/8 dark:shadow-[0_0_16px_0_black]/80'
-          : 'bg-transparent shadow-none',
-      )}
-    >
-      <div
+    <>
+      <SiteHeaderWrapper
         className={cn(
-          'mx-auto flex h-17 items-center justify-between gap-2 px-2 transition-all duration-300 sm:gap-4 md:max-w-[680px]',
-          show ? '' : 'border-transparent',
+          'fixed left-0 right-0 top-0 z-50 max-w-screen overflow-x-hidden px-2 transition-all duration-300',
+          show
+            ? 'bg-background shadow-[0_0_16px_0_black]/8 dark:shadow-[0_0_16px_0_black]/80'
+            : 'bg-transparent shadow-none',
         )}
-        data-header-container
       >
-        <Link
-          to="/"
+        <div
           className={cn(
-            'flex items-center transition-opacity duration-300',
-            show ? 'opacity-100' : 'opacity-0 pointer-events-none',
+            'mx-auto flex h-17 items-center justify-between gap-2 px-2 transition-all duration-300 sm:gap-4 md:max-w-[680px]',
+            show ? '' : 'border-transparent',
           )}
+          data-header-container
         >
-          <Avatar className=" h-8 w-8 rounded-md border-2 ring-2 ring-white/50 bg-black">
-            <AvatarImage src={avatarUrl || '/avatar-placeholder.png'} />
-            <AvatarFallback>{username}</AvatarFallback>
-          </Avatar>
-          <span className="ml-2 font-medium">{username}</span>
-        </Link>
-        {/* <UserButton /> */}
-        <Button variant="outline" size="icon" className="h-8 w-8"><ShoppingCart /></Button>
-      </div>
-    </SiteHeaderWrapper>
+          <Link
+            to="/"
+            className={cn(
+              'flex items-center transition-opacity duration-300',
+              show ? 'opacity-100' : 'opacity-0 pointer-events-none',
+            )}
+          >
+            <Avatar className=" h-8 w-8 rounded-md border-2 ring-2 ring-white/50 bg-black">
+              <AvatarImage src={avatarUrl || '/avatar-placeholder.png'} />
+              <AvatarFallback>{username}</AvatarFallback>
+            </Avatar>
+            <span className="ml-2 font-medium">{username}</span>
+          </Link>
+          {/* <UserButton /> */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 relative"
+            onClick={() => setIsCartOpen(true)}
+          >
+            <ShoppingCart className="h-4 w-4" />
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
+                {totalItems > 9 ? '9+' : totalItems}
+              </span>
+            )}
+          </Button>
+        </div>
+      </SiteHeaderWrapper>
+      <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+    </>
   )
 }

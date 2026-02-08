@@ -7,7 +7,6 @@ import NotFound from '@/components/not-found'
 import { cn, formatPrice } from '@/lib/utils'
 import { useCartStore } from '@/store/cart-store'
 import { toastManager } from '@/components/ui/toast'
-import { FloatingCartButton } from '@/components/floating-cart-button'
 
 import SiteUserProfileHeader, {
   ProfileBanner,
@@ -362,8 +361,6 @@ function UserProfile() {
           </div>
         </div>
       </div>
-
-      <FloatingCartButton />
     </div>
   )
 }

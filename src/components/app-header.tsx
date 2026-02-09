@@ -17,7 +17,7 @@ function AppHeaderContent({
 }: React.ComponentProps<'div'> & { title: string }) {
   return (
     <div className={cn('flex flex-col gap-1', className)} {...props}>
-      <h1 className="font-heading font-semibold text-lg leading-none">
+      <h1 className="font-heading text-foreground font-semibold text-lg leading-none">
         {title}
       </h1>
       {children}

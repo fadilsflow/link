@@ -53,6 +53,7 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { formatPrice, cn } from '@/lib/utils'
 import { toastManager } from '@/components/ui/toast'
 import { BASE_URL } from '@/lib/constans'
+import { Spinner } from '@/components/ui/spinner'
 
 export const Route = createFileRoute('/$username/admin/orders/')({
   component: OrdersPage,
@@ -112,7 +113,7 @@ function OrdersPage() {
         const product = row.original.product
         return (
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="h-10 w-10 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
               {product.images && product.images.length > 0 ? (
                 <img
                   src={product.images[0]}
@@ -120,14 +121,14 @@ function OrdersPage() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <ShoppingBag className="h-5 w-5 text-slate-400" />
+                <ShoppingBag className="h-5 w-5" />
               )}
             </div>
             <div className="min-w-0">
-              <p className="font-medium text-slate-900 truncate max-w-[150px] sm:max-w-xs">
+              <p className="font-medium  truncate max-w-[150px] sm:max-w-xs">
                 {product.title}
               </p>
-              <p className="text-xs text-slate-500 truncate">
+              <p className="text-xs text-muted-foreground truncate">
                 {new Date(row.original.createdAt).toLocaleDateString()}
               </p>
             </div>
@@ -140,12 +141,10 @@ function OrdersPage() {
       header: 'Customer',
       cell: ({ row }) => (
         <div className="min-w-0">
-          <p className="font-medium text-slate-900 truncate">
+          <p className="font-medium  truncate">
             {row.original.buyerName || 'Guest'}
           </p>
-          <p className="text-xs text-slate-500 truncate">
-            {row.original.buyerEmail}
-          </p>
+          <p className="text-xs text-muted-foreground truncate">{row.original.buyerEmail}</p>
         </div>
       ),
     },
@@ -161,31 +160,14 @@ function OrdersPage() {
     {
       accessorKey: 'status',
       header: 'Status',
-      cell: ({ row }) => (
-        <Badge
-          variant="outline"
-          className={cn(
-            'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50',
-          )}
-        >
-          Paid
-        </Badge>
-      ),
+      cell: ({ row }) => <Badge variant="success">Paid</Badge>,
     },
     {
       accessorKey: 'emailSent',
       header: 'Delivery',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Badge
-            variant="secondary"
-            className={cn(
-              'text-[10px] h-5 px-1.5 font-normal',
-              row.original.emailSent
-                ? 'bg-blue-50 text-blue-700 hover:bg-blue-50'
-                : 'bg-yellow-50 text-yellow-700 hover:bg-yellow-50',
-            )}
-          >
+          <Badge variant={row.original.emailSent ? 'info' : 'warning'}>
             {row.original.emailSent ? 'Sent' : 'Pending'}
           </Badge>
         </div>
@@ -197,7 +179,9 @@ function OrdersPage() {
         const order = row.original
         return (
           <Menu>
-            <MenuTrigger render={<Button variant="ghost" className="h-8 w-8 p-0" />}>
+            <MenuTrigger
+              render={<Button variant="ghost" className="h-8 w-8 p-0" />}
+            >
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </MenuTrigger>
@@ -206,7 +190,10 @@ function OrdersPage() {
                 <MenuGroupLabel>Actions</MenuGroupLabel>
                 <MenuItem
                   onClick={() => {
-                    window.open(`${BASE_URL}/d/${order.deliveryToken}`, '_blank')
+                    window.open(
+                      `${BASE_URL}/d/${order.deliveryToken}`,
+                      '_blank',
+                    )
                   }}
                 >
                   <ExternalLink className="mr-2 h-4 w-4" />
@@ -271,52 +258,47 @@ function OrdersPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Orders
-          </h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-bold tracking-tight ">Orders</h1>
+          <p className="text-sm ">
             Manage your digital product sales and delivery
           </p>
         </div>
       </div>
 
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200">
-        <CardHeader className="pb-3 border-b border-slate-100">
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold">
               Sales History
             </CardTitle>
             <div className="relative w-full max-w-sm">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 " />
               <Input
                 placeholder="Search orders..."
                 value={globalFilter ?? ''}
                 onChange={(event) => setGlobalFilter(event.target.value)}
-                className="pl-9 h-9 bg-slate-50 border-slate-200 text-sm"
+                className="pl-9 h-9 text-sm"
               />
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
-            <TableHeader className="bg-slate-50">
+            <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow
-                  key={headerGroup.id}
-                  className="border-slate-100 hover:bg-slate-50"
-                >
+                <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
                     return (
                       <TableHead
                         key={header.id}
-                        className="text-xs font-semibold text-slate-500 uppercase h-10"
+                        className="text-xs font-semibold  uppercase h-10"
                       >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
                       </TableHead>
                     )
                   })}
@@ -330,9 +312,8 @@ function OrdersPage() {
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    <div className="flex items-center justify-center gap-2 text-slate-400">
-                      <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-                      Loading...
+                    <div className="flex items-center justify-center gap-2">
+                      <Spinner />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -341,7 +322,7 @@ function OrdersPage() {
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && 'selected'}
-                    className="group border-slate-100"
+                    className="group"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="py-3">
@@ -357,7 +338,7 @@ function OrdersPage() {
                 <TableRow>
                   <TableCell
                     colSpan={columns.length}
-                    className="h-32 text-center text-slate-500"
+                    className="h-32 text-center "
                   >
                     No orders found.
                   </TableCell>
@@ -367,7 +348,7 @@ function OrdersPage() {
           </Table>
         </CardContent>
         {table.getPageCount() > 1 && (
-          <div className="flex items-center justify-end space-x-2 py-4 px-6 border-t border-slate-100">
+          <div className="flex items-center justify-end space-x-2 py-4 px-6">
             <Button
               variant="outline"
               size="sm"

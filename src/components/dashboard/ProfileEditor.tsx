@@ -129,7 +129,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
       <div className="flex gap-4">
         <Avatar className="h-16 w-16 border">
           <AvatarImage src={user.image || ''} />
-          <AvatarFallback className="bg-zinc-900 text-white text-2xl font-bold">
+          <AvatarFallback className="text-2xl font-bold">
             {user.name.slice(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
@@ -137,7 +137,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
         <div className="flex flex-col">
           <span
             onClick={() => setDialogOpen(true)}
-            className="font-heading text-xl cursor-pointer hover:underline"
+            className="font-heading text-foreground text-xl cursor-pointer hover:underline"
           >
             {user.name}
           </span>
@@ -177,7 +177,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
               <div className="flex justify-center">
                 <div className="relative group">
                   <div
-                    className="relative h-24 w-24 rounded-full overflow-hidden ring-4 ring-zinc-100 cursor-pointer"
+                    className="relative h-24 w-24 rounded-full overflow-hidden ring-4 cursor-pointer"
                     onClick={openFileDialog}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
@@ -189,7 +189,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
                         src={avatarFiles[0]?.preview || formData.image || ''}
                         className="object-cover"
                       />
-                      <AvatarFallback className="bg-zinc-100 text-zinc-400 text-2xl font-bold">
+                      <AvatarFallback className="text-2xl font-bold">
                         {formData.name.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>

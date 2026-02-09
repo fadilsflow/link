@@ -13,9 +13,15 @@ export default function UserButton() {
 
   return (
     <Menu>
-      <MenuTrigger render={<Button
-        className='hover:bg-background/80'
-        variant={'outline'} size={'default'} />}>
+      <MenuTrigger
+        render={
+          <Button
+            className="hover:bg-background/80"
+            variant={'outline'}
+            size={'default'}
+          />
+        }
+      >
         {session.user.image ? (
           <Avatar className="size-5">
             <AvatarImage
@@ -69,7 +75,7 @@ export default function UserButton() {
           }}
         >
           {/* <LogOut className="mr-2 h-4 w-4" /> */}
-          Log out
+          Sign Out
         </MenuItem>
       </MenuPopup>
     </Menu>

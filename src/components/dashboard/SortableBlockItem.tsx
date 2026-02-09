@@ -53,7 +53,7 @@ export function SortableBlockItem({
       <div
         className={cn(
           'flex-1 flex rounded-xl border overflow-hidden transition-all duration-300 bg-white shadow-sm hover:shadow-md',
-          block.syncStatus === 'error' ? 'border-red-500' : 'border-zinc-100',
+          block.syncStatus === 'error' ? 'border-red-500' : 'border-border',
           block.type === 'text' ? 'bg-yellow-50/10' : 'bg-green-50/10',
         )}
       >
@@ -65,7 +65,7 @@ export function SortableBlockItem({
               {...listeners}
               className="flex items-center pr-4 cursor-grab touch-none"
             >
-              <GripVertical className="h-5 w-5 text-zinc-300 group-hover:text-zinc-400 transition-colors" />
+              <GripVertical className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             </div>
 
             {/* Content */}

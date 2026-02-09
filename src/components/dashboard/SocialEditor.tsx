@@ -74,7 +74,7 @@ const PLATFORMS = [
     value: 'twitter',
     label: 'X (Twitter)',
     icon: XformerlyTwitter,
-    iconClass: 'invert',
+    iconClass: 'invert dark:invert-0',
   },
   { value: 'linkedin', label: 'LinkedIn', icon: LinkedIn },
   { value: 'email', label: 'Email', icon: Gmail },
@@ -519,10 +519,7 @@ export default function SocialEditor({
                   <AlertDialogClose render={<Button variant="ghost" />}>
                     Cancel
                   </AlertDialogClose>
-                  <Button
-                    onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
+                  <Button onClick={handleDelete} variant={'destructive'}>
                     Delete
                   </Button>
                 </AlertDialogFooter>

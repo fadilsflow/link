@@ -1,17 +1,26 @@
 import {
+  ArrowDown,
   ArrowRightLeft,
   BarChart3,
+  ChevronDown,
   CircleHelp,
   Copy,
   ExternalLink,
   Grid,
+  LogOut,
   Package,
+  Search,
   Settings,
   ShoppingBag,
   User as UserIcon,
 } from 'lucide-react'
 
-import { Link, useParams, useRouterState } from '@tanstack/react-router'
+import {
+  Link,
+  useParams,
+  useRouter,
+  useRouterState,
+} from '@tanstack/react-router'
 import { toastManager } from '@/components/ui/toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -27,6 +36,14 @@ import {
 import { authClient } from '@/lib/auth-client'
 import { BASE_URL } from '@/lib/constans'
 import Credits from '../Credits'
+import { Button } from '../ui/button'
+import {
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger,
+} from '../ui/menu'
 
 const data = {
   navBottom: [
@@ -34,11 +51,6 @@ const data = {
       icon: Settings,
       title: 'Settings',
       url: '/$username/admin/settings',
-    },
-    {
-      icon: CircleHelp,
-      title: 'Help',
-      url: '/$username/admin/help',
     },
   ],
   navMain: [
@@ -77,6 +89,7 @@ const isAdminpage = (path: string, currentPath: string) => {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const router = useRouter()
   const { data: session } = authClient.useSession()
   const { username } = useParams({ strict: false })
   const location = useRouterState({ select: (s) => s.location })
@@ -92,25 +105,68 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar {...props} collapsible="icon" variant="sidebar">
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="default" className="mt-3">
-              <Avatar className="h-7 w-7 border border-white ring-1 ring-zinc-100 shadow-sm">
-                <AvatarImage src={session?.user.image || ''} />
-                <AvatarFallback className="bg-zinc-900 text-white text-[9px] font-bold">
-                  {session?.user.name?.slice(0, 2).toUpperCase() || 'US'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 text-left">
-                <h3 className="text-xs font-bold text-foreground truncate">
-                  {username || session?.user.name}
-                </h3>
-                <p className="text-[9px] font-medium text-zinc-400">Personal</p>
-              </div>
-              <ArrowRightLeft className="h-3 w-3 text-zinc-400" />
+          <SidebarMenuItem className="flex gap-3 items-center mt-3">
+            <Menu>
+              <MenuTrigger render={<SidebarMenuButton size="default" />}>
+                <Avatar className="h-7 w-7 border">
+                  <AvatarImage src={session?.user.image || ''} />
+                  <AvatarFallback>
+                    {session?.user.name?.slice(0, 2).toUpperCase() || 'US'}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="min-w-0 flex-1 text-left">
+                  <h3 className="truncate text-sm text-foreground">
+                    {username || session?.user.name}
+                  </h3>
+                </div>
+
+                <ChevronDown className="h-3 w-3 text-zinc-400" />
+              </MenuTrigger>
+              <MenuPopup className={'w-40'}>
+                <MenuItem
+                  render={
+                    <Link to={'/'} target="_blank" rel="noopener noreferrer" />
+                  }
+                >
+                  <UserIcon className="h-3 w-3" />
+                  My Profile
+                </MenuItem>
+                <MenuItem
+                  render={
+                    <Link to={'/'} target="_blank" rel="noopener noreferrer" />
+                  }
+                >
+                  <CircleHelp className="h-3 w-3" />
+                  Help
+                </MenuItem>
+                <MenuSeparator />
+                <MenuItem
+                  onClick={async () => {
+                    await authClient.signOut({
+                      fetchOptions: {
+                        onSuccess: () => {
+                          router.invalidate()
+                          router.navigate({ to: '/' })
+                        },
+                      },
+                    })
+                  }}
+                  className="text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </MenuItem>
+              </MenuPopup>
+            </Menu>
+
+            <SidebarMenuButton render={<Button size="icon" variant="ghost" />}>
+              <Search />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
@@ -131,7 +187,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       />
                     }
                     isActive={isActive}
-                    className="data-[active=true]:bg-zinc-200/80 text-foreground"
+                    className="text-foreground"
                   >
                     <item.icon className=" h-4 w-4" />
                     <span>{item.title}</span>
@@ -172,7 +228,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   location.pathname ===
                   item.url.replace('/$username', `/${username}`)
                 }
-                className="data-[active=true]:bg-zinc-200/80 text-foreground"
+                className="text-foreground"
               >
                 <item.icon className=" h-4 w-4" />
                 <span>{item.title}</span>

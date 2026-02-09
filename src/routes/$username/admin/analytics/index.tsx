@@ -1,6 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-
+import {
+  AppHeader,
+  AppHeaderContent,
+  AppHeaderDescription,
+} from '@/components/app-header'
 import {
   Card,
   CardContent,
@@ -78,16 +82,13 @@ function AnalyticsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Analytics
-          </h1>
-          <p className="text-sm text-slate-500">
+      <AppHeader>
+        <AppHeaderContent title="Analytics">
+          <AppHeaderDescription>
             Track your sales performance and product metrics
-          </p>
-        </div>
-      </div>
+          </AppHeaderDescription>
+        </AppHeaderContent>
+      </AppHeader>
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

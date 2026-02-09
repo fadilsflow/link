@@ -93,7 +93,7 @@ export function ShareProfileModal({ url }: { url: string }) {
           <div className="space-y-3">
             <div className="flex items-center gap-2 p-1.5 rounded-xl border ">
               <span className="flex-1 truncate ml-3 text-sm font-medium">
-                {url}
+                {url.replace(/^https?:\/\//, '')}
               </span>
               <Button size="sm" onClick={handleCopyLink}>
                 {copyStatus === 'copied' ? 'Copied' : 'Copy'}

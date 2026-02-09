@@ -102,13 +102,14 @@ function UserProfile() {
   type BgMode = 'banner' | 'wallpaper' | 'color' | 'image'
   type WallpaperStyle = 'flat' | 'gradient' | 'avatar' | 'image'
 
-  const bgType = user.appearanceBgType as BgMode
+  const bgType = (user.appearanceBgType as BgMode) || 'banner'
   const wallpaperStyle = user.appearanceBgWallpaperStyle as WallpaperStyle
   const bgColor = user.appearanceBgColor
-  const isBanner = bgType === 'banner' || !bgType
+  const isBanner = bgType === 'banner'
 
   const blockStyle = user.appearanceBlockStyle as 'basic' | 'flat' | 'shadow'
   const blockRadius = user.appearanceBlockRadius as 'rounded' | 'square'
+  const isFullPageBg = !isBanner
 
   const cardBase =
     blockStyle === 'flat'
@@ -118,13 +119,14 @@ function UserProfile() {
         : 'bg-white border border-slate-100 shadow-sm'
 
   const radiusClass = blockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-md'
-  const isFullPageBg = bgType === 'wallpaper' || bgType === 'color'
   const isDarkBg =
     isFullPageBg &&
     (wallpaperStyle === 'gradient' ||
       wallpaperStyle === 'avatar' ||
+      wallpaperStyle === 'image' ||
       (bgType === 'color' &&
-        (!!bgColor?.includes('#0') || !!bgColor?.includes('rgb(0'))))
+        bgColor &&
+        (bgColor.includes('#0') || bgColor.includes('rgb(0'))))
 
   const getImageUrl = (imageUrl?: string | null, fallback?: string) => {
     if (imageUrl) return imageUrl
@@ -143,32 +145,23 @@ function UserProfile() {
       }
     }
 
-    if (bgType === 'wallpaper' || bgType === 'image') {
-      if (wallpaperStyle === 'image' || user.appearanceWallpaperImageUrl) {
+    if (isFullPageBg) {
+      if (
+        wallpaperStyle === 'gradient' &&
+        user.appearanceWallpaperGradientTop
+      ) {
         return {
-          backgroundImage: user.appearanceWallpaperImageUrl
-            ? `url('${getImageUrl(user.appearanceWallpaperImageUrl)}')`
-            : user.appearanceBgImageUrl
-              ? `url('${getImageUrl(user.appearanceBgImageUrl)}')`
-              : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          background: `linear-gradient(180deg, ${user.appearanceWallpaperGradientTop}, ${user.appearanceWallpaperGradientBottom || user.appearanceWallpaperGradientTop})`,
         }
       }
 
       if (
-        wallpaperStyle === 'gradient' &&
-        user.appearanceWallpaperGradientTop &&
-        user.appearanceWallpaperGradientBottom
+        (wallpaperStyle === 'flat' && user.appearanceWallpaperColor) ||
+        (bgType === 'color' && bgColor)
       ) {
         return {
-          background: `linear-gradient(180deg, ${user.appearanceWallpaperGradientTop}, ${user.appearanceWallpaperGradientBottom})`,
-        }
-      }
-
-      if (wallpaperStyle === 'flat' && user.appearanceWallpaperColor) {
-        return {
-          backgroundColor: user.appearanceWallpaperColor,
+          backgroundColor:
+            user.appearanceWallpaperColor || bgColor || undefined,
         }
       }
 
@@ -178,10 +171,17 @@ function UserProfile() {
             'radial-gradient(circle at center, rgba(15,23,42,0.1), #020617)',
         }
       }
-    }
 
-    if (bgType === 'color' && bgColor) {
-      return { background: bgColor }
+      // Default to image if style is 'image' or if it's legacy 'image' mode or generic 'wallpaper' mode
+      return {
+        backgroundImage: user.appearanceWallpaperImageUrl
+          ? `url('${getImageUrl(user.appearanceWallpaperImageUrl)}')`
+          : user.appearanceBgImageUrl
+            ? `url('${getImageUrl(user.appearanceBgImageUrl)}')`
+            : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }
     }
 
     return {

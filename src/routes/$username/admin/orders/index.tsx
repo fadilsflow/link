@@ -1,6 +1,17 @@
 import { useState } from 'react'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
+import {
+  AppHeader,
+  AppHeaderActions,
+  AppHeaderContent,
+  AppHeaderDescription,
+} from '@/components/app-header'
 import {
   ExternalLink,
   Mail,
@@ -60,7 +71,6 @@ export const Route = createFileRoute('/$username/admin/orders/')({
 })
 
 function OrdersPage() {
-  const { username } = Route.useParams()
   const { data: session } = authClient.useSession()
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
@@ -144,7 +154,9 @@ function OrdersPage() {
           <p className="font-medium  truncate">
             {row.original.buyerName || 'Guest'}
           </p>
-          <p className="text-xs text-muted-foreground truncate">{row.original.buyerEmail}</p>
+          <p className="text-xs text-muted-foreground truncate">
+            {row.original.buyerEmail}
+          </p>
         </div>
       ),
     },
@@ -256,14 +268,35 @@ function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight ">Orders</h1>
           <p className="text-sm ">
             Manage your digital product sales and delivery
           </p>
         </div>
-      </div>
+      </div> */}
+      <AppHeader>
+        <AppHeaderContent title="Orders">
+          <AppHeaderDescription>
+            Manage your digital product sales and delivery
+          </AppHeaderDescription>
+        </AppHeaderContent>
+        <AppHeaderActions>
+          <InputGroup>
+            <InputGroupAddon>
+              <Search aria-hidden="true" />
+            </InputGroupAddon>
+            <InputGroupInput
+              aria-label="Search"
+              placeholder="Search orders..."
+              value={globalFilter ?? ''}
+              onChange={(event) => setGlobalFilter(event.target.value)}
+              type="search"
+            />
+          </InputGroup>
+        </AppHeaderActions>
+      </AppHeader>
 
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
@@ -271,15 +304,6 @@ function OrdersPage() {
             <CardTitle className="text-base font-semibold">
               Sales History
             </CardTitle>
-            <div className="relative w-full max-w-sm">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 " />
-              <Input
-                placeholder="Search orders..."
-                value={globalFilter ?? ''}
-                onChange={(event) => setGlobalFilter(event.target.value)}
-                className="pl-9 h-9 text-sm"
-              />
-            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">

@@ -124,13 +124,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <ChevronDown className="h-3 w-3 text-zinc-400" />
               </MenuTrigger>
               <MenuPopup className={'w-40'}>
-                <MenuItem
-                  render={
-                    <Link to={'/'} target="_blank" rel="noopener noreferrer" />
-                  }
-                >
+                <MenuItem render={<Link to={'/'} rel="noopener noreferrer" />}>
                   <UserIcon className="h-3 w-3" />
-                  My Profile
+                  Account
                 </MenuItem>
                 <MenuItem
                   render={

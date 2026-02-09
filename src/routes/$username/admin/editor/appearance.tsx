@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Image as ImageIcon, Palette, SearchIcon } from 'lucide-react'
+import { Image as ImageIcon, Palette } from 'lucide-react'
 import type {
   BgMode,
   BlockRadius,
@@ -19,15 +19,9 @@ import { BlockStyleSelector } from '@/components/dashboard/appearance/BlockStyle
 import { LOCAL_BANNER_IMAGES } from '@/components/dashboard/appearance/banner-presets'
 import {
   AppHeader,
-  AppHeaderActions,
   AppHeaderContent,
   AppHeaderDescription,
 } from '@/components/app-header'
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group'
 import { usePreview } from '@/lib/preview-context'
 
 export const Route = createFileRoute('/$username/admin/editor/appearance')({
@@ -289,18 +283,6 @@ function AppearanceEditor({
             Customize your background and how your blocks look.
           </AppHeaderDescription>
         </AppHeaderContent>
-        <AppHeaderActions className="max-md:hidden">
-          <InputGroup>
-            <InputGroupInput
-              aria-label="Search"
-              placeholder="Search…"
-              type="search"
-            />
-            <InputGroupAddon>
-              <SearchIcon />
-            </InputGroupAddon>
-          </InputGroup>
-        </AppHeaderActions>
       </AppHeader>
 
       {/* Background */}

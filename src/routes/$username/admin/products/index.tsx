@@ -1,25 +1,11 @@
 import * as React from 'react'
-import {
-  
-  flexRender,
-  getCoreRowModel,
-  useReactTable
-} from '@tanstack/react-table'
-import { Link, createFileRoute  } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, SearchIcon, ToggleLeft, ToggleRight } from 'lucide-react'
-import type {ColumnDef} from '@tanstack/react-table';
+import { Plus, ToggleLeft, ToggleRight } from 'lucide-react'
+import type { ColumnDef } from '@tanstack/react-table'
+
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Frame } from '@/components/ui/frame'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { getDashboardData } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
 import EmptyProduct from '@/components/emply-product'
@@ -29,11 +15,8 @@ import {
   AppHeaderContent,
   AppHeaderDescription,
 } from '@/components/app-header'
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group'
+import { DataTable } from '@/components/ui/data-table'
+import { DataTableColumnHeader } from '@/components/ui/data-table'
 
 export const Route = createFileRoute('/$username/admin/products/')({
   component: ProductAdminRoute,
@@ -69,10 +52,12 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
   return [
     {
       accessorKey: 'title',
-      header: 'Product',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Product" />
+      ),
       cell: ({ row }) => (
         <div className="flex flex-col">
-          <span className="font-medium text-sm">
+          <span className="font-medium text-sm truncate max-w-[250px]">
             {row.original.title || 'Untitled'}
           </span>
         </div>
@@ -82,13 +67,13 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
       id: 'pricing',
       header: 'Pricing',
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-sm font-medium text-muted-foreground">
           {productPriceLabel(row.original)}
         </span>
       ),
     },
     {
-      id: 'status',
+      accessorKey: 'isActive',
       header: 'Status',
       cell: ({ row }) => {
         const active = row.original.isActive
@@ -96,16 +81,16 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
           <Badge
             variant="outline"
             className={cn(
-              'gap-1 text-[11px]',
+              'gap-1.5 text-[11px] font-medium border-0',
               active
-                ? 'border-emerald-500/60 text-emerald-700 bg-emerald-50'
-                : 'border-zinc-200 text-zinc-600 bg-zinc-50',
+                ? 'text-emerald-700 bg-emerald-50/50'
+                : 'text-zinc-500 bg-zinc-50/50',
             )}
           >
             {active ? (
-              <ToggleRight className="h-3 w-3" />
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             ) : (
-              <ToggleLeft className="h-3 w-3" />
+              <span className="h-1.5 w-1.5 rounded-full bg-zinc-300" />
             )}
             {active ? 'Active' : 'Hidden'}
           </Badge>
@@ -114,7 +99,9 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
     },
     {
       accessorKey: 'createdAt',
-      header: 'Created',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Created" />
+      ),
       cell: ({ row }) => {
         const date = new Date(row.original.createdAt)
         return (
@@ -130,14 +117,16 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
       cell: ({ row }) => {
         const href = `/${username}/admin/products/${row.original.id}`
         return (
-          <Button
-            variant="outline"
-            size="xs"
-            className="rounded-full text-[11px]"
-            render={<Link to={href} />}
-          >
-            Edit
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              render={<Link to={href} />}
+            >
+              Edit
+            </Button>
+          </div>
         )
       },
     },
@@ -158,18 +147,13 @@ function ProductAdminRoute() {
   const products = (dashboardData?.products ?? []) as Array<ProductRow>
 
   const columns = React.useMemo(() => getColumns(username), [username])
-  const table = useReactTable({
-    data: products,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
 
   if (!user) return null
 
   const newHref = `/${username}/admin/products/new`
 
   return (
-    <>
+    <div className="space-y-6">
       <AppHeader>
         <AppHeaderContent title="Products">
           <AppHeaderDescription>
@@ -177,93 +161,27 @@ function ProductAdminRoute() {
           </AppHeaderDescription>
         </AppHeaderContent>
         <AppHeaderActions>
-          <InputGroup>
-            <InputGroupInput
-              aria-label="Search"
-              placeholder="Search…"
-              type="search"
-            />
-            <InputGroupAddon>
-              <SearchIcon />
-            </InputGroupAddon>
-          </InputGroup>
           <Button size="sm" render={<Link to={newHref} />}>
-            <Plus className="h-3.5 w-3.5 mr-1" />
+            <Plus className="h-4 w-4 mr-1.5" />
             New product
           </Button>
         </AppHeaderActions>
       </AppHeader>
-      {/* <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-            Digital products
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Manage the products that appear on your public profile.
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="rounded-full text-xs"
-          render={<Link to={newHref} />}
-        >
-          <Plus className="h-3.5 w-3.5 mr-1" />
-          New product
-        </Button>
-      </div> */}
 
       {products.length === 0 ? (
         <EmptyProduct />
       ) : (
-        <Frame className="w-full">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.length ? (
-                table.getRowModel().rows.map((row) => {
-                  return (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  )
-                })
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No products found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Frame>
+        <div className="bg-card rounded-xl border shadow-sm">
+          <div className="p-1">
+            <DataTable
+              columns={columns}
+              data={products}
+              searchKey="title"
+              filterPlaceholder="Filter products..."
+            />
+          </div>
+        </div>
       )}
-    </>
+    </div>
   )
 }

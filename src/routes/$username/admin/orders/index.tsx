@@ -1,14 +1,8 @@
 import { useState } from 'react'
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   AppHeader,
-  AppHeaderActions,
   AppHeaderContent,
   AppHeaderDescription,
 } from '@/components/app-header'
@@ -16,31 +10,12 @@ import {
   ExternalLink,
   Mail,
   MoreHorizontal,
-  Search,
   ShoppingBag,
   FileText,
 } from 'lucide-react'
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  SortingState,
-} from '@tanstack/react-table'
+import { ColumnDef } from '@tanstack/react-table'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import {
   Menu,
   MenuPopup,
@@ -51,20 +26,13 @@ import {
   MenuTrigger,
 } from '@/components/ui/menu'
 import { Badge } from '@/components/ui/badge'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { authClient } from '@/lib/auth-client'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
-import { formatPrice, cn } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 import { toastManager } from '@/components/ui/toast'
 import { BASE_URL } from '@/lib/constans'
-import { Spinner } from '@/components/ui/spinner'
+import { DataTable } from '@/components/ui/data-table'
+import { DataTableColumnHeader } from '@/components/ui/data-table'
 
 export const Route = createFileRoute('/$username/admin/orders/')({
   component: OrdersPage,
@@ -72,8 +40,6 @@ export const Route = createFileRoute('/$username/admin/orders/')({
 
 function OrdersPage() {
   const { data: session } = authClient.useSession()
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [globalFilter, setGlobalFilter] = useState('')
 
   const {
     data: orders,
@@ -118,12 +84,14 @@ function OrdersPage() {
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: 'product',
-      header: 'Product',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Product" />
+      ),
       cell: ({ row }) => {
         const product = row.original.product
         return (
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="h-9 w-9 rounded-md flex items-center justify-center overflow-hidden flex-shrink-0 bg-secondary/50 border">
               {product.images && product.images.length > 0 ? (
                 <img
                   src={product.images[0]}
@@ -131,16 +99,16 @@ function OrdersPage() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <ShoppingBag className="h-5 w-5" />
+                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               )}
             </div>
-            <div className="min-w-0">
-              <p className="font-medium  truncate max-w-[150px] sm:max-w-xs">
+            <div className="min-w-0 flex flex-col">
+              <span className="font-medium text-sm truncate max-w-[200px]">
                 {product.title}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
+              </span>
+              <span className="text-xs text-muted-foreground truncate">
                 {new Date(row.original.createdAt).toLocaleDateString()}
-              </p>
+              </span>
             </div>
           </div>
         )
@@ -148,23 +116,27 @@ function OrdersPage() {
     },
     {
       accessorKey: 'buyerEmail',
-      header: 'Customer',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Customer" />
+      ),
       cell: ({ row }) => (
-        <div className="min-w-0">
-          <p className="font-medium  truncate">
+        <div className="min-w-0 flex flex-col">
+          <span className="font-medium text-sm truncate">
             {row.original.buyerName || 'Guest'}
-          </p>
-          <p className="text-xs text-muted-foreground truncate">
+          </span>
+          <span className="text-xs text-muted-foreground truncate">
             {row.original.buyerEmail}
-          </p>
+          </span>
         </div>
       ),
     },
     {
       accessorKey: 'amountPaid',
-      header: 'Amount',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Amount" />
+      ),
       cell: ({ row }) => (
-        <span className="font-medium">
+        <span className="font-medium text-sm">
           {formatPrice(row.original.amountPaid)}
         </span>
       ),
@@ -172,18 +144,29 @@ function OrdersPage() {
     {
       accessorKey: 'status',
       header: 'Status',
-      cell: ({ row }) => <Badge variant="success">Paid</Badge>,
-    },
-    {
-      accessorKey: 'emailSent',
-      header: 'Delivery',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Badge variant={row.original.emailSent ? 'info' : 'warning'}>
-            {row.original.emailSent ? 'Sent' : 'Pending'}
-          </Badge>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const isSent = row.original.emailSent
+        return (
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className="border-emerald-500/30 text-emerald-600 bg-emerald-50/50"
+            >
+              Paid
+            </Badge>
+            <Badge
+              variant="outline"
+              className={
+                isSent
+                  ? 'border-blue-500/30 text-blue-600 bg-blue-50/50'
+                  : 'border-amber-500/30 text-amber-600 bg-amber-50/50'
+              }
+            >
+              {isSent ? 'Sent' : 'Pending'}
+            </Badge>
+          </div>
+        )
+      },
     },
     {
       id: 'actions',
@@ -192,7 +175,9 @@ function OrdersPage() {
         return (
           <Menu>
             <MenuTrigger
-              render={<Button variant="ghost" className="h-8 w-8 p-0" />}
+              render={
+                <Button variant="ghost" size="icon" className="h-8 w-8" />
+              }
             >
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
@@ -239,159 +224,26 @@ function OrdersPage() {
     },
   ]
 
-  const table = useReactTable({
-    data: orders || [],
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: (row, columnId, filterValue) => {
-      const safeValue = (() => {
-        const value = row.getValue(columnId)
-        return typeof value === 'number' ? String(value) : value
-      })()
-
-      return (
-        (safeValue as string)
-          ?.toLowerCase()
-          ?.includes(filterValue.toLowerCase()) ?? false
-      )
-    },
-    state: {
-      sorting,
-      globalFilter,
-    },
-  })
-
   return (
     <div className="space-y-6">
-      {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight ">Orders</h1>
-          <p className="text-sm ">
-            Manage your digital product sales and delivery
-          </p>
-        </div>
-      </div> */}
       <AppHeader>
         <AppHeaderContent title="Orders">
           <AppHeaderDescription>
             Manage your digital product sales and delivery
           </AppHeaderDescription>
         </AppHeaderContent>
-        <AppHeaderActions>
-          <InputGroup>
-            <InputGroupAddon>
-              <Search aria-hidden="true" />
-            </InputGroupAddon>
-            <InputGroupInput
-              aria-label="Search"
-              placeholder="Search orders..."
-              value={globalFilter ?? ''}
-              onChange={(event) => setGlobalFilter(event.target.value)}
-              type="search"
-            />
-          </InputGroup>
-        </AppHeaderActions>
       </AppHeader>
 
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold">
-              Sales History
-            </CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead
-                        key={header.id}
-                        className="text-xs font-semibold  uppercase h-10"
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    )
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <Spinner />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                    className="group"
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="py-3">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-32 text-center "
-                  >
-                    No orders found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-        {table.getPageCount() > 1 && (
-          <div className="flex items-center justify-end space-x-2 py-4 px-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
-          </div>
-        )}
-      </Card>
+      <div className="bg-card rounded-xl border shadow-sm">
+        <div className="p-1">
+          <DataTable
+            columns={columns}
+            data={orders || []}
+            searchKey="buyerEmail"
+            filterPlaceholder="Filter by email..."
+          />
+        </div>
+      </div>
     </div>
   )
 }

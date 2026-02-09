@@ -4,15 +4,15 @@ import {
   AppHeaderContent,
   AppHeaderDescription,
 } from '@/components/app-header'
-import { ModeToggle } from '@/components/mode-toggle'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
+// import { ModeToggle } from '@/components/mode-toggle'
+// import {
+//   Card,
+//   CardContent,
+//   CardDescription,
+//   CardHeader,
+//   CardTitle,
+// } from '@/components/ui/card'
+// import { Label } from '@/components/ui/label'
 
 export const Route = createFileRoute('/$username/admin/settings')({
   component: SettingsPage,
@@ -29,7 +29,7 @@ function SettingsPage() {
         </AppHeaderContent>
       </AppHeader>
 
-      <div className="grid gap-4">
+      {/* <div className="grid gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Appearance</CardTitle>
@@ -47,7 +47,7 @@ function SettingsPage() {
             <ModeToggle />
           </CardContent>
         </Card>
-      </div>
+      </div> */}
     </div>
   )
 }

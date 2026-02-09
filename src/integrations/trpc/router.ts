@@ -438,6 +438,47 @@ const productRouter = {
 
       return row
     }),
+  duplicate: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      // 1. Get original product
+      const product = await db.query.products.findFirst({
+        where: eq(products.id, input.id),
+      })
+
+      if (!product) {
+        throw new Error('Product not found')
+      }
+
+      // 2. Create duplicate
+      const newId = crypto.randomUUID()
+      // Use explicit fields to avoid type issues and unwanted data
+      const [newProduct] = await db
+        .insert(products)
+        .values({
+          id: newId,
+          userId: product.userId,
+          title: `${product.title} (Copy)`,
+          description: product.description,
+          payWhatYouWant: product.payWhatYouWant,
+          price: product.price,
+          salePrice: product.salePrice,
+          minimumPrice: product.minimumPrice,
+          suggestedPrice: product.suggestedPrice,
+          totalQuantity: product.totalQuantity,
+          limitPerCheckout: product.limitPerCheckout,
+          productUrl: product.productUrl,
+          productFiles: product.productFiles,
+          images: product.images,
+          customerQuestions: product.customerQuestions,
+          isActive: false, // Default to inactive
+          salesCount: 0,
+          totalRevenue: 0,
+        })
+        .returning()
+
+      return newProduct
+    }),
   delete: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {

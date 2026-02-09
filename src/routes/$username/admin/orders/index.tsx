@@ -234,16 +234,12 @@ function OrdersPage() {
         </AppHeaderContent>
       </AppHeader>
 
-      <div className="bg-card rounded-xl border shadow-sm">
-        <div className="p-1">
-          <DataTable
-            columns={columns}
-            data={orders || []}
-            searchKey="buyerEmail"
-            filterPlaceholder="Filter by email..."
-          />
-        </div>
-      </div>
+      <DataTable
+        columns={columns}
+        data={orders || []}
+        searchKey="buyerEmail"
+        filterPlaceholder="Filter by email..."
+      />
     </div>
   )
 }

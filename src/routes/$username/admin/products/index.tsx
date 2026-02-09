@@ -1,14 +1,41 @@
 import * as React from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import { Plus, ToggleLeft, ToggleRight } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectPopup,
+  SelectItem,
+} from '@/components/ui/select'
+
+import {
+  Plus,
+  MoreHorizontal,
+  Copy,
+  Edit,
+  Trash,
+  ExternalLink,
+  ShoppingBag,
+} from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  Menu,
+  MenuPopup,
+  MenuItem,
+  MenuGroup,
+  MenuGroupLabel,
+  MenuSeparator,
+  MenuTrigger,
+} from '@/components/ui/menu'
 import { getDashboardData } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
 import EmptyProduct from '@/components/emply-product'
+import { toastManager } from '@/components/ui/toast'
+import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import {
   AppHeader,
   AppHeaderActions,
@@ -48,6 +75,121 @@ function productPriceLabel(product: ProductRow): string {
   return 'No price'
 }
 
+function ProductActions({
+  product,
+  username,
+}: {
+  product: ProductRow
+  username: string
+}) {
+  const queryClient = useQueryClient()
+
+  const duplicateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return toastManager.promise(trpcClient.product.duplicate.mutate({ id }), {
+        loading: 'Duplicating product...',
+        success: 'Product duplicated successfully',
+        error: 'Failed to duplicate product',
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => trpcClient.product.delete.mutate({ id }),
+    onSuccess: () => {
+      toastManager.add({
+        title: 'Product deleted',
+        description: 'The product has been removed.',
+      })
+      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+    },
+    onError: (error: any) => {
+      toastManager.add({
+        title: 'Failed to delete',
+        description: error.message,
+        type: 'error',
+      })
+    },
+  })
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text)
+    toastManager.add({
+      title: 'Copied',
+      description: `${label} copied to clipboard`,
+    })
+  }
+
+  const publicUrl = `${window.location.origin}/${username}/products/${product.id}`
+  const checkoutUrl = `${publicUrl}/checkout`
+  const href = `/${username}/admin/products/${product.id}`
+  return (
+    <Menu>
+      <MenuTrigger
+        render={<Button variant="ghost" size="icon" className="h-8 w-8" />}
+      >
+        <span className="sr-only">Open menu</span>
+        <MoreHorizontal className="h-4 w-4" />
+      </MenuTrigger>
+      <MenuPopup align="end" className="w-[220px]">
+        <MenuGroup>
+          <MenuGroupLabel>Actions</MenuGroupLabel>
+          <MenuItem
+            onClick={() => {
+              // Link handles navigation
+            }}
+            render={
+              <Link
+                to={href}
+                className="flex items-center w-full cursor-pointer"
+              />
+            }
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Product
+          </MenuItem>
+          <MenuItem
+            disabled={duplicateMutation.isPending}
+            onClick={() => duplicateMutation.mutate(product.id)}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            Duplicate Product
+          </MenuItem>
+          <MenuItem
+            className="text-destructive focus:text-destructive"
+            disabled={deleteMutation.isPending}
+            onClick={() => deleteMutation.mutate(product.id)}
+          >
+            <Trash className="mr-2 h-4 w-4" />
+            Delete Product
+          </MenuItem>
+        </MenuGroup>
+        <MenuSeparator />
+        <MenuGroup>
+          <MenuGroupLabel>Share</MenuGroupLabel>
+          <MenuItem onClick={() => copyToClipboard(product.id, 'Product ID')}>
+            <Copy className="mr-2 h-4 w-4" />
+            Copy Product ID
+          </MenuItem>
+          <MenuItem onClick={() => copyToClipboard(publicUrl, 'Public URL')}>
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Copy Public URL
+          </MenuItem>
+          <MenuItem
+            onClick={() => copyToClipboard(checkoutUrl, 'Checkout URL')}
+          >
+            <ShoppingBag className="mr-2 h-4 w-4" />
+            Copy Checkout URL
+          </MenuItem>
+        </MenuGroup>
+      </MenuPopup>
+    </Menu>
+  )
+}
+
 function getColumns(username: string): Array<ColumnDef<ProductRow>> {
   return [
     {
@@ -72,28 +214,102 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
         </span>
       ),
     },
+
+    // ... existing code ...
+
     {
       accessorKey: 'isActive',
       header: 'Status',
       cell: ({ row }) => {
+        const queryClient = useQueryClient()
         const active = row.original.isActive
+
+        const toggleMutation = useMutation({
+          mutationFn: (value: boolean) =>
+            trpcClient.product.toggleActive.mutate({
+              id: row.original.id,
+              isActive: value,
+            }),
+          onMutate: async (newValue) => {
+            // Optimistic update
+            await queryClient.cancelQueries({
+              queryKey: ['dashboard', username],
+            })
+            const previousData = queryClient.getQueryData([
+              'dashboard',
+              username,
+            ])
+
+            queryClient.setQueryData(['dashboard', username], (old: any) => {
+              if (!old) return old
+              return {
+                ...old,
+                products: old.products.map((p: any) =>
+                  p.id === row.original.id ? { ...p, isActive: newValue } : p,
+                ),
+              }
+            })
+
+            return { previousData }
+          },
+          onSuccess: (data, variables) => {
+            toastManager.add({
+              title: variables ? 'Product activated' : 'Product deactivated',
+              description: `Product is now ${variables ? 'visible on' : 'hidden from'} your profile.`,
+            })
+          },
+          onError: (err, newTodo, context) => {
+            queryClient.setQueryData(
+              ['dashboard', username],
+              context?.previousData,
+            )
+            toastManager.add({
+              title: 'Failed to update status',
+              description: 'Please try again.',
+              type: 'error',
+            })
+          },
+          onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+          },
+        })
+
         return (
-          <Badge
-            variant="outline"
-            className={cn(
-              'gap-1.5 text-[11px] font-medium border-0',
-              active
-                ? 'text-emerald-700 bg-emerald-50/50'
-                : 'text-zinc-500 bg-zinc-50/50',
-            )}
+          <Select
+            value={active ? 'active' : 'hidden'}
+            onValueChange={(val) => toggleMutation.mutate(val === 'active')}
           >
-            {active ? (
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            ) : (
-              <span className="h-1.5 w-1.5 rounded-full bg-zinc-300" />
-            )}
-            {active ? 'Active' : 'Hidden'}
-          </Badge>
+            <SelectTrigger
+              size="sm"
+              className={cn(
+                'h-7 text-xs border-0 shadow-none px-2 gap-1.5 w-auto min-w-[90px] justify-start',
+                active
+                  ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                  : 'bg-zinc-50 text-zinc-600 hover:bg-zinc-100',
+              )}
+            >
+              {active ? (
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+              ) : (
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 shrink-0" />
+              )}
+              <SelectValue />
+            </SelectTrigger>
+            <SelectPopup className="w-[120px]">
+              <SelectItem value="active">
+                <span className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  Active
+                </span>
+              </SelectItem>
+              <SelectItem value="hidden">
+                <span className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 shrink-0" />
+                  Hidden
+                </span>
+              </SelectItem>
+            </SelectPopup>
+          </Select>
         )
       },
     },
@@ -114,21 +330,9 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
     {
       id: 'actions',
       header: '',
-      cell: ({ row }) => {
-        const href = `/${username}/admin/products/${row.original.id}`
-        return (
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs"
-              render={<Link to={href} />}
-            >
-              Edit
-            </Button>
-          </div>
-        )
-      },
+      cell: ({ row }) => (
+        <ProductActions product={row.original} username={username} />
+      ),
     },
   ]
 }
@@ -171,16 +375,12 @@ function ProductAdminRoute() {
       {products.length === 0 ? (
         <EmptyProduct />
       ) : (
-        <div className="bg-card rounded-xl border shadow-sm">
-          <div className="p-1">
-            <DataTable
-              columns={columns}
-              data={products}
-              searchKey="title"
-              filterPlaceholder="Filter products..."
-            />
-          </div>
-        </div>
+        <DataTable
+          columns={columns}
+          data={products}
+          searchKey="title"
+          filterPlaceholder="Search products..."
+        />
       )}
     </div>
   )

@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import {
   ArrowUpRight,
@@ -12,6 +13,7 @@ import NotFound from '@/components/not-found'
 import { cn, formatPrice } from '@/lib/utils'
 import { useCartStore } from '@/store/cart-store'
 import { toastManager } from '@/components/ui/toast'
+import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 
 import SiteUserProfileHeader, {
   ProfileBanner,
@@ -102,7 +104,7 @@ function UserProfile() {
   type BgMode = 'banner' | 'wallpaper' | 'color' | 'image'
   type WallpaperStyle = 'flat' | 'gradient' | 'avatar' | 'image'
 
-  const bgType = (user.appearanceBgType as BgMode) || 'banner'
+  const bgType = user.appearanceBgType as BgMode
   const wallpaperStyle = user.appearanceBgWallpaperStyle as WallpaperStyle
   const bgColor = user.appearanceBgColor
   const isBanner = bgType === 'banner'
@@ -195,6 +197,22 @@ function UserProfile() {
 
   const { addItem } = useCartStore()
 
+  const blockClickMutation = useMutation({
+    mutationFn: async (blockId: string) =>
+      trpcClient.block.trackClick.mutate({ id: blockId }),
+  })
+
+  React.useEffect(() => {
+    if (!user.username) return
+    void trpcClient.user.trackProfileView.mutate({ username: user.username })
+  }, [user.username])
+
+  const openBlockUrl = (block: PublicBlock) => {
+    if (!block.url) return
+    blockClickMutation.mutate(block.id)
+    window.open(block.url, '_blank', 'noopener,noreferrer')
+  }
+
   return (
     <div
       className="relative min-h-screen font-sans text-slate-900"
@@ -272,10 +290,7 @@ function UserProfile() {
                   <div className="px-3 pb-3">
                     <Button
                       className="w-full"
-                      onClick={() =>
-                        block.url &&
-                        window.open(block.url, '_blank', 'noopener,noreferrer')
-                      }
+                      onClick={() => openBlockUrl(block)}
                     >
                       Open link
                     </Button>
@@ -391,10 +406,7 @@ function UserProfile() {
               style={{
                 backgroundColor: user.appearanceBlockColor || undefined,
               }}
-              onClick={() =>
-                block.url &&
-                window.open(block.url, '_blank', 'noopener,noreferrer')
-              }
+              onClick={() => openBlockUrl(block)}
             >
               <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-4">

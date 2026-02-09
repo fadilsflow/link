@@ -60,6 +60,7 @@ export const user = pgTable('user', {
   // Analytics fields
   totalRevenue: integer('total_revenue').notNull().default(0), // in cents
   totalSalesCount: integer('total_sales_count').notNull().default(0),
+  totalViews: integer('total_views').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()

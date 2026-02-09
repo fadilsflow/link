@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { asc, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
@@ -66,6 +66,23 @@ const userRouter = {
         blocks: userProfile.blocks,
         socialLinks: userProfile.socialLinks,
       }
+    }),
+  trackProfileView: publicProcedure
+    .input(z.object({ username: z.string() }))
+    .mutation(async ({ input }) => {
+      const existingUser = await db.query.user.findFirst({
+        where: eq(user.username, input.username),
+        columns: { id: true },
+      })
+
+      if (!existingUser) return { success: false }
+
+      await db
+        .update(user)
+        .set({ totalViews: sql`${user.totalViews} + 1` })
+        .where(eq(user.id, existingUser.id))
+
+      return { success: true }
     }),
   updateProfile: publicProcedure
     .input(
@@ -150,6 +167,16 @@ const userRouter = {
 } satisfies TRPCRouterRecord
 
 const blockRouter = {
+  trackClick: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      await db
+        .update(blocks)
+        .set({ clicks: sql`${blocks.clicks} + 1` })
+        .where(eq(blocks.id, input.id))
+
+      return { success: true }
+    }),
   create: publicProcedure
     .input(
       z.object({
@@ -768,28 +795,84 @@ const orderRouter = {
 } satisfies TRPCRouterRecord
 
 const analyticsRouter = {
-  // Get profile-level analytics (total revenue, total sales count)
-  getProfileAnalytics: publicProcedure
-    .input(z.object({ userId: z.string() }))
+  getOverview: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        from: z.string().optional(),
+        to: z.string().optional(),
+      }),
+    )
     .query(async ({ input }) => {
+      const fromDate = input.from ? new Date(`${input.from}T00:00:00.000Z`) : null
+      const toDate = input.to ? new Date(`${input.to}T23:59:59.999Z`) : null
+
       const profile = await db.query.user.findFirst({
         where: eq(user.id, input.userId),
         columns: {
           totalRevenue: true,
           totalSalesCount: true,
+          totalViews: true,
         },
       })
 
-      if (!profile) {
-        return {
-          totalRevenue: 0,
-          totalSalesCount: 0,
-        }
+      const blockRows = await db.query.blocks.findMany({
+        where: eq(blocks.userId, input.userId),
+        columns: {
+          id: true,
+          title: true,
+          type: true,
+          clicks: true,
+          isEnabled: true,
+        },
+        orderBy: [desc(blocks.clicks)],
+      })
+
+      const orderConditions = [eq(orders.creatorId, input.userId)]
+      if (fromDate) orderConditions.push(gte(orders.createdAt, fromDate))
+      if (toDate) orderConditions.push(lte(orders.createdAt, toDate))
+
+      const orderRows = await db.query.orders.findMany({
+        where: and(...orderConditions),
+        columns: {
+          amountPaid: true,
+          createdAt: true,
+        },
+        orderBy: [asc(orders.createdAt)],
+      })
+
+      const byDay = new Map<string, { date: string; sales: number; revenue: number }>()
+
+      for (const order of orderRows) {
+        const day = order.createdAt.toISOString().slice(0, 10)
+        const existing = byDay.get(day) ?? { date: day, sales: 0, revenue: 0 }
+        existing.sales += 1
+        existing.revenue += order.amountPaid
+        byDay.set(day, existing)
       }
 
+      const chart = Array.from(byDay.values())
+
+      const rangeRevenue = orderRows.reduce((acc, row) => acc + row.amountPaid, 0)
+      const rangeSales = orderRows.length
+      const totalBlocks = blockRows.length
+      const totalClicks = blockRows.reduce((acc, row) => acc + row.clicks, 0)
+
       return {
-        totalRevenue: profile.totalRevenue,
-        totalSalesCount: profile.totalSalesCount,
+        totals: {
+          totalRevenue: profile?.totalRevenue ?? 0,
+          totalSalesCount: profile?.totalSalesCount ?? 0,
+          totalViews: profile?.totalViews ?? 0,
+          totalBlocks,
+          totalClicks,
+          clicksPerBlock: totalBlocks > 0 ? totalClicks / totalBlocks : 0,
+        },
+        range: {
+          revenue: rangeRevenue,
+          sales: rangeSales,
+        },
+        chart,
+        blocks: blockRows,
       }
     }),
 

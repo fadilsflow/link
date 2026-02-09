@@ -7,7 +7,6 @@ import {
   Instagram,
   Github,
   Youtube,
-  Facebook,
 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -32,9 +31,9 @@ import { Gmail } from '../icon/gmail'
 import { LinkedIn } from '../icon/linkedin'
 import { XformerlyTwitter } from '../icon/x'
 import { WhatsApp } from '../icon/whatsapp'
+import { Facebook as FacebookIcon } from '../icon/facebook'
 import { Button } from '../ui/button'
 import { Switch } from '../ui/switch'
-import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Field, FieldLabel } from '../ui/field'
 import {
@@ -64,28 +63,123 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from '../ui/input-group'
 import { toastManager } from '../ui/toast'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { cn } from '@/lib/utils'
 
-// Platform definitions with icons
+// Platform definitions with icons and URL handling
 const PLATFORMS = [
   {
     value: 'twitter',
     label: 'X (Twitter)',
     icon: XformerlyTwitter,
     iconClass: 'invert dark:invert-0',
+    prefix: 'x.com/',
+    baseUrl: 'https://x.com/',
+    placeholder: 'username',
   },
-  { value: 'linkedin', label: 'LinkedIn', icon: LinkedIn },
-  { value: 'email', label: 'Email', icon: Gmail },
-  { value: 'instagram', label: 'Instagram', icon: Instagram },
-  { value: 'github', label: 'GitHub', icon: Github },
-  { value: 'youtube', label: 'YouTube', icon: Youtube },
-  { value: 'facebook', label: 'Facebook', icon: Facebook },
-  { value: 'whatsapp', label: 'WhatsApp', icon: WhatsApp },
+  {
+    value: 'linkedin',
+    label: 'LinkedIn',
+    icon: LinkedIn,
+    prefix: 'in/',
+    baseUrl: 'https://linkedin.com/in/',
+    placeholder: 'username',
+  },
+  {
+    value: 'email',
+    label: 'Email',
+    icon: Gmail,
+    prefix: '',
+    baseUrl: 'mailto:',
+    placeholder: 'your@email.com',
+  },
+  {
+    value: 'instagram',
+    label: 'Instagram',
+    icon: Instagram,
+    prefix: 'instagram.com/',
+    baseUrl: 'https://instagram.com/',
+    placeholder: 'username',
+  },
+  {
+    value: 'github',
+    label: 'GitHub',
+    icon: Github,
+    prefix: 'github.com/',
+    baseUrl: 'https://github.com/',
+    placeholder: 'username',
+  },
+  {
+    value: 'youtube',
+    label: 'YouTube',
+    icon: Youtube,
+    prefix: '@',
+    baseUrl: 'https://youtube.com/@',
+    placeholder: 'username',
+  },
+  {
+    value: 'facebook',
+    label: 'Facebook',
+    icon: FacebookIcon,
+    prefix: 'facebook.com/',
+    baseUrl: 'https://facebook.com/',
+    placeholder: 'username',
+  },
+  {
+    value: 'whatsapp',
+    label: 'WhatsApp',
+    icon: WhatsApp,
+    prefix: 'wa.me/',
+    baseUrl: 'https://wa.me/',
+    placeholder: '628123456789',
+  },
 ] as const
 
 type PlatformValue = (typeof PLATFORMS)[number]['value']
+
+function extractUsername(input: string, platform: PlatformValue): string {
+  if (!input) return ''
+
+  if (platform === 'email') {
+    return input.replace(/^mailto:/, '').trim()
+  }
+
+  const p = PLATFORMS.find((p) => p.value === platform)
+  if (!p) return input
+
+  try {
+    // If it looks like a URL
+    if (input.includes('://') || (input.includes('.') && input.includes('/'))) {
+      const url = input.startsWith('http') ? input : `https://${input}`
+      const urlObj = new URL(url)
+
+      if (platform === 'youtube') {
+        const username = urlObj.pathname
+          .replace(/^\/(@|c\/|user\/)/, '')
+          .split('/')[0]
+        return username
+      }
+
+      if (platform === 'whatsapp') {
+        return urlObj.pathname.replace(/^\//, '').split('/')[0]
+      }
+
+      // Default for most social platforms: just the first part of pathname
+      return urlObj.pathname.replace(/^\//, '').split('/')[0]
+    }
+  } catch (e) {
+    // invalid URL, ignore
+  }
+
+  return input.replace(/^@/, '').trim()
+}
 
 interface SocialLink {
   id: string
@@ -257,10 +351,9 @@ export default function SocialEditor({
   }
 
   const handleAdd = () => {
-    const url =
-      newPlatform === 'email' && !newUrl.startsWith('mailto:')
-        ? `mailto:${newUrl}`
-        : newUrl
+    const platformDef = PLATFORMS.find((p) => p.value === newPlatform)
+    const username = extractUsername(newUrl, newPlatform)
+    const url = platformDef ? `${platformDef.baseUrl}${username}` : username
 
     // Close dialog immediately
     setAddDialogOpen(false)
@@ -288,8 +381,9 @@ export default function SocialEditor({
 
   const handleEdit = (link: SocialLink) => {
     setEditingLink(link)
-    setEditPlatform(link.platform as PlatformValue)
-    setEditUrl(link.url)
+    const platform = link.platform as PlatformValue
+    setEditPlatform(platform)
+    setEditUrl(extractUsername(link.url, platform))
     setEditIsEnabled(link.isEnabled)
     setEditDialogOpen(true)
   }
@@ -297,15 +391,26 @@ export default function SocialEditor({
   const handleSaveEdit = () => {
     if (!editingLink) return
 
-    const url =
-      editPlatform === 'email' && !editUrl.startsWith('mailto:')
-        ? `mailto:${editUrl}`
-        : editUrl
+    const platformDef = PLATFORMS.find((p) => p.value === editPlatform)
+    const username = extractUsername(editUrl, editPlatform)
+    const urlToSave = platformDef
+      ? `${platformDef.baseUrl}${username}`
+      : username
+
+    const hasChanged =
+      editPlatform !== editingLink.platform ||
+      urlToSave !== editingLink.url ||
+      editIsEnabled !== editingLink.isEnabled
+
+    if (!hasChanged) {
+      setEditDialogOpen(false)
+      setEditingLink(null)
+      return
+    }
 
     // Close dialog immediately
     const linkId = editingLink.id
     const platformToSave = editPlatform
-    const urlToSave = url
     const enabledToSave = editIsEnabled
     setEditDialogOpen(false)
     setEditingLink(null)
@@ -369,7 +474,7 @@ export default function SocialEditor({
         <DialogTrigger render={<Button size="icon" variant="secondary" />}>
           <PlusIcon size={16} />
         </DialogTrigger>
-        <DialogPopup className="sm:max-w-sm">
+        <DialogPopup className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Social Link</DialogTitle>
             <DialogDescription>
@@ -381,7 +486,12 @@ export default function SocialEditor({
               <FieldLabel>Platform</FieldLabel>
               <Select
                 value={newPlatform}
-                onValueChange={(v) => setNewPlatform(v as PlatformValue)}
+                onValueChange={(v) => {
+                  const p = v as PlatformValue
+                  setNewPlatform(p)
+                  // If switching platform, we might want to re-extract username from what's already there
+                  setNewUrl(extractUsername(newUrl, p))
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -407,17 +517,27 @@ export default function SocialEditor({
             </Field>
             <Field>
               <FieldLabel>
-                {newPlatform === 'email' ? 'Email Address' : 'URL'}
+                {newPlatform === 'email' ? 'Email Address' : 'Username / ID'}
               </FieldLabel>
-              <Input
-                placeholder={
-                  newPlatform === 'email'
-                    ? 'your@email.com'
-                    : 'https://example.com/yourprofile'
-                }
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-              />
+              <InputGroup>
+                {newPlatform !== 'email' && (
+                  <InputGroupAddon>
+                    <InputGroupText>
+                      {PLATFORMS.find((p) => p.value === newPlatform)?.prefix}
+                    </InputGroupText>
+                  </InputGroupAddon>
+                )}
+                <InputGroupInput
+                  placeholder={
+                    PLATFORMS.find((p) => p.value === newPlatform)?.placeholder
+                  }
+                  value={newUrl}
+                  onChange={(e) => setNewUrl(e.target.value)}
+                  onBlur={(e) =>
+                    setNewUrl(extractUsername(e.target.value, newPlatform))
+                  }
+                />
+              </InputGroup>
             </Field>
           </DialogPanel>
           <DialogFooter>
@@ -433,7 +553,7 @@ export default function SocialEditor({
 
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogPopup className="sm:max-w-sm">
+        <DialogPopup className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Social Link</DialogTitle>
             <DialogDescription>
@@ -445,7 +565,11 @@ export default function SocialEditor({
               <FieldLabel>Platform</FieldLabel>
               <Select
                 value={editPlatform}
-                onValueChange={(v) => setEditPlatform(v as PlatformValue)}
+                onValueChange={(v) => {
+                  const p = v as PlatformValue
+                  setEditPlatform(p)
+                  setEditUrl(extractUsername(editUrl, p))
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -471,17 +595,27 @@ export default function SocialEditor({
             </Field>
             <Field>
               <FieldLabel>
-                {editPlatform === 'email' ? 'Email Address' : 'URL'}
+                {editPlatform === 'email' ? 'Email Address' : 'Username / ID'}
               </FieldLabel>
-              <Input
-                placeholder={
-                  editPlatform === 'email'
-                    ? 'your@email.com'
-                    : 'https://example.com/yourprofile'
-                }
-                value={editUrl}
-                onChange={(e) => setEditUrl(e.target.value)}
-              />
+              <InputGroup>
+                {editPlatform !== 'email' && (
+                  <InputGroupAddon>
+                    <InputGroupText>
+                      {PLATFORMS.find((p) => p.value === editPlatform)?.prefix}
+                    </InputGroupText>
+                  </InputGroupAddon>
+                )}
+                <InputGroupInput
+                  placeholder={
+                    PLATFORMS.find((p) => p.value === editPlatform)?.placeholder
+                  }
+                  value={editUrl}
+                  onChange={(e) => setEditUrl(e.target.value)}
+                  onBlur={(e) =>
+                    setEditUrl(extractUsername(e.target.value, editPlatform))
+                  }
+                />
+              </InputGroup>
             </Field>
             <div className="flex items-center justify-between">
               <Label>Enabled</Label>

@@ -174,9 +174,9 @@ function AdminDashboard() {
       updateProfile.mutateAsync({
         userId: user!.id,
         name: data.name,
-        title: data.title || undefined,
-        bio: data.bio || undefined,
-        image: data.image || undefined,
+        title: data.title ?? undefined,
+        bio: data.bio ?? undefined,
+        image: data.image ?? undefined,
       }),
       {
         loading: {
@@ -329,7 +329,7 @@ function AdminDashboard() {
           </AppHeaderDescription>
         </AppHeaderContent>
       </AppHeader>
-      <section >
+      <section>
         <ProfileEditor user={user} onSave={handleProfileSave} />
       </section>
 

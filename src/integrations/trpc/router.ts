@@ -99,9 +99,9 @@ const userRouter = {
       const [updatedUser] = await db
         .update(user)
         .set({
-          ...(input.name ? { name: input.name } : {}),
-          ...(input.title ? { title: input.title } : {}),
-          ...(input.bio ? { bio: input.bio } : {}),
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.title !== undefined ? { title: input.title || null } : {}),
+          ...(input.bio !== undefined ? { bio: input.bio || null } : {}),
           ...(input.image !== undefined ? { image: input.image } : {}),
           ...(input.appearanceBgType
             ? { appearanceBgType: input.appearanceBgType }

@@ -96,25 +96,52 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Check for changes
+    const newFile = avatarFiles[0]?.file
+    const imageRemoved = avatarFiles.length === 0 && user.image !== null
+    const imageChanged = newFile instanceof File || imageRemoved
+
+    // Normalize values for comparison
+    const currentName = user.name || ''
+    const currentTitle = user.title || ''
+    const currentBio = user.bio || ''
+    const newName = formData.name || ''
+    const newTitle = formData.title || ''
+    const newBio = formData.bio || ''
+
+    const hasChanged =
+      newName !== currentName ||
+      newTitle !== currentTitle ||
+      newBio !== currentBio ||
+      imageChanged
+
+    if (!hasChanged) {
+      setDialogOpen(false)
+      return
+    }
+
+    // Close dialog immediately as requested
+    setDialogOpen(false)
     setIsUploading(true)
 
     try {
       let imageUrl = formData.image
 
       // If we have a new file selection (File object), upload it
-      const newFile = avatarFiles[0]?.file
       if (newFile instanceof File) {
         imageUrl = await uploadFile(newFile, 'avatars')
-      } else if (avatarFiles.length === 0) {
-        // If file removed
+      } else if (imageRemoved) {
         imageUrl = null
       }
 
       await onSave({ ...formData, image: imageUrl })
-      setDialogOpen(false)
     } catch (error) {
       console.error('Failed to save profile:', error)
-      alert('Failed to save profile. Please try again.')
+      // Since dialog is closed, maybe we should use a toast for error?
+      // But onSave in profiles.tsx already uses toastManager.promise which handles errors.
+      // However, if the uploadFile fails, onSave is never called.
+      // In that case, we might need a manual toast or a way to notify the user.
     } finally {
       setIsUploading(false)
     }
@@ -127,7 +154,10 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
   return (
     <div className="relative flex flex-col gap-2">
       <div className="flex gap-4">
-        <Avatar className="h-16 w-16 border">
+        <Avatar
+          onClick={() => setDialogOpen(true)}
+          className="h-16 w-16 border cursor-pointer hover:border-primary"
+        >
           <AvatarImage src={user.image || ''} />
           <AvatarFallback className="text-2xl font-bold">
             {user.name.slice(0, 2).toUpperCase()}
@@ -177,7 +207,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
               <div className="flex justify-center">
                 <div className="relative group">
                   <div
-                    className="relative h-24 w-24 rounded-full overflow-hidden ring-4 cursor-pointer"
+                    className="relative h-24 w-24 rounded-full overflow-hidden border cursor-pointer"
                     onClick={openFileDialog}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
@@ -219,7 +249,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
               </div>
 
               <Field>
-                <FieldLabel>Name</FieldLabel>
+                <FieldLabel>Display Name</FieldLabel>
                 <Input
                   className="font-heading text-2xl"
                   value={formData.name}

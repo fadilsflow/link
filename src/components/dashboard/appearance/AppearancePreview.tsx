@@ -1,4 +1,10 @@
-import { ArrowUpRight, Globe, Link as LinkIcon, X as XIcon } from 'lucide-react'
+import {
+  ArrowUpRight,
+  Globe,
+  Link as LinkIcon,
+  PlayCircle,
+  X as XIcon,
+} from 'lucide-react'
 import type { BgMode, BlockRadius, BlockStyle, WallpaperStyle } from './types'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -47,9 +53,8 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
     appearanceBlockColor,
   } = user
 
-  const bgType = (appearanceBgType as BgMode) ?? 'banner'
-  const wallpaperStyle =
-    (appearanceBgWallpaperStyle as WallpaperStyle) ?? 'flat'
+  const bgType = appearanceBgType as BgMode
+  const wallpaperStyle = appearanceBgWallpaperStyle as WallpaperStyle
   const isBanner = bgType === 'banner' || !bgType
 
   const getImageUrl = (imageUrl?: string | null, fallback?: string) => {
@@ -111,8 +116,8 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
     }
   }
 
-  const blockStyle = (appearanceBlockStyle as BlockStyle) ?? 'basic'
-  const blockRadius = (appearanceBlockRadius as BlockRadius) ?? 'rounded'
+  const blockStyle = appearanceBlockStyle as BlockStyle
+  const blockRadius = appearanceBlockRadius as BlockRadius
 
   const cardBase =
     blockStyle === 'flat'
@@ -197,6 +202,74 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
                             {block.content}
                           </p>
                         )}
+                      </div>
+                    )
+                  }
+
+                  if (block.type === 'image') {
+                    return (
+                      <div
+                        key={block.id}
+                        className={cn(
+                          'w-full overflow-hidden bg-white',
+                          cardBase,
+                          radiusClass,
+                        )}
+                        style={{
+                          backgroundColor: appearanceBlockColor || undefined,
+                        }}
+                      >
+                        {block.content && (
+                          <img
+                            src={block.content}
+                            alt={block.title}
+                            className="h-24 w-full object-cover"
+                          />
+                        )}
+                      </div>
+                    )
+                  }
+
+                  if (block.type === 'video') {
+                    return (
+                      <div
+                        key={block.id}
+                        className={cn(
+                          'w-full p-3 flex items-center justify-between transition-all bg-white',
+                          cardBase,
+                          radiusClass,
+                        )}
+                        style={{
+                          backgroundColor: appearanceBlockColor || undefined,
+                        }}
+                      >
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <PlayCircle className="h-3.5 w-3.5 text-zinc-500" />
+                          <span className="font-semibold text-xs truncate max-w-[120px] text-zinc-800">
+                            {block.title || 'Video'}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  if (block.type === 'product') {
+                    return (
+                      <div
+                        key={block.id}
+                        className={cn(
+                          'w-full p-3 flex items-center justify-between transition-all bg-white',
+                          cardBase,
+                          radiusClass,
+                        )}
+                        style={{
+                          backgroundColor: appearanceBlockColor || undefined,
+                        }}
+                      >
+                        <span className="font-semibold text-xs truncate max-w-[150px] text-zinc-800">
+                          Product block
+                        </span>
+                        <ArrowUpRight className="h-3.5 w-3.5 text-zinc-400" />
                       </div>
                     )
                   }

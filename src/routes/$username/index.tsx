@@ -1,5 +1,10 @@
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import { ArrowUpRight, Link as LinkIcon, ShoppingCart } from 'lucide-react'
+import {
+  ArrowUpRight,
+  Link as LinkIcon,
+  PlayCircle,
+  ShoppingCart,
+} from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getPublicProfile } from '@/lib/profile-server'
@@ -13,6 +18,38 @@ import SiteUserProfileHeader, {
   ProfileCard,
   SocialLinks,
 } from '@/components/site-user-profile-header'
+
+function getVideoEmbedUrl(rawUrl?: string | null) {
+  if (!rawUrl) return null
+
+  try {
+    const url = new URL(rawUrl)
+    const host = url.hostname.toLowerCase()
+
+    if (host.includes('youtube.com')) {
+      const id = url.searchParams.get('v')
+      return id ? `https://www.youtube.com/embed/${id}` : null
+    }
+
+    if (host.includes('youtu.be')) {
+      const id = url.pathname.replace('/', '')
+      return id ? `https://www.youtube.com/embed/${id}` : null
+    }
+
+    if (host.includes('tiktok.com')) {
+      const parts = url.pathname.split('/').filter(Boolean)
+      const videoIndex = parts.findIndex((part) => part === 'video')
+      if (videoIndex !== -1 && parts[videoIndex + 1]) {
+        return `https://www.tiktok.com/embed/v2/${parts[videoIndex + 1]}`
+      }
+      return null
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
 
 export const Route = createFileRoute('/$username/')({
   component: UserProfile,
@@ -32,9 +69,8 @@ function UserProfile() {
   type BgMode = 'banner' | 'wallpaper' | 'color' | 'image'
   type WallpaperStyle = 'flat' | 'gradient' | 'avatar' | 'image'
 
-  const bgType = (user.appearanceBgType as BgMode) ?? 'banner'
-  const wallpaperStyle =
-    (user.appearanceBgWallpaperStyle as WallpaperStyle) ?? 'flat'
+  const bgType = user.appearanceBgType as BgMode
+  const wallpaperStyle = user.appearanceBgWallpaperStyle as WallpaperStyle
   const bgColor = user.appearanceBgColor
   const bgImage = user.appearanceBgImageUrl
   const wallpaperColor = user.appearanceWallpaperColor
@@ -120,10 +156,8 @@ function UserProfile() {
   // Full page background for wallpaper mode
   const isFullPageBg = bgType === 'wallpaper' || bgType === 'color'
 
-  const blockStyle =
-    (user.appearanceBlockStyle as 'basic' | 'flat' | 'shadow') ?? 'basic'
-  const blockRadius =
-    (user.appearanceBlockRadius as 'rounded' | 'square') ?? 'rounded'
+  const blockStyle = user.appearanceBlockStyle as 'basic' | 'flat' | 'shadow'
+  const blockRadius = user.appearanceBlockRadius as 'rounded' | 'square'
 
   const cardBase =
     blockStyle === 'flat'
@@ -202,6 +236,134 @@ function UserProfile() {
             )
           }
 
+          if (block.type === 'image') {
+            return (
+              <Card
+                key={block.id}
+                className={cn('w-full overflow-hidden', cardBase, radiusClass)}
+                style={{
+                  backgroundColor: user.appearanceBlockColor || undefined,
+                }}
+              >
+                {block.content && (
+                  <img
+                    src={block.content}
+                    alt={block.title || 'Image block'}
+                    className="h-auto max-h-[480px] w-full object-cover"
+                  />
+                )}
+                {block.title && (
+                  <p className="p-3 text-sm font-semibold">{block.title}</p>
+                )}
+                {block.url && (
+                  <div className="px-3 pb-3">
+                    <Button
+                      className="w-full"
+                      onClick={() => window.open(block.url, '_blank')}
+                    >
+                      Open link
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            )
+          }
+
+          if (block.type === 'video') {
+            const embedUrl = getVideoEmbedUrl(block.content)
+            return (
+              <Card
+                key={block.id}
+                className={cn(
+                  'w-full overflow-hidden p-3 space-y-3',
+                  cardBase,
+                  radiusClass,
+                )}
+                style={{
+                  backgroundColor: user.appearanceBlockColor || undefined,
+                }}
+              >
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <PlayCircle className="h-4 w-4" />
+                  {block.title || 'Video'}
+                </div>
+                {embedUrl ? (
+                  <iframe
+                    src={embedUrl}
+                    className="h-64 w-full rounded-lg border"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Unsupported video URL. Please use a valid YouTube or TikTok
+                    link.
+                  </p>
+                )}
+              </Card>
+            )
+          }
+
+          if (block.type === 'product') {
+            const selectedProduct = products.find(
+              (product: any) => product.id === block.content,
+            )
+            if (!selectedProduct) return null
+
+            const href = `/${user.username}/products/${selectedProduct.id}`
+            const price = selectedProduct.payWhatYouWant
+              ? selectedProduct.minimumPrice
+                ? `From ${formatPrice(selectedProduct.minimumPrice)}`
+                : 'Pay what you want'
+              : selectedProduct.salePrice && selectedProduct.price
+                ? formatPrice(selectedProduct.salePrice)
+                : selectedProduct.price
+                  ? formatPrice(selectedProduct.price)
+                  : 'Free'
+
+            const selectedImages = selectedProduct.images
+            const hasImage = selectedImages && selectedImages.length > 0
+
+            return (
+              <Card
+                key={block.id}
+                className={cn(
+                  'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
+                  cardBase,
+                  radiusClass,
+                )}
+                style={{
+                  backgroundColor: user.appearanceBlockColor || undefined,
+                }}
+                render={<Link to={href} />}
+              >
+                <div className="flex items-stretch">
+                  {hasImage && (
+                    <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
+                      <img
+                        src={selectedImages[0]}
+                        alt={selectedProduct.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-1 items-center justify-between gap-3 p-4">
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm font-semibold">
+                        {selectedProduct.title}
+                      </span>
+                      <span className="mt-0.5 text-xs text-slate-500">
+                        {price}
+                      </span>
+                    </div>
+                    <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </div>
+                </div>
+              </Card>
+            )
+          }
+
           return (
             <Card
               key={block.id}
@@ -252,7 +414,7 @@ function UserProfile() {
                       ? formatPrice(product.price)
                       : 'Free'
 
-                const productImages = product.images as string[] | null
+                const productImages = product.images
                 const hasImage = productImages && productImages.length > 0
 
                 const handleAddToCart = (e: React.MouseEvent) => {
@@ -273,7 +435,7 @@ function UserProfile() {
                     productId: product.id,
                     title: product.title,
                     price: cartPrice,
-                    image: hasImage ? productImages![0] : null,
+                    image: hasImage ? productImages[0] : null,
                     maxQuantity: product.totalQuantity,
                     limitPerCheckout: product.limitPerCheckout,
                   })

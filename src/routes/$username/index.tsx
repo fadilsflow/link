@@ -19,6 +19,26 @@ import SiteUserProfileHeader, {
   SocialLinks,
 } from '@/components/site-user-profile-header'
 
+interface PublicBlock {
+  id: string
+  title: string
+  url?: string | null
+  type?: string | null
+  content?: string | null
+}
+
+interface PublicProduct {
+  id: string
+  title: string
+  images?: Array<string> | null
+  payWhatYouWant?: boolean | null
+  minimumPrice?: number | null
+  salePrice?: number | null
+  price?: number | null
+  totalQuantity?: number | null
+  limitPerCheckout?: number | null
+}
+
 function getVideoEmbedUrl(rawUrl?: string | null) {
   if (!rawUrl) return null
 
@@ -42,13 +62,26 @@ function getVideoEmbedUrl(rawUrl?: string | null) {
       if (videoIndex !== -1 && parts[videoIndex + 1]) {
         return `https://www.tiktok.com/embed/v2/${parts[videoIndex + 1]}`
       }
-      return null
     }
 
     return null
   } catch {
     return null
   }
+}
+
+function getProductPriceLabel(product: PublicProduct) {
+  if (product.payWhatYouWant) {
+    return product.minimumPrice
+      ? `From ${formatPrice(product.minimumPrice)}`
+      : 'Pay what you want'
+  }
+
+  if (product.salePrice && product.price) {
+    return formatPrice(product.salePrice)
+  }
+
+  return product.price ? formatPrice(product.price) : 'Free'
 }
 
 export const Route = createFileRoute('/$username/')({
@@ -154,15 +187,7 @@ function UserProfile() {
     return {
       background: 'radial-gradient(circle at top, #1f2937, #020617)',
     }
-  }
-
-  const backgroundStyles = getBackgroundStyles()
-
-  // Full page background for wallpaper mode
-  const isFullPageBg = bgType === 'wallpaper' || bgType === 'color'
-
-  const blockStyle = user.appearanceBlockStyle as 'basic' | 'flat' | 'shadow'
-  const blockRadius = user.appearanceBlockRadius as 'rounded' | 'square'
+  })()
 
   const productMap = new Map(
     (products as Array<PublicProduct>).map((product) => [product.id, product]),
@@ -234,6 +259,7 @@ function UserProfile() {
               >
                 {block.content && (
                   <img
+                    loading="lazy"
                     src={block.content}
                     alt={block.title || 'Image block'}
                     className="h-auto max-h-[480px] w-full object-cover"
@@ -246,7 +272,10 @@ function UserProfile() {
                   <div className="px-3 pb-3">
                     <Button
                       className="w-full"
-                      onClick={() => window.open(block.url, '_blank')}
+                      onClick={() =>
+                        block.url &&
+                        window.open(block.url, '_blank', 'noopener,noreferrer')
+                      }
                     >
                       Open link
                     </Button>
@@ -278,6 +307,7 @@ function UserProfile() {
                   <iframe
                     src={embedUrl}
                     className="h-64 w-full rounded-lg border"
+                    loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   />
@@ -292,24 +322,14 @@ function UserProfile() {
           }
 
           if (block.type === 'product') {
-            const selectedProduct = products.find(
-              (product: any) => product.id === block.content,
-            )
+            const selectedProduct = block.content
+              ? productMap.get(block.content)
+              : null
             if (!selectedProduct) return null
 
-            const href = `/${user.username}/products/${selectedProduct.id}`
-            const price = selectedProduct.payWhatYouWant
-              ? selectedProduct.minimumPrice
-                ? `From ${formatPrice(selectedProduct.minimumPrice)}`
-                : 'Pay what you want'
-              : selectedProduct.salePrice && selectedProduct.price
-                ? formatPrice(selectedProduct.salePrice)
-                : selectedProduct.price
-                  ? formatPrice(selectedProduct.price)
-                  : 'Free'
-
+            const price = getProductPriceLabel(selectedProduct)
             const selectedImages = selectedProduct.images
-            const hasImage = selectedImages && selectedImages.length > 0
+            const hasImage = !!selectedImages?.length
 
             return (
               <Card
@@ -322,12 +342,21 @@ function UserProfile() {
                 style={{
                   backgroundColor: user.appearanceBlockColor || undefined,
                 }}
-                render={<Link to={href} />}
+                render={
+                  <Link
+                    to="/$username/products/$productId"
+                    params={{
+                      username: user.username || '',
+                      productId: selectedProduct.id,
+                    }}
+                  />
+                }
               >
                 <div className="flex items-stretch">
                   {hasImage && (
                     <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
                       <img
+                        loading="lazy"
                         src={selectedImages[0]}
                         alt={selectedProduct.title}
                         className="h-full w-full object-cover"
@@ -392,19 +421,9 @@ function UserProfile() {
             </p>
             <div className="grid gap-3">
               {(products as Array<PublicProduct>).map((product) => {
-                const href = `/${user.username}/products/${product.id}`
-                const price = product.payWhatYouWant
-                  ? product.minimumPrice
-                    ? `From ${formatPrice(product.minimumPrice)}`
-                    : 'Pay what you want'
-                  : product.salePrice && product.price
-                    ? formatPrice(product.salePrice)
-                    : product.price
-                      ? formatPrice(product.price)
-                      : 'Free'
-
+                const price = getProductPriceLabel(product)
                 const productImages = product.images
-                const hasImage = productImages && productImages.length > 0
+                const hasImage = !!productImages?.length
 
                 const handleAddToCart = (e: React.MouseEvent) => {
                   e.preventDefault()
@@ -440,7 +459,15 @@ function UserProfile() {
                     style={{
                       backgroundColor: user.appearanceBlockColor || undefined,
                     }}
-                    render={<Link to={href} />}
+                    render={
+                      <Link
+                        to="/$username/products/$productId"
+                        params={{
+                          username: user.username || '',
+                          productId: product.id,
+                        }}
+                      />
+                    }
                   >
                     <div className="flex items-stretch">
                       {hasImage && (

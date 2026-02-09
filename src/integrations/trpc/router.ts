@@ -116,15 +116,15 @@ const userRouter = {
         appearanceBgWallpaperStyle: z
           .enum(['flat', 'gradient', 'avatar', 'image'])
           .optional(),
-        appearanceBgColor: z.string().optional(),
-        appearanceBgImageUrl: z.string().optional(),
-        appearanceWallpaperImageUrl: z.string().optional(),
-        appearanceWallpaperColor: z.string().optional(),
-        appearanceWallpaperGradientTop: z.string().optional(),
-        appearanceWallpaperGradientBottom: z.string().optional(),
+        appearanceBgColor: z.string().nullable().optional(),
+        appearanceBgImageUrl: z.string().nullable().optional(),
+        appearanceWallpaperImageUrl: z.string().nullable().optional(),
+        appearanceWallpaperColor: z.string().nullable().optional(),
+        appearanceWallpaperGradientTop: z.string().nullable().optional(),
+        appearanceWallpaperGradientBottom: z.string().nullable().optional(),
         appearanceBlockStyle: z.enum(['basic', 'flat', 'shadow']).optional(),
         appearanceBlockRadius: z.enum(['rounded', 'square']).optional(),
-        appearanceBlockColor: z.string().optional(),
+        appearanceBlockColor: z.string().nullable().optional(),
       }),
     )
     .mutation(async ({ input }) => {

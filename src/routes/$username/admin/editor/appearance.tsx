@@ -80,15 +80,15 @@ function AppearanceEditor({
       userId: string
       appearanceBgType?: BgMode | 'color' | 'image'
       appearanceBgWallpaperStyle?: WallpaperStyle
-      appearanceBgColor?: string
-      appearanceBgImageUrl?: string
-      appearanceWallpaperImageUrl?: string
-      appearanceWallpaperColor?: string
-      appearanceWallpaperGradientTop?: string
-      appearanceWallpaperGradientBottom?: string
+      appearanceBgColor?: string | null
+      appearanceBgImageUrl?: string | null
+      appearanceWallpaperImageUrl?: string | null
+      appearanceWallpaperColor?: string | null
+      appearanceWallpaperGradientTop?: string | null
+      appearanceWallpaperGradientBottom?: string | null
       appearanceBlockStyle?: BlockStyle
       appearanceBlockRadius?: BlockRadius
-      appearanceBlockColor?: string
+      appearanceBlockColor?: string | null
     }) => trpcClient.user.updateProfile.mutate(data),
     onMutate: () => {
       setStatus({ isSaving: true, isSaved: false })
@@ -211,14 +211,14 @@ function AppearanceEditor({
     setCurrentBannerUrl(imageUrl || undefined)
     handleChange({
       appearanceBgType: 'banner',
-      appearanceBgImageUrl: imageUrl ? imageUrl : undefined,
+      appearanceBgImageUrl: imageUrl || null,
     })
   }
 
   const handleBannerColorChange = (color: string | undefined) => {
     setCurrentBgColor(color)
     handleChange({
-      appearanceBgColor: color,
+      appearanceBgColor: color ?? null,
     })
   }
 
@@ -233,7 +233,7 @@ function AppearanceEditor({
   const handleWallpaperColorChange = (color: string | undefined) => {
     setCurrentWallpaperColor(color)
     handleChange({
-      appearanceWallpaperColor: color,
+      appearanceWallpaperColor: color ?? null,
     })
   }
 
@@ -244,15 +244,15 @@ function AppearanceEditor({
     setCurrentGradientTop(top)
     setCurrentGradientBottom(bottom)
     handleChange({
-      appearanceWallpaperGradientTop: top,
-      appearanceWallpaperGradientBottom: bottom,
+      appearanceWallpaperGradientTop: top ?? null,
+      appearanceWallpaperGradientBottom: bottom ?? null,
     })
   }
 
   const handleWallpaperImageChange = (url: string | undefined) => {
     setCurrentWallpaperImageUrl(url)
     handleChange({
-      appearanceWallpaperImageUrl: url,
+      appearanceWallpaperImageUrl: url || null,
     })
   }
 
@@ -268,7 +268,7 @@ function AppearanceEditor({
 
   const handleBlockColorChange = (color: string | undefined) => {
     setCurrentBlockColor(color)
-    handleChange({ appearanceBlockColor: color })
+    handleChange({ appearanceBlockColor: color ?? null })
   }
 
   const handleBlockReset = () => {
@@ -278,7 +278,7 @@ function AppearanceEditor({
     handleChange({
       appearanceBlockStyle: 'basic',
       appearanceBlockRadius: 'rounded',
-      appearanceBlockColor: undefined,
+      appearanceBlockColor: null,
     })
   }
 

@@ -20,6 +20,7 @@ import SiteUserProfileHeader, {
   ProfileCard,
   SocialLinks,
 } from '@/components/site-user-profile-header'
+import { useMutation } from '@tanstack/react-query'
 
 interface PublicBlock {
   id: string

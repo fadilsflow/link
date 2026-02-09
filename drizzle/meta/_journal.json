@@ -8,6 +8,13 @@
       "when": 1770379719930,
       "tag": "0000_polite_taskmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770648255852,
+      "tag": "0001_secret_abomination",
+      "breakpoints": true
     }
   ]
 }

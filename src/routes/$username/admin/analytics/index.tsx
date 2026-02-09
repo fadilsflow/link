@@ -1,31 +1,29 @@
-import { useMemo, useState } from 'react'
+import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Package } from 'lucide-react'
+import { CalendarIcon, TrendingUp } from 'lucide-react'
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 import {
   AppHeader,
   AppHeaderContent,
   AppHeaderDescription,
 } from '@/components/app-header'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Spinner } from '@/components/ui/spinner'
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Skeleton } from '@/components/ui/skeleton'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { authClient } from '@/lib/auth-client'
 import { cn, formatPrice } from '@/lib/utils'
@@ -34,255 +32,346 @@ export const Route = createFileRoute('/$username/admin/analytics/')({
   component: AnalyticsPage,
 })
 
+type DateRange = { from: Date | undefined; to: Date | undefined }
+
+const RANGE_PRESETS = [
+  { label: '1D', days: 1 },
+  { label: '7D', days: 7 },
+  { label: '30D', days: 30 },
+] as const
+
 function AnalyticsPage() {
-  const { data: session } = authClient.useSession()
+  const { data: session, isPending: isSessionPending } = authClient.useSession()
+  const today = new Date()
+  today.setHours(23, 59, 59, 999)
 
-  const today = new Date().toISOString().slice(0, 10)
-  const thirtyDaysAgo = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10)
+  const [dateRange, setDateRange] = React.useState<DateRange>({
+    from: new Date(Date.now() - 29 * 24 * 60 * 60 * 1000),
+    to: today,
+  })
 
-  const [from, setFrom] = useState(thirtyDaysAgo)
-  const [to, setTo] = useState(today)
+  const fromStr = dateRange.from?.toISOString().slice(0, 10)
+  const toStr = dateRange.to?.toISOString().slice(0, 10)
 
   const { data: overview, isLoading: isLoadingOverview } = useQuery({
-    queryKey: ['analytics', 'overview', session.user.id, from, to],
+    queryKey: ['analytics', 'overview', session?.user?.id, fromStr, toStr],
     queryFn: async () => {
-      if (!session.user.id) return null
+      if (!session?.user?.id) return null
       return await trpcClient.analytics.getOverview.query({
         userId: session.user.id,
-        from,
-        to,
+        from: fromStr,
+        to: toStr,
       })
     },
-    enabled: !!session.user.id,
+    enabled: !!session?.user?.id,
   })
 
-  const { data: productAnalytics, isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['analytics', 'products', session.user.id],
-    queryFn: async () => {
-      if (!session.user.id) return []
-      return await trpcClient.analytics.getProductAnalytics.query({
-        userId: session.user.id,
-      })
-    },
-    enabled: !!session.user.id,
-  })
-
-  const isLoading = isLoadingOverview || isLoadingProducts
-
-  if (!session.user.id || isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Spinner />
-      </div>
-    )
+  const handlePreset = (days: number) => {
+    const now = new Date()
+    now.setHours(23, 59, 59, 999)
+    const from = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000)
+    from.setHours(0, 0, 0, 0)
+    setDateRange({ from, to: now })
   }
 
-  const totalProducts = productAnalytics?.length ?? 0
-  const activeProducts = productAnalytics?.filter((p) => p.isActive).length ?? 0
-  const avgOrderValue =
-    overview?.totals.totalSalesCount && overview.totals.totalSalesCount > 0
-      ? Math.round(
-          overview.totals.totalRevenue / overview.totals.totalSalesCount,
-        )
-      : 0
+  const isLoading = isSessionPending || isLoadingOverview
+  const chartData = overview?.chart ?? []
+  const rangeRevenue = overview?.range.revenue ?? 0
+  const rangeSales = overview?.range.sales ?? 0
 
   return (
     <div className="space-y-6">
       <AppHeader>
         <AppHeaderContent title="Analytics">
           <AppHeaderDescription>
-            Track sales, views, and clicks performance
+            Performance overview for your profile
           </AppHeaderDescription>
         </AppHeaderContent>
       </AppHeader>
 
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200">
-        <CardHeader className="pb-3 border-b border-slate-100">
-          <CardTitle className="text-base">Date Range Filter</CardTitle>
-          <CardDescription className="text-xs">
-            Filter chart and period totals by date
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-4 grid gap-3 md:grid-cols-2">
-          <div className="space-y-1">
-            <p className="text-xs text-slate-500">From</p>
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs text-slate-500">To</p>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Revenue" value={formatPrice(overview?.totals.totalRevenue ?? 0)} sub="Lifetime earnings" />
-        <StatCard title="Total Sales" value={overview?.totals.totalSalesCount ?? 0} sub="Successful checkouts" />
-        <StatCard title="Total Views" value={overview?.totals.totalViews ?? 0} sub="Profile page views" />
-        <StatCard title="Total Clicks" value={overview?.totals.totalClicks ?? 0} sub="All block clicks" />
+      {/* Date Range Picker */}
+      <div className="flex flex-wrap items-center gap-2">
+        {RANGE_PRESETS.map((preset) => (
+          <Button
+            key={preset.label}
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            onClick={() => handlePreset(preset.days)}
+          >
+            {preset.label}
+          </Button>
+        ))}
+        <DateRangePicker value={dateRange} onChange={setDateRange} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Clicks / Block" value={(overview?.totals.clicksPerBlock ?? 0).toFixed(2)} sub={`${overview?.totals.totalBlocks ?? 0} blocks`} />
-        <StatCard title="Avg Order Value" value={formatPrice(avgOrderValue)} sub="Per transaction" />
-        <StatCard title="Range Revenue" value={formatPrice(overview?.range.revenue ?? 0)} sub="For selected dates" />
-        <StatCard title="Range Sales" value={overview?.range.sales ?? 0} sub="For selected dates" />
+      {/* Key Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Revenue"
+          value={formatPrice(rangeRevenue)}
+          description="Selected period"
+          isLoading={isLoading}
+        />
+        <StatCard
+          title="Sales"
+          value={rangeSales}
+          description="Selected period"
+          isLoading={isLoading}
+        />
+        <StatCard
+          title="Views"
+          value={overview?.totals.totalViews ?? 0}
+          description="All time"
+          isLoading={isLoading}
+        />
+        <StatCard
+          title="Clicks"
+          value={overview?.totals.totalClicks ?? 0}
+          description="All time"
+          isLoading={isLoading}
+        />
       </div>
 
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200">
-        <CardHeader className="pb-3 border-b border-slate-100">
-          <CardTitle className="text-base font-semibold">Sales & Revenue Trend</CardTitle>
-          <CardDescription className="text-xs">
-            Shadcn-style chart card for selected date range
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <SimpleBarChart data={overview?.chart ?? []} />
-        </CardContent>
-      </Card>
-
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200">
-        <CardHeader className="pb-3 border-b border-slate-100">
-          <CardTitle className="text-base font-semibold">Block Click Performance</CardTitle>
-          <CardDescription className="text-xs">
-            Total clicks by block
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-slate-50">
-              <TableRow className="border-slate-100 hover:bg-slate-50">
-                <TableHead className="text-xs font-semibold text-slate-500 uppercase h-10">Block</TableHead>
-                <TableHead className="text-xs font-semibold text-slate-500 uppercase h-10 text-right">Type</TableHead>
-                <TableHead className="text-xs font-semibold text-slate-500 uppercase h-10 text-right">Clicks</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(overview?.blocks ?? []).map((block) => (
-                <TableRow key={block.id} className="group border-slate-100 hover:bg-slate-50/50">
-                  <TableCell className="py-3">
-                    <p className="font-medium text-slate-900 truncate max-w-[240px]">{block.title}</p>
-                  </TableCell>
-                  <TableCell className="py-3 text-right text-slate-600">{block.type}</TableCell>
-                  <TableCell className="py-3 text-right font-semibold text-slate-900">{block.clicks}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card className="border-0 shadow-sm ring-1 ring-slate-200">
-        <CardHeader className="pb-3 border-b border-slate-100">
-          <CardTitle className="text-base font-semibold">Product Performance</CardTitle>
-          <CardDescription className="text-xs">Revenue and sales breakdown by product</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-slate-50">
-              <TableRow className="border-slate-100 hover:bg-slate-50">
-                <TableHead className="text-xs font-semibold text-slate-500 uppercase h-10">Product</TableHead>
-                <TableHead className="text-xs font-semibold text-slate-500 uppercase h-10 text-right">Sales</TableHead>
-                <TableHead className="text-xs font-semibold text-slate-500 uppercase h-10 text-right">Revenue</TableHead>
-                <TableHead className="text-xs font-semibold text-slate-500 uppercase h-10 text-right">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {productAnalytics && productAnalytics.length > 0 ? (
-                productAnalytics.map((product) => (
-                  <TableRow key={product.id} className="group border-slate-100 hover:bg-slate-50/50">
-                    <TableCell className="py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                          {product.image ? (
-                            <img src={product.image} alt={product.title} className="h-full w-full object-cover" />
-                          ) : (
-                            <Package className="h-5 w-5 text-slate-400" />
-                          )}
-                        </div>
-                        <p className="font-medium text-slate-900 truncate max-w-[200px]">{product.title}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3 text-right font-medium text-slate-700">{product.salesCount}</TableCell>
-                    <TableCell className="py-3 text-right font-semibold text-slate-900">{formatPrice(product.totalRevenue)}</TableCell>
-                    <TableCell className="py-3 text-right">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          'text-[10px] h-5 px-1.5 font-normal',
-                          product.isActive
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : 'bg-slate-50 text-slate-500 border-slate-200',
-                        )}
-                      >
-                        {product.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-32 text-center text-slate-500">
-                    <div className="flex flex-col items-center gap-2">
-                      <Package className="h-8 w-8 text-slate-300" />
-                      <p>No products yet</p>
-                      <p className="text-xs text-slate-400">Create a product to start tracking analytics</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <p className="text-xs text-slate-500">{activeProducts} of {totalProducts} products are active.</p>
+      {/* Revenue Chart */}
+      <RevenueChart data={chartData} isLoading={isLoading} />
     </div>
   )
 }
 
-function StatCard({ title, value, sub }: { title: string; value: string | number; sub: string }) {
+function StatCard({
+  title,
+  value,
+  description,
+  isLoading,
+}: {
+  title: string
+  value: string | number
+  description: string
+  isLoading?: boolean
+}) {
   return (
-    <Card className="relative overflow-hidden border-0 shadow-sm ring-1 ring-slate-200">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-slate-600">{title}</CardTitle>
+    <Card className="relative overflow-hidden min-h-28">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-slate-900">{value}</div>
-        <p className="text-xs text-slate-500 mt-1">{sub}</p>
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        ) : (
+          <>
+            <div className="text-2xl font-bold">{value}</div>
+            <p className="text-xs text-muted-foreground">{description}</p>
+          </>
+        )}
       </CardContent>
     </Card>
   )
 }
 
-function SimpleBarChart({ data }: { data: Array<{ date: string; sales: number; revenue: number }> }) {
-  const maxRevenue = useMemo(
-    () => data.reduce((max, item) => Math.max(max, item.revenue), 0),
+const chartConfig = {
+  revenue: {
+    label: 'Revenue',
+    color: 'hsl(var(--chart-1))',
+  },
+  sales: {
+    label: 'Sales',
+    color: 'hsl(var(--chart-2))',
+  },
+} satisfies ChartConfig
+
+function RevenueChart({
+  data,
+  isLoading,
+}: {
+  data: Array<{ date: string; sales: number; revenue: number }>
+  isLoading?: boolean
+}) {
+  const totalRevenue = React.useMemo(
+    () => data.reduce((acc, item) => acc + item.revenue, 0),
     [data],
   )
 
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Revenue Trend
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="h-[300px] flex flex-col gap-4">
+          <Skeleton className="h-full w-full rounded-lg" />
+        </CardContent>
+      </Card>
+    )
+  }
+
   if (data.length === 0) {
-    return <p className="text-sm text-slate-500">No order data for this date range.</p>
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Revenue Trend</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[200px] flex items-center justify-center text-muted-foreground">
+          No data for this period
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
-    <div className="space-y-3">
-      {data.map((item) => (
-        <div key={item.date} className="space-y-1">
-          <div className="flex items-center justify-between text-xs text-slate-500">
-            <span>{item.date}</span>
-            <span>{item.sales} sales</span>
-          </div>
-          <div className="h-2 rounded bg-slate-100 overflow-hidden">
-            <div
-              className="h-full bg-slate-900"
-              style={{ width: `${maxRevenue > 0 ? (item.revenue / maxRevenue) * 100 : 0}%` }}
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <TrendingUp className="h-4 w-4" />
+          Revenue Trend
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={chartConfig} className="h-[250px] w-full">
+          <AreaChart
+            data={data}
+            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-revenue)"
+                  stopOpacity={0.8}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-revenue)"
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis
+              dataKey="date"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(value) => {
+                const date = new Date(value)
+                return date.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })
+              }}
             />
-          </div>
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
+            />
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(value) => {
+                    return new Date(value).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  }}
+                  formatter={(value, name) => (
+                    <div className="flex min-w-[120px] items-center text-xs text-muted-foreground">
+                      {name === 'revenue' ? 'Revenue' : 'Sales'}
+                      <div className="ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums text-foreground">
+                        {name === 'revenue'
+                          ? formatPrice(value as number)
+                          : value}
+                      </div>
+                    </div>
+                  )}
+                />
+              }
+            />
+            <Area
+              dataKey="revenue"
+              type="monotone"
+              fill="url(#fillRevenue)"
+              stroke="var(--color-revenue)"
+              strokeWidth={2}
+            />
+          </AreaChart>
+        </ChartContainer>
+        <div className="mt-4 flex items-center gap-2 text-sm">
+          <span className="font-medium">Total:</span>
+          <span className="font-bold">{formatPrice(totalRevenue)}</span>
         </div>
-      ))}
-    </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function DateRangePicker({
+  value,
+  onChange,
+}: {
+  value: DateRange
+  onChange: (range: DateRange) => void
+}) {
+  const [open, setOpen] = React.useState(false)
+
+  const formatDateRange = () => {
+    if (!value.from) return 'Pick a date range'
+    if (!value.to) {
+      return value.from.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    }
+    return `${value.from.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    })} - ${value.to.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })}`
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn(
+              'h-8 justify-start text-left font-normal text-xs',
+              !value.from && 'text-muted-foreground',
+            )}
+          />
+        }
+      >
+        <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+        {formatDateRange()}
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="range"
+          defaultMonth={value.from}
+          selected={value}
+          onSelect={(range) => {
+            onChange({ from: range?.from, to: range?.to })
+          }}
+          numberOfMonths={2}
+        />
+      </PopoverContent>
+    </Popover>
   )
 }

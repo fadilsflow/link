@@ -297,3 +297,56 @@ export const ordersRelations = relations(orders, ({ one }) => ({
     references: [products.id],
   }),
 }))
+
+// Analytics tracking tables for period-based filtering
+export const profileViews = pgTable(
+  'profile_view',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('profile_view_user_id_idx').on(table.userId),
+    index('profile_view_created_at_idx').on(table.createdAt),
+  ],
+)
+
+export const blockClicks = pgTable(
+  'block_click',
+  {
+    id: text('id').primaryKey(),
+    blockId: text('block_id')
+      .notNull()
+      .references(() => blocks.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('block_click_block_id_idx').on(table.blockId),
+    index('block_click_user_id_idx').on(table.userId),
+    index('block_click_created_at_idx').on(table.createdAt),
+  ],
+)
+
+export const profileViewsRelations = relations(profileViews, ({ one }) => ({
+  user: one(user, {
+    fields: [profileViews.userId],
+    references: [user.id],
+  }),
+}))
+
+export const blockClicksRelations = relations(blockClicks, ({ one }) => ({
+  block: one(blocks, {
+    fields: [blockClicks.blockId],
+    references: [blocks.id],
+  }),
+  user: one(user, {
+    fields: [blockClicks.userId],
+    references: [user.id],
+  }),
+}))

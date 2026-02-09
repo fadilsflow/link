@@ -3,7 +3,15 @@ import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
-import { blocks, orders, products, socialLinks, user } from '@/db/schema'
+import {
+  blockClicks,
+  blocks,
+  orders,
+  products,
+  profileViews,
+  socialLinks,
+  user,
+} from '@/db/schema'
 import { StorageService } from '@/lib/storage'
 import { sendOrderEmail } from '@/lib/email'
 import { BASE_URL } from '@/lib/constans'
@@ -77,6 +85,13 @@ const userRouter = {
 
       if (!existingUser) return { success: false }
 
+      // Insert into profileViews table for period-based tracking
+      await db.insert(profileViews).values({
+        id: crypto.randomUUID(),
+        userId: existingUser.id,
+      })
+
+      // Also update legacy counter for backwards compatibility
       await db
         .update(user)
         .set({ totalViews: sql`${user.totalViews} + 1` })
@@ -170,6 +185,22 @@ const blockRouter = {
   trackClick: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
+      // Get block to find the userId
+      const block = await db.query.blocks.findFirst({
+        where: eq(blocks.id, input.id),
+        columns: { id: true, userId: true },
+      })
+
+      if (!block) return { success: false }
+
+      // Insert into blockClicks table for period-based tracking
+      await db.insert(blockClicks).values({
+        id: crypto.randomUUID(),
+        blockId: input.id,
+        userId: block.userId,
+      })
+
+      // Also update legacy counter for backwards compatibility
       await db
         .update(blocks)
         .set({ clicks: sql`${blocks.clicks} + 1` })
@@ -804,7 +835,9 @@ const analyticsRouter = {
       }),
     )
     .query(async ({ input }) => {
-      const fromDate = input.from ? new Date(`${input.from}T00:00:00.000Z`) : null
+      const fromDate = input.from
+        ? new Date(`${input.from}T00:00:00.000Z`)
+        : null
       const toDate = input.to ? new Date(`${input.to}T23:59:59.999Z`) : null
 
       const profile = await db.query.user.findFirst({
@@ -828,6 +861,7 @@ const analyticsRouter = {
         orderBy: [desc(blocks.clicks)],
       })
 
+      // Orders query for revenue/sales
       const orderConditions = [eq(orders.creatorId, input.userId)]
       if (fromDate) orderConditions.push(gte(orders.createdAt, fromDate))
       if (toDate) orderConditions.push(lte(orders.createdAt, toDate))
@@ -841,7 +875,30 @@ const analyticsRouter = {
         orderBy: [asc(orders.createdAt)],
       })
 
-      const byDay = new Map<string, { date: string; sales: number; revenue: number }>()
+      // Views query for period
+      const viewsConditions = [eq(profileViews.userId, input.userId)]
+      if (fromDate) viewsConditions.push(gte(profileViews.createdAt, fromDate))
+      if (toDate) viewsConditions.push(lte(profileViews.createdAt, toDate))
+
+      const viewRows = await db.query.profileViews.findMany({
+        where: and(...viewsConditions),
+        columns: { id: true },
+      })
+
+      // Clicks query for period
+      const clicksConditions = [eq(blockClicks.userId, input.userId)]
+      if (fromDate) clicksConditions.push(gte(blockClicks.createdAt, fromDate))
+      if (toDate) clicksConditions.push(lte(blockClicks.createdAt, toDate))
+
+      const clickRows = await db.query.blockClicks.findMany({
+        where: and(...clicksConditions),
+        columns: { id: true },
+      })
+
+      const byDay = new Map<
+        string,
+        { date: string; sales: number; revenue: number }
+      >()
 
       for (const order of orderRows) {
         const day = order.createdAt.toISOString().slice(0, 10)
@@ -853,8 +910,13 @@ const analyticsRouter = {
 
       const chart = Array.from(byDay.values())
 
-      const rangeRevenue = orderRows.reduce((acc, row) => acc + row.amountPaid, 0)
+      const rangeRevenue = orderRows.reduce(
+        (acc, row) => acc + row.amountPaid,
+        0,
+      )
       const rangeSales = orderRows.length
+      const rangeViews = viewRows.length
+      const rangeClicks = clickRows.length
       const totalBlocks = blockRows.length
       const totalClicks = blockRows.reduce((acc, row) => acc + row.clicks, 0)
 
@@ -870,6 +932,8 @@ const analyticsRouter = {
         range: {
           revenue: rangeRevenue,
           sales: rangeSales,
+          views: rangeViews,
+          clicks: rangeClicks,
         },
         chart,
         blocks: blockRows,

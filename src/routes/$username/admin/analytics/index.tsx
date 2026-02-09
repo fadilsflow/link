@@ -67,6 +67,7 @@ function AnalyticsPage() {
     from: new Date(Date.now() - 29 * 24 * 60 * 60 * 1000),
     to: today,
   })
+  const [activePreset, setActivePreset] = React.useState<string | null>('30D')
 
   const fromStr = dateRange.from?.toISOString().slice(0, 10)
   const toStr = dateRange.to?.toISOString().slice(0, 10)
@@ -95,12 +96,13 @@ function AnalyticsPage() {
     enabled: !!session?.user?.id,
   })
 
-  const handlePreset = (days: number) => {
+  const handlePreset = (days: number, label: string) => {
     const now = new Date()
     now.setHours(23, 59, 59, 999)
     const from = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000)
     from.setHours(0, 0, 0, 0)
     setDateRange({ from, to: now })
+    setActivePreset(label)
   }
 
   const isLoading = isSessionPending || isLoadingOverview
@@ -129,15 +131,21 @@ function AnalyticsPage() {
             {RANGE_PRESETS.map((preset) => (
               <Button
                 key={preset.label}
-                variant="ghost"
+                variant={activePreset === preset.label ? 'secondary' : 'ghost'}
                 size="sm"
-                className="h-8 text-xs"
-                onClick={() => handlePreset(preset.days)}
+                className="h-8 text-xs font-medium"
+                onClick={() => handlePreset(preset.days, preset.label)}
               >
                 {preset.label}
               </Button>
             ))}
-            <DateRangePicker value={dateRange} onChange={setDateRange} />
+            <DateRangePicker
+              value={dateRange}
+              onChange={(range) => {
+                setDateRange(range)
+                setActivePreset(null)
+              }}
+            />
           </div>
         </AppHeaderActions>
       </AppHeader>

@@ -20,6 +20,7 @@ import {
 
 import {
   AppHeader,
+  AppHeaderActions,
   AppHeaderContent,
   AppHeaderDescription,
 } from '@/components/app-header'
@@ -108,6 +109,8 @@ function AnalyticsPage() {
   const rangeSales = overview?.range.sales ?? 0
   const rangeViews = overview?.range.views ?? 0
   const rangeClicks = overview?.range.clicks ?? 0
+  const ctr =
+    rangeViews > 0 ? ((rangeClicks / rangeViews) * 100).toFixed(1) : '0'
   const blocks = overview?.blocks ?? []
   const topBlocks = blocks.slice(0, 5)
   const topProducts = (productAnalytics ?? []).slice(0, 5)
@@ -120,23 +123,24 @@ function AnalyticsPage() {
             Performance overview for your profile
           </AppHeaderDescription>
         </AppHeaderContent>
+        <AppHeaderActions>
+          {/* Date Range Picker */}
+          <div className="flex flex-wrap items-center gap-2">
+            {RANGE_PRESETS.map((preset) => (
+              <Button
+                key={preset.label}
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => handlePreset(preset.days)}
+              >
+                {preset.label}
+              </Button>
+            ))}
+            <DateRangePicker value={dateRange} onChange={setDateRange} />
+          </div>
+        </AppHeaderActions>
       </AppHeader>
-
-      {/* Date Range Picker */}
-      <div className="flex flex-wrap items-center gap-2">
-        {RANGE_PRESETS.map((preset) => (
-          <Button
-            key={preset.label}
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs"
-            onClick={() => handlePreset(preset.days)}
-          >
-            {preset.label}
-          </Button>
-        ))}
-        <DateRangePicker value={dateRange} onChange={setDateRange} />
-      </div>
 
       {/* Key Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -152,16 +156,24 @@ function AnalyticsPage() {
           description="Selected period"
           isLoading={isLoading}
         />
-        <EngagementCard
-          views={rangeViews}
-          clicks={rangeClicks}
-          data={chartData}
+        <StatCard
+          title="CTR"
+          value={`${ctr}%`}
+          description="Click-Through Rate"
           isLoading={isLoading}
         />
       </div>
 
       {/* Revenue Chart */}
       <RevenueChart data={chartData} isLoading={isLoading} />
+
+      {/* Engagement Chart */}
+      <EngagementCard
+        views={rangeViews}
+        clicks={rangeClicks}
+        data={chartData}
+        isLoading={isLoading}
+      />
 
       {/* Two Column Layout for Top Blocks and Products */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -246,14 +258,14 @@ function EngagementCard({
             <div className="flex items-center gap-8">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-3 w-3 rounded-full bg-[var(--color-chart-4)]" />
+                  <div className="h-3 w-3 rounded-full bg-(--color-chart-4)" />
                   Views
                 </div>
                 <div className="text-3xl font-bold">{views}</div>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-3 w-3 rounded-full bg-[var(--color-chart-2)]" />
+                  <div className="h-3 w-3 rounded-full bg-(--color-chart-2)" />
                   Clicks
                 </div>
                 <div className="text-3xl font-bold">{clicks}</div>

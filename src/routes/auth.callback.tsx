@@ -28,10 +28,15 @@ function AuthCallbackPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
+    let isCancelled = false
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+
     // 2. FALLBACK PATH: If server-side didn't redirect, try once more on the client
     // This handles rare timing issues where cookies might sync slightly after the initial request.
     const checkAgain = async () => {
       const status = await checkOnboardingStatus()
+      if (isCancelled) return
+
       if (status.isLoggedIn && status.user) {
         const username = status.user.username
         if (username) {
@@ -44,11 +49,20 @@ function AuthCallbackPage() {
         }
       } else {
         // If still nothing after a brief wait, go home
-        const timer = setTimeout(() => navigate({ to: '/' }), 2000)
-        return () => clearTimeout(timer)
+        timeoutId = setTimeout(() => {
+          if (!isCancelled) {
+            navigate({ to: '/' })
+          }
+        }, 2000)
       }
     }
+
     checkAgain()
+
+    return () => {
+      isCancelled = true
+      if (timeoutId) clearTimeout(timeoutId)
+    }
   }, [navigate])
 
   return (

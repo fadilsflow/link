@@ -1,9 +1,7 @@
-import React from 'react'
-import { Check, Square, SquareDashed } from 'lucide-react'
+import { Check } from 'lucide-react'
 import type { BlockRadius, BlockStyle } from './types'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 interface BlockStyleSelectorProps {
@@ -153,24 +151,48 @@ export function BlockStyleSelector({
               Card Color
             </Label>
             <div className="flex gap-3">
-              <div
-                className="h-10 w-10 rounded-xl border border-zinc-200 shadow-sm shrink-0"
-                style={{ backgroundColor: currentBlockColor || '#FFFFFF' }}
-              />
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-zinc-200 shadow-sm focus-within:ring-2 focus-within:ring-zinc-900/20">
+                <input
+                  type="color"
+                  className="absolute inset-0 h-[150%] w-[150%] -translate-x-1/4 -translate-y-1/4 cursor-pointer border-none p-0 opacity-100"
+                  value={currentBlockColor || '#FFFFFF'}
+                  onChange={(e) => onColorChange(e.target.value)}
+                />
+              </div>
               <div className="relative flex-1">
                 <Input
                   placeholder="#FFFFFF"
-                  defaultValue={currentBlockColor ?? ''}
-                  onBlur={(e) => onColorChange(e.target.value || undefined)}
-                  className="h-10 text-xs font-mono"
+                  value={currentBlockColor ?? ''}
+                  onChange={(e) => onColorChange(e.target.value || undefined)}
+                  className="h-10 text-xs font-mono uppercase"
                 />
-                {currentBlockColor && (
-                  <div
-                    className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full border border-black/10 cursor-pointer"
-                    style={{ backgroundColor: currentBlockColor }}
-                  />
-                )}
               </div>
+            </div>
+
+            {/* Color Presets */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {[
+                '#FFFFFF',
+                '#F4F4F5',
+                '#18181B',
+                '#E11D48',
+                '#2563EB',
+                '#16A34A',
+                '#D97706',
+              ].map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => onColorChange(color)}
+                  className={cn(
+                    'h-6 w-6 rounded-full border border-zinc-200 transition-all hover:scale-110 active:scale-95',
+                    currentBlockColor?.toUpperCase() === color.toUpperCase() &&
+                      'ring-2 ring-zinc-900 ring-offset-2',
+                  )}
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
             </div>
           </div>
         </div>

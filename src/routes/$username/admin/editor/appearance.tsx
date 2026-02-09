@@ -150,6 +150,9 @@ function AppearanceEditor({
   const [currentGradientBottom, setCurrentGradientBottom] = React.useState<
     string | undefined
   >(user.appearanceWallpaperGradientBottom ?? undefined)
+  const [currentBlockColor, setCurrentBlockColor] = React.useState<
+    string | undefined
+  >(user.appearanceBlockColor ?? undefined)
 
   // Track current banner selection
   const [currentBannerId, setCurrentBannerId] = React.useState<
@@ -176,6 +179,7 @@ function AppearanceEditor({
     setCurrentGradientBottom(
       user.appearanceWallpaperGradientBottom ?? undefined,
     )
+    setCurrentBlockColor(user.appearanceBlockColor ?? undefined)
   }, [
     user.appearanceBgImageUrl,
     user.appearanceBgColor,
@@ -183,6 +187,7 @@ function AppearanceEditor({
     user.appearanceWallpaperColor,
     user.appearanceWallpaperGradientTop,
     user.appearanceWallpaperGradientBottom,
+    user.appearanceBlockColor,
   ])
 
   const handleChange = (
@@ -262,12 +267,14 @@ function AppearanceEditor({
   }
 
   const handleBlockColorChange = (color: string | undefined) => {
+    setCurrentBlockColor(color)
     handleChange({ appearanceBlockColor: color })
   }
 
   const handleBlockReset = () => {
     setBlockStyle('basic')
     setBlockRadius('rounded')
+    setCurrentBlockColor(undefined)
     handleChange({
       appearanceBlockStyle: 'basic',
       appearanceBlockRadius: 'rounded',
@@ -367,7 +374,7 @@ function AppearanceEditor({
           <BlockStyleSelector
             blockStyle={blockStyle}
             blockRadius={blockRadius}
-            currentBlockColor={user.appearanceBlockColor ?? undefined}
+            currentBlockColor={currentBlockColor}
             onStyleChange={handleBlockStyleChange}
             onRadiusChange={handleBlockRadiusChange}
             onColorChange={handleBlockColorChange}

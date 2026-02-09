@@ -4,7 +4,7 @@ import {
   PointerSensor,
   closestCorners,
   useSensor,
-  useSensors
+  useSensors,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -13,8 +13,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { SortableBlockItem } from './SortableBlockItem'
-import type {
-  DragEndEvent} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core'
 
 interface Block {
   id: string
@@ -24,7 +23,12 @@ interface Block {
   content?: string
   isEnabled: boolean
   syncStatus?: 'saved' | 'saving' | 'unsaved' | 'error'
-  errors?: { title?: string; url?: string }
+  errors?: { title?: string; url?: string; content?: string }
+}
+
+interface ProductOption {
+  id: string
+  title: string
 }
 
 interface BlockListProps {
@@ -32,6 +36,7 @@ interface BlockListProps {
   onUpdate: (id: string, field: string, value: any) => void
   onDelete: (id: string) => void
   onReorder: (newBlocks: Array<Block>) => void
+  products?: Array<ProductOption>
   onDragStart?: () => void
   onDragCancel?: () => void
 }
@@ -41,6 +46,7 @@ export function BlockList({
   onUpdate,
   onDelete,
   onReorder,
+  products,
   onDragStart,
   onDragCancel,
 }: BlockListProps) {
@@ -88,6 +94,7 @@ export function BlockList({
             <SortableBlockItem
               key={block.id}
               block={block}
+              products={products}
               handleBlockUpdate={onUpdate}
               handleDeleteBlock={onDelete}
             />

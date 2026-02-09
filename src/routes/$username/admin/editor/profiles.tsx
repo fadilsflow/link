@@ -1,8 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Layout, Plus, User as UserIcon } from 'lucide-react'
+import {
+  ImageIcon,
+  Layout,
+  Package,
+  PlaySquare,
+  Plus,
+  User as UserIcon,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
+import type { PreviewUser } from '@/lib/preview-context'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -23,7 +31,7 @@ import {
 } from '@/components/app-header'
 import SocialEditor from '@/components/dashboard/SocialEditor'
 import { toastManager } from '@/components/ui/toast'
-import { usePreview, type PreviewUser } from '@/lib/preview-context'
+import { usePreview } from '@/lib/preview-context'
 
 export const Route = createFileRoute('/$username/admin/editor/profiles')({
   component: AdminDashboard,
@@ -35,6 +43,21 @@ export const Route = createFileRoute('/$username/admin/editor/profiles')({
 const linkSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   url: z.union([z.literal(''), z.string().url('Invalid URL')]),
+})
+
+const imageSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  content: z.string().url('Invalid image URL'),
+  url: z.union([z.literal(''), z.string().url('Invalid URL')]).optional(),
+})
+
+const videoSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  content: z.string().url('Invalid video URL'),
+})
+
+const productSchema = z.object({
+  content: z.string().min(1, 'Please select a product'),
 })
 
 function AdminDashboard() {
@@ -190,7 +213,7 @@ function AdminDashboard() {
         error: (err: unknown) => ({
           title: 'Failed to save profile',
           description:
-            (err as Error)?.message || 'An unexpected error occurred.',
+            (err as Error).message || 'An unexpected error occurred.',
         }),
       },
     )
@@ -216,6 +239,37 @@ function AdminDashboard() {
           const result = linkSchema.safeParse({ title: 'ignore', url: value })
           if (!result.success) errors.url = 'Invalid URL'
           else delete errors.url
+        }
+
+        if (field === 'content' && block.type === 'image') {
+          const result = z
+            .string()
+            .url()
+            .safeParse(value || '')
+          if (!result.success) errors.content = 'Invalid image URL'
+          else delete errors.content
+        }
+
+        if (field === 'url' && block.type === 'image') {
+          const result = z
+            .union([z.literal(''), z.string().url()])
+            .safeParse(value || '')
+          if (!result.success) errors.url = 'Invalid URL'
+          else delete errors.url
+        }
+
+        if (field === 'content' && block.type === 'video') {
+          const result = z
+            .string()
+            .url()
+            .safeParse(value || '')
+          if (!result.success) errors.content = 'Invalid video URL'
+          else delete errors.content
+        }
+
+        if (field === 'content' && block.type === 'product') {
+          if (!value) errors.content = 'Please select a product'
+          else delete errors.content
         }
 
         const hasNoErrors = Object.keys(errors).length === 0
@@ -244,6 +298,21 @@ function AdminDashboard() {
         }).success
       } else if (updatedVal.type === 'text') {
         isValid = !!updatedVal.title
+      } else if (updatedVal.type === 'image') {
+        isValid = imageSchema.safeParse({
+          title: updatedVal.title,
+          content: updatedVal.content || '',
+          url: updatedVal.url || '',
+        }).success
+      } else if (updatedVal.type === 'video') {
+        isValid = videoSchema.safeParse({
+          title: updatedVal.title,
+          content: updatedVal.content || '',
+        }).success
+      } else if (updatedVal.type === 'product') {
+        isValid = productSchema.safeParse({
+          content: updatedVal.content || '',
+        }).success
       }
 
       if (isValid) {
@@ -297,7 +366,9 @@ function AdminDashboard() {
     }
   }
 
-  const handleAddBlock = (type: 'link' | 'text') => {
+  const handleAddBlock = (
+    type: 'link' | 'text' | 'image' | 'video' | 'product',
+  ) => {
     const tempId = 'temp-' + Date.now()
     const newBlock = {
       id: tempId,
@@ -305,14 +376,26 @@ function AdminDashboard() {
       title: '',
       url: '',
       type,
-      content: type === 'text' ? '' : undefined,
+      content:
+        type === 'text' ||
+        type === 'image' ||
+        type === 'video' ||
+        type === 'product'
+          ? ''
+          : undefined,
       isEnabled: true,
-      order: (localBlocks?.[localBlocks.length - 1]?.order || 0) + 1,
+      order: (localBlocks[localBlocks.length - 1]?.order || 0) + 1,
       syncStatus: 'unsaved' as const,
       errors:
         type === 'link'
           ? { title: 'Title is required', url: 'Invalid URL' }
-          : { title: 'Title is required' },
+          : type === 'text'
+            ? { title: 'Title is required' }
+            : type === 'image'
+              ? { title: 'Title is required', content: 'Invalid image URL' }
+              : type === 'video'
+                ? { title: 'Title is required', content: 'Invalid video URL' }
+                : { content: 'Please select a product' },
     }
     setLocalBlocks((prev) => [...prev, newBlock])
     setIsAddBlockOpen(false)
@@ -337,7 +420,7 @@ function AdminDashboard() {
         <SocialEditor
           userId={user.id}
           username={username}
-          socialLinks={dashboardData?.socialLinks || []}
+          socialLinks={dashboardData.socialLinks}
         />
       </section>
 
@@ -348,7 +431,7 @@ function AdminDashboard() {
           <DialogTrigger
             render={
               <Button
-                size={'lg'}
+                size="lg"
                 className="w-full rounded-full flex active:scale-[0.98]"
               />
             }
@@ -389,12 +472,59 @@ function AdminDashboard() {
                   Write a simple message or bio segment
                 </p>
               </div>
+
+              <div
+                onClick={() => handleAddBlock('image')}
+                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:border-border cursor-pointer group"
+              >
+                <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center">
+                  <ImageIcon className="h-6 w-6 text-zinc-400 group-hover:text-zinc-900" />
+                </div>
+                <span className="text-sm font-bold text-zinc-900">
+                  Image Block
+                </span>
+                <p className="text-[10px] text-zinc-400 text-center leading-tight">
+                  Showcase an image with optional click link
+                </p>
+              </div>
+              <div
+                onClick={() => handleAddBlock('video')}
+                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:border-border cursor-pointer group"
+              >
+                <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center">
+                  <PlaySquare className="h-6 w-6 text-zinc-400 group-hover:text-zinc-900" />
+                </div>
+                <span className="text-sm font-bold text-zinc-900">
+                  Video Block
+                </span>
+                <p className="text-[10px] text-zinc-400 text-center leading-tight">
+                  Embed videos from YouTube, TikTok, and more
+                </p>
+              </div>
+              <div
+                onClick={() => handleAddBlock('product')}
+                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:border-border cursor-pointer group"
+              >
+                <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center">
+                  <Package className="h-6 w-6 text-zinc-400 group-hover:text-zinc-900" />
+                </div>
+                <span className="text-sm font-bold text-zinc-900">
+                  Product Block
+                </span>
+                <p className="text-[10px] text-zinc-400 text-center leading-tight">
+                  Feature one product from your existing catalog
+                </p>
+              </div>
             </DialogPanel>
           </DialogContent>
         </Dialog>
 
         <BlockList
           blocks={localBlocks}
+          products={dashboardData.products.map((product: any) => ({
+            id: product.id,
+            title: product.title,
+          }))}
           onUpdate={handleBlockUpdate}
           onDelete={handleDeleteBlock}
           onReorder={handleReorder}

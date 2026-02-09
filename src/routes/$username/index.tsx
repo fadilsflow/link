@@ -1,5 +1,10 @@
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import { ArrowUpRight, Link as LinkIcon, ShoppingCart } from 'lucide-react'
+import {
+  ArrowUpRight,
+  Link as LinkIcon,
+  PlayCircle,
+  ShoppingCart,
+} from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getPublicProfile } from '@/lib/profile-server'
@@ -13,6 +18,71 @@ import SiteUserProfileHeader, {
   ProfileCard,
   SocialLinks,
 } from '@/components/site-user-profile-header'
+
+interface PublicBlock {
+  id: string
+  title: string
+  url?: string | null
+  type?: string | null
+  content?: string | null
+}
+
+interface PublicProduct {
+  id: string
+  title: string
+  images?: Array<string> | null
+  payWhatYouWant?: boolean | null
+  minimumPrice?: number | null
+  salePrice?: number | null
+  price?: number | null
+  totalQuantity?: number | null
+  limitPerCheckout?: number | null
+}
+
+function getVideoEmbedUrl(rawUrl?: string | null) {
+  if (!rawUrl) return null
+
+  try {
+    const url = new URL(rawUrl)
+    const host = url.hostname.toLowerCase()
+
+    if (host.includes('youtube.com')) {
+      const id = url.searchParams.get('v')
+      return id ? `https://www.youtube.com/embed/${id}` : null
+    }
+
+    if (host.includes('youtu.be')) {
+      const id = url.pathname.replace('/', '')
+      return id ? `https://www.youtube.com/embed/${id}` : null
+    }
+
+    if (host.includes('tiktok.com')) {
+      const parts = url.pathname.split('/').filter(Boolean)
+      const videoIndex = parts.findIndex((part) => part === 'video')
+      if (videoIndex !== -1 && parts[videoIndex + 1]) {
+        return `https://www.tiktok.com/embed/v2/${parts[videoIndex + 1]}`
+      }
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
+
+function getProductPriceLabel(product: PublicProduct) {
+  if (product.payWhatYouWant) {
+    return product.minimumPrice
+      ? `From ${formatPrice(product.minimumPrice)}`
+      : 'Pay what you want'
+  }
+
+  if (product.salePrice && product.price) {
+    return formatPrice(product.salePrice)
+  }
+
+  return product.price ? formatPrice(product.price) : 'Free'
+}
 
 export const Route = createFileRoute('/$username/')({
   component: UserProfile,
@@ -32,32 +102,40 @@ function UserProfile() {
   type BgMode = 'banner' | 'wallpaper' | 'color' | 'image'
   type WallpaperStyle = 'flat' | 'gradient' | 'avatar' | 'image'
 
-  const bgType = (user.appearanceBgType as BgMode) ?? 'banner'
-  const wallpaperStyle =
-    (user.appearanceBgWallpaperStyle as WallpaperStyle) ?? 'flat'
+  const bgType = user.appearanceBgType as BgMode
+  const wallpaperStyle = user.appearanceBgWallpaperStyle as WallpaperStyle
   const bgColor = user.appearanceBgColor
-  const bgImage = user.appearanceBgImageUrl
-  const wallpaperColor = user.appearanceWallpaperColor
-  const wallpaperGradientTop = user.appearanceWallpaperGradientTop
-  const wallpaperGradientBottom = user.appearanceWallpaperGradientBottom
-  const wallpaperImage = user.appearanceWallpaperImageUrl
-
   const isBanner = bgType === 'banner' || !bgType
 
-  // Helper to determine if image is local (starts with /) or external
+  const blockStyle = user.appearanceBlockStyle as 'basic' | 'flat' | 'shadow'
+  const blockRadius = user.appearanceBlockRadius as 'rounded' | 'square'
+
+  const cardBase =
+    blockStyle === 'flat'
+      ? 'bg-white/95 backdrop-blur-sm border border-slate-200/50'
+      : blockStyle === 'shadow'
+        ? 'bg-white/95 backdrop-blur-sm border-none shadow-lg'
+        : 'bg-white border border-slate-100 shadow-sm'
+
+  const radiusClass = blockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-md'
+  const isFullPageBg = bgType === 'wallpaper' || bgType === 'color'
+  const isDarkBg =
+    isFullPageBg &&
+    (wallpaperStyle === 'gradient' ||
+      wallpaperStyle === 'avatar' ||
+      (bgType === 'color' &&
+        (!!bgColor?.includes('#0') || !!bgColor?.includes('rgb(0'))))
+
   const getImageUrl = (imageUrl?: string | null, fallback?: string) => {
-    if (imageUrl) {
-      return imageUrl.startsWith('/') ? imageUrl : imageUrl
-    }
+    if (imageUrl) return imageUrl
     return fallback
   }
 
-  // Build background styles based on type
-  const getBackgroundStyles = () => {
+  const backgroundStyles = (() => {
     if (isBanner) {
       return {
-        backgroundImage: bgImage
-          ? `url('${getImageUrl(bgImage)}')`
+        backgroundImage: user.appearanceBgImageUrl
+          ? `url('${getImageUrl(user.appearanceBgImageUrl)}')`
           : `url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -65,14 +143,13 @@ function UserProfile() {
       }
     }
 
-    // Wallpaper/Full background mode
     if (bgType === 'wallpaper' || bgType === 'image') {
-      if (wallpaperStyle === 'image' || wallpaperImage) {
+      if (wallpaperStyle === 'image' || user.appearanceWallpaperImageUrl) {
         return {
-          backgroundImage: wallpaperImage
-            ? `url('${getImageUrl(wallpaperImage)}')`
-            : bgImage
-              ? `url('${getImageUrl(bgImage)}')`
+          backgroundImage: user.appearanceWallpaperImageUrl
+            ? `url('${getImageUrl(user.appearanceWallpaperImageUrl)}')`
+            : user.appearanceBgImageUrl
+              ? `url('${getImageUrl(user.appearanceBgImageUrl)}')`
               : undefined,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -81,17 +158,17 @@ function UserProfile() {
 
       if (
         wallpaperStyle === 'gradient' &&
-        wallpaperGradientTop &&
-        wallpaperGradientBottom
+        user.appearanceWallpaperGradientTop &&
+        user.appearanceWallpaperGradientBottom
       ) {
         return {
-          background: `linear-gradient(180deg, ${wallpaperGradientTop}, ${wallpaperGradientBottom})`,
+          background: `linear-gradient(180deg, ${user.appearanceWallpaperGradientTop}, ${user.appearanceWallpaperGradientBottom})`,
         }
       }
 
-      if (wallpaperStyle === 'flat' && wallpaperColor) {
+      if (wallpaperStyle === 'flat' && user.appearanceWallpaperColor) {
         return {
-          backgroundColor: wallpaperColor,
+          backgroundColor: user.appearanceWallpaperColor,
         }
       }
 
@@ -104,43 +181,17 @@ function UserProfile() {
     }
 
     if (bgType === 'color' && bgColor) {
-      return {
-        background: bgColor,
-      }
+      return { background: bgColor }
     }
 
-    // Default fallback
     return {
       background: 'radial-gradient(circle at top, #1f2937, #020617)',
     }
-  }
+  })()
 
-  const backgroundStyles = getBackgroundStyles()
-
-  // Full page background for wallpaper mode
-  const isFullPageBg = bgType === 'wallpaper' || bgType === 'color'
-
-  const blockStyle =
-    (user.appearanceBlockStyle as 'basic' | 'flat' | 'shadow') ?? 'basic'
-  const blockRadius =
-    (user.appearanceBlockRadius as 'rounded' | 'square') ?? 'rounded'
-
-  const cardBase =
-    blockStyle === 'flat'
-      ? 'bg-white/95 backdrop-blur-sm border border-slate-200/50'
-      : blockStyle === 'shadow'
-        ? 'bg-white/95 backdrop-blur-sm border-none shadow-lg'
-        : 'bg-white border border-slate-100 shadow-sm'
-
-  const radiusClass = blockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-md'
-
-  // Determine if we need light or dark text based on background
-  const isDarkBg =
-    isFullPageBg &&
-    (wallpaperStyle === 'gradient' ||
-      wallpaperStyle === 'avatar' ||
-      (bgType === 'color' && bgColor?.includes('#0')) ||
-      bgColor?.includes('rgb(0'))
+  const productMap = new Map(
+    (products as Array<PublicProduct>).map((product) => [product.id, product]),
+  )
 
   const { addItem } = useCartStore()
 
@@ -153,28 +204,23 @@ function UserProfile() {
         avatarUrl={user.image || '/avatar-placeholder.png'}
         username={user.name}
       />
-      {/* Background Header - Only for banner mode */}
       <ProfileBanner isBanner={isBanner} backgroundStyles={backgroundStyles} />
 
-      {/* Main Content Container */}
       <div
         className={cn(
           'relative z-20 mx-auto flex max-w-[680px] flex-col items-center gap-6 px-4 pb-16',
           isBanner ? '-mt-24' : 'pt-20',
         )}
       >
-        {/* Profile Card */}
         <ProfileCard
           user={user}
           isFullPageBg={isFullPageBg}
           id="profile-card-section"
         />
 
-        {/* Social Links */}
         <SocialLinks socialLinks={socialLinks} isFullPageBg={isFullPageBg} />
 
-        {/* Blocks List */}
-        {blocks.map((block: any) => {
+        {(blocks as Array<PublicBlock>).map((block) => {
           if (block.type === 'text') {
             return (
               <div key={block.id} className="w-full space-y-1 py-2 text-center">
@@ -202,6 +248,130 @@ function UserProfile() {
             )
           }
 
+          if (block.type === 'image') {
+            return (
+              <Card
+                key={block.id}
+                className={cn('w-full overflow-hidden', cardBase, radiusClass)}
+                style={{
+                  backgroundColor: user.appearanceBlockColor || undefined,
+                }}
+              >
+                {block.content && (
+                  <img
+                    loading="lazy"
+                    src={block.content}
+                    alt={block.title || 'Image block'}
+                    className="h-auto max-h-[480px] w-full object-cover"
+                  />
+                )}
+                {block.title && (
+                  <p className="p-3 text-sm font-semibold">{block.title}</p>
+                )}
+                {block.url && (
+                  <div className="px-3 pb-3">
+                    <Button
+                      className="w-full"
+                      onClick={() =>
+                        window.open(block.url!, '_blank', 'noopener,noreferrer')
+                      }
+                    >
+                      Open link
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            )
+          }
+
+          if (block.type === 'video') {
+            const embedUrl = getVideoEmbedUrl(block.content)
+            return (
+              <Card
+                key={block.id}
+                className={cn(
+                  'w-full overflow-hidden p-3 space-y-3',
+                  cardBase,
+                  radiusClass,
+                )}
+                style={{
+                  backgroundColor: user.appearanceBlockColor || undefined,
+                }}
+              >
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <PlayCircle className="h-4 w-4" />
+                  {block.title || 'Video'}
+                </div>
+                {embedUrl ? (
+                  <iframe
+                    src={embedUrl}
+                    className="h-64 w-full rounded-lg border"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Unsupported video URL. Please use a valid YouTube or TikTok
+                    link.
+                  </p>
+                )}
+              </Card>
+            )
+          }
+
+          if (block.type === 'product') {
+            const selectedProduct = block.content
+              ? productMap.get(block.content)
+              : null
+            if (!selectedProduct) return null
+
+            const href = `/${user.username}/products/${selectedProduct.id}`
+            const price = getProductPriceLabel(selectedProduct)
+            const selectedImages = selectedProduct.images
+            const hasImage = !!selectedImages?.length
+
+            return (
+              <Card
+                key={block.id}
+                className={cn(
+                  'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
+                  cardBase,
+                  radiusClass,
+                )}
+                style={{
+                  backgroundColor: user.appearanceBlockColor || undefined,
+                }}
+                render={<Link to={href} />}
+              >
+                <div className="flex items-stretch">
+                  {hasImage && (
+                    <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
+                      <img
+                        loading="lazy"
+                        src={selectedImages[0]}
+                        alt={selectedProduct.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-1 items-center justify-between gap-3 p-4">
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm font-semibold">
+                        {selectedProduct.title}
+                      </span>
+                      <span className="mt-0.5 text-xs text-slate-500">
+                        {price}
+                      </span>
+                    </div>
+                    <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </div>
+                </div>
+              </Card>
+            )
+          }
+
           return (
             <Card
               key={block.id}
@@ -213,7 +383,10 @@ function UserProfile() {
               style={{
                 backgroundColor: user.appearanceBlockColor || undefined,
               }}
-              onClick={() => block.url && window.open(block.url, '_blank')}
+              onClick={() =>
+                block.url &&
+                window.open(block.url, '_blank', 'noopener,noreferrer')
+              }
             >
               <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-4">
@@ -228,7 +401,6 @@ function UserProfile() {
           )
         })}
 
-        {/* Products section */}
         {products.length > 0 && (
           <div className="mt-4 w-full space-y-3">
             <p
@@ -240,40 +412,25 @@ function UserProfile() {
               Digital Products
             </p>
             <div className="grid gap-3">
-              {products.map((product: any) => {
+              {(products as Array<PublicProduct>).map((product) => {
                 const href = `/${user.username}/products/${product.id}`
-                const price = product.payWhatYouWant
-                  ? product.minimumPrice
-                    ? `From ${formatPrice(product.minimumPrice)}`
-                    : 'Pay what you want'
-                  : product.salePrice && product.price
-                    ? formatPrice(product.salePrice)
-                    : product.price
-                      ? formatPrice(product.price)
-                      : 'Free'
-
-                const productImages = product.images as string[] | null
-                const hasImage = productImages && productImages.length > 0
+                const price = getProductPriceLabel(product)
+                const productImages = product.images
+                const hasImage = !!productImages?.length
 
                 const handleAddToCart = (e: React.MouseEvent) => {
                   e.preventDefault()
                   e.stopPropagation()
 
-                  // Calculate price for cart (default to minimum price or sale price or price)
                   const cartPrice = product.payWhatYouWant
                     ? product.minimumPrice || 0
                     : product.salePrice || product.price || 0
-
-                  // For Pay What You Want without minimum, allowing adding to cart might be tricky
-                  // as user usually sets price. For now, we'll allow it with 0 or min price,
-                  // and maybe checkout needs to handle price changes.
-                  // But simple MVP: just add with default price.
 
                   addItem({
                     productId: product.id,
                     title: product.title,
                     price: cartPrice,
-                    image: hasImage ? productImages![0] : null,
+                    image: hasImage ? productImages[0] : null,
                     maxQuantity: product.totalQuantity,
                     limitPerCheckout: product.limitPerCheckout,
                   })
@@ -298,10 +455,10 @@ function UserProfile() {
                     render={<Link to={href} />}
                   >
                     <div className="flex items-stretch">
-                      {/* Product Image */}
                       {hasImage && (
                         <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
                           <img
+                            loading="lazy"
                             src={productImages[0]}
                             alt={product.title}
                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -309,7 +466,6 @@ function UserProfile() {
                         </div>
                       )}
 
-                      {/* Product Info */}
                       <div className="flex flex-1 items-center justify-between gap-3 p-4">
                         <div className="flex min-w-0 flex-col">
                           <span className="truncate text-sm font-semibold">
@@ -341,7 +497,6 @@ function UserProfile() {
           </div>
         )}
 
-        {/* Footer */}
         <div className="mb-4 mt-8">
           <div
             className={cn(

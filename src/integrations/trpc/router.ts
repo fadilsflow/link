@@ -882,7 +882,7 @@ const analyticsRouter = {
 
       const viewRows = await db.query.profileViews.findMany({
         where: and(...viewsConditions),
-        columns: { id: true },
+        columns: { id: true, createdAt: true },
       })
 
       // Clicks query for period
@@ -892,23 +892,67 @@ const analyticsRouter = {
 
       const clickRows = await db.query.blockClicks.findMany({
         where: and(...clicksConditions),
-        columns: { id: true },
+        columns: { id: true, createdAt: true },
       })
 
       const byDay = new Map<
         string,
-        { date: string; sales: number; revenue: number }
+        {
+          date: string
+          sales: number
+          revenue: number
+          views: number
+          clicks: number
+        }
       >()
+
+      // Initialize map with all days in range if feasible, or just iterate data
+      // For simplicity, we'll just aggregate available data points
 
       for (const order of orderRows) {
         const day = order.createdAt.toISOString().slice(0, 10)
-        const existing = byDay.get(day) ?? { date: day, sales: 0, revenue: 0 }
+        const existing = byDay.get(day) ?? {
+          date: day,
+          sales: 0,
+          revenue: 0,
+          views: 0,
+          clicks: 0,
+        }
         existing.sales += 1
         existing.revenue += order.amountPaid
         byDay.set(day, existing)
       }
 
-      const chart = Array.from(byDay.values())
+      for (const view of viewRows) {
+        const day = view.createdAt.toISOString().slice(0, 10)
+        const existing = byDay.get(day) ?? {
+          date: day,
+          sales: 0,
+          revenue: 0,
+          views: 0,
+          clicks: 0,
+        }
+        existing.views += 1
+        byDay.set(day, existing)
+      }
+
+      for (const click of clickRows) {
+        const day = click.createdAt.toISOString().slice(0, 10)
+        const existing = byDay.get(day) ?? {
+          date: day,
+          sales: 0,
+          revenue: 0,
+          views: 0,
+          clicks: 0,
+        }
+        existing.clicks += 1
+        byDay.set(day, existing)
+      }
+
+      // Sort chart data by date
+      const chart = Array.from(byDay.values()).sort((a, b) =>
+        a.date.localeCompare(b.date),
+      )
 
       const rangeRevenue = orderRows.reduce(
         (acc, row) => acc + row.amountPaid,
@@ -935,7 +979,7 @@ const analyticsRouter = {
           views: rangeViews,
           clicks: rangeClicks,
         },
-        chart,
+        chart: Array.from(byDay.values()),
         blocks: blockRows,
       }
     }),

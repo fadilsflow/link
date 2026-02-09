@@ -1,14 +1,29 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { CalendarIcon, TrendingUp } from 'lucide-react'
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import {
+  CalendarIcon,
+  Eye,
+  MousePointerClick,
+  Package,
+  TrendingUp,
+} from 'lucide-react'
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
 import {
   AppHeader,
   AppHeaderContent,
   AppHeaderDescription,
 } from '@/components/app-header'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,11 +33,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
+import { Meter } from '@/components/ui/meter'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { authClient } from '@/lib/auth-client'
@@ -66,6 +83,17 @@ function AnalyticsPage() {
     enabled: !!session?.user?.id,
   })
 
+  const { data: productAnalytics, isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['analytics', 'products', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null
+      return await trpcClient.analytics.getProductAnalytics.query({
+        userId: session.user.id,
+      })
+    },
+    enabled: !!session?.user?.id,
+  })
+
   const handlePreset = (days: number) => {
     const now = new Date()
     now.setHours(23, 59, 59, 999)
@@ -78,6 +106,11 @@ function AnalyticsPage() {
   const chartData = overview?.chart ?? []
   const rangeRevenue = overview?.range.revenue ?? 0
   const rangeSales = overview?.range.sales ?? 0
+  const rangeViews = overview?.range.views ?? 0
+  const rangeClicks = overview?.range.clicks ?? 0
+  const blocks = overview?.blocks ?? []
+  const topBlocks = blocks.slice(0, 5)
+  const topProducts = (productAnalytics ?? []).slice(0, 5)
 
   return (
     <div className="space-y-6">
@@ -106,7 +139,7 @@ function AnalyticsPage() {
       </div>
 
       {/* Key Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Revenue"
           value={formatPrice(rangeRevenue)}
@@ -119,22 +152,25 @@ function AnalyticsPage() {
           description="Selected period"
           isLoading={isLoading}
         />
-        <StatCard
-          title="Views"
-          value={overview?.totals.totalViews ?? 0}
-          description="All time"
-          isLoading={isLoading}
-        />
-        <StatCard
-          title="Clicks"
-          value={overview?.totals.totalClicks ?? 0}
-          description="All time"
+        <EngagementCard
+          views={rangeViews}
+          clicks={rangeClicks}
+          data={chartData}
           isLoading={isLoading}
         />
       </div>
 
       {/* Revenue Chart */}
       <RevenueChart data={chartData} isLoading={isLoading} />
+
+      {/* Two Column Layout for Top Blocks and Products */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <TopBlocksCard blocks={topBlocks} isLoading={isLoading} />
+        <TopProductsCard
+          products={topProducts}
+          isLoading={isLoadingProducts || isSessionPending}
+        />
+      </div>
     </div>
   )
 }
@@ -168,6 +204,292 @@ function StatCard({
             <div className="text-2xl font-bold">{value}</div>
             <p className="text-xs text-muted-foreground">{description}</p>
           </>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function EngagementCard({
+  views,
+  clicks,
+  data,
+  isLoading,
+}: {
+  views: number
+  clicks: number
+  data: Array<{
+    date: string
+    views?: number
+    clicks?: number
+  }>
+  isLoading?: boolean
+}) {
+  return (
+    <Card className="relative overflow-hidden min-h-28">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-medium">
+          Total Views & Clicks
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-4">
+            <div className="flex gap-8">
+              <Skeleton className="h-12 w-20" />
+              <Skeleton className="h-12 w-20" />
+            </div>
+            <Skeleton className="h-[200px] w-full" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-8">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="h-3 w-3 rounded-full bg-[var(--color-chart-4)]" />
+                  Views
+                </div>
+                <div className="text-3xl font-bold">{views}</div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="h-3 w-3 rounded-full bg-[var(--color-chart-2)]" />
+                  Clicks
+                </div>
+                <div className="text-3xl font-bold">{clicks}</div>
+              </div>
+            </div>
+
+            <div className="h-[300px] w-full mt-4">
+              <ChartContainer
+                config={{
+                  views: {
+                    label: 'Views',
+                    color: 'var(--chart-4)',
+                  },
+                  clicks: {
+                    label: 'Clicks',
+                    color: 'var(--chart-2)',
+                  },
+                }}
+                className="h-full w-full"
+              >
+                <BarChart data={data}>
+                  <CartesianGrid
+                    strokeDasharray="4 4"
+                    vertical={false}
+                    stroke="var(--edge)"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    tickFormatter={(value) => {
+                      const date = new Date(value)
+                      return (
+                        date.toLocaleDateString('en-US', {
+                          day: 'numeric',
+                        }) +
+                        '\n' +
+                        date.toLocaleDateString('en-US', {
+                          month: 'short',
+                        })
+                      )
+                    }}
+                    interval={0}
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    allowDecimals={false}
+                    style={{ fontSize: '12px' }}
+                  />
+                  <ChartTooltip
+                    cursor={{ fill: 'var(--muted)' }}
+                    content={
+                      <ChartTooltipContent
+                        labelFormatter={(value) => {
+                          return new Date(value).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          })
+                        }}
+                      />
+                    }
+                  />
+                  <Bar
+                    dataKey="views"
+                    fill="var(--color-views)"
+                    radius={[4, 4, 4, 4]}
+                    barSize={8}
+                  />
+                  <Bar
+                    dataKey="clicks"
+                    fill="var(--color-clicks)"
+                    radius={[4, 4, 4, 4]}
+                    barSize={8}
+                  />
+                </BarChart>
+              </ChartContainer>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function TopBlocksCard({
+  blocks,
+  isLoading,
+}: {
+  blocks: Array<{
+    id: string
+    title: string
+    type: string
+    clicks: number
+    isEnabled: boolean
+  }>
+  isLoading?: boolean
+}) {
+  const maxClicks = Math.max(...blocks.map((b) => b.clicks), 1)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <MousePointerClick className="h-4 w-4" />
+          Top Blocks
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="h-8 w-8 rounded" />
+                <div className="flex-1 space-y-1">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-2 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : blocks.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No block data yet
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {blocks.map((block, index) => (
+              <div key={block.id} className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs font-medium">
+                  {index + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium truncate">
+                      {block.title || 'Untitled'}
+                    </p>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {block.clicks} clicks
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{
+                        width: `${(block.clicks / maxClicks) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function TopProductsCard({
+  products,
+  isLoading,
+}: {
+  products: Array<{
+    id: string
+    title: string
+    image: string | null
+    salesCount: number
+    totalRevenue: number
+    isActive: boolean
+  }>
+  isLoading?: boolean
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Package className="h-4 w-4" />
+          Top Products
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded" />
+                <div className="flex-1 space-y-1">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No products yet
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {products.map((product) => (
+              <div key={product.id} className="flex items-center gap-3">
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.title}
+                    className="h-10 w-10 rounded object-cover"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 items-center justify-center rounded bg-muted">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium truncate">
+                      {product.title}
+                    </p>
+                    {!product.isActive && (
+                      <Badge variant="secondary" className="text-xs shrink-0">
+                        Inactive
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{product.salesCount} sales</span>
+                    <span>•</span>
+                    <span>{formatPrice(product.totalRevenue)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>

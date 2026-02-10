@@ -73,21 +73,6 @@ export async function generateInvoicePdf(
     align: 'right',
   })
 
-  // Refund info if applicable
-  if (order.refundedAmount && order.refundedAmount > 0) {
-    doc.setTextColor(220, 50, 50)
-    doc.text(
-      `Refunded: -${formatPrice(order.refundedAmount)}`,
-      pageWidth - 14,
-      finalY + 7,
-      { align: 'right' },
-    )
-    doc.setTextColor(0, 0, 0)
-    const netAmount = order.amountPaid - order.refundedAmount
-    doc.text(`Net: ${formatPrice(netAmount)}`, pageWidth - 14, finalY + 14, {
-      align: 'right',
-    })
-  }
 
   // Footer
   doc.setFontSize(10)

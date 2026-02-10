@@ -223,14 +223,6 @@ function OrderDeliveryPage() {
                   {formatPrice(order.amountPaid)}
                 </span>
               </div>
-              {order.refundedAmount > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-red-500">Refunded</span>
-                  <span className="font-semibold text-red-500">
-                    -{formatPrice(order.refundedAmount)}
-                  </span>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>

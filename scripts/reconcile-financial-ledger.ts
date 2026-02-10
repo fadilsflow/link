@@ -1,33 +1,11 @@
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { db } from '@/db'
 import { orders, products, transactions, TRANSACTION_TYPE, user } from '@/db/schema'
 
 async function main() {
   const issues: string[] = []
 
-  // 1) orders.refundedAmount vs refund ledger aggregate per order
-  const refundDriftRows = await db
-    .select({
-      orderId: orders.id,
-      orderRefundedAmount: orders.refundedAmount,
-      ledgerRefundedAmount:
-        sql<number>`COALESCE(SUM(CASE WHEN ${transactions.type} IN ('refund', 'partial_refund') AND ${transactions.amount} < 0 THEN -${transactions.amount} ELSE 0 END), 0)`.as(
-          'ledgerRefundedAmount',
-        ),
-    })
-    .from(orders)
-    .leftJoin(transactions, eq(transactions.orderId, orders.id))
-    .groupBy(orders.id)
-    .having(
-      sql`COALESCE(SUM(CASE WHEN ${transactions.type} IN ('refund', 'partial_refund') AND ${transactions.amount} < 0 THEN -${transactions.amount} ELSE 0 END), 0) <> ${orders.refundedAmount}`,
-    )
-
-  if (refundDriftRows.length > 0) {
-    issues.push(`refund drift on ${refundDriftRows.length} orders`)
-    console.error('[reconcile] order refund drift', refundDriftRows.slice(0, 20))
-  }
-
-  // 2) cached creator totalRevenue vs ledger aggregate (sale/refund only)
+  // 1) cached creator totalRevenue vs ledger aggregate (sale only)
   const creatorRevenueRows = await db
     .select({
       creatorId: user.id,
@@ -41,11 +19,7 @@ async function main() {
       transactions,
       and(
         eq(transactions.creatorId, user.id),
-        inArray(transactions.type, [
-          TRANSACTION_TYPE.SALE,
-          TRANSACTION_TYPE.REFUND,
-          TRANSACTION_TYPE.PARTIAL_REFUND,
-        ]),
+        eq(transactions.type, TRANSACTION_TYPE.SALE),
       ),
     )
     .groupBy(user.id)
@@ -58,21 +32,22 @@ async function main() {
     console.error('[reconcile] creator revenue drift', creatorRevenueRows.slice(0, 20))
   }
 
-  // 3) cached product totalRevenue vs orders net (amountPaid - refundedAmount)
+  // 2) cached product totalRevenue vs sales ledger aggregate
   const productRevenueRows = await db
     .select({
       productId: products.id,
       cachedRevenue: products.totalRevenue,
-      orderBackedRevenue:
-        sql<number>`COALESCE(SUM(${orders.amountPaid} - ${orders.refundedAmount}), 0)`.as(
-          'orderBackedRevenue',
+      ledgerRevenue:
+        sql<number>`COALESCE(SUM(CASE WHEN ${transactions.type} = 'sale' THEN ${transactions.netAmount} ELSE 0 END), 0)`.as(
+          'ledgerRevenue',
         ),
     })
     .from(products)
     .leftJoin(orders, eq(orders.productId, products.id))
+    .leftJoin(transactions, eq(transactions.orderId, orders.id))
     .groupBy(products.id)
     .having(
-      sql`COALESCE(SUM(${orders.amountPaid} - ${orders.refundedAmount}), 0) <> ${products.totalRevenue}`,
+      sql`COALESCE(SUM(CASE WHEN ${transactions.type} = 'sale' THEN ${transactions.netAmount} ELSE 0 END), 0) <> ${products.totalRevenue}`,
     )
 
   if (productRevenueRows.length > 0) {

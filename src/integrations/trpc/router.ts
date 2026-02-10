@@ -408,11 +408,7 @@ const productRouter = {
         .where(
           and(
             eq(transactions.creatorId, input.userId),
-            inArray(transactions.type, [
-              TRANSACTION_TYPE.SALE,
-              TRANSACTION_TYPE.REFUND,
-              TRANSACTION_TYPE.PARTIAL_REFUND,
-            ]),
+            eq(transactions.type, TRANSACTION_TYPE.SALE),
           ),
         )
         .groupBy(orders.productId)
@@ -982,205 +978,6 @@ const orderRouter = {
       return rows
     }),
 
-  /**
-   * Full refund — creates a REFUND transaction and updates order status.
-   * The original SALE transaction is NOT modified (append-only ledger).
-   */
-  refund: publicProcedure
-    .input(
-      z.object({
-        orderId: z.string(),
-        userId: z.string(),
-        reason: z.string().optional(),
-      }),
-    )
-    .mutation(async ({ input }) => {
-      const now = new Date()
-
-      try {
-        return await neonSql.transaction(async (tx) => {
-          const orderRows = await tx<
-            Array<{
-              id: string
-              amountPaid: number
-              refundedAmountBefore: number
-              productId: string | null
-            }>
-          >`
-            UPDATE "order"
-            SET
-              "status" = 'refunded',
-              "refunded_amount" = "amount_paid",
-              "refunded_at" = ${now},
-              "refund_reason" = ${input.reason ?? null}
-            WHERE
-              "id" = ${input.orderId}
-              AND "creator_id" = ${input.userId}
-              AND "refunded_amount" < "amount_paid"
-            RETURNING
-              "id",
-              "amount_paid" AS "amountPaid",
-              "refunded_amount" AS "refundedAmountBefore",
-              "product_id" AS "productId"
-          `
-
-          const order = orderRows[0]
-          if (!order) {
-            throw new Error(
-              'Order not found, unauthorized, or already refunded',
-            )
-          }
-
-          const refundAmount = order.amountPaid - order.refundedAmountBefore
-          if (refundAmount <= 0) throw new Error('Nothing to refund')
-
-          await tx`
-            INSERT INTO "transaction" (
-              "id", "creator_id", "order_id", "type", "amount", "net_amount",
-              "platform_fee_percent", "platform_fee_amount", "description", "metadata", "available_at"
-            ) VALUES (
-              ${crypto.randomUUID()}, ${input.userId}, ${order.id}, ${TRANSACTION_TYPE.REFUND},
-              ${-refundAmount}, ${-refundAmount}, ${PLATFORM_FEE_PERCENT}, 0,
-              ${`Refund: Order ${order.id.slice(0, 8)}`},
-              ${JSON.stringify({ reason: input.reason ?? 'Full refund', originalAmount: order.amountPaid })}::json,
-              ${now}
-            )
-          `
-
-          await tx`
-            UPDATE "user"
-            SET
-              "total_revenue" = GREATEST("total_revenue" - ${refundAmount}, 0),
-              "total_sales_count" = GREATEST("total_sales_count" - 1, 0)
-            WHERE "id" = ${input.userId}
-          `
-
-          if (order.productId) {
-            await tx`
-              UPDATE "product"
-              SET
-                "total_revenue" = GREATEST("total_revenue" - ${refundAmount}, 0),
-                "sales_count" = GREATEST("sales_count" - 1, 0)
-              WHERE "id" = ${order.productId}
-            `
-          }
-
-          return { success: true, refundedAmount: refundAmount }
-        })
-      } catch (error) {
-        console.error('[finance][refund] transaction failed', {
-          orderId: input.orderId,
-          userId: input.userId,
-          error,
-        })
-        throw error
-      }
-    }),
-
-  /**
-   * Partial refund — refunds a specific amount from the order.
-   */
-  partialRefund: publicProcedure
-    .input(
-      z.object({
-        orderId: z.string(),
-        userId: z.string(),
-        amount: z.number().int().positive(),
-        reason: z.string().optional(),
-      }),
-    )
-    .mutation(async ({ input }) => {
-      const now = new Date()
-
-      try {
-        return await neonSql.transaction(async (tx) => {
-          const orderRows = await tx<
-            Array<{
-              id: string
-              amountPaid: number
-              refundedAmount: number
-              productId: string | null
-            }>
-          >`
-            UPDATE "order"
-            SET
-              "refunded_amount" = "refunded_amount" + ${input.amount},
-              "refunded_at" = ${now},
-              "refund_reason" = ${input.reason ?? null},
-              "status" = CASE
-                WHEN "refunded_amount" + ${input.amount} >= "amount_paid" THEN 'refunded'
-                ELSE 'partially_refunded'
-              END
-            WHERE
-              "id" = ${input.orderId}
-              AND "creator_id" = ${input.userId}
-              AND "refunded_amount" + ${input.amount} <= "amount_paid"
-            RETURNING
-              "id",
-              "amount_paid" AS "amountPaid",
-              "refunded_amount" AS "refundedAmount",
-              "product_id" AS "productId"
-          `
-
-          const order = orderRows[0]
-          if (!order) {
-            throw new Error(
-              'Order not found, unauthorized, already refunded, or refund exceeds remaining amount',
-            )
-          }
-
-          const newRefundedTotal = order.refundedAmount
-          const isFullyRefunded = newRefundedTotal >= order.amountPaid
-
-          await tx`
-            INSERT INTO "transaction" (
-              "id", "creator_id", "order_id", "type", "amount", "net_amount",
-              "platform_fee_percent", "platform_fee_amount", "description", "metadata", "available_at"
-            ) VALUES (
-              ${crypto.randomUUID()}, ${input.userId}, ${order.id}, ${TRANSACTION_TYPE.REFUND},
-              ${-input.amount}, ${-input.amount}, ${PLATFORM_FEE_PERCENT}, 0,
-              ${`Partial refund: Order ${order.id.slice(0, 8)}`},
-              ${JSON.stringify({
-                reason: input.reason ?? 'Partial refund',
-                refundedAmount: input.amount,
-                originalAmount: order.amountPaid,
-              })}::json,
-              ${now}
-            )
-          `
-
-          await tx`
-            UPDATE "user"
-            SET "total_revenue" = GREATEST("total_revenue" - ${input.amount}, 0)
-            WHERE "id" = ${input.userId}
-          `
-
-          if (order.productId) {
-            await tx`
-              UPDATE "product"
-              SET "total_revenue" = GREATEST("total_revenue" - ${input.amount}, 0)
-              WHERE "id" = ${order.productId}
-            `
-          }
-
-          return {
-            success: true,
-            refundedAmount: input.amount,
-            totalRefunded: newRefundedTotal,
-            status: isFullyRefunded ? 'refunded' : 'partially_refunded',
-          }
-        })
-      } catch (error) {
-        console.error('[finance][partial-refund] transaction failed', {
-          orderId: input.orderId,
-          userId: input.userId,
-          amount: input.amount,
-          error,
-        })
-        throw error
-      }
-    }),
-
   resendEmail: publicProcedure
     .input(z.object({ orderId: z.string(), userId: z.string() }))
     .mutation(async ({ input }) => {
@@ -1252,7 +1049,6 @@ const balanceRouter = {
       })
 
       let totalEarnings = 0
-      let totalRefunds = 0
       let totalPayouts = 0
       let totalFees = 0
       let availableBalance = 0
@@ -1263,11 +1059,6 @@ const balanceRouter = {
 
         if (txn.type === TRANSACTION_TYPE.SALE) {
           totalEarnings += netAmount
-        } else if (
-          txn.type === TRANSACTION_TYPE.REFUND ||
-          txn.type === TRANSACTION_TYPE.PARTIAL_REFUND
-        ) {
-          totalRefunds += Math.abs(netAmount)
         } else if (txn.type === TRANSACTION_TYPE.PAYOUT) {
           totalPayouts += Math.abs(netAmount)
         } else if (txn.type === TRANSACTION_TYPE.FEE) {
@@ -1286,7 +1077,6 @@ const balanceRouter = {
 
       return {
         totalEarnings,
-        totalRefunds,
         totalPayouts,
         totalFees,
         currentBalance,
@@ -1537,11 +1327,7 @@ const analyticsRouter = {
       // Transactions query for revenue calculation (replacing orders query)
       const txnConditions = [
         eq(transactions.creatorId, input.userId),
-        inArray(transactions.type, [
-          TRANSACTION_TYPE.SALE,
-          TRANSACTION_TYPE.REFUND,
-          TRANSACTION_TYPE.PARTIAL_REFUND,
-        ]),
+        eq(transactions.type, TRANSACTION_TYPE.SALE),
       ]
       if (fromDate) txnConditions.push(gte(transactions.createdAt, fromDate))
       if (toDate) txnConditions.push(lte(transactions.createdAt, toDate))
@@ -1605,7 +1391,7 @@ const analyticsRouter = {
           rangeSales += 1
         }
 
-        // txn.netAmount is already net of fees for sales, and negative for refunds
+        // txn.netAmount is already net of fees for sale transactions
         existing.revenue += txn.netAmount
         rangeRevenue += txn.netAmount
 
@@ -1700,11 +1486,7 @@ const analyticsRouter = {
         .where(
           and(
             eq(transactions.creatorId, input.userId),
-            inArray(transactions.type, [
-              TRANSACTION_TYPE.SALE,
-              TRANSACTION_TYPE.REFUND,
-              TRANSACTION_TYPE.PARTIAL_REFUND,
-            ]),
+            eq(transactions.type, TRANSACTION_TYPE.SALE),
           ),
         )
         .groupBy(orders.productId)

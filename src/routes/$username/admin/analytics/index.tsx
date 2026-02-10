@@ -1,22 +1,8 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  CalendarIcon,
-  Eye,
-  MousePointerClick,
-  Package,
-  TrendingUp,
-} from 'lucide-react'
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { CalendarIcon, TrendingUp } from 'lucide-react'
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 import {
   AppHeader,
@@ -34,13 +20,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Meter } from '@/components/ui/meter'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { authClient } from '@/lib/auth-client'
@@ -53,9 +37,9 @@ export const Route = createFileRoute('/$username/admin/analytics/')({
 type DateRange = { from: Date | undefined; to: Date | undefined }
 
 const RANGE_PRESETS = [
-  { label: '1D', days: 1 },
   { label: '7D', days: 7 },
   { label: '30D', days: 30 },
+  { label: '90D', days: 90 },
 ] as const
 
 function AnalyticsPage() {
@@ -85,15 +69,49 @@ function AnalyticsPage() {
     enabled: !!session?.user?.id,
   })
 
-  const { data: productAnalytics, isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['analytics', 'products', session?.user?.id],
+  const previousPeriod = React.useMemo(() => {
+    if (!dateRange.from || !dateRange.to) return null
+
+    const end = new Date(dateRange.to)
+    end.setHours(0, 0, 0, 0)
+
+    const start = new Date(dateRange.from)
+    start.setHours(0, 0, 0, 0)
+
+    const dayCount = Math.max(
+      1,
+      Math.floor((end.getTime() - start.getTime()) / 86400000) + 1,
+    )
+
+    const prevTo = new Date(start)
+    prevTo.setDate(prevTo.getDate() - 1)
+    const prevFrom = new Date(prevTo)
+    prevFrom.setDate(prevFrom.getDate() - (dayCount - 1))
+
+    return {
+      from: prevFrom.toISOString().slice(0, 10),
+      to: prevTo.toISOString().slice(0, 10),
+    }
+  }, [dateRange.from, dateRange.to])
+
+  const { data: previousOverview, isLoading: isLoadingPrevious } = useQuery({
+    queryKey: [
+      'analytics',
+      'overview',
+      'previous',
+      session?.user?.id,
+      previousPeriod?.from,
+      previousPeriod?.to,
+    ],
     queryFn: async () => {
-      if (!session?.user?.id) return null
-      return await trpcClient.analytics.getProductAnalytics.query({
+      if (!session?.user?.id || !previousPeriod) return null
+      return await trpcClient.analytics.getOverview.query({
         userId: session.user.id,
+        from: previousPeriod.from,
+        to: previousPeriod.to,
       })
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && !!previousPeriod,
   })
 
   const handlePreset = (days: number, label: string) => {
@@ -107,26 +125,35 @@ function AnalyticsPage() {
 
   const isLoading = isSessionPending || isLoadingOverview
   const chartData = overview?.chart ?? []
+
   const rangeRevenue = overview?.range.revenue ?? 0
   const rangeSales = overview?.range.sales ?? 0
   const rangeViews = overview?.range.views ?? 0
   const rangeClicks = overview?.range.clicks ?? 0
-  const ctr =
-    rangeViews > 0 ? ((rangeClicks / rangeViews) * 100).toFixed(1) : '0'
-  const blocks = overview?.blocks ?? []
-  const topBlocks = blocks.slice(0, 5)
-  const topProducts = (productAnalytics ?? []).slice(0, 5)
+
+  const clickRate = rangeViews > 0 ? (rangeClicks / rangeViews) * 100 : 0
+  const conversionRate = rangeClicks > 0 ? (rangeSales / rangeClicks) * 100 : 0
+  const avgOrderValue = rangeSales > 0 ? rangeRevenue / rangeSales : 0
+
+  const previousRevenue = previousOverview?.range.revenue ?? 0
+  const previousSales = previousOverview?.range.sales ?? 0
+  const previousClicks = previousOverview?.range.clicks ?? 0
+  const previousViews = previousOverview?.range.views ?? 0
+
+  const previousConversionRate =
+    previousClicks > 0 ? (previousSales / previousClicks) * 100 : 0
+  const previousClickRate =
+    previousViews > 0 ? (previousClicks / previousViews) * 100 : 0
 
   return (
     <div className="space-y-6">
       <AppHeader>
         <AppHeaderContent title="Analytics">
           <AppHeaderDescription>
-            Net metrics are near-real-time. Product ranking cards below use cached counters.
+            Focused performance view: revenue, conversion, and traffic quality.
           </AppHeaderDescription>
         </AppHeaderContent>
         <AppHeaderActions>
-          {/* Date Range Picker */}
           <div className="flex flex-wrap items-center gap-2">
             {RANGE_PRESETS.map((preset) => (
               <Button
@@ -150,47 +177,62 @@ function AnalyticsPage() {
         </AppHeaderActions>
       </AppHeader>
 
-      {/* Key Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Net Revenue"
           value={formatPrice(rangeRevenue)}
-          description="Near-real-time (sale − refund − fee from ledger-backed API)"
-          isLoading={isLoading}
+          delta={percentDelta(rangeRevenue, previousRevenue)}
+          isLoading={isLoading || isLoadingPrevious}
         />
         <StatCard
           title="Sales"
           value={rangeSales}
-          description="Selected period"
-          isLoading={isLoading}
+          delta={percentDelta(rangeSales, previousSales)}
+          isLoading={isLoading || isLoadingPrevious}
         />
         <StatCard
-          title="CTR"
-          value={`${ctr}%`}
-          description="Click-Through Rate"
+          title="Click → Sale"
+          value={`${conversionRate.toFixed(1)}%`}
+          delta={percentDelta(conversionRate, previousConversionRate)}
+          isLoading={isLoading || isLoadingPrevious}
+        />
+        <StatCard
+          title="Avg Order Value"
+          value={formatPrice(avgOrderValue)}
           isLoading={isLoading}
         />
       </div>
 
-      {/* Revenue Chart */}
       <RevenueChart data={chartData} isLoading={isLoading} />
 
-      {/* Engagement Chart */}
-      <EngagementCard
-        views={rangeViews}
-        clicks={rangeClicks}
-        data={chartData}
-        isLoading={isLoading}
-      />
-
-      {/* Two Column Layout for Top Blocks and Products */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <TopBlocksCard blocks={topBlocks} isLoading={isLoading} />
-        <TopProductsCard
-          products={topProducts}
-          isLoading={isLoadingProducts || isSessionPending}
-        />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Traffic quality snapshot</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <InsightItem
+            label="Profile view → click rate"
+            value={`${clickRate.toFixed(1)}%`}
+            detail={`${rangeClicks.toLocaleString()} clicks from ${rangeViews.toLocaleString()} views`}
+            delta={percentDelta(clickRate, previousClickRate)}
+            isLoading={isLoading || isLoadingPrevious}
+          />
+          <InsightItem
+            label="Revenue per click"
+            value={formatPrice(
+              rangeClicks > 0 ? rangeRevenue / rangeClicks : 0,
+            )}
+            detail="How much each click is worth"
+            isLoading={isLoading}
+          />
+          <InsightItem
+            label="Sales velocity"
+            value={`${rangeSales.toLocaleString()}`}
+            detail="Completed purchases in selected period"
+            isLoading={isLoading}
+          />
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -198,12 +240,12 @@ function AnalyticsPage() {
 function StatCard({
   title,
   value,
-  description,
+  delta,
   isLoading,
 }: {
   title: string
   value: string | number
-  description: string
+  delta?: number | null
   isLoading?: boolean
 }) {
   return (
@@ -217,12 +259,14 @@ function StatCard({
         {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-6 w-24" />
-            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-20" />
           </div>
         ) : (
           <>
             <div className="text-2xl font-bold">{value}</div>
-            <p className="text-xs text-muted-foreground">{description}</p>
+            {typeof delta === 'number' && (
+              <DeltaBadge value={delta} className="mt-2" />
+            )}
           </>
         )}
       </CardContent>
@@ -230,303 +274,77 @@ function StatCard({
   )
 }
 
-function EngagementCard({
-  views,
-  clicks,
-  data,
+function InsightItem({
+  label,
+  value,
+  detail,
+  delta,
   isLoading,
 }: {
-  views: number
-  clicks: number
-  data: Array<{
-    date: string
-    views?: number
-    clicks?: number
-  }>
+  label: string
+  value: string
+  detail: string
+  delta?: number | null
   isLoading?: boolean
 }) {
-  return (
-    <Card className="relative overflow-hidden min-h-28">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">
-          Total Views & Clicks
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-4">
-            <div className="flex gap-8">
-              <Skeleton className="h-12 w-20" />
-              <Skeleton className="h-12 w-20" />
-            </div>
-            <Skeleton className="h-[200px] w-full" />
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center gap-8">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-3 w-3 rounded-full bg-(--color-chart-4)" />
-                  Views
-                </div>
-                <div className="text-3xl font-bold">{views}</div>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-3 w-3 rounded-full bg-(--color-chart-2)" />
-                  Clicks
-                </div>
-                <div className="text-3xl font-bold">{clicks}</div>
-              </div>
-            </div>
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-7 w-20" />
+        <Skeleton className="h-3 w-40" />
+      </div>
+    )
+  }
 
-            <div className="h-[300px] w-full mt-4">
-              <ChartContainer
-                config={{
-                  views: {
-                    label: 'Views',
-                    color: 'var(--chart-4)',
-                  },
-                  clicks: {
-                    label: 'Clicks',
-                    color: 'var(--chart-2)',
-                  },
-                }}
-                className="h-full w-full"
-              >
-                <BarChart data={data}>
-                  <CartesianGrid
-                    strokeDasharray="4 4"
-                    vertical={false}
-                    stroke="var(--edge)"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={10}
-                    tickFormatter={(value) => {
-                      const date = new Date(value)
-                      return (
-                        date.toLocaleDateString('en-US', {
-                          day: 'numeric',
-                        }) +
-                        '\n' +
-                        date.toLocaleDateString('en-US', {
-                          month: 'short',
-                        })
-                      )
-                    }}
-                    interval={0}
-                    style={{ fontSize: '12px' }}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={10}
-                    allowDecimals={false}
-                    style={{ fontSize: '12px' }}
-                  />
-                  <ChartTooltip
-                    cursor={{ fill: 'var(--muted)' }}
-                    content={
-                      <ChartTooltipContent
-                        labelFormatter={(value) => {
-                          return new Date(value).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                          })
-                        }}
-                      />
-                    }
-                  />
-                  <Bar
-                    dataKey="views"
-                    fill="var(--color-views)"
-                    radius={[4, 4, 4, 4]}
-                    barSize={8}
-                  />
-                  <Bar
-                    dataKey="clicks"
-                    fill="var(--color-clicks)"
-                    radius={[4, 4, 4, 4]}
-                    barSize={8}
-                  />
-                </BarChart>
-              </ChartContainer>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+  return (
+    <div className="space-y-1">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="text-xl font-semibold">{value}</div>
+      <div className="flex items-center gap-2">
+        <p className="text-xs text-muted-foreground">{detail}</p>
+        {typeof delta === 'number' && <DeltaBadge value={delta} />}
+      </div>
+    </div>
   )
 }
 
-function TopBlocksCard({
-  blocks,
-  isLoading,
+function DeltaBadge({
+  value,
+  className,
 }: {
-  blocks: Array<{
-    id: string
-    title: string
-    type: string
-    clicks: number
-    isEnabled: boolean
-  }>
-  isLoading?: boolean
+  value: number
+  className?: string
 }) {
-  const maxClicks = Math.max(...blocks.map((b) => b.clicks), 1)
+  const rounded = Number.isFinite(value) ? value : 0
+  const positive = rounded > 0
+  const label = `${positive ? '+' : ''}${rounded.toFixed(1)}% vs previous`
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <MousePointerClick className="h-4 w-4" />
-          Top Blocks
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="h-8 w-8 rounded" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-2 w-full" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : blocks.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No block data yet
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {blocks.map((block, index) => (
-              <div key={block.id} className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs font-medium">
-                  {index + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium truncate">
-                      {block.title || 'Untitled'}
-                    </p>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {block.clicks} clicks
-                    </span>
-                  </div>
-                  <div className="mt-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full bg-primary transition-all"
-                      style={{
-                        width: `${(block.clicks / maxClicks) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <Badge
+      variant="outline"
+      className={cn(
+        'text-[10px]',
+        positive
+          ? 'border-emerald-500/30 text-emerald-700 bg-emerald-50/50'
+          : 'border-amber-500/30 text-amber-700 bg-amber-50/50',
+        className,
+      )}
+    >
+      {label}
+    </Badge>
   )
 }
 
-function TopProductsCard({
-  products,
-  isLoading,
-}: {
-  products: Array<{
-    id: string
-    title: string
-    image: string | null
-    salesCount: number
-    totalRevenue: number
-    isActive: boolean
-  }>
-  isLoading?: boolean
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Package className="h-4 w-4" />
-          Top Products (Cached)
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Uses cached counters for ranking. Ledger-based balances are authoritative in Balance page.
-        </p>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-20" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : products.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No products yet
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {products.map((product) => (
-              <div key={product.id} className="flex items-center gap-3">
-                {product.image ? (
-                  <img
-                    src={product.image}
-                    alt={product.title}
-                    className="h-10 w-10 rounded object-cover"
-                  />
-                ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded bg-muted">
-                    <Package className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium truncate">
-                      {product.title}
-                    </p>
-                    {!product.isActive && (
-                      <Badge variant="secondary" className="text-xs shrink-0">
-                        Inactive
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{product.salesCount} sales</span>
-                    <span>•</span>
-                    <span>{formatPrice(product.totalRevenue)}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
+function percentDelta(current: number, previous: number): number | null {
+  if (previous === 0) return current === 0 ? 0 : null
+  return ((current - previous) / previous) * 100
 }
 
 const chartConfig = {
   revenue: {
     label: 'Net Revenue',
     color: 'hsl(var(--chart-1))',
-  },
-  sales: {
-    label: 'Sales',
-    color: 'hsl(var(--chart-2))',
   },
 } satisfies ChartConfig
 
@@ -630,13 +448,11 @@ function RevenueChart({
                       year: 'numeric',
                     })
                   }}
-                  formatter={(value, name) => (
+                  formatter={(value) => (
                     <div className="flex min-w-[120px] items-center text-xs text-muted-foreground">
-                      {name === 'revenue' ? 'Revenue' : 'Sales'}
+                      Revenue
                       <div className="ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums text-foreground">
-                        {name === 'revenue'
-                          ? formatPrice(value as number)
-                          : value}
+                        {formatPrice(value as number)}
                       </div>
                     </div>
                   )}

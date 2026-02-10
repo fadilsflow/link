@@ -12,6 +12,8 @@ import {
   ShoppingBag,
   FileText,
   RotateCcw,
+  DollarSign,
+  TrendingUp,
 } from 'lucide-react'
 import { ColumnDef } from '@tanstack/react-table'
 
@@ -25,6 +27,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from '@/components/ui/menu'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { authClient } from '@/lib/auth-client'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
@@ -368,10 +371,28 @@ function OrdersPage() {
     0,
   )
   const totalOrders = (orders ?? []).length
-  const totalRefunds = (orders ?? []).reduce(
-    (acc, o: any) => acc + (o.refundedAmount ?? 0),
-    0,
-  )
+  // const totalRefunds = (orders ?? []).reduce(
+  //   (acc, o: any) => acc + (o.refundedAmount ?? 0),
+  //   0,
+  // )
+
+  const today = new Date()
+  const todaysRevenue = (orders ?? []).reduce((acc, o: any) => {
+    return (
+      acc +
+      (o.transactions ?? []).reduce((tAcc: number, t: any) => {
+        const tDate = new Date(t.createdAt)
+        const isToday =
+          tDate.getDate() === today.getDate() &&
+          tDate.getMonth() === today.getMonth() &&
+          tDate.getFullYear() === today.getFullYear()
+        if (isToday) {
+          return tAcc + t.netAmount
+        }
+        return tAcc
+      }, 0)
+    )
+  }, 0)
 
   return (
     <div className="space-y-6">
@@ -383,37 +404,48 @@ function OrdersPage() {
         </AppHeaderContent>
       </AppHeader>
 
-      {/* Summary stats */}
-      {totalOrders > 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-8 bg-muted">
-          <div className="space-y-1.5">
-            <h3 className="text-xl font-bold tracking-tight">Summary</h3>
-            <p className="text-sm">
-              {totalOrders} total order{totalOrders !== 1 ? 's' : ''}
-            </p>
-          </div>
-          <div className="flex items-center gap-10 sm:gap-16">
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-[0.2em] mb-1">
-                Net Revenue
-              </span>
-              <span className="text-3xl font-black tabular-nums">
-                {formatPrice(totalRevenue)}
-              </span>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Orders</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalOrders}</div>
+            <p className="text-xs text-muted-foreground">Total orders placed</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Today&apos;s Revenue
+            </CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatPrice(todaysRevenue)}
             </div>
-            {totalRefunds > 0 && (
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-[0.2em] mb-1 text-red-500">
-                  Refunded
-                </span>
-                <span className="text-3xl font-black tabular-nums text-red-500">
-                  {formatPrice(totalRefunds)}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+            <p className="text-xs text-muted-foreground">Net revenue today</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Cumulative Revenue
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatPrice(totalRevenue)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              All time net revenue
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       <DataTable
         columns={columns}

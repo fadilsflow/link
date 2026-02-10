@@ -17,7 +17,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-export function ShareProfileModal({ url }: { url: string }) {
+export function ShareProfileModal({
+  url,
+  children,
+}: {
+  url: string
+  children?: React.ReactElement
+}) {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
 
   const handleCopyLink = async () => {
@@ -69,17 +75,23 @@ export function ShareProfileModal({ url }: { url: string }) {
     <Dialog>
       <DialogTrigger
         render={
-          <Button
-            className="rounded-full py-6 px-6 font-semibold"
-            variant={'outline'}
-            size={'lg'}
-          />
+          children || (
+            <Button
+              className="rounded-full py-6 px-6 font-semibold"
+              variant={'outline'}
+              size={'lg'}
+            />
+          )
         }
       >
-        <span className="truncate max-w-[120px] md:max-w-40">
-          {url.replace(/^https?:\/\//, '')}
-        </span>
-        <Share className="ml-2 h-4 w-4" />
+        {!children && (
+          <>
+            <span className="truncate max-w-[120px] md:max-w-40">
+              {url.replace(/^https?:\/\//, '')}
+            </span>
+            <Share className="ml-2 h-4 w-4" />
+          </>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md border-none shadow-2xl overflow-hidden p-0">
         <DialogHeader>

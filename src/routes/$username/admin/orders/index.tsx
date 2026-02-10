@@ -12,8 +12,6 @@ import {
   ShoppingBag,
   FileText,
   RotateCcw,
-  DollarSign,
-  TrendingUp,
 } from 'lucide-react'
 import { ColumnDef } from '@tanstack/react-table'
 
@@ -27,7 +25,6 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from '@/components/ui/menu'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { authClient } from '@/lib/auth-client'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
@@ -403,49 +400,6 @@ function OrdersPage() {
           </AppHeaderDescription>
         </AppHeaderContent>
       </AppHeader>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Orders</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalOrders}</div>
-            <p className="text-xs text-muted-foreground">Total orders placed</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Today&apos;s Revenue
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatPrice(todaysRevenue)}
-            </div>
-            <p className="text-xs text-muted-foreground">Net revenue today</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Cumulative Revenue
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatPrice(totalRevenue)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              All time net revenue
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
       <DataTable
         columns={columns}

@@ -34,13 +34,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-import { Meter } from '@/components/ui/meter'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { authClient } from '@/lib/auth-client'
@@ -122,7 +120,8 @@ function AnalyticsPage() {
       <AppHeader>
         <AppHeaderContent title="Analytics">
           <AppHeaderDescription>
-            Net metrics are near-real-time. Product ranking cards below use cached counters.
+            Net metrics are near-real-time. Product ranking cards below use
+            cached counters.
           </AppHeaderDescription>
         </AppHeaderContent>
         <AppHeaderActions>
@@ -155,21 +154,10 @@ function AnalyticsPage() {
         <StatCard
           title="Net Revenue"
           value={formatPrice(rangeRevenue)}
-          description="Near-real-time (sale − refund − fee from ledger-backed API)"
           isLoading={isLoading}
         />
-        <StatCard
-          title="Sales"
-          value={rangeSales}
-          description="Selected period"
-          isLoading={isLoading}
-        />
-        <StatCard
-          title="CTR"
-          value={`${ctr}%`}
-          description="Click-Through Rate"
-          isLoading={isLoading}
-        />
+        <StatCard title="Sales" value={rangeSales} isLoading={isLoading} />
+        <StatCard title="CTR" value={`${ctr}%`} isLoading={isLoading} />
       </div>
 
       {/* Revenue Chart */}
@@ -198,20 +186,16 @@ function AnalyticsPage() {
 function StatCard({
   title,
   value,
-  description,
   isLoading,
 }: {
   title: string
   value: string | number
-  description: string
   isLoading?: boolean
 }) {
   return (
     <Card className="relative overflow-hidden min-h-28">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -221,8 +205,7 @@ function StatCard({
           </div>
         ) : (
           <>
-            <div className="text-2xl font-bold">{value}</div>
-            <p className="text-xs text-muted-foreground">{description}</p>
+            <div className="text-2xl font-mono">{value}</div>
           </>
         )}
       </CardContent>
@@ -248,9 +231,7 @@ function EngagementCard({
   return (
     <Card className="relative overflow-hidden min-h-28">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">
-          Total Views & Clicks
-        </CardTitle>
+        <CardTitle>Total Views & Clicks</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -269,14 +250,14 @@ function EngagementCard({
                   <div className="h-3 w-3 rounded-full bg-(--color-chart-4)" />
                   Views
                 </div>
-                <div className="text-3xl font-bold">{views}</div>
+                <div className="text-3xl font-mono">{views}</div>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <div className="h-3 w-3 rounded-full bg-(--color-chart-2)" />
                   Clicks
                 </div>
-                <div className="text-3xl font-bold">{clicks}</div>
+                <div className="text-3xl font-mono">{clicks}</div>
               </div>
             </div>
 
@@ -380,10 +361,7 @@ function TopBlocksCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <MousePointerClick className="h-4 w-4" />
-          Top Blocks
-        </CardTitle>
+        <CardTitle>Top Blocks</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -453,12 +431,10 @@ function TopProductsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Package className="h-4 w-4" />
-          Top Products (Cached)
-        </CardTitle>
+        <CardTitle>Top Products (Cached)</CardTitle>
         <p className="text-xs text-muted-foreground">
-          Uses cached counters for ranking. Ledger-based balances are authoritative in Balance page.
+          Uses cached counters for ranking. Ledger-based balances are
+          authoritative in Balance page.
         </p>
       </CardHeader>
       <CardContent>
@@ -546,10 +522,7 @@ function RevenueChart({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Net Revenue Trend
-          </CardTitle>
+          <CardTitle>Net Revenue Trend</CardTitle>
         </CardHeader>
         <CardContent className="h-[300px] flex flex-col gap-4">
           <Skeleton className="h-full w-full rounded-lg" />
@@ -562,7 +535,7 @@ function RevenueChart({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Net Revenue Trend</CardTitle>
+          <CardTitle>Net Revenue Trend</CardTitle>
         </CardHeader>
         <CardContent className="h-[200px] flex items-center justify-center text-muted-foreground">
           No data for this period
@@ -574,10 +547,7 @@ function RevenueChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <TrendingUp className="h-4 w-4" />
-          Net Revenue Trend
-        </CardTitle>
+        <CardTitle>Net Revenue Trend</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
@@ -654,7 +624,7 @@ function RevenueChart({
         </ChartContainer>
         <div className="mt-4 flex items-center gap-2 text-sm">
           <span className="font-medium">Period net total:</span>
-          <span className="font-bold">{formatPrice(totalRevenue)}</span>
+          <span className="font-monon">{formatPrice(totalRevenue)}</span>
         </div>
       </CardContent>
     </Card>

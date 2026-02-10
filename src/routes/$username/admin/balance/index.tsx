@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -10,10 +9,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Banknote,
-  Clock,
   DollarSign,
-  TrendingUp,
-  Wallet,
   XCircle,
 } from 'lucide-react'
 
@@ -25,7 +21,6 @@ import { authClient } from '@/lib/auth-client'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { formatPrice } from '@/lib/utils'
 import { toastManager } from '@/components/ui/toast'
-
 
 function getFinanceUiError(message: string): string {
   const lower = message.toLowerCase()
@@ -140,7 +135,9 @@ function BalancePage() {
 
   const isLoading = isSummaryLoading
   const availableBalance = summary?.availableBalance ?? 0
-  const hasPendingPayout = (payoutsList ?? []).some((p: any) => p.status === 'pending')
+  const hasPendingPayout = (payoutsList ?? []).some(
+    (p: any) => p.status === 'pending',
+  )
   const disablePayoutRequest =
     requestPayoutMutation.isPending || availableBalance <= 0 || hasPendingPayout
 
@@ -160,7 +157,6 @@ function BalancePage() {
         <BalanceCard
           title="Available Balance"
           value={summary?.availableBalance ?? 0}
-          icon={<Wallet className="h-4 w-4" />}
           description="Ledger Available (withdrawable now)"
           isLoading={isLoading}
           highlight
@@ -168,21 +164,18 @@ function BalancePage() {
         <BalanceCard
           title="Pending Balance"
           value={summary?.pendingBalance ?? 0}
-          icon={<Clock className="h-4 w-4" />}
           description={`Ledger Pending (${summary?.holdPeriodDays ?? 7}-day hold)`}
           isLoading={isLoading}
         />
         <BalanceCard
           title="Total Earnings"
           value={summary?.totalEarnings ?? 0}
-          icon={<TrendingUp className="h-4 w-4" />}
           description="All time (net of fees)"
           isLoading={isLoading}
         />
         <BalanceCard
           title="Total Refunds"
           value={summary?.totalRefunds ?? 0}
-          icon={<ArrowDownRight className="h-4 w-4" />}
           description="All time"
           isLoading={isLoading}
           negative
@@ -195,23 +188,24 @@ function BalancePage() {
           <div className="space-y-1">
             <h3 className="font-semibold">Request Payout</h3>
             <p className="text-sm text-muted-foreground">
-              Available = funds ready to withdraw. Pending = funds still in hold ({summary?.holdPeriodDays ?? 7} days).
+              Available = funds ready to withdraw. Pending = funds still in hold
+              ({summary?.holdPeriodDays ?? 7} days).
             </p>
             <p className="text-xs text-amber-600 mt-2">
-              Refunds after a payout can make your available balance negative until new sales settle.
+              Refunds after a payout can make your available balance negative
+              until new sales settle.
             </p>
             {hasPendingPayout && (
               <p className="text-xs text-muted-foreground mt-1">
-                You already have a pending payout request. Only one pending payout is allowed.
+                You already have a pending payout request. Only one pending
+                payout is allowed.
               </p>
             )}
           </div>
           <Button
             onClick={() => {
               if (
-                confirm(
-                  `Request payout of ${formatPrice(availableBalance)}?`,
-                )
+                confirm(`Request payout of ${formatPrice(availableBalance)}?`)
               ) {
                 requestPayoutMutation.mutate()
               }
@@ -219,7 +213,6 @@ function BalancePage() {
             disabled={disablePayoutRequest}
             className="shrink-0"
           >
-            <Banknote className="mr-2 h-4 w-4" />
             {requestPayoutMutation.isPending
               ? 'Requesting...'
               : hasPendingPayout
@@ -233,10 +226,7 @@ function BalancePage() {
       {(payoutsList ?? []).length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Banknote className="h-4 w-4" />
-              Payout History
-            </CardTitle>
+            <CardTitle>Payout History</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -286,10 +276,7 @@ function BalancePage() {
       {/* Transaction History */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
-            Transaction History
-          </CardTitle>
+          <CardTitle>Transaction History</CardTitle>
         </CardHeader>
         <CardContent>
           {isTxnsLoading ? (
@@ -328,7 +315,6 @@ function BalancePage() {
 function BalanceCard({
   title,
   value,
-  icon,
   description,
   isLoading,
   highlight,
@@ -336,7 +322,6 @@ function BalanceCard({
 }: {
   title: string
   value: number
-  icon: React.ReactNode
   description: string
   isLoading?: boolean
   highlight?: boolean
@@ -345,10 +330,7 @@ function BalanceCard({
   return (
     <Card className={highlight ? 'border-primary/20 bg-primary/[0.02]' : ''}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          {icon}
-          {title}
-        </CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -359,7 +341,7 @@ function BalanceCard({
         ) : (
           <>
             <div
-              className={`text-2xl font-bold ${negative && value > 0 ? 'text-red-500' : ''} ${highlight ? 'text-primary' : ''}`}
+              className={`text-2xl font-mono ${negative && value > 0 ? 'text-red-500' : ''} ${highlight ? 'text-primary' : ''}`}
             >
               {negative && value > 0 ? '-' : ''}
               {formatPrice(value)}
@@ -419,7 +401,9 @@ function TransactionRow({ txn }: { txn: any }) {
           className={`text-sm font-semibold tabular-nums ${isCredit ? 'text-emerald-600' : 'text-red-500'}`}
         >
           {isCredit ? '+' : ''}
-          {formatPrice(Math.abs((txn.amount ?? 0) - (txn.platformFeeAmount ?? 0)))}
+          {formatPrice(
+            Math.abs((txn.amount ?? 0) - (txn.platformFeeAmount ?? 0)),
+          )}
         </p>
         {txn.platformFeeAmount > 0 && (
           <p className="text-[10px] text-muted-foreground">

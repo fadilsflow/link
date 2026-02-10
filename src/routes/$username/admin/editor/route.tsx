@@ -4,6 +4,8 @@ import { AppearancePreview } from '@/components/dashboard/appearance/AppearanceP
 import { ShareProfileModal } from '@/components/share-profile-modal'
 import { BASE_URL } from '@/lib/constans'
 import { Spinner } from '@/components/ui/spinner'
+import { Button } from '@/components/ui/button'
+import { Share } from 'lucide-react'
 
 export const Route = createFileRoute('/$username/admin/editor')({
   component: RouteComponent,
@@ -33,7 +35,20 @@ function EditorLayout() {
       <div className="block border-t lg:border-t-0 lg:border-l lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden bg-zinc-50/50 lg:bg-transparent">
         <div className="lg:h-full flex flex-col items-center py-10 lg:pt-10">
           <div className="flex items-center gap-2 mb-6 shrink-0">
-            <ShareProfileModal url={`${BASE_URL}/${user?.username || ''}`} />
+            <ShareProfileModal url={`${BASE_URL}/${user?.username || ''}`}>
+              <Button
+                className="rounded-full py-6 px-6 font-semibold"
+                variant={'outline'}
+                size={'lg'}
+              >
+                <span className="truncate max-w-[120px] md:max-w-40">
+                  {user?.username
+                    ? `${window.location.host}/${user.username}`
+                    : 'loading...'}
+                </span>
+                <Share className="ml-2 h-4 w-4" />
+              </Button>
+            </ShareProfileModal>
             {status.isSaving && (
               <span className="text-xs text-amber-500 font-medium animate-pulse">
                 Saving...

@@ -9,22 +9,10 @@ import {
   DollarSign,
   ArrowRight,
   Info,
+  ExternalLink,
+  Share,
 } from 'lucide-react'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 import {
   AppHeader,
@@ -37,7 +25,6 @@ import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -51,8 +38,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { authClient } from '@/lib/auth-client'
+import { ShareProfileModal } from '@/components/share-profile-modal'
+import { BASE_URL } from '@/lib/constans'
 import { cn, formatPrice } from '@/lib/utils'
-import { toastManager } from '@/components/ui/toast'
 
 export const Route = createFileRoute('/$username/admin/')({
   component: HomePage,
@@ -67,6 +55,7 @@ const RANGE_PRESETS = [
 ] as const
 
 function HomePage() {
+  const { username } = Route.useParams()
   const { data: session, isPending: isSessionPending } = authClient.useSession()
   const today = new Date()
   today.setHours(23, 59, 59, 999)
@@ -123,14 +112,6 @@ function HomePage() {
   const topBlocks = blocks.slice(0, 5)
   const topProducts = (productAnalytics ?? []).slice(0, 5)
 
-  // Today's revenue calculation
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const todaysRevenue = React.useMemo(() => {
-    if (!chartData) return 0
-    const todayEntry = chartData.find((d) => d.date === todayStr)
-    return todayEntry?.revenue ?? 0
-  }, [chartData, todayStr])
-
   // New Data Fetching for Dashboard Cards
   const { data: balance, isLoading: isLoadingBalance } = useQuery({
     queryKey: ['balance', session?.user?.id],
@@ -138,46 +119,6 @@ function HomePage() {
       if (!session?.user?.id) return null
       return await trpcClient.balance.getSummary.query({
         userId: session.user.id,
-      })
-    },
-    enabled: !!session?.user?.id,
-  })
-
-  // Last 7 days
-  const last7DaysFrom = React.useMemo(() => {
-    const d = new Date()
-    d.setDate(d.getDate() - 7)
-    return d.toISOString().slice(0, 10)
-  }, [])
-
-  const { data: last7Days, isLoading: isLoadingLast7Days } = useQuery({
-    queryKey: ['analytics', 'last7Days', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return null
-      return await trpcClient.analytics.getOverview.query({
-        userId: session.user.id,
-        from: last7DaysFrom,
-        to: new Date().toISOString().slice(0, 10),
-      })
-    },
-    enabled: !!session?.user?.id,
-  })
-
-  // Last 28 days
-  const last28DaysFrom = React.useMemo(() => {
-    const d = new Date()
-    d.setDate(d.getDate() - 28)
-    return d.toISOString().slice(0, 10)
-  }, [])
-
-  const { data: last28Days, isLoading: isLoadingLast28Days } = useQuery({
-    queryKey: ['analytics', 'last28Days', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return null
-      return await trpcClient.analytics.getOverview.query({
-        userId: session.user.id,
-        from: last28DaysFrom,
-        to: new Date().toISOString().slice(0, 10),
       })
     },
     enabled: !!session?.user?.id,
@@ -191,61 +132,100 @@ function HomePage() {
             Welcome back, {session?.user?.name || 'Creator'}
           </AppHeaderDescription>
         </AppHeaderContent>
-        <AppHeaderActions>
-          {/* Date Range Picker */}
-          <div className="flex flex-wrap items-center gap-2">
-            {RANGE_PRESETS.map((preset) => (
-              <Button
-                key={preset.label}
-                variant={activePreset === preset.label ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-8 text-xs font-medium"
-                onClick={() => handlePreset(preset.days, preset.label)}
-              >
-                {preset.label}
-              </Button>
-            ))}
-            <DateRangePicker
-              value={dateRange}
-              onChange={(range) => {
-                setDateRange(range)
-                setActivePreset(null)
-              }}
-            />
-          </div>
-        </AppHeaderActions>
+        <AppHeaderActions></AppHeaderActions>
       </AppHeader>
 
-      {/* Top Cards: Balance, Last 7 Days, Last 28 Days, Total Earnings */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCardWithTooltip
-          title="Balance"
-          value={formatPrice(balance?.currentBalance ?? 0)}
-          tooltip="Total funds currently in your account (available + pending)."
-          isLoading={isLoadingBalance}
-        />
-        <StatCardWithTooltip
-          title="Last 7 Days"
-          value={formatPrice(last7Days?.range.revenue ?? 0)}
-          tooltip="Total net revenue generated in the last 7 days."
-          isLoading={isLoadingLast7Days}
-        />
-        <StatCardWithTooltip
-          title="Last 28 Days"
-          value={formatPrice(last28Days?.range.revenue ?? 0)}
-          tooltip="Total net revenue generated in the last 28 days."
-          isLoading={isLoadingLast28Days}
-        />
-        <StatCardWithTooltip
-          title="Total Earnings"
-          value={formatPrice(balance?.totalEarnings ?? 0)}
-          tooltip="All-time net earnings from sales."
-          isLoading={isLoadingBalance}
-        />
-      </div>
+      {/* Profile and Earnings Cards */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Profile Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 ">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="rounded-md h-14 w-14 border-2 border-background ring-2 ring-primary/10 transition-transform group-hover:scale-105">
+                  <AvatarImage src={session?.user?.image || ''} />
+                  <AvatarFallback className="bg-primary/5 text-primary text-lg">
+                    {session?.user?.name?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold tracking-tight truncate">
+                    {session?.user?.name || 'Creator'}
+                  </h3>
+                  <a
+                    href={`/${username}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary flex items-center text-sm hover:text-primary transition-colors mt-0.5 group/link w-fit"
+                  >
+                    <span className="font-medium underline-offset-4 group-hover/link:underline">
+                      {window.location.host}/{username}
+                    </span>
+                  </a>
+                </div>
+              </div>
+              <ShareProfileModal url={`${BASE_URL}/${username}`}>
+                <Button size="lg" variant={'outline'}>
+                  Share
+                </Button>
+              </ShareProfileModal>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Revenue Chart */}
-      <RevenueChart data={chartData} isLoading={isLoading} />
+        {/* Earnings Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Available Balance</CardTitle>
+          </CardHeader>
+
+          <CardContent className="flex items-center justify-between h-full">
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-mono tracking-tight">
+                {isLoadingBalance ? (
+                  <Skeleton className="h-8 w-24" />
+                ) : (
+                  formatPrice(balance?.currentBalance ?? 0)
+                )}
+              </span>
+            </div>
+            <Button
+              size="lg"
+              render={
+                <Link to={`/$username/admin/balance`} params={{ username }} />
+              }
+            >
+              Payout
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="justify-end flex">
+        {/* Date Range Picker */}
+        <div className="flex flex-wrap items-center gap-2">
+          {RANGE_PRESETS.map((preset) => (
+            <Button
+              key={preset.label}
+              variant={activePreset === preset.label ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 text-xs font-medium"
+              onClick={() => handlePreset(preset.days, preset.label)}
+            >
+              {preset.label}
+            </Button>
+          ))}
+          <DateRangePicker
+            value={dateRange}
+            onChange={(range) => {
+              setDateRange(range)
+              setActivePreset(null)
+            }}
+          />
+        </div>
+      </div>
 
       {/* Engagement Chart */}
       <EngagementCard
@@ -264,50 +244,6 @@ function HomePage() {
         />
       </div>
     </div>
-  )
-}
-
-function StatCardWithTooltip({
-  title,
-  value,
-  tooltip,
-  isLoading,
-}: {
-  title: string
-  value: string | number
-  tooltip: string
-  isLoading?: boolean
-}) {
-  return (
-    <Card className="relative overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center gap-2">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger
-                delay={0}
-                className="bg-transparent p-0 border-0 focus:outline-none"
-              >
-                <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">{tooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-24" />
-          </div>
-        ) : (
-          <div className="text-2xl font-bold">{value}</div>
-        )}
-      </CardContent>
-    </Card>
   )
 }
 
@@ -596,148 +532,6 @@ function TopProductsCard({
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
-  )
-}
-
-const chartConfig = {
-  revenue: {
-    label: 'Net Revenue',
-    color: 'hsl(var(--chart-1))',
-  },
-  sales: {
-    label: 'Sales',
-    color: 'hsl(var(--chart-2))',
-  },
-} satisfies ChartConfig
-
-function RevenueChart({
-  data,
-  isLoading,
-}: {
-  data: Array<{ date: string; sales: number; revenue: number }>
-  isLoading?: boolean
-}) {
-  const totalRevenue = React.useMemo(
-    () => data.reduce((acc, item) => acc + item.revenue, 0),
-    [data],
-  )
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Net Revenue Trend
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="h-[300px] flex flex-col gap-4">
-          <Skeleton className="h-full w-full rounded-lg" />
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (data.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Net Revenue Trend</CardTitle>
-        </CardHeader>
-        <CardContent className="h-[200px] flex items-center justify-center text-muted-foreground">
-          No data for this period
-        </CardContent>
-      </Card>
-    )
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <TrendingUp className="h-4 w-4" />
-          Net Revenue Trend
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="h-[250px] w-full">
-          <AreaChart
-            data={data}
-            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-          >
-            <defs>
-              <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-revenue)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-revenue)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })
-              }}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })
-                  }}
-                  formatter={(value, name) => (
-                    <div className="flex min-w-[120px] items-center text-xs text-muted-foreground">
-                      {name === 'revenue' ? 'Revenue' : 'Sales'}
-                      <div className="ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums text-foreground">
-                        {name === 'revenue'
-                          ? formatPrice(value as number)
-                          : value}
-                      </div>
-                    </div>
-                  )}
-                />
-              }
-            />
-            <Area
-              dataKey="revenue"
-              type="monotone"
-              fill="url(#fillRevenue)"
-              stroke="var(--color-revenue)"
-              strokeWidth={2}
-            />
-          </AreaChart>
-        </ChartContainer>
-        <div className="mt-4 flex items-center gap-2 text-sm">
-          <span className="font-medium">Period net total:</span>
-          <span className="font-bold">{formatPrice(totalRevenue)}</span>
-        </div>
       </CardContent>
     </Card>
   )

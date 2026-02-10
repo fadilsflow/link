@@ -16,5 +16,5 @@ import * as schema from './schema'
 
 config({ path: ['.env.local', '.env'] })
 
-const sql = neon(process.env.DATABASE_URL!)
-export const db = drizzle(sql, { schema })
+export const neonSql = neon(process.env.DATABASE_URL!)
+export const db = drizzle(neonSql, { schema })

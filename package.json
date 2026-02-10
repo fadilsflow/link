@@ -14,7 +14,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:pull": "drizzle-kit pull",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "finance:reconcile": "tsx scripts/reconcile-financial-ledger.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.983.0",

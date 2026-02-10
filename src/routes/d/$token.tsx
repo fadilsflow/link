@@ -31,6 +31,8 @@ function OrderDeliveryPage() {
   // Use snapshot title from the order (immutable), fallback to product
   const displayTitle = order.productTitle ?? product.title ?? 'Product'
   const displayImage = order.productImage ?? productImages[0] ?? null
+  const isProductUnavailable = !order.productId || !product?.id
+  const isCreatorUnavailable = !order.creatorId || !creator?.username
 
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-50 to-white py-12 px-4">
@@ -83,9 +85,19 @@ function OrderDeliveryPage() {
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm text-slate-500">
-                    by {creator.name}
+                    by {creator.name || 'Creator'}
                   </span>
                 </div>
+                {isProductUnavailable && (
+                  <p className="text-xs text-amber-600 mt-2">
+                    Product is no longer active, but this purchase remains valid via order snapshot data.
+                  </p>
+                )}
+                {isCreatorUnavailable && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Creator profile may be unavailable. Your order access remains valid.
+                  </p>
+                )}
               </div>
             </div>
           </CardHeader>

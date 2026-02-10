@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import {
   boolean,
   index,
@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core'
 
 // ─── Status Enums ────────────────────────────────────────────────────────────
@@ -24,6 +25,7 @@ export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS]
 export const TRANSACTION_TYPE = {
   SALE: 'sale',
   REFUND: 'refund',
+  // Legacy type kept for historical rows only.
   PARTIAL_REFUND: 'partial_refund',
   PAYOUT: 'payout',
   FEE: 'fee',
@@ -318,7 +320,9 @@ export const transactions = pgTable(
       onDelete: 'set null',
     }),
     // Related payout (set when this is a payout debit)
-    payoutId: text('payout_id'),
+    payoutId: text('payout_id').references(() => payouts.id, {
+      onDelete: 'restrict',
+    }),
     // Transaction type
     type: text('type').notNull(), // sale | refund | partial_refund | payout | fee | adjustment
     // Amount in cents (positive = credit, negative = debit)
@@ -381,6 +385,9 @@ export const payouts = pgTable(
     index('payout_creator_id_idx').on(table.creatorId),
     index('payout_status_idx').on(table.status),
     index('payout_created_at_idx').on(table.createdAt),
+    uniqueIndex('payout_one_pending_per_creator_idx')
+      .on(table.creatorId)
+      .where(sql`${table.status} = 'pending'`),
   ],
 )
 
@@ -491,13 +498,18 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
     fields: [transactions.orderId],
     references: [orders.id],
   }),
+  payout: one(payouts, {
+    fields: [transactions.payoutId],
+    references: [payouts.id],
+  }),
 }))
 
-export const payoutsRelations = relations(payouts, ({ one }) => ({
+export const payoutsRelations = relations(payouts, ({ one, many }) => ({
   creator: one(user, {
     fields: [payouts.creatorId],
     references: [user.id],
   }),
+  transactions: many(transactions),
 }))
 
 export const profileViewsRelations = relations(profileViews, ({ one }) => ({

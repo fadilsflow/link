@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { and, asc, desc, eq, gte, inArray, lte, sql, isNull } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
-import { db, neonSql } from '@/db'
+import { db } from '@/db'
 import {
   blockClicks,
   blocks,
@@ -1145,15 +1145,23 @@ const payoutRouter = {
       const now = new Date()
 
       try {
-        return await neonSql.transaction(async (tx) => {
-          const availableRows = await tx<Array<{ availableBalance: number }>>`
-            SELECT COALESCE(SUM("amount" - "platform_fee_amount"), 0)::int AS "availableBalance"
-            FROM "transaction"
-            WHERE "creator_id" = ${input.userId}
-              AND "available_at" <= ${now}
-          `
+        const result = await db.transaction(async (tx) => {
+          // Calculate available balance using drizzle's query builder
+          const availableResult = await tx
+            .select({
+              availableBalance: sql<number>`COALESCE(SUM(${transactions.amount} - ${transactions.platformFeeAmount}), 0)`,
+            })
+            .from(transactions)
+            .where(
+              and(
+                eq(transactions.creatorId, input.userId),
+                lte(transactions.availableAt, now),
+              ),
+            )
 
-          const availableBalance = availableRows[0]?.availableBalance ?? 0
+          const availableBalance = Number(
+            availableResult[0]?.availableBalance ?? 0,
+          )
           const payoutAmount = input.amount ?? availableBalance
 
           if (payoutAmount <= 0) {
@@ -1167,54 +1175,39 @@ const payoutRouter = {
 
           const payoutId = crypto.randomUUID()
 
-          const payoutRows = await tx<
-            Array<{
-              id: string
-              creatorId: string
-              amount: number
-              status: string
-              periodEnd: Date | null
-              payoutMethod: string | null
-              payoutDetails: Record<string, any> | null
-              createdAt: Date
-              updatedAt: Date
-            }>
-          >`
-            INSERT INTO "payout" (
-              "id", "creator_id", "amount", "status", "period_end", "payout_method", "payout_details"
-            ) VALUES (
-              ${payoutId}, ${input.userId}, ${payoutAmount}, 'pending', ${now},
-              ${input.payoutMethod ?? null}, ${JSON.stringify(input.payoutDetails ?? null)}::json
-            )
-            RETURNING
-              "id",
-              "creator_id" AS "creatorId",
-              "amount",
-              "status",
-              "period_end" AS "periodEnd",
-              "payout_method" AS "payoutMethod",
-              "payout_details" AS "payoutDetails",
-              "created_at" AS "createdAt",
-              "updated_at" AS "updatedAt"
-          `
+          // Insert payout record
+          const [payout] = await tx
+            .insert(payouts)
+            .values({
+              id: payoutId,
+              creatorId: input.userId,
+              amount: payoutAmount,
+              status: 'pending',
+              periodEnd: now,
+              payoutMethod: input.payoutMethod ?? null,
+              payoutDetails: input.payoutDetails ?? null,
+            })
+            .returning()
 
-          const payout = payoutRows[0]
-
-          await tx`
-            INSERT INTO "transaction" (
-              "id", "creator_id", "payout_id", "type", "amount", "net_amount",
-              "platform_fee_percent", "platform_fee_amount", "description", "metadata", "available_at"
-            ) VALUES (
-              ${crypto.randomUUID()}, ${input.userId}, ${payoutId}, ${TRANSACTION_TYPE.PAYOUT},
-              ${-payoutAmount}, ${-payoutAmount}, 0, 0,
-              ${`Payout request #${payoutId.slice(0, 8)}`},
-              ${JSON.stringify({ payoutId, payoutMethod: input.payoutMethod })}::json,
-              ${now}
-            )
-          `
+          // Insert debit transaction
+          await tx.insert(transactions).values({
+            id: crypto.randomUUID(),
+            creatorId: input.userId,
+            payoutId: payoutId,
+            type: TRANSACTION_TYPE.PAYOUT,
+            amount: -payoutAmount,
+            netAmount: -payoutAmount,
+            platformFeePercent: 0,
+            platformFeeAmount: 0,
+            description: `Payout request #${payoutId.slice(0, 8)}`,
+            metadata: { payoutId, payoutMethod: input.payoutMethod },
+            availableAt: now,
+          })
 
           return payout
         })
+
+        return result
       } catch (error) {
         console.error('[finance][payout-request] transaction failed', {
           userId: input.userId,

@@ -29,6 +29,13 @@
       "when": 1770713004089,
       "tag": "0003_dear_ulik",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1770714927869,
+      "tag": "0004_audit_financial_hardening",
+      "breakpoints": true
     }
   ]
 }

@@ -122,7 +122,7 @@ function AnalyticsPage() {
       <AppHeader>
         <AppHeaderContent title="Analytics">
           <AppHeaderDescription>
-            Performance overview for your profile
+            Net metrics are near-real-time. Product ranking cards below use cached counters.
           </AppHeaderDescription>
         </AppHeaderContent>
         <AppHeaderActions>
@@ -153,9 +153,9 @@ function AnalyticsPage() {
       {/* Key Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          title="Revenue"
+          title="Net Revenue"
           value={formatPrice(rangeRevenue)}
-          description="Selected period"
+          description="Near-real-time (sale − refund − fee from ledger-backed API)"
           isLoading={isLoading}
         />
         <StatCard
@@ -455,8 +455,11 @@ function TopProductsCard({
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Package className="h-4 w-4" />
-          Top Products
+          Top Products (Cached)
         </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Uses cached counters for ranking. Ledger-based balances are authoritative in Balance page.
+        </p>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -518,7 +521,7 @@ function TopProductsCard({
 
 const chartConfig = {
   revenue: {
-    label: 'Revenue',
+    label: 'Net Revenue',
     color: 'hsl(var(--chart-1))',
   },
   sales: {
@@ -545,7 +548,7 @@ function RevenueChart({
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
-            Revenue Trend
+            Net Revenue Trend
           </CardTitle>
         </CardHeader>
         <CardContent className="h-[300px] flex flex-col gap-4">
@@ -559,7 +562,7 @@ function RevenueChart({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Revenue Trend</CardTitle>
+          <CardTitle className="text-base">Net Revenue Trend</CardTitle>
         </CardHeader>
         <CardContent className="h-[200px] flex items-center justify-center text-muted-foreground">
           No data for this period
@@ -573,7 +576,7 @@ function RevenueChart({
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <TrendingUp className="h-4 w-4" />
-          Revenue Trend
+          Net Revenue Trend
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -650,7 +653,7 @@ function RevenueChart({
           </AreaChart>
         </ChartContainer>
         <div className="mt-4 flex items-center gap-2 text-sm">
-          <span className="font-medium">Total:</span>
+          <span className="font-medium">Period net total:</span>
           <span className="font-bold">{formatPrice(totalRevenue)}</span>
         </div>
       </CardContent>

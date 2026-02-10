@@ -12,7 +12,6 @@ import {
   Banknote,
   Clock,
   DollarSign,
-  MoreHorizontal,
   TrendingUp,
   Wallet,
   XCircle,
@@ -22,20 +21,27 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Separator } from '@/components/ui/separator'
-import {
-  Menu,
-  MenuPopup,
-  MenuItem,
-  MenuGroup,
-  MenuGroupLabel,
-  MenuSeparator,
-  MenuTrigger,
-} from '@/components/ui/menu'
 import { authClient } from '@/lib/auth-client'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { formatPrice } from '@/lib/utils'
 import { toastManager } from '@/components/ui/toast'
+
+
+function getFinanceUiError(message: string): string {
+  const lower = message.toLowerCase()
+
+  if (lower.includes('already have a pending payout')) {
+    return 'You already have a pending payout request. Wait until it is processed or cancel it first.'
+  }
+  if (lower.includes('requested') && lower.includes('available')) {
+    return 'Insufficient available balance for this payout request.'
+  }
+  if (lower.includes('no available balance')) {
+    return 'No available balance to withdraw yet. Pending funds will unlock after the hold period.'
+  }
+
+  return message
+}
 
 export const Route = createFileRoute('/$username/admin/balance/')({
   component: BalancePage,
@@ -71,7 +77,7 @@ function BalancePage() {
   })
 
   // Payouts list
-  const { data: payoutsList, isLoading: isPayoutsLoading } = useQuery({
+  const { data: payoutsList } = useQuery({
     queryKey: ['balance', 'payouts', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return []
@@ -100,7 +106,7 @@ function BalancePage() {
     onError: (error) => {
       toastManager.add({
         title: 'Payout Failed',
-        description: error.message,
+        description: getFinanceUiError(error.message),
         type: 'error',
       })
     },
@@ -126,20 +132,25 @@ function BalancePage() {
     onError: (error) => {
       toastManager.add({
         title: 'Cancel Failed',
-        description: error.message,
+        description: getFinanceUiError(error.message),
         type: 'error',
       })
     },
   })
 
   const isLoading = isSummaryLoading
+  const availableBalance = summary?.availableBalance ?? 0
+  const hasPendingPayout = (payoutsList ?? []).some((p: any) => p.status === 'pending')
+  const disablePayoutRequest =
+    requestPayoutMutation.isPending || availableBalance <= 0 || hasPendingPayout
 
   return (
     <div className="space-y-6 pb-20">
       <AppHeader>
         <AppHeaderContent title="Balance & Payouts">
           <AppHeaderDescription>
-            Track your earnings, view transaction history, and request payouts
+            Ledger-based balances and payout lifecycle from immutable
+            transactions
           </AppHeaderDescription>
         </AppHeaderContent>
       </AppHeader>
@@ -150,7 +161,7 @@ function BalancePage() {
           title="Available Balance"
           value={summary?.availableBalance ?? 0}
           icon={<Wallet className="h-4 w-4" />}
-          description="Ready for payout"
+          description="Ledger Available (withdrawable now)"
           isLoading={isLoading}
           highlight
         />
@@ -158,7 +169,7 @@ function BalancePage() {
           title="Pending Balance"
           value={summary?.pendingBalance ?? 0}
           icon={<Clock className="h-4 w-4" />}
-          description={`${summary?.holdPeriodDays ?? 7}-day hold period`}
+          description={`Ledger Pending (${summary?.holdPeriodDays ?? 7}-day hold)`}
           isLoading={isLoading}
         />
         <BalanceCard
@@ -184,31 +195,36 @@ function BalancePage() {
           <div className="space-y-1">
             <h3 className="font-semibold">Request Payout</h3>
             <p className="text-sm text-muted-foreground">
-              Withdraw your available balance. Funds from sales are available
-              after a {summary?.holdPeriodDays ?? 7}-day hold period.
+              Available = funds ready to withdraw. Pending = funds still in hold ({summary?.holdPeriodDays ?? 7} days).
             </p>
+            <p className="text-xs text-amber-600 mt-2">
+              Refunds after a payout can make your available balance negative until new sales settle.
+            </p>
+            {hasPendingPayout && (
+              <p className="text-xs text-muted-foreground mt-1">
+                You already have a pending payout request. Only one pending payout is allowed.
+              </p>
+            )}
           </div>
           <Button
             onClick={() => {
               if (
                 confirm(
-                  `Request payout of ${formatPrice(summary?.availableBalance ?? 0)}?`,
+                  `Request payout of ${formatPrice(availableBalance)}?`,
                 )
               ) {
                 requestPayoutMutation.mutate()
               }
             }}
-            disabled={
-              requestPayoutMutation.isPending ||
-              !summary?.availableBalance ||
-              summary.availableBalance <= 0
-            }
+            disabled={disablePayoutRequest}
             className="shrink-0"
           >
             <Banknote className="mr-2 h-4 w-4" />
             {requestPayoutMutation.isPending
               ? 'Requesting...'
-              : `Withdraw ${formatPrice(summary?.availableBalance ?? 0)}`}
+              : hasPendingPayout
+                ? 'Pending payout in progress'
+                : `Withdraw ${formatPrice(availableBalance)}`}
           </Button>
         </CardContent>
       </Card>
@@ -403,7 +419,7 @@ function TransactionRow({ txn }: { txn: any }) {
           className={`text-sm font-semibold tabular-nums ${isCredit ? 'text-emerald-600' : 'text-red-500'}`}
         >
           {isCredit ? '+' : ''}
-          {formatPrice(Math.abs(txn.netAmount))}
+          {formatPrice(Math.abs((txn.amount ?? 0) - (txn.platformFeeAmount ?? 0)))}
         </p>
         {txn.platformFeeAmount > 0 && (
           <p className="text-[10px] text-muted-foreground">
@@ -474,7 +490,7 @@ function getTransactionTypeConfig(type: string) {
     case 'refund':
       return { label: 'Refund', color: 'red' }
     case 'partial_refund':
-      return { label: 'Partial Refund', color: 'amber' }
+      return { label: 'Refund (Legacy)', color: 'amber' }
     case 'payout':
       return { label: 'Payout', color: 'blue' }
     case 'fee':

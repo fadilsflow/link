@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { and, asc, desc, eq, gte, inArray, lte, sql, isNull } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
-import { db } from '@/db'
+import { db, neonSql } from '@/db'
 import {
   blockClicks,
   blocks,
@@ -36,6 +36,13 @@ function calculateFee(amount: number): {
 } {
   const feeAmount = Math.round((amount * PLATFORM_FEE_PERCENT) / 100)
   return { feeAmount, netAmount: amount - feeAmount }
+}
+
+function getTransactionNetAmount(txn: {
+  amount: number
+  platformFeeAmount: number
+}): number {
+  return txn.amount - txn.platformFeeAmount
 }
 
 // ─── User Router ─────────────────────────────────────────────────────────────
@@ -961,68 +968,84 @@ const orderRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      const order = await db.query.orders.findFirst({
-        where: eq(orders.id, input.orderId),
-      })
+      const now = new Date()
 
-      if (!order) throw new Error('Order not found')
-      if (order.creatorId !== input.userId) throw new Error('Unauthorized')
-      if (order.status === 'refunded') throw new Error('Already refunded')
+      try {
+        return await neonSql.transaction(async (tx) => {
+          const orderRows = await tx<
+            Array<{
+              id: string
+              amountPaid: number
+              refundedAmountBefore: number
+              productId: string | null
+            }>
+          >`
+            UPDATE "order"
+            SET
+              "status" = 'refunded',
+              "refunded_amount" = "amount_paid",
+              "refunded_at" = ${now},
+              "refund_reason" = ${input.reason ?? null}
+            WHERE
+              "id" = ${input.orderId}
+              AND "creator_id" = ${input.userId}
+              AND "refunded_amount" < "amount_paid"
+            RETURNING
+              "id",
+              "amount_paid" AS "amountPaid",
+              "refunded_amount" AS "refundedAmountBefore",
+              "product_id" AS "productId"
+          `
 
-      const refundAmount = order.amountPaid - order.refundedAmount
+          const order = orderRows[0]
+          if (!order) {
+            throw new Error('Order not found, unauthorized, or already refunded')
+          }
 
-      if (refundAmount <= 0) throw new Error('Nothing to refund')
+          const refundAmount = order.amountPaid - order.refundedAmountBefore
+          if (refundAmount <= 0) throw new Error('Nothing to refund')
 
-      // Create REFUND transaction (negative amount)
-      const { netAmount } = calculateFee(refundAmount)
-      await db.insert(transactions).values({
-        id: crypto.randomUUID(),
-        creatorId: input.userId,
-        orderId: order.id,
-        type: TRANSACTION_TYPE.REFUND,
-        amount: -refundAmount,
-        netAmount: -netAmount,
-        platformFeePercent: PLATFORM_FEE_PERCENT,
-        platformFeeAmount: 0,
-        description: `Refund: Order ${order.id.slice(0, 8)}`,
-        availableAt: new Date(), // refunds are immediately effective
-        metadata: {
-          reason: input.reason ?? 'Full refund',
-          originalAmount: order.amountPaid,
-        },
-      })
+          await tx`
+            INSERT INTO "transaction" (
+              "id", "creator_id", "order_id", "type", "amount", "net_amount",
+              "platform_fee_percent", "platform_fee_amount", "description", "metadata", "available_at"
+            ) VALUES (
+              ${crypto.randomUUID()}, ${input.userId}, ${order.id}, ${TRANSACTION_TYPE.REFUND},
+              ${-refundAmount}, ${-refundAmount}, ${PLATFORM_FEE_PERCENT}, 0,
+              ${`Refund: Order ${order.id.slice(0, 8)}`},
+              ${JSON.stringify({ reason: input.reason ?? 'Full refund', originalAmount: order.amountPaid })}::json,
+              ${now}
+            )
+          `
 
-      // Update order status
-      await db
-        .update(orders)
-        .set({
-          status: 'refunded',
-          refundedAmount: order.amountPaid,
-          refundedAt: new Date(),
-          refundReason: input.reason ?? null,
+          await tx`
+            UPDATE "user"
+            SET
+              "total_revenue" = GREATEST("total_revenue" - ${refundAmount}, 0),
+              "total_sales_count" = GREATEST("total_sales_count" - 1, 0)
+            WHERE "id" = ${input.userId}
+          `
+
+          if (order.productId) {
+            await tx`
+              UPDATE "product"
+              SET
+                "total_revenue" = GREATEST("total_revenue" - ${refundAmount}, 0),
+                "sales_count" = GREATEST("sales_count" - 1, 0)
+              WHERE "id" = ${order.productId}
+            `
+          }
+
+          return { success: true, refundedAmount: refundAmount }
         })
-        .where(eq(orders.id, order.id))
-
-      // Update cached counters (subtract)
-      await db
-        .update(user)
-        .set({
-          totalRevenue: sql`GREATEST(${user.totalRevenue} - ${refundAmount}, 0)`,
-          totalSalesCount: sql`GREATEST(${user.totalSalesCount} - 1, 0)`,
+      } catch (error) {
+        console.error('[finance][refund] transaction failed', {
+          orderId: input.orderId,
+          userId: input.userId,
+          error,
         })
-        .where(eq(user.id, input.userId))
-
-      if (order.productId) {
-        await db
-          .update(products)
-          .set({
-            totalRevenue: sql`GREATEST(${products.totalRevenue} - ${refundAmount}, 0)`,
-            salesCount: sql`GREATEST(${products.salesCount} - 1, 0)`,
-          })
-          .where(eq(products.id, order.productId))
+        throw error
       }
-
-      return { success: true, refundedAmount: refundAmount }
     }),
 
   /**
@@ -1038,76 +1061,94 @@ const orderRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      const order = await db.query.orders.findFirst({
-        where: eq(orders.id, input.orderId),
-      })
+      const now = new Date()
 
-      if (!order) throw new Error('Order not found')
-      if (order.creatorId !== input.userId) throw new Error('Unauthorized')
-      if (order.status === 'refunded') throw new Error('Already fully refunded')
+      try {
+        return await neonSql.transaction(async (tx) => {
+          const orderRows = await tx<
+            Array<{
+              id: string
+              amountPaid: number
+              refundedAmount: number
+              productId: string | null
+            }>
+          >`
+            UPDATE "order"
+            SET
+              "refunded_amount" = "refunded_amount" + ${input.amount},
+              "refunded_at" = ${now},
+              "refund_reason" = ${input.reason ?? null},
+              "status" = CASE
+                WHEN "refunded_amount" + ${input.amount} >= "amount_paid" THEN 'refunded'
+                ELSE 'partially_refunded'
+              END
+            WHERE
+              "id" = ${input.orderId}
+              AND "creator_id" = ${input.userId}
+              AND "refunded_amount" + ${input.amount} <= "amount_paid"
+            RETURNING
+              "id",
+              "amount_paid" AS "amountPaid",
+              "refunded_amount" AS "refundedAmount",
+              "product_id" AS "productId"
+          `
 
-      const maxRefundable = order.amountPaid - order.refundedAmount
-      if (input.amount > maxRefundable) {
-        throw new Error(
-          `Cannot refund more than ${maxRefundable}. Already refunded ${order.refundedAmount}.`,
-        )
-      }
+          const order = orderRows[0]
+          if (!order) {
+            throw new Error(
+              'Order not found, unauthorized, already refunded, or refund exceeds remaining amount',
+            )
+          }
 
-      // Create PARTIAL_REFUND transaction
-      const { netAmount } = calculateFee(input.amount)
-      await db.insert(transactions).values({
-        id: crypto.randomUUID(),
-        creatorId: input.userId,
-        orderId: order.id,
-        type: TRANSACTION_TYPE.PARTIAL_REFUND,
-        amount: -input.amount,
-        netAmount: -netAmount,
-        platformFeePercent: PLATFORM_FEE_PERCENT,
-        platformFeeAmount: 0,
-        description: `Partial refund: Order ${order.id.slice(0, 8)}`,
-        availableAt: new Date(),
-        metadata: {
-          reason: input.reason ?? 'Partial refund',
-          refundedAmount: input.amount,
-          originalAmount: order.amountPaid,
-        },
-      })
+          const newRefundedTotal = order.refundedAmount
+          const isFullyRefunded = newRefundedTotal >= order.amountPaid
 
-      const newRefundedTotal = order.refundedAmount + input.amount
-      const isFullyRefunded = newRefundedTotal >= order.amountPaid
+          await tx`
+            INSERT INTO "transaction" (
+              "id", "creator_id", "order_id", "type", "amount", "net_amount",
+              "platform_fee_percent", "platform_fee_amount", "description", "metadata", "available_at"
+            ) VALUES (
+              ${crypto.randomUUID()}, ${input.userId}, ${order.id}, ${TRANSACTION_TYPE.REFUND},
+              ${-input.amount}, ${-input.amount}, ${PLATFORM_FEE_PERCENT}, 0,
+              ${`Partial refund: Order ${order.id.slice(0, 8)}`},
+              ${JSON.stringify({
+                reason: input.reason ?? 'Partial refund',
+                refundedAmount: input.amount,
+                originalAmount: order.amountPaid,
+              })}::json,
+              ${now}
+            )
+          `
 
-      await db
-        .update(orders)
-        .set({
-          status: isFullyRefunded ? 'refunded' : 'partially_refunded',
-          refundedAmount: newRefundedTotal,
-          refundedAt: new Date(),
-          refundReason: input.reason ?? null,
+          await tx`
+            UPDATE "user"
+            SET "total_revenue" = GREATEST("total_revenue" - ${input.amount}, 0)
+            WHERE "id" = ${input.userId}
+          `
+
+          if (order.productId) {
+            await tx`
+              UPDATE "product"
+              SET "total_revenue" = GREATEST("total_revenue" - ${input.amount}, 0)
+              WHERE "id" = ${order.productId}
+            `
+          }
+
+          return {
+            success: true,
+            refundedAmount: input.amount,
+            totalRefunded: newRefundedTotal,
+            status: isFullyRefunded ? 'refunded' : 'partially_refunded',
+          }
         })
-        .where(eq(orders.id, order.id))
-
-      // Update cached counters
-      await db
-        .update(user)
-        .set({
-          totalRevenue: sql`GREATEST(${user.totalRevenue} - ${input.amount}, 0)`,
+      } catch (error) {
+        console.error('[finance][partial-refund] transaction failed', {
+          orderId: input.orderId,
+          userId: input.userId,
+          amount: input.amount,
+          error,
         })
-        .where(eq(user.id, input.userId))
-
-      if (order.productId) {
-        await db
-          .update(products)
-          .set({
-            totalRevenue: sql`GREATEST(${products.totalRevenue} - ${input.amount}, 0)`,
-          })
-          .where(eq(products.id, order.productId))
-      }
-
-      return {
-        success: true,
-        refundedAmount: input.amount,
-        totalRefunded: newRefundedTotal,
-        status: isFullyRefunded ? 'refunded' : 'partially_refunded',
+        throw error
       }
     }),
 
@@ -1175,7 +1216,7 @@ const balanceRouter = {
         where: eq(transactions.creatorId, input.userId),
         columns: {
           amount: true,
-          netAmount: true,
+          platformFeeAmount: true,
           type: true,
           availableAt: true,
         },
@@ -1189,21 +1230,26 @@ const balanceRouter = {
       let pendingBalance = 0
 
       for (const txn of allTxns) {
-        if (txn.type === 'sale') {
-          totalEarnings += txn.netAmount
-        } else if (txn.type === 'refund' || txn.type === 'partial_refund') {
-          totalRefunds += Math.abs(txn.netAmount)
-        } else if (txn.type === 'payout') {
-          totalPayouts += Math.abs(txn.netAmount)
-        } else if (txn.type === 'fee') {
-          totalFees += Math.abs(txn.netAmount)
+        const netAmount = getTransactionNetAmount(txn)
+
+        if (txn.type === TRANSACTION_TYPE.SALE) {
+          totalEarnings += netAmount
+        } else if (
+          txn.type === TRANSACTION_TYPE.REFUND ||
+          txn.type === TRANSACTION_TYPE.PARTIAL_REFUND
+        ) {
+          totalRefunds += Math.abs(netAmount)
+        } else if (txn.type === TRANSACTION_TYPE.PAYOUT) {
+          totalPayouts += Math.abs(netAmount)
+        } else if (txn.type === TRANSACTION_TYPE.FEE) {
+          totalFees += Math.abs(netAmount)
         }
 
-        // Compute available vs pending balance
+        // Compute available vs pending balance from ledger + availableAt only.
         if (txn.availableAt <= now) {
-          availableBalance += txn.netAmount
+          availableBalance += netAmount
         } else {
-          pendingBalance += txn.netAmount
+          pendingBalance += netAmount
         }
       }
 
@@ -1215,8 +1261,8 @@ const balanceRouter = {
         totalPayouts,
         totalFees,
         currentBalance,
-        availableBalance: Math.max(0, availableBalance),
-        pendingBalance: Math.max(0, pendingBalance),
+        availableBalance,
+        pendingBalance,
         holdPeriodDays: HOLD_PERIOD_DAYS,
       }
     }),
@@ -1279,76 +1325,92 @@ const payoutRouter = {
     .mutation(async ({ input }) => {
       const now = new Date()
 
-      // Calculate available balance from transactions
-      const allTxns = await db.query.transactions.findMany({
-        where: eq(transactions.creatorId, input.userId),
-        columns: { netAmount: true, availableAt: true },
-      })
+      try {
+        return await neonSql.transaction(async (tx) => {
+          const availableRows = await tx<Array<{ availableBalance: number }>>`
+            SELECT COALESCE(SUM("amount" - "platform_fee_amount"), 0)::int AS "availableBalance"
+            FROM "transaction"
+            WHERE "creator_id" = ${input.userId}
+              AND "available_at" <= ${now}
+          `
 
-      let availableBalance = 0
-      for (const txn of allTxns) {
-        if (txn.availableAt <= now) {
-          availableBalance += txn.netAmount
-        }
-      }
+          const availableBalance = availableRows[0]?.availableBalance ?? 0
+          const payoutAmount = input.amount ?? availableBalance
 
-      availableBalance = Math.max(0, availableBalance)
+          if (payoutAmount <= 0) {
+            throw new Error('No available balance for payout')
+          }
+          if (payoutAmount > availableBalance) {
+            throw new Error(
+              `Requested ${payoutAmount} but only ${availableBalance} available`,
+            )
+          }
 
-      const payoutAmount = input.amount ?? availableBalance
-      if (payoutAmount <= 0) {
-        throw new Error('No available balance for payout')
-      }
-      if (payoutAmount > availableBalance) {
-        throw new Error(
-          `Requested ${payoutAmount} but only ${availableBalance} available`,
-        )
-      }
+          const payoutId = crypto.randomUUID()
 
-      // Check for pending payouts
-      const pendingPayouts = await db.query.payouts.findMany({
-        where: and(
-          eq(payouts.creatorId, input.userId),
-          eq(payouts.status, 'pending'),
-        ),
-      })
-      if (pendingPayouts.length > 0) {
-        throw new Error('You already have a pending payout request')
-      }
+          const payoutRows = await tx<
+            Array<{
+              id: string
+              creatorId: string
+              amount: number
+              status: string
+              periodEnd: Date | null
+              payoutMethod: string | null
+              payoutDetails: Record<string, any> | null
+              createdAt: Date
+              updatedAt: Date
+            }>
+          >`
+            INSERT INTO "payout" (
+              "id", "creator_id", "amount", "status", "period_end", "payout_method", "payout_details"
+            ) VALUES (
+              ${payoutId}, ${input.userId}, ${payoutAmount}, 'pending', ${now},
+              ${input.payoutMethod ?? null}, ${JSON.stringify(input.payoutDetails ?? null)}::json
+            )
+            RETURNING
+              "id",
+              "creator_id" AS "creatorId",
+              "amount",
+              "status",
+              "period_end" AS "periodEnd",
+              "payout_method" AS "payoutMethod",
+              "payout_details" AS "payoutDetails",
+              "created_at" AS "createdAt",
+              "updated_at" AS "updatedAt"
+          `
 
-      // Create payout
-      const payoutId = crypto.randomUUID()
-      const [payout] = await db
-        .insert(payouts)
-        .values({
-          id: payoutId,
-          creatorId: input.userId,
-          amount: payoutAmount,
-          status: 'pending',
-          periodEnd: now,
-          payoutMethod: input.payoutMethod ?? null,
-          payoutDetails: input.payoutDetails ?? null,
+          const payout = payoutRows[0]
+
+          await tx`
+            INSERT INTO "transaction" (
+              "id", "creator_id", "payout_id", "type", "amount", "net_amount",
+              "platform_fee_percent", "platform_fee_amount", "description", "metadata", "available_at"
+            ) VALUES (
+              ${crypto.randomUUID()}, ${input.userId}, ${payoutId}, ${TRANSACTION_TYPE.PAYOUT},
+              ${-payoutAmount}, ${-payoutAmount}, 0, 0,
+              ${`Payout request #${payoutId.slice(0, 8)}`},
+              ${JSON.stringify({ payoutId, payoutMethod: input.payoutMethod })}::json,
+              ${now}
+            )
+          `
+
+          return payout
         })
-        .returning()
+      } catch (error) {
+        console.error('[finance][payout-request] transaction failed', {
+          userId: input.userId,
+          amount: input.amount,
+          error,
+        })
 
-      // Create debit transaction for the payout
-      await db.insert(transactions).values({
-        id: crypto.randomUUID(),
-        creatorId: input.userId,
-        payoutId: payoutId,
-        type: TRANSACTION_TYPE.PAYOUT,
-        amount: -payoutAmount,
-        netAmount: -payoutAmount,
-        platformFeePercent: 0,
-        platformFeeAmount: 0,
-        description: `Payout request #${payoutId.slice(0, 8)}`,
-        availableAt: now,
-        metadata: {
-          payoutId,
-          payoutMethod: input.payoutMethod,
-        },
-      })
+        const message =
+          error instanceof Error ? error.message.toLowerCase() : ''
+        if (message.includes('payout_one_pending_per_creator_idx')) {
+          throw new Error('You already have a pending payout request')
+        }
 
-      return payout
+        throw new Error('Payout request failed. Please retry.')
+      }
     }),
 
   /**

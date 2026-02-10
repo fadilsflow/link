@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   AppHeader,
   AppHeaderContent,
@@ -13,7 +12,6 @@ import {
   ShoppingBag,
   FileText,
   RotateCcw,
-  AlertTriangle,
 } from 'lucide-react'
 import { ColumnDef } from '@tanstack/react-table'
 
@@ -81,13 +79,27 @@ function getStatusBadge(status: string, refundedAmount: number) {
   }
 }
 
+
+function getFinanceUiError(message: string): string {
+  const lower = message.toLowerCase()
+
+  if (lower.includes('already refunded') || lower.includes('nothing to refund')) {
+    return 'This order has already been fully refunded.'
+  }
+  if (lower.includes('refund exceeds') || lower.includes('cannot refund more')) {
+    return 'Refund amount exceeds the remaining paid amount for this order.'
+  }
+  if (lower.includes('not found') && lower.includes('unauthorized')) {
+    return 'Refund could not be processed because the order state changed. Please refresh and try again.'
+  }
+
+  return message
+}
+
 function OrdersPage() {
   const { data: session } = authClient.useSession()
-  const queryClient = useQueryClient()
-
   const {
     data: orders,
-    isLoading,
     refetch,
   } = useQuery({
     queryKey: ['orders', session?.user?.id],
@@ -144,7 +156,7 @@ function OrdersPage() {
     onError: (error) => {
       toastManager.add({
         title: 'Refund Failed',
-        description: error.message,
+        description: getFinanceUiError(error.message),
         type: 'error',
       })
     },
@@ -180,7 +192,7 @@ function OrdersPage() {
                 {title}
               </span>
               <span className="text-xs text-muted-foreground truncate">
-                {new Date(order.createdAt).toLocaleDateString()}
+                Snapshot price: {formatPrice(order.productPrice ?? order.amountPaid)}
               </span>
             </div>
           </div>
@@ -210,15 +222,18 @@ function OrdersPage() {
       ),
       cell: ({ row }) => {
         const order = row.original
-        const netAmount = order.amountPaid - (order.refundedAmount ?? 0)
+        const remainingRefundable = Math.max(0, order.amountPaid - (order.refundedAmount ?? 0))
         return (
           <div className="flex flex-col">
             <span className="font-medium text-sm">
-              {formatPrice(order.amountPaid)}
+              Paid: {formatPrice(order.amountPaid)}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              Net revenue: {formatPrice(remainingRefundable)}
             </span>
             {order.refundedAmount > 0 && (
               <span className="text-xs text-red-500">
-                -{formatPrice(order.refundedAmount)} refunded
+                Refunded: {formatPrice(order.refundedAmount)}
               </span>
             )}
           </div>
@@ -252,8 +267,10 @@ function OrdersPage() {
       id: 'actions',
       cell: ({ row }) => {
         const order = row.original
+        const remainingRefundable = Math.max(0, order.amountPaid - (order.refundedAmount ?? 0))
         const canRefund =
-          order.status === 'completed' || order.status === 'partially_refunded'
+          (order.status === 'completed' || order.status === 'partially_refunded') &&
+          remainingRefundable > 0
         return (
           <Menu>
             <MenuTrigger
@@ -289,11 +306,11 @@ function OrdersPage() {
                 {canRefund && (
                   <MenuItem
                     className="text-destructive focus:text-destructive"
-                    disabled={refundMutation.isPending}
+                    disabled={refundMutation.isPending || !canRefund}
                     onClick={() => {
                       if (
                         confirm(
-                          `Refund ${formatPrice(order.amountPaid - (order.refundedAmount ?? 0))} to ${order.buyerEmail}?`,
+                          `Refund ${formatPrice(remainingRefundable)} to ${order.buyerEmail}?`,
                         )
                       ) {
                         refundMutation.mutate(order.id)

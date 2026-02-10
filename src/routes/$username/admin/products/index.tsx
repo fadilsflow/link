@@ -205,7 +205,7 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
         const publicUrl = `${window.location.origin}/${username}/products/${row.original.id}`
         return (
           <div className="flex items-center gap-4 py-1">
-            <div className="h-12 w-12 shrink-0 rounded-lg bg-zinc-50 overflow-hidden border border-zinc-200 shadow-sm">
+            <div className="h-12 w-12 shrink-0 rounded-lg overflow-hidden border">
               {imageUrl ? (
                 <img
                   src={imageUrl}

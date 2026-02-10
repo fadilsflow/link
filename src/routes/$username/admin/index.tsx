@@ -127,11 +127,7 @@ function HomePage() {
   return (
     <div className="space-y-6 p-6">
       <AppHeader>
-        <AppHeaderContent title="Home">
-          <AppHeaderDescription>
-            Welcome back, {session?.user?.name || 'Creator'}
-          </AppHeaderDescription>
-        </AppHeaderContent>
+        <AppHeaderContent title="Home"></AppHeaderContent>
         <AppHeaderActions></AppHeaderActions>
       </AppHeader>
 

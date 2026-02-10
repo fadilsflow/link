@@ -32,7 +32,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  ChevronsUpDown,
   ChevronUp,
   ChevronDown,
 } from 'lucide-react'
@@ -273,9 +272,7 @@ export function DataTableColumnHeader<TData, TValue>({
           <ChevronDown className="ml-2 h-4 w-4" />
         ) : column.getIsSorted() === 'asc' ? (
           <ChevronUp className="ml-2 h-4 w-4" />
-        ) : (
-          <ChevronsUpDown className="ml-2 h-4 w-4" />
-        )}
+        ) : null}
       </Button>
     </div>
   )

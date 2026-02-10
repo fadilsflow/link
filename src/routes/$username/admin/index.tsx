@@ -175,7 +175,7 @@ function HomePage() {
         {/* Earnings Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Available Balance</CardTitle>
+            <CardTitle>Earnings</CardTitle>
           </CardHeader>
 
           <CardContent className="flex items-center justify-between h-full">

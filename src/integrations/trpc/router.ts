@@ -22,7 +22,7 @@ import { BASE_URL } from '@/lib/constans'
 
 // ─── Hold period for funds (in days) ─────────────────────────────────────────
 const HOLD_PERIOD_DAYS = 7
-const PLATFORM_FEE_PERCENT = 0 // 0% fee for now, easy to change later
+const PLATFORM_FEE_PERCENT = 5 // 5% fee
 
 function getAvailableAt(): Date {
   const d = new Date()
@@ -999,7 +999,9 @@ const orderRouter = {
 
           const order = orderRows[0]
           if (!order) {
-            throw new Error('Order not found, unauthorized, or already refunded')
+            throw new Error(
+              'Order not found, unauthorized, or already refunded',
+            )
           }
 
           const refundAmount = order.amountPaid - order.refundedAmountBefore

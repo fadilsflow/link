@@ -36,6 +36,13 @@
       "when": 1770714927869,
       "tag": "0004_audit_financial_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1770718392052,
+      "tag": "0005_spotty_puma",
+      "breakpoints": true
     }
   ]
 }

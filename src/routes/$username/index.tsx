@@ -205,7 +205,7 @@ function UserProfile() {
 
   React.useEffect(() => {
     if (!user.username) return
-    void trpcClient.user.trackProfileView.mutate({ username: user.username })
+    void trpcClient.user.trackView.mutate({ username: user.username })
   }, [user.username])
 
   const openBlockUrl = (block: PublicBlock) => {

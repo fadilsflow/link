@@ -13,6 +13,7 @@ import {
   Settings,
   ShoppingBag,
   User as UserIcon,
+  Wallet,
 } from 'lucide-react'
 
 import {
@@ -73,6 +74,11 @@ const data = {
       title: 'Orders',
       url: '/$username/admin/orders',
       icon: ShoppingBag,
+    },
+    {
+      title: 'Balance',
+      url: '/$username/admin/balance',
+      icon: Wallet,
     },
     {
       title: 'Analytics',

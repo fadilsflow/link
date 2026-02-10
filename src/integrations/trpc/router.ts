@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, lte, sql, isNull } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
@@ -7,14 +7,38 @@ import {
   blockClicks,
   blocks,
   orders,
+  payouts,
   products,
   profileViews,
   socialLinks,
+  transactions,
   user,
+  TRANSACTION_TYPE,
+  PAYOUT_STATUS,
 } from '@/db/schema'
 import { StorageService } from '@/lib/storage'
 import { sendOrderEmail } from '@/lib/email'
 import { BASE_URL } from '@/lib/constans'
+
+// ─── Hold period for funds (in days) ─────────────────────────────────────────
+const HOLD_PERIOD_DAYS = 7
+const PLATFORM_FEE_PERCENT = 0 // 0% fee for now, easy to change later
+
+function getAvailableAt(): Date {
+  const d = new Date()
+  d.setDate(d.getDate() + HOLD_PERIOD_DAYS)
+  return d
+}
+
+function calculateFee(amount: number): {
+  feeAmount: number
+  netAmount: number
+} {
+  const feeAmount = Math.round((amount * PLATFORM_FEE_PERCENT) / 100)
+  return { feeAmount, netAmount: amount - feeAmount }
+}
+
+// ─── User Router ─────────────────────────────────────────────────────────────
 
 const userRouter = {
   getByEmail: publicProcedure
@@ -23,27 +47,25 @@ const userRouter = {
       const foundUser = await db.query.user.findFirst({
         where: eq(user.email, input.email),
       })
-      return foundUser
+      return foundUser ?? null
     }),
-  updateUsername: publicProcedure
-    .input(
-      z.object({
-        userId: z.string(),
-        username: z
-          .string()
-          .min(3)
-          .max(30)
-          .regex(/^[a-zA-Z0-9_-]+$/),
-      }),
-    )
+  getByUsername: publicProcedure
+    .input(z.object({ username: z.string() }))
+    .query(async ({ input }) => {
+      const foundUser = await db.query.user.findFirst({
+        where: eq(user.username, input.username),
+      })
+      return foundUser ?? null
+    }),
+  setUsername: publicProcedure
+    .input(z.object({ userId: z.string(), username: z.string() }))
     .mutation(async ({ input }) => {
-      // Check if username already exists
-      const existingUser = await db.query.user.findFirst({
+      const existing = await db.query.user.findFirst({
         where: eq(user.username, input.username),
       })
 
-      if (existingUser && existingUser.id !== input.userId) {
-        throw new Error('Username sudah digunakan')
+      if (existing && existing.id !== input.userId) {
+        throw new Error('Username is already taken')
       }
 
       const [updatedUser] = await db
@@ -61,25 +83,26 @@ const userRouter = {
         where: eq(user.username, input.username),
         with: {
           blocks: {
+            where: eq(blocks.isEnabled, true),
             orderBy: [asc(blocks.order)],
           },
           products: {
+            where: and(
+              eq(products.isActive, true),
+              eq(products.isDeleted, false),
+            ),
             orderBy: [desc(products.createdAt)],
           },
           socialLinks: {
+            where: eq(socialLinks.isEnabled, true),
             orderBy: [asc(socialLinks.order)],
           },
         },
       })
-      if (!userProfile) return null
-      return {
-        user: userProfile,
-        blocks: userProfile.blocks,
-        products: userProfile.products,
-        socialLinks: userProfile.socialLinks,
-      }
+
+      return userProfile ?? null
     }),
-  trackProfileView: publicProcedure
+  trackView: publicProcedure
     .input(z.object({ username: z.string() }))
     .mutation(async ({ input }) => {
       const existingUser = await db.query.user.findFirst({
@@ -111,12 +134,7 @@ const userRouter = {
         title: z.string().optional(),
         bio: z.string().optional(),
         image: z.string().nullable().optional(),
-        // Appearance settings
-        // Keep backward compatibility with existing values ('color', 'image')
-        // while allowing a future 'wallpaper' mode if needed.
-        appearanceBgType: z
-          .enum(['banner', 'color', 'image', 'wallpaper'])
-          .optional(),
+        appearanceBgType: z.enum(['banner', 'wallpaper']).optional(),
         appearanceBgWallpaperStyle: z
           .enum(['flat', 'gradient', 'avatar', 'image'])
           .optional(),
@@ -142,7 +160,7 @@ const userRouter = {
           ...(input.appearanceBgType
             ? { appearanceBgType: input.appearanceBgType }
             : {}),
-          ...(input.appearanceBgWallpaperStyle
+          ...(input.appearanceBgWallpaperStyle !== undefined
             ? { appearanceBgWallpaperStyle: input.appearanceBgWallpaperStyle }
             : {}),
           ...(input.appearanceBgColor !== undefined
@@ -184,6 +202,8 @@ const userRouter = {
       return updatedUser
     }),
 } satisfies TRPCRouterRecord
+
+// ─── Block Router ────────────────────────────────────────────────────────────
 
 const blockRouter = {
   trackClick: publicProcedure
@@ -304,6 +324,8 @@ const blockRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+// ─── Product Router ──────────────────────────────────────────────────────────
+
 const priceSettingsSchema = z
   .object({
     payWhatYouWant: z.boolean(),
@@ -361,7 +383,10 @@ const productRouter = {
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       const rows = await db.query.products.findMany({
-        where: eq(products.userId, input.userId),
+        where: and(
+          eq(products.userId, input.userId),
+          eq(products.isDeleted, false),
+        ),
         orderBy: [desc(products.createdAt)],
       })
       return rows
@@ -445,7 +470,6 @@ const productRouter = {
   duplicate: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      // 1. Get original product
       const product = await db.query.products.findFirst({
         where: eq(products.id, input.id),
       })
@@ -454,9 +478,7 @@ const productRouter = {
         throw new Error('Product not found')
       }
 
-      // 2. Create duplicate
       const newId = crypto.randomUUID()
-      // Use explicit fields to avoid type issues and unwanted data
       const [newProduct] = await db
         .insert(products)
         .values({
@@ -483,12 +505,21 @@ const productRouter = {
 
       return newProduct
     }),
+
+  /**
+   * SOFT DELETE — sets isDeleted = true, preserving historical data.
+   * Orders, transactions, and payouts referencing this product remain intact.
+   */
   delete: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input }) => {
-      await db.delete(products).where(eq(products.id, input.id))
+      await db
+        .update(products)
+        .set({ isDeleted: true, isActive: false })
+        .where(eq(products.id, input.id))
       return { success: true }
     }),
+
   toggleActive: publicProcedure
     .input(z.object({ id: z.string(), isActive: z.boolean() }))
     .mutation(async ({ input }) => {
@@ -501,6 +532,8 @@ const productRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+// ─── Social Link Router ──────────────────────────────────────────────────────
+
 const socialLinkRouter = {
   create: publicProcedure
     .input(
@@ -511,7 +544,6 @@ const socialLinkRouter = {
       }),
     )
     .mutation(async ({ input }) => {
-      // Get max order
       const userSocialLinks = await db.query.socialLinks.findMany({
         where: eq(socialLinks.userId, input.userId),
         orderBy: [asc(socialLinks.order)],
@@ -584,6 +616,8 @@ const socialLinkRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+// ─── Storage Router ──────────────────────────────────────────────────────────
+
 export const storageRouter = {
   getUploadUrl: publicProcedure
     .input(z.object({ key: z.string(), contentType: z.string() }))
@@ -592,7 +626,15 @@ export const storageRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+// ─── Order Router ────────────────────────────────────────────────────────────
+
 const orderRouter = {
+  /**
+   * Single product checkout.
+   *
+   * Flow: validate product → snapshot product data → create order →
+   *       create SALE transaction → update cached counters → send email
+   */
   create: publicProcedure
     .input(
       z.object({
@@ -607,7 +649,10 @@ const orderRouter = {
     .mutation(async ({ input }) => {
       // 1. Get product and creator
       const product = await db.query.products.findFirst({
-        where: eq(products.id, input.productId),
+        where: and(
+          eq(products.id, input.productId),
+          eq(products.isDeleted, false),
+        ),
         with: {
           user: true, // creator
         },
@@ -621,7 +666,7 @@ const orderRouter = {
         throw new Error('Product is not active')
       }
 
-      // Check quantity limits if applicable (simple check)
+      // Check quantity limits
       if (
         product.totalQuantity !== null &&
         product.totalQuantity !== undefined &&
@@ -632,7 +677,17 @@ const orderRouter = {
 
       const creator = product.user
 
-      // 2. Create Order
+      // 2. Snapshot product data at checkout
+      const productImage = product.images?.[0] ?? null
+      const effectivePrice = product.payWhatYouWant
+        ? input.amountPaid
+        : product.salePrice &&
+            product.price &&
+            product.salePrice < product.price
+          ? product.salePrice
+          : (product.price ?? 0)
+
+      // 3. Create Order with snapshot
       const deliveryToken = crypto.randomUUID()
       const orderId = crypto.randomUUID()
 
@@ -642,19 +697,44 @@ const orderRouter = {
           id: orderId,
           creatorId: creator.id,
           productId: product.id,
+          // Snapshot fields
+          productTitle: product.title,
+          productPrice: effectivePrice,
+          productImage,
+          // Buyer info
           buyerEmail: input.buyerEmail,
           buyerName: input.buyerName ?? '',
           amountPaid: input.amountPaid,
           checkoutAnswers: input.answers ?? {},
           note: input.note ?? null,
-          status: 'completed', // No payment gateway yet, so auto-complete
+          status: 'completed',
           deliveryToken,
           emailSent: false,
         })
         .returning()
 
-      // 3. Update analytics counters
-      // Update product analytics (salesCount, totalRevenue)
+      // 4. Create SALE transaction (append-only ledger entry)
+      const { feeAmount, netAmount } = calculateFee(input.amountPaid)
+      const txnId = crypto.randomUUID()
+
+      await db.insert(transactions).values({
+        id: txnId,
+        creatorId: creator.id,
+        orderId: orderId,
+        type: TRANSACTION_TYPE.SALE,
+        amount: input.amountPaid,
+        netAmount,
+        platformFeePercent: PLATFORM_FEE_PERCENT,
+        platformFeeAmount: feeAmount,
+        description: `Sale: ${product.title}`,
+        availableAt: getAvailableAt(),
+        metadata: {
+          productId: product.id,
+          buyerEmail: input.buyerEmail,
+        },
+      })
+
+      // 5. Update cached analytics counters (denormalized, not source of truth)
       await db
         .update(products)
         .set({
@@ -663,7 +743,6 @@ const orderRouter = {
         })
         .where(eq(products.id, product.id))
 
-      // Update creator/profile analytics (totalSalesCount, totalRevenue)
       await db
         .update(user)
         .set({
@@ -672,10 +751,7 @@ const orderRouter = {
         })
         .where(eq(user.id, creator.id))
 
-      // 4. Send Email (async / fire and forget, but update status)
-      // In a real message queue, this would be separate.
-      // Here we await it to report status early, or we can background it.
-      // For MVP, we'll await it to ensure it works.
+      // 6. Send Email
       const deliveryUrl = `${BASE_URL}/d/${deliveryToken}`
       const emailResult = await sendOrderEmail({
         to: input.buyerEmail,
@@ -704,6 +780,10 @@ const orderRouter = {
       }
     }),
 
+  /**
+   * Multi-product cart checkout.
+   * Creates one order + one SALE transaction per product in the cart.
+   */
   createMultiple: publicProcedure
     .input(
       z.object({
@@ -726,7 +806,10 @@ const orderRouter = {
 
       const productIds = input.items.map((i) => i.productId)
       const productsList = await db.query.products.findMany({
-        where: inArray(products.id, productIds),
+        where: and(
+          inArray(products.id, productIds),
+          eq(products.isDeleted, false),
+        ),
         with: { user: true },
       })
 
@@ -735,10 +818,10 @@ const orderRouter = {
 
       for (const item of input.items) {
         const product = productMap.get(item.productId)
-        if (!product) continue // Skip if not found
-        if (!product.isActive) continue // Skip if inactive
+        if (!product) continue
+        if (!product.isActive) continue
 
-        // Check quantity limits if applicable (simple check)
+        // Check quantity limits
         if (
           product.totalQuantity !== null &&
           product.totalQuantity !== undefined &&
@@ -752,8 +835,15 @@ const orderRouter = {
         const creator = product.user
         const totalAmount = item.amountPaidPerUnit * item.quantity
 
-        // Create orders based on quantity?
-        // No, create one order record with quantity field.
+        // Snapshot product data
+        const productImage = product.images?.[0] ?? null
+        const effectivePrice = product.payWhatYouWant
+          ? item.amountPaidPerUnit
+          : product.salePrice &&
+              product.price &&
+              product.salePrice < product.price
+            ? product.salePrice
+            : (product.price ?? 0)
 
         const deliveryToken = crypto.randomUUID()
         const orderId = crypto.randomUUID()
@@ -764,6 +854,11 @@ const orderRouter = {
             id: orderId,
             creatorId: creator.id,
             productId: product.id,
+            // Snapshot fields
+            productTitle: product.title,
+            productPrice: effectivePrice,
+            productImage,
+            // Buyer info
             buyerEmail: input.buyerEmail,
             buyerName: input.buyerName ?? '',
             amountPaid: totalAmount,
@@ -776,7 +871,27 @@ const orderRouter = {
           })
           .returning()
 
-        // Update analytics
+        // Create SALE transaction
+        const { feeAmount, netAmount } = calculateFee(totalAmount)
+        await db.insert(transactions).values({
+          id: crypto.randomUUID(),
+          creatorId: creator.id,
+          orderId: orderId,
+          type: TRANSACTION_TYPE.SALE,
+          amount: totalAmount,
+          netAmount,
+          platformFeePercent: PLATFORM_FEE_PERCENT,
+          platformFeeAmount: feeAmount,
+          description: `Sale: ${product.title} x${item.quantity}`,
+          availableAt: getAvailableAt(),
+          metadata: {
+            productId: product.id,
+            buyerEmail: input.buyerEmail,
+            quantity: item.quantity,
+          },
+        })
+
+        // Update cached counters
         await db
           .update(products)
           .set({
@@ -826,17 +941,179 @@ const orderRouter = {
       const rows = await db.query.orders.findMany({
         where: eq(orders.creatorId, input.userId),
         with: {
-          product: true,
+          product: true, // may be null if product was hard-deleted
         },
         orderBy: [desc(orders.createdAt)],
       })
       return rows
     }),
 
+  /**
+   * Full refund — creates a REFUND transaction and updates order status.
+   * The original SALE transaction is NOT modified (append-only ledger).
+   */
+  refund: publicProcedure
+    .input(
+      z.object({
+        orderId: z.string(),
+        userId: z.string(),
+        reason: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const order = await db.query.orders.findFirst({
+        where: eq(orders.id, input.orderId),
+      })
+
+      if (!order) throw new Error('Order not found')
+      if (order.creatorId !== input.userId) throw new Error('Unauthorized')
+      if (order.status === 'refunded') throw new Error('Already refunded')
+
+      const refundAmount = order.amountPaid - order.refundedAmount
+
+      if (refundAmount <= 0) throw new Error('Nothing to refund')
+
+      // Create REFUND transaction (negative amount)
+      const { netAmount } = calculateFee(refundAmount)
+      await db.insert(transactions).values({
+        id: crypto.randomUUID(),
+        creatorId: input.userId,
+        orderId: order.id,
+        type: TRANSACTION_TYPE.REFUND,
+        amount: -refundAmount,
+        netAmount: -netAmount,
+        platformFeePercent: PLATFORM_FEE_PERCENT,
+        platformFeeAmount: 0,
+        description: `Refund: Order ${order.id.slice(0, 8)}`,
+        availableAt: new Date(), // refunds are immediately effective
+        metadata: {
+          reason: input.reason ?? 'Full refund',
+          originalAmount: order.amountPaid,
+        },
+      })
+
+      // Update order status
+      await db
+        .update(orders)
+        .set({
+          status: 'refunded',
+          refundedAmount: order.amountPaid,
+          refundedAt: new Date(),
+          refundReason: input.reason ?? null,
+        })
+        .where(eq(orders.id, order.id))
+
+      // Update cached counters (subtract)
+      await db
+        .update(user)
+        .set({
+          totalRevenue: sql`GREATEST(${user.totalRevenue} - ${refundAmount}, 0)`,
+          totalSalesCount: sql`GREATEST(${user.totalSalesCount} - 1, 0)`,
+        })
+        .where(eq(user.id, input.userId))
+
+      if (order.productId) {
+        await db
+          .update(products)
+          .set({
+            totalRevenue: sql`GREATEST(${products.totalRevenue} - ${refundAmount}, 0)`,
+            salesCount: sql`GREATEST(${products.salesCount} - 1, 0)`,
+          })
+          .where(eq(products.id, order.productId))
+      }
+
+      return { success: true, refundedAmount: refundAmount }
+    }),
+
+  /**
+   * Partial refund — refunds a specific amount from the order.
+   */
+  partialRefund: publicProcedure
+    .input(
+      z.object({
+        orderId: z.string(),
+        userId: z.string(),
+        amount: z.number().int().positive(),
+        reason: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const order = await db.query.orders.findFirst({
+        where: eq(orders.id, input.orderId),
+      })
+
+      if (!order) throw new Error('Order not found')
+      if (order.creatorId !== input.userId) throw new Error('Unauthorized')
+      if (order.status === 'refunded') throw new Error('Already fully refunded')
+
+      const maxRefundable = order.amountPaid - order.refundedAmount
+      if (input.amount > maxRefundable) {
+        throw new Error(
+          `Cannot refund more than ${maxRefundable}. Already refunded ${order.refundedAmount}.`,
+        )
+      }
+
+      // Create PARTIAL_REFUND transaction
+      const { netAmount } = calculateFee(input.amount)
+      await db.insert(transactions).values({
+        id: crypto.randomUUID(),
+        creatorId: input.userId,
+        orderId: order.id,
+        type: TRANSACTION_TYPE.PARTIAL_REFUND,
+        amount: -input.amount,
+        netAmount: -netAmount,
+        platformFeePercent: PLATFORM_FEE_PERCENT,
+        platformFeeAmount: 0,
+        description: `Partial refund: Order ${order.id.slice(0, 8)}`,
+        availableAt: new Date(),
+        metadata: {
+          reason: input.reason ?? 'Partial refund',
+          refundedAmount: input.amount,
+          originalAmount: order.amountPaid,
+        },
+      })
+
+      const newRefundedTotal = order.refundedAmount + input.amount
+      const isFullyRefunded = newRefundedTotal >= order.amountPaid
+
+      await db
+        .update(orders)
+        .set({
+          status: isFullyRefunded ? 'refunded' : 'partially_refunded',
+          refundedAmount: newRefundedTotal,
+          refundedAt: new Date(),
+          refundReason: input.reason ?? null,
+        })
+        .where(eq(orders.id, order.id))
+
+      // Update cached counters
+      await db
+        .update(user)
+        .set({
+          totalRevenue: sql`GREATEST(${user.totalRevenue} - ${input.amount}, 0)`,
+        })
+        .where(eq(user.id, input.userId))
+
+      if (order.productId) {
+        await db
+          .update(products)
+          .set({
+            totalRevenue: sql`GREATEST(${products.totalRevenue} - ${input.amount}, 0)`,
+          })
+          .where(eq(products.id, order.productId))
+      }
+
+      return {
+        success: true,
+        refundedAmount: input.amount,
+        totalRefunded: newRefundedTotal,
+        status: isFullyRefunded ? 'refunded' : 'partially_refunded',
+      }
+    }),
+
   resendEmail: publicProcedure
     .input(z.object({ orderId: z.string(), userId: z.string() }))
     .mutation(async ({ input }) => {
-      // 1. Get order with details
       const order = await db.query.orders.findFirst({
         where: eq(orders.id, input.orderId),
         with: {
@@ -850,12 +1127,23 @@ const orderRouter = {
 
       const deliveryUrl = `${BASE_URL}/d/${order.deliveryToken}`
 
+      // Use snapshot data for email, fallback to product relation if available
+      const emailProduct = order.product ?? {
+        title: order.productTitle,
+        images: order.productImage ? [order.productImage] : [],
+      }
+
+      const emailCreator = order.creator ?? {
+        name: 'Creator',
+        email: '',
+      }
+
       const emailResult = await sendOrderEmail({
         to: order.buyerEmail,
         deliveryUrl,
         order,
-        product: order.product,
-        creator: order.creator,
+        product: emailProduct,
+        creator: emailCreator,
       })
 
       if (emailResult.success) {
@@ -869,6 +1157,255 @@ const orderRouter = {
       }
     }),
 } satisfies TRPCRouterRecord
+
+// ─── Transaction / Balance Router ────────────────────────────────────────────
+
+const balanceRouter = {
+  /**
+   * Get creator's financial summary.
+   * Balance is computed from the transactions ledger (single source of truth).
+   */
+  getSummary: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input }) => {
+      const now = new Date()
+
+      // Total balance (all transactions)
+      const allTxns = await db.query.transactions.findMany({
+        where: eq(transactions.creatorId, input.userId),
+        columns: {
+          amount: true,
+          netAmount: true,
+          type: true,
+          availableAt: true,
+        },
+      })
+
+      let totalEarnings = 0
+      let totalRefunds = 0
+      let totalPayouts = 0
+      let totalFees = 0
+      let availableBalance = 0
+      let pendingBalance = 0
+
+      for (const txn of allTxns) {
+        if (txn.type === 'sale') {
+          totalEarnings += txn.netAmount
+        } else if (txn.type === 'refund' || txn.type === 'partial_refund') {
+          totalRefunds += Math.abs(txn.netAmount)
+        } else if (txn.type === 'payout') {
+          totalPayouts += Math.abs(txn.netAmount)
+        } else if (txn.type === 'fee') {
+          totalFees += Math.abs(txn.netAmount)
+        }
+
+        // Compute available vs pending balance
+        if (txn.availableAt <= now) {
+          availableBalance += txn.netAmount
+        } else {
+          pendingBalance += txn.netAmount
+        }
+      }
+
+      const currentBalance = availableBalance + pendingBalance
+
+      return {
+        totalEarnings,
+        totalRefunds,
+        totalPayouts,
+        totalFees,
+        currentBalance,
+        availableBalance: Math.max(0, availableBalance),
+        pendingBalance: Math.max(0, pendingBalance),
+        holdPeriodDays: HOLD_PERIOD_DAYS,
+      }
+    }),
+
+  /**
+   * Get transaction history for a creator.
+   */
+  getTransactions: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        limit: z.number().int().min(1).max(100).default(50),
+        offset: z.number().int().min(0).default(0),
+        type: z.string().optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const conditions = [eq(transactions.creatorId, input.userId)]
+      if (input.type) {
+        conditions.push(eq(transactions.type, input.type))
+      }
+
+      const rows = await db.query.transactions.findMany({
+        where: and(...conditions),
+        with: {
+          order: {
+            columns: {
+              id: true,
+              buyerEmail: true,
+              buyerName: true,
+              productTitle: true,
+            },
+          },
+        },
+        orderBy: [desc(transactions.createdAt)],
+        limit: input.limit,
+        offset: input.offset,
+      })
+
+      return rows
+    }),
+} satisfies TRPCRouterRecord
+
+// ─── Payout Router ───────────────────────────────────────────────────────────
+
+const payoutRouter = {
+  /**
+   * Request a payout of available balance.
+   * Creates a payout record + debit transaction.
+   */
+  request: publicProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        amount: z.number().int().positive().optional(), // if not specified, payout all available
+        payoutMethod: z.string().optional(),
+        payoutDetails: z.any().optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const now = new Date()
+
+      // Calculate available balance from transactions
+      const allTxns = await db.query.transactions.findMany({
+        where: eq(transactions.creatorId, input.userId),
+        columns: { netAmount: true, availableAt: true },
+      })
+
+      let availableBalance = 0
+      for (const txn of allTxns) {
+        if (txn.availableAt <= now) {
+          availableBalance += txn.netAmount
+        }
+      }
+
+      availableBalance = Math.max(0, availableBalance)
+
+      const payoutAmount = input.amount ?? availableBalance
+      if (payoutAmount <= 0) {
+        throw new Error('No available balance for payout')
+      }
+      if (payoutAmount > availableBalance) {
+        throw new Error(
+          `Requested ${payoutAmount} but only ${availableBalance} available`,
+        )
+      }
+
+      // Check for pending payouts
+      const pendingPayouts = await db.query.payouts.findMany({
+        where: and(
+          eq(payouts.creatorId, input.userId),
+          eq(payouts.status, 'pending'),
+        ),
+      })
+      if (pendingPayouts.length > 0) {
+        throw new Error('You already have a pending payout request')
+      }
+
+      // Create payout
+      const payoutId = crypto.randomUUID()
+      const [payout] = await db
+        .insert(payouts)
+        .values({
+          id: payoutId,
+          creatorId: input.userId,
+          amount: payoutAmount,
+          status: 'pending',
+          periodEnd: now,
+          payoutMethod: input.payoutMethod ?? null,
+          payoutDetails: input.payoutDetails ?? null,
+        })
+        .returning()
+
+      // Create debit transaction for the payout
+      await db.insert(transactions).values({
+        id: crypto.randomUUID(),
+        creatorId: input.userId,
+        payoutId: payoutId,
+        type: TRANSACTION_TYPE.PAYOUT,
+        amount: -payoutAmount,
+        netAmount: -payoutAmount,
+        platformFeePercent: 0,
+        platformFeeAmount: 0,
+        description: `Payout request #${payoutId.slice(0, 8)}`,
+        availableAt: now,
+        metadata: {
+          payoutId,
+          payoutMethod: input.payoutMethod,
+        },
+      })
+
+      return payout
+    }),
+
+  /**
+   * List all payouts for a creator.
+   */
+  list: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .query(async ({ input }) => {
+      const rows = await db.query.payouts.findMany({
+        where: eq(payouts.creatorId, input.userId),
+        orderBy: [desc(payouts.createdAt)],
+      })
+      return rows
+    }),
+
+  /**
+   * Cancel a pending payout (reverses the debit transaction).
+   */
+  cancel: publicProcedure
+    .input(z.object({ payoutId: z.string(), userId: z.string() }))
+    .mutation(async ({ input }) => {
+      const payout = await db.query.payouts.findFirst({
+        where: eq(payouts.id, input.payoutId),
+      })
+
+      if (!payout) throw new Error('Payout not found')
+      if (payout.creatorId !== input.userId) throw new Error('Unauthorized')
+      if (payout.status !== 'pending') {
+        throw new Error('Can only cancel pending payouts')
+      }
+
+      // Update payout status
+      await db
+        .update(payouts)
+        .set({ status: 'cancelled' })
+        .where(eq(payouts.id, payout.id))
+
+      // Create reversal transaction (positive amount to restore balance)
+      await db.insert(transactions).values({
+        id: crypto.randomUUID(),
+        creatorId: input.userId,
+        payoutId: payout.id,
+        type: TRANSACTION_TYPE.ADJUSTMENT,
+        amount: payout.amount,
+        netAmount: payout.amount,
+        platformFeePercent: 0,
+        platformFeeAmount: 0,
+        description: `Payout cancelled: #${payout.id.slice(0, 8)}`,
+        availableAt: new Date(),
+        metadata: { cancelledPayoutId: payout.id },
+      })
+
+      return { success: true }
+    }),
+} satisfies TRPCRouterRecord
+
+// ─── Analytics Router ────────────────────────────────────────────────────────
 
 const analyticsRouter = {
   getOverview: publicProcedure
@@ -906,7 +1443,7 @@ const analyticsRouter = {
         orderBy: [desc(blocks.clicks)],
       })
 
-      // Orders query for revenue/sales
+      // Orders query — uses snapshot data, not product relation
       const orderConditions = [eq(orders.creatorId, input.userId)]
       if (fromDate) orderConditions.push(gte(orders.createdAt, fromDate))
       if (toDate) orderConditions.push(lte(orders.createdAt, toDate))
@@ -915,7 +1452,9 @@ const analyticsRouter = {
         where: and(...orderConditions),
         columns: {
           amountPaid: true,
+          refundedAmount: true,
           createdAt: true,
+          status: true,
         },
         orderBy: [asc(orders.createdAt)],
       })
@@ -951,9 +1490,6 @@ const analyticsRouter = {
         }
       >()
 
-      // Initialize map with all days in range if feasible, or just iterate data
-      // For simplicity, we'll just aggregate available data points
-
       for (const order of orderRows) {
         const day = order.createdAt.toISOString().slice(0, 10)
         const existing = byDay.get(day) ?? {
@@ -964,7 +1500,8 @@ const analyticsRouter = {
           clicks: 0,
         }
         existing.sales += 1
-        existing.revenue += order.amountPaid
+        // Use net revenue (amountPaid minus refunds)
+        existing.revenue += order.amountPaid - (order.refundedAmount ?? 0)
         byDay.set(day, existing)
       }
 
@@ -1000,7 +1537,7 @@ const analyticsRouter = {
       )
 
       const rangeRevenue = orderRows.reduce(
-        (acc, row) => acc + row.amountPaid,
+        (acc, row) => acc + row.amountPaid - (row.refundedAmount ?? 0),
         0,
       )
       const rangeSales = orderRows.length
@@ -1034,7 +1571,10 @@ const analyticsRouter = {
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       const productRows = await db.query.products.findMany({
-        where: eq(products.userId, input.userId),
+        where: and(
+          eq(products.userId, input.userId),
+          eq(products.isDeleted, false),
+        ),
         columns: {
           id: true,
           title: true,
@@ -1059,6 +1599,8 @@ const analyticsRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+// ─── Main Router ─────────────────────────────────────────────────────────────
+
 export const trpcRouter = createTRPCRouter({
   user: userRouter,
   block: blockRouter,
@@ -1066,6 +1608,8 @@ export const trpcRouter = createTRPCRouter({
   socialLink: socialLinkRouter,
   storage: storageRouter,
   order: orderRouter,
+  balance: balanceRouter,
+  payout: payoutRouter,
   analytics: analyticsRouter,
 })
 export type TRPCRouter = typeof trpcRouter

@@ -37,7 +37,7 @@ function OnboardingPage() {
     }
 
     try {
-      await trpcClient.user.updateUsername.mutate({
+      await trpcClient.user.setUsername.mutate({
         userId: session.user.id,
         username,
       })

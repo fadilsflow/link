@@ -23,7 +23,7 @@ export async function generateInvoicePdf(
   doc.text(`Invoice #: ${order.id.slice(0, 8).toUpperCase()}`, 14, 30)
   doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 14, 35)
 
-  // Seller Info (Right aligned)
+  // Seller Info (Right aligned) — use snapshot creator data
   const pageWidth = doc.internal.pageSize.width
   doc.text(creator.name || 'Seller', pageWidth - 14, 22, { align: 'right' })
   doc.text(creator.email || '', pageWidth - 14, 27, { align: 'right' })
@@ -35,11 +35,12 @@ export async function generateInvoicePdf(
   doc.setFontSize(10)
   doc.text(order.buyerEmail, 14, 61)
 
-  // Order Items Table
+  // Order Items Table — use snapshot product title from order
+  const displayTitle = order.productTitle ?? product.title ?? 'Product'
   const tableColumn = ['Item', 'Quantity', 'Price', 'Total']
   const tableRows = [
     [
-      product.title,
+      displayTitle,
       order.quantity || 1,
       formatPrice(order.amountPaid),
       formatPrice(order.amountPaid),
@@ -72,9 +73,25 @@ export async function generateInvoicePdf(
     align: 'right',
   })
 
+  // Refund info if applicable
+  if (order.refundedAmount && order.refundedAmount > 0) {
+    doc.setTextColor(220, 50, 50)
+    doc.text(
+      `Refunded: -${formatPrice(order.refundedAmount)}`,
+      pageWidth - 14,
+      finalY + 7,
+      { align: 'right' },
+    )
+    doc.setTextColor(0, 0, 0)
+    const netAmount = order.amountPaid - order.refundedAmount
+    doc.text(`Net: ${formatPrice(netAmount)}`, pageWidth - 14, finalY + 14, {
+      align: 'right',
+    })
+  }
+
   // Footer
   doc.setFontSize(10)
-  doc.text('Thank you for your business!', 14, finalY + 20)
+  doc.text('Thank you for your business!', 14, finalY + 25)
 
   // Return as Buffer
   return Buffer.from(doc.output('arraybuffer'))

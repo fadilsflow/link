@@ -1,4 +1,3 @@
-
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import {
   Download,
@@ -29,8 +28,12 @@ function OrderDeliveryPage() {
   const productFiles = (product.productFiles as any[]) || []
   const productImages = (product.images as string[]) || []
 
+  // Use snapshot title from the order (immutable), fallback to product
+  const displayTitle = order.productTitle ?? product.title ?? 'Product'
+  const displayImage = order.productImage ?? productImages[0] ?? null
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white py-12 px-4">
+    <div className="min-h-screen bg-linear-to-b from-slate-50 to-white py-12 px-4">
       <div className="max-w-2xl mx-auto space-y-8">
         {/* Success Header */}
         <div className="text-center space-y-4">
@@ -41,7 +44,7 @@ function OrderDeliveryPage() {
             Thanks for your order!
           </h1>
           <p className="text-slate-500 max-w-md mx-auto">
-            You now have access to <strong>{product.title}</strong>. We've also
+            You now have access to <strong>{displayTitle}</strong>. We've also
             sent a confirmation email to <strong>{order.buyerEmail}</strong>.
           </p>
         </div>
@@ -50,16 +53,16 @@ function OrderDeliveryPage() {
         <Card className="shadow-xl border-0 rounded-2xl overflow-hidden">
           <CardHeader className="bg-slate-50 border-b border-slate-100 pb-8 pt-8 px-6 md:px-10">
             <div className="flex items-start gap-6">
-              {productImages.length > 0 ? (
-                <div className="w-24 h-24 rounded-xl overflow-hidden bg-white shadow-sm flex-shrink-0">
+              {displayImage ? (
+                <div className="w-24 h-24 rounded-xl overflow-hidden bg-white shadow-sm shrink-0">
                   <img
-                    src={productImages[0]}
-                    alt={product.title}
+                    src={displayImage}
+                    alt={displayTitle}
                     className="w-full h-full object-cover"
                   />
                 </div>
               ) : (
-                <div className="w-24 h-24 rounded-xl bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                <div className="w-24 h-24 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0">
                   <ShoppingBag className="h-10 w-10 text-slate-300" />
                 </div>
               )}
@@ -68,7 +71,7 @@ function OrderDeliveryPage() {
                   Purchased
                 </span>
                 <h2 className="text-2xl font-bold text-slate-900 leading-tight">
-                  {product.title}
+                  {displayTitle}
                 </h2>
                 <div className="flex items-center gap-2 mt-3">
                   <Avatar className="h-5 w-5">
@@ -76,7 +79,7 @@ function OrderDeliveryPage() {
                       src={creator.image || '/avatar-placeholder.png'}
                     />
                     <AvatarFallback className="text-[9px]">
-                      {creator.name.slice(0, 2).toUpperCase()}
+                      {(creator.name ?? 'C').slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-sm text-slate-500">
@@ -94,7 +97,7 @@ function OrderDeliveryPage() {
                 Your Content
               </h3>
 
-              {/* Product URL */}
+              {/* Product URL — uses live product data if available */}
               {product.productUrl && (
                 <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors group">
                   <div className="flex items-center justify-between gap-4">
@@ -111,12 +114,17 @@ function OrderDeliveryPage() {
                         </p>
                       </div>
                     </div>
-                    <Button render={<a
-                      href={product.productUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    />} size="sm" className="rounded-lg">
-
+                    <Button
+                      render={
+                        <a
+                          href={product.productUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        />
+                      }
+                      size="sm"
+                      className="rounded-lg"
+                    >
                       Open
                     </Button>
                   </div>
@@ -132,7 +140,7 @@ function OrderDeliveryPage() {
                       className="p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between gap-4"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-2 bg-purple-100 text-purple-600 rounded-lg flex-shrink-0">
+                        <div className="p-2 bg-purple-100 text-purple-600 rounded-lg shrink-0">
                           <FileIcon className="h-5 w-5" />
                         </div>
                         <div className="min-w-0">
@@ -180,7 +188,7 @@ function OrderDeliveryPage() {
 
             <Separator />
 
-            {/* Order Details */}
+            {/* Order Details — uses snapshot data for immutability */}
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
                 Order Summary
@@ -203,20 +211,32 @@ function OrderDeliveryPage() {
                   {formatPrice(order.amountPaid)}
                 </span>
               </div>
+              {order.refundedAmount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-red-500">Refunded</span>
+                  <span className="font-semibold text-red-500">
+                    -{formatPrice(order.refundedAmount)}
+                  </span>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
         {/* Footer Actions */}
         <div className="flex justify-center gap-4">
-          <Button variant="ghost" render={<Link
-            to="/$username"
-            params={{ username: creator.username ?? creator.name }}
-          />}>
-            More from {creator.name}
-          </Button>
+          {creator.username && (
+            <Button
+              variant="ghost"
+              render={
+                <Link to="/$username" params={{ username: creator.username }} />
+              }
+            >
+              More from {creator.name}
+            </Button>
+          )}
         </div>
       </div>
-    </div >
+    </div>
   )
 }

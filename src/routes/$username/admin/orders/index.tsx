@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AppHeader,
   AppHeaderContent,
@@ -12,6 +12,8 @@ import {
   MoreHorizontal,
   ShoppingBag,
   FileText,
+  RotateCcw,
+  AlertTriangle,
 } from 'lucide-react'
 import { ColumnDef } from '@tanstack/react-table'
 
@@ -38,8 +40,50 @@ export const Route = createFileRoute('/$username/admin/orders/')({
   component: OrdersPage,
 })
 
+function getStatusBadge(status: string, refundedAmount: number) {
+  switch (status) {
+    case 'refunded':
+      return (
+        <Badge
+          variant="outline"
+          className="border-red-500/30 text-red-600 bg-red-50/50"
+        >
+          Refunded
+        </Badge>
+      )
+    case 'partially_refunded':
+      return (
+        <Badge
+          variant="outline"
+          className="border-amber-500/30 text-amber-600 bg-amber-50/50"
+        >
+          Partial Refund ({formatPrice(refundedAmount)})
+        </Badge>
+      )
+    case 'cancelled':
+      return (
+        <Badge
+          variant="outline"
+          className="border-zinc-500/30 text-zinc-600 bg-zinc-50/50"
+        >
+          Cancelled
+        </Badge>
+      )
+    default:
+      return (
+        <Badge
+          variant="outline"
+          className="border-emerald-500/30 text-emerald-600 bg-emerald-50/50"
+        >
+          Paid
+        </Badge>
+      )
+  }
+}
+
 function OrdersPage() {
   const { data: session } = authClient.useSession()
+  const queryClient = useQueryClient()
 
   const {
     data: orders,
@@ -81,6 +125,31 @@ function OrdersPage() {
     },
   })
 
+  // Full Refund Mutation
+  const refundMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      if (!session?.user?.id) throw new Error('Unauthorized')
+      return await trpcClient.order.refund.mutate({
+        orderId,
+        userId: session.user.id,
+      })
+    },
+    onSuccess: (data) => {
+      toastManager.add({
+        title: 'Refund Processed',
+        description: `${formatPrice(data.refundedAmount)} has been refunded.`,
+      })
+      refetch()
+    },
+    onError: (error) => {
+      toastManager.add({
+        title: 'Refund Failed',
+        description: error.message,
+        type: 'error',
+      })
+    },
+  })
+
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: 'product',
@@ -88,14 +157,18 @@ function OrdersPage() {
         <DataTableColumnHeader column={column} title="Product" />
       ),
       cell: ({ row }) => {
-        const product = row.original.product
+        // Use snapshot data (immutable), fallback to product relation
+        const order = row.original
+        const title =
+          order.productTitle ?? order.product?.title ?? 'Deleted Product'
+        const image = order.productImage ?? order.product?.images?.[0] ?? null
         return (
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-md flex items-center justify-center overflow-hidden flex-shrink-0 bg-secondary/50 border">
-              {product.images && product.images.length > 0 ? (
+            <div className="h-9 w-9 rounded-md flex items-center justify-center overflow-hidden shrink-0 bg-secondary/50 border">
+              {image ? (
                 <img
-                  src={product.images[0]}
-                  alt={product.title}
+                  src={image}
+                  alt={title}
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -104,10 +177,10 @@ function OrdersPage() {
             </div>
             <div className="min-w-0 flex flex-col">
               <span className="font-medium text-sm truncate max-w-[200px]">
-                {product.title}
+                {title}
               </span>
               <span className="text-xs text-muted-foreground truncate">
-                {new Date(row.original.createdAt).toLocaleDateString()}
+                {new Date(order.createdAt).toLocaleDateString()}
               </span>
             </div>
           </div>
@@ -135,25 +208,32 @@ function OrdersPage() {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Amount" />
       ),
-      cell: ({ row }) => (
-        <span className="font-medium text-sm">
-          {formatPrice(row.original.amountPaid)}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const order = row.original
+        const netAmount = order.amountPaid - (order.refundedAmount ?? 0)
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium text-sm">
+              {formatPrice(order.amountPaid)}
+            </span>
+            {order.refundedAmount > 0 && (
+              <span className="text-xs text-red-500">
+                -{formatPrice(order.refundedAmount)} refunded
+              </span>
+            )}
+          </div>
+        )
+      },
     },
     {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const isSent = row.original.emailSent
+        const order = row.original
+        const isSent = order.emailSent
         return (
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className="border-emerald-500/30 text-emerald-600 bg-emerald-50/50"
-            >
-              Paid
-            </Badge>
+          <div className="flex items-center gap-2 flex-wrap">
+            {getStatusBadge(order.status, order.refundedAmount ?? 0)}
             <Badge
               variant="outline"
               className={
@@ -172,6 +252,8 @@ function OrdersPage() {
       id: 'actions',
       cell: ({ row }) => {
         const order = row.original
+        const canRefund =
+          order.status === 'completed' || order.status === 'partially_refunded'
         return (
           <Menu>
             <MenuTrigger
@@ -182,7 +264,7 @@ function OrdersPage() {
               <span className="sr-only">Open menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </MenuTrigger>
-            <MenuPopup align="end" className="w-[180px]">
+            <MenuPopup align="end" className="w-[200px]">
               <MenuGroup>
                 <MenuGroupLabel>Actions</MenuGroupLabel>
                 <MenuItem
@@ -204,6 +286,24 @@ function OrdersPage() {
                   Resend Email
                 </MenuItem>
                 <MenuSeparator />
+                {canRefund && (
+                  <MenuItem
+                    className="text-destructive focus:text-destructive"
+                    disabled={refundMutation.isPending}
+                    onClick={() => {
+                      if (
+                        confirm(
+                          `Refund ${formatPrice(order.amountPaid - (order.refundedAmount ?? 0))} to ${order.buyerEmail}?`,
+                        )
+                      ) {
+                        refundMutation.mutate(order.id)
+                      }
+                    }}
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Full Refund
+                  </MenuItem>
+                )}
                 <MenuItem
                   onClick={() => {
                     navigator.clipboard.writeText(order.id)
@@ -224,15 +324,58 @@ function OrdersPage() {
     },
   ]
 
+  // Calculate totals from snapshot data
+  const totalRevenue = (orders ?? []).reduce(
+    (acc, o: any) => acc + o.amountPaid - (o.refundedAmount ?? 0),
+    0,
+  )
+  const totalOrders = (orders ?? []).length
+  const totalRefunds = (orders ?? []).reduce(
+    (acc, o: any) => acc + (o.refundedAmount ?? 0),
+    0,
+  )
+
   return (
     <div className="space-y-6">
       <AppHeader>
         <AppHeaderContent title="Orders">
           <AppHeaderDescription>
-            Manage your digital product sales and delivery
+            Manage your digital product sales, delivery, and refunds
           </AppHeaderDescription>
         </AppHeaderContent>
       </AppHeader>
+
+      {/* Summary stats */}
+      {totalOrders > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-8 bg-muted">
+          <div className="space-y-1.5">
+            <h3 className="text-xl font-bold tracking-tight">Summary</h3>
+            <p className="text-sm">
+              {totalOrders} total order{totalOrders !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="flex items-center gap-10 sm:gap-16">
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-[0.2em] mb-1">
+                Net Revenue
+              </span>
+              <span className="text-3xl font-black tabular-nums">
+                {formatPrice(totalRevenue)}
+              </span>
+            </div>
+            {totalRefunds > 0 && (
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-[0.2em] mb-1 text-red-500">
+                  Refunded
+                </span>
+                <span className="text-3xl font-black tabular-nums text-red-500">
+                  {formatPrice(totalRefunds)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <DataTable
         columns={columns}

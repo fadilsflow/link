@@ -415,61 +415,7 @@ function ProductAdminRoute() {
       {products.length === 0 ? (
         <EmptyProduct />
       ) : (
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Active products
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {products.filter((product) => product.isActive).length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Visible and purchasable right now
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Products with no sales
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {
-                    products.filter(
-                      (product) => (product.salesCount ?? 0) === 0,
-                    ).length
-                  }
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Candidates for copy or pricing updates
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Average revenue per sale
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatPrice(totalSales > 0 ? totalRevenue / totalSales : 0)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Across all product sales
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
+        <div className="space-y-8">
           <DataTable
             columns={columns}
             data={products}

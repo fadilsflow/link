@@ -12,8 +12,8 @@ import {
   ShoppingBag,
   FileText,
   RotateCcw,
+  DollarSign,
   TrendingUp,
-  AlertTriangle,
 } from 'lucide-react'
 import { ColumnDef } from '@tanstack/react-table'
 
@@ -376,10 +376,23 @@ function OrdersPage() {
   //   0,
   // )
 
-  const refundedOrders = (orders ?? []).filter(
-    (o: any) => o.status === 'refunded' || o.status === 'partially_refunded',
-  ).length
-  const refundRate = totalOrders > 0 ? (refundedOrders / totalOrders) * 100 : 0
+  const today = new Date()
+  const todaysRevenue = (orders ?? []).reduce((acc, o: any) => {
+    return (
+      acc +
+      (o.transactions ?? []).reduce((tAcc: number, t: any) => {
+        const tDate = new Date(t.createdAt)
+        const isToday =
+          tDate.getDate() === today.getDate() &&
+          tDate.getMonth() === today.getMonth() &&
+          tDate.getFullYear() === today.getFullYear()
+        if (isToday) {
+          return tAcc + t.netAmount
+        }
+        return tAcc
+      }, 0)
+    )
+  }, 0)
 
   return (
     <div className="space-y-6">
@@ -404,14 +417,16 @@ function OrdersPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Refund rate</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">
+              Today&apos;s Revenue
+            </CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{refundRate.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground">
-              {refundedOrders} refunded or partially refunded orders
-            </p>
+            <div className="text-2xl font-bold">
+              {formatPrice(todaysRevenue)}
+            </div>
+            <p className="text-xs text-muted-foreground">Net revenue today</p>
           </CardContent>
         </Card>
         <Card>

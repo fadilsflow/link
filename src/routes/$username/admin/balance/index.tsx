@@ -173,13 +173,6 @@ function BalancePage() {
           description="All time (net of fees)"
           isLoading={isLoading}
         />
-        <BalanceCard
-          title="Total Refunds"
-          value={summary?.totalRefunds ?? 0}
-          description="All time"
-          isLoading={isLoading}
-          negative
-        />
       </div>
 
       {/* Payout Action */}
@@ -190,10 +183,6 @@ function BalancePage() {
             <p className="text-sm text-muted-foreground">
               Available = funds ready to withdraw. Pending = funds still in hold
               ({summary?.holdPeriodDays ?? 7} days).
-            </p>
-            <p className="text-xs text-amber-600 mt-2">
-              Refunds after a payout can make your available balance negative
-              until new sales settle.
             </p>
             {hasPendingPayout && (
               <p className="text-xs text-muted-foreground mt-1">
@@ -471,10 +460,6 @@ function getTransactionTypeConfig(type: string) {
   switch (type) {
     case 'sale':
       return { label: 'Sale', color: 'emerald' }
-    case 'refund':
-      return { label: 'Refund', color: 'red' }
-    case 'partial_refund':
-      return { label: 'Refund (Legacy)', color: 'amber' }
     case 'payout':
       return { label: 'Payout', color: 'blue' }
     case 'fee':

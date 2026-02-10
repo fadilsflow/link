@@ -16,17 +16,12 @@ export const ORDER_STATUS = {
   COMPLETED: 'completed',
   PENDING: 'pending',
   CANCELLED: 'cancelled',
-  REFUNDED: 'refunded',
-  PARTIALLY_REFUNDED: 'partially_refunded',
 } as const
 
 export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS]
 
 export const TRANSACTION_TYPE = {
   SALE: 'sale',
-  REFUND: 'refund',
-  // Legacy type kept for historical rows only.
-  PARTIAL_REFUND: 'partial_refund',
   PAYOUT: 'payout',
   FEE: 'fee',
   ADJUSTMENT: 'adjustment',
@@ -236,7 +231,7 @@ export const socialLinks = pgTable('social_link', {
  * - productId uses 'set null' on delete → order survives product removal
  * - creatorId uses 'set null' on delete → order survives account removal
  * - Product snapshot fields capture the state at time of purchase
- * - Financial data (amountPaid, refundedAmount) is immutable audit trail
+ * - Financial data (amountPaid) is immutable audit trail
  */
 export const orders = pgTable(
   'order',
@@ -261,10 +256,6 @@ export const orders = pgTable(
     quantity: integer('quantity').notNull().default(1),
     // Amount paid (in cents) — immutable historical record
     amountPaid: integer('amount_paid').notNull().default(0),
-    // Refund tracking
-    refundedAmount: integer('refunded_amount').notNull().default(0), // in cents
-    refundedAt: timestamp('refunded_at'),
-    refundReason: text('refund_reason'),
     // Checkout answers (JSON: { questionId: answer })
     checkoutAnswers: json('checkout_answers').$type<Record<string, string>>(),
     // Note to seller
@@ -298,7 +289,7 @@ export const orders = pgTable(
  * RULES:
  * - NEVER update or delete rows (append-only)
  * - Positive amounts = money IN (sale)
- * - Negative amounts = money OUT (refund, payout, fee)
+ * - Negative amounts = money OUT (payout, fee)
  * - Creator balance = SUM(amount) WHERE creatorId = X
  * - Available balance = SUM(amount) WHERE creatorId = X AND availableAt <= NOW()
  *
@@ -324,7 +315,7 @@ export const transactions = pgTable(
       onDelete: 'restrict',
     }),
     // Transaction type
-    type: text('type').notNull(), // sale | refund | partial_refund | payout | fee | adjustment
+    type: text('type').notNull(), // sale | payout | fee | adjustment
     // Amount in cents (positive = credit, negative = debit)
     amount: integer('amount').notNull(),
     // Net amount after platform fee (if applicable)

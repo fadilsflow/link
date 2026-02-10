@@ -11,7 +11,6 @@ import {
   MoreHorizontal,
   ShoppingBag,
   FileText,
-  RotateCcw,
 } from 'lucide-react'
 import { ColumnDef } from '@tanstack/react-table'
 
@@ -22,7 +21,6 @@ import {
   MenuItem,
   MenuGroup,
   MenuGroupLabel,
-  MenuSeparator,
   MenuTrigger,
 } from '@/components/ui/menu'
 import { Badge } from '@/components/ui/badge'
@@ -38,26 +36,8 @@ export const Route = createFileRoute('/$username/admin/orders/')({
   component: OrdersPage,
 })
 
-function getStatusBadge(status: string, refundedAmount: number) {
+function getStatusBadge(status: string) {
   switch (status) {
-    case 'refunded':
-      return (
-        <Badge
-          variant="outline"
-          className="border-red-500/30 text-red-600 bg-red-50/50"
-        >
-          Refunded
-        </Badge>
-      )
-    case 'partially_refunded':
-      return (
-        <Badge
-          variant="outline"
-          className="border-amber-500/30 text-amber-600 bg-amber-50/50"
-        >
-          Partial Refund ({formatPrice(refundedAmount)})
-        </Badge>
-      )
     case 'cancelled':
       return (
         <Badge
@@ -77,28 +57,6 @@ function getStatusBadge(status: string, refundedAmount: number) {
         </Badge>
       )
   }
-}
-
-function getFinanceUiError(message: string): string {
-  const lower = message.toLowerCase()
-
-  if (
-    lower.includes('already refunded') ||
-    lower.includes('nothing to refund')
-  ) {
-    return 'This order has already been fully refunded.'
-  }
-  if (
-    lower.includes('refund exceeds') ||
-    lower.includes('cannot refund more')
-  ) {
-    return 'Refund amount exceeds the remaining paid amount for this order.'
-  }
-  if (lower.includes('not found') && lower.includes('unauthorized')) {
-    return 'Refund could not be processed because the order state changed. Please refresh and try again.'
-  }
-
-  return message
 }
 
 function OrdersPage() {
@@ -134,31 +92,6 @@ function OrdersPage() {
       toastManager.add({
         title: 'Failed to send email',
         description: error.message,
-        type: 'error',
-      })
-    },
-  })
-
-  // Full Refund Mutation
-  const refundMutation = useMutation({
-    mutationFn: async (orderId: string) => {
-      if (!session?.user?.id) throw new Error('Unauthorized')
-      return await trpcClient.order.refund.mutate({
-        orderId,
-        userId: session.user.id,
-      })
-    },
-    onSuccess: (data) => {
-      toastManager.add({
-        title: 'Refund Processed',
-        description: `${formatPrice(data.refundedAmount)} has been refunded.`,
-      })
-      refetch()
-    },
-    onError: (error) => {
-      toastManager.add({
-        title: 'Refund Failed',
-        description: getFinanceUiError(error.message),
         type: 'error',
       })
     },
@@ -225,10 +158,6 @@ function OrdersPage() {
       ),
       cell: ({ row }) => {
         const order = row.original
-        const remainingRefundable = Math.max(
-          0,
-          order.amountPaid - (order.refundedAmount ?? 0),
-        )
         return (
           <div className="flex flex-col">
             <span className="font-medium text-sm">
@@ -243,11 +172,6 @@ function OrdersPage() {
                 ),
               )}
             </span>
-            {order.refundedAmount > 0 && (
-              <span className="text-xs text-red-500">
-                Refunded: {formatPrice(order.refundedAmount)}
-              </span>
-            )}
           </div>
         )
       },
@@ -260,7 +184,7 @@ function OrdersPage() {
         const isSent = order.emailSent
         return (
           <div className="flex items-center gap-2 flex-wrap">
-            {getStatusBadge(order.status, order.refundedAmount ?? 0)}
+            {getStatusBadge(order.status)}
             <Badge
               variant="outline"
               className={
@@ -279,14 +203,6 @@ function OrdersPage() {
       id: 'actions',
       cell: ({ row }) => {
         const order = row.original
-        const remainingRefundable = Math.max(
-          0,
-          order.amountPaid - (order.refundedAmount ?? 0),
-        )
-        const canRefund =
-          (order.status === 'completed' ||
-            order.status === 'partially_refunded') &&
-          remainingRefundable > 0
         return (
           <Menu>
             <MenuTrigger
@@ -318,25 +234,6 @@ function OrdersPage() {
                   <Mail className="mr-2 h-4 w-4" />
                   Resend Email
                 </MenuItem>
-                <MenuSeparator />
-                {canRefund && (
-                  <MenuItem
-                    className="text-destructive focus:text-destructive"
-                    disabled={refundMutation.isPending || !canRefund}
-                    onClick={() => {
-                      if (
-                        confirm(
-                          `Refund ${formatPrice(remainingRefundable)} to ${order.buyerEmail}?`,
-                        )
-                      ) {
-                        refundMutation.mutate(order.id)
-                      }
-                    }}
-                  >
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    Full Refund
-                  </MenuItem>
-                )}
                 <MenuItem
                   onClick={() => {
                     navigator.clipboard.writeText(order.id)
@@ -357,46 +254,12 @@ function OrdersPage() {
     },
   ]
 
-  // Calculate totals from snapshot data
-  const totalRevenue = (orders ?? []).reduce(
-    (acc, o: any) =>
-      acc +
-      (o.transactions ?? []).reduce(
-        (tAcc: number, t: any) => tAcc + t.netAmount,
-        0,
-      ),
-    0,
-  )
-  const totalOrders = (orders ?? []).length
-  // const totalRefunds = (orders ?? []).reduce(
-  //   (acc, o: any) => acc + (o.refundedAmount ?? 0),
-  //   0,
-  // )
-
-  const today = new Date()
-  const todaysRevenue = (orders ?? []).reduce((acc, o: any) => {
-    return (
-      acc +
-      (o.transactions ?? []).reduce((tAcc: number, t: any) => {
-        const tDate = new Date(t.createdAt)
-        const isToday =
-          tDate.getDate() === today.getDate() &&
-          tDate.getMonth() === today.getMonth() &&
-          tDate.getFullYear() === today.getFullYear()
-        if (isToday) {
-          return tAcc + t.netAmount
-        }
-        return tAcc
-      }, 0)
-    )
-  }, 0)
-
   return (
     <div className="space-y-6">
       <AppHeader>
         <AppHeaderContent title="Orders">
           <AppHeaderDescription>
-            Manage your digital product sales, delivery, and refunds
+            Manage your digital product sales and delivery
           </AppHeaderDescription>
         </AppHeaderContent>
       </AppHeader>

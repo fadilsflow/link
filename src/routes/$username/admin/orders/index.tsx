@@ -79,14 +79,19 @@ function getStatusBadge(status: string, refundedAmount: number) {
   }
 }
 
-
 function getFinanceUiError(message: string): string {
   const lower = message.toLowerCase()
 
-  if (lower.includes('already refunded') || lower.includes('nothing to refund')) {
+  if (
+    lower.includes('already refunded') ||
+    lower.includes('nothing to refund')
+  ) {
     return 'This order has already been fully refunded.'
   }
-  if (lower.includes('refund exceeds') || lower.includes('cannot refund more')) {
+  if (
+    lower.includes('refund exceeds') ||
+    lower.includes('cannot refund more')
+  ) {
     return 'Refund amount exceeds the remaining paid amount for this order.'
   }
   if (lower.includes('not found') && lower.includes('unauthorized')) {
@@ -98,10 +103,7 @@ function getFinanceUiError(message: string): string {
 
 function OrdersPage() {
   const { data: session } = authClient.useSession()
-  const {
-    data: orders,
-    refetch,
-  } = useQuery({
+  const { data: orders, refetch } = useQuery({
     queryKey: ['orders', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return []
@@ -192,7 +194,8 @@ function OrdersPage() {
                 {title}
               </span>
               <span className="text-xs text-muted-foreground truncate">
-                Snapshot price: {formatPrice(order.productPrice ?? order.amountPaid)}
+                Snapshot price:{' '}
+                {formatPrice(order.productPrice ?? order.amountPaid)}
               </span>
             </div>
           </div>
@@ -222,14 +225,23 @@ function OrdersPage() {
       ),
       cell: ({ row }) => {
         const order = row.original
-        const remainingRefundable = Math.max(0, order.amountPaid - (order.refundedAmount ?? 0))
+        const remainingRefundable = Math.max(
+          0,
+          order.amountPaid - (order.refundedAmount ?? 0),
+        )
         return (
           <div className="flex flex-col">
             <span className="font-medium text-sm">
               Paid: {formatPrice(order.amountPaid)}
             </span>
             <span className="text-xs text-muted-foreground">
-              Net revenue: {formatPrice(remainingRefundable)}
+              Net revenue:{' '}
+              {formatPrice(
+                (order.transactions ?? []).reduce(
+                  (acc: number, t: any) => acc + t.netAmount,
+                  0,
+                ),
+              )}
             </span>
             {order.refundedAmount > 0 && (
               <span className="text-xs text-red-500">
@@ -267,9 +279,13 @@ function OrdersPage() {
       id: 'actions',
       cell: ({ row }) => {
         const order = row.original
-        const remainingRefundable = Math.max(0, order.amountPaid - (order.refundedAmount ?? 0))
+        const remainingRefundable = Math.max(
+          0,
+          order.amountPaid - (order.refundedAmount ?? 0),
+        )
         const canRefund =
-          (order.status === 'completed' || order.status === 'partially_refunded') &&
+          (order.status === 'completed' ||
+            order.status === 'partially_refunded') &&
           remainingRefundable > 0
         return (
           <Menu>
@@ -343,7 +359,12 @@ function OrdersPage() {
 
   // Calculate totals from snapshot data
   const totalRevenue = (orders ?? []).reduce(
-    (acc, o: any) => acc + o.amountPaid - (o.refundedAmount ?? 0),
+    (acc, o: any) =>
+      acc +
+      (o.transactions ?? []).reduce(
+        (tAcc: number, t: any) => tAcc + t.netAmount,
+        0,
+      ),
     0,
   )
   const totalOrders = (orders ?? []).length

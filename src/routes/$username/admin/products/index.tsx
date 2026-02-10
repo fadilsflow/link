@@ -8,6 +8,7 @@ import {
   SelectPopup,
   SelectItem,
 } from '@/components/ui/select'
+import { authClient } from '@/lib/auth-client'
 
 import {
   Plus,
@@ -94,7 +95,7 @@ function ProductActions({
       })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
     },
   })
 
@@ -105,7 +106,7 @@ function ProductActions({
         title: 'Product deleted',
         description: 'The product has been removed.',
       })
-      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
     },
     onError: (error: any) => {
       toastManager.add({
@@ -270,6 +271,7 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
       header: 'Status',
       cell: ({ row }) => {
         const queryClient = useQueryClient()
+        const { data: session } = authClient.useSession()
         const active = row.original.isActive
 
         const toggleMutation = useMutation({
@@ -281,22 +283,22 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
           onMutate: async (newValue) => {
             // Optimistic update
             await queryClient.cancelQueries({
-              queryKey: ['dashboard', username],
+              queryKey: ['products', session?.user?.id],
             })
             const previousData = queryClient.getQueryData([
-              'dashboard',
-              username,
+              'products',
+              session?.user?.id,
             ])
 
-            queryClient.setQueryData(['dashboard', username], (old: any) => {
-              if (!old) return old
-              return {
-                ...old,
-                products: old.products.map((p: any) =>
+            queryClient.setQueryData(
+              ['products', session?.user?.id],
+              (old: any) => {
+                if (!old) return old
+                return old.map((p: any) =>
                   p.id === row.original.id ? { ...p, isActive: newValue } : p,
-                ),
-              }
-            })
+                )
+              },
+            )
 
             return { previousData }
           },
@@ -308,7 +310,7 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
           },
           onError: (err, newTodo, context) => {
             queryClient.setQueryData(
-              ['dashboard', username],
+              ['products', session?.user?.id],
               context?.previousData,
             )
             toastManager.add({
@@ -318,7 +320,7 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
             })
           },
           onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+            queryClient.invalidateQueries({ queryKey: ['products'] })
           },
         })
 
@@ -369,15 +371,18 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
 function ProductAdminRoute() {
   const { username } = Route.useParams()
 
-  const { data: dashboardData } = useQuery({
-    queryKey: ['dashboard', username],
-    queryFn: () => getDashboardData(),
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  })
+  const { data: session } = authClient.useSession()
 
-  const user = dashboardData?.user
-  const products = (dashboardData?.products ?? []) as Array<ProductRow>
+  const { data: products = [] } = useQuery({
+    queryKey: ['products', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return []
+      return await trpcClient.product.listByUser.query({
+        userId: session.user.id,
+      })
+    },
+    enabled: !!session?.user?.id,
+  })
 
   const columns = React.useMemo(() => getColumns(username), [username])
 
@@ -387,7 +392,7 @@ function ProductAdminRoute() {
     0,
   )
 
-  if (!user) return null
+  if (!session?.user) return null
 
   const newHref = `/${username}/admin/products/new`
 
@@ -411,32 +416,6 @@ function ProductAdminRoute() {
         <EmptyProduct />
       ) : (
         <div className="space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-8 bg-muted  ">
-            <div className="space-y-1.5">
-              <h3 className="text-xl font-bold tracking-tight">Total</h3>
-              <p className="text-sm">
-                Accumulated stats across all {products.length} products.
-              </p>
-            </div>
-            <div className="flex items-center gap-10 sm:gap-16">
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase tracking-[0.2em] mb-1">
-                  Sales
-                </span>
-                <span className="text-3xl font-black tabular-nums">
-                  {totalSales.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex flex-col  border-zinc-700 ">
-                <span className="text-[10px] uppercase tracking-[0.2em] mb-1">
-                  Revenue
-                </span>
-                <span className="text-3xl font-black tabular-nums">
-                  {formatPrice(totalRevenue)}
-                </span>
-              </div>
-            </div>
-          </div>
           <DataTable
             columns={columns}
             data={products}

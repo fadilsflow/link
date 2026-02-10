@@ -396,7 +396,33 @@ const productRouter = {
         ),
         orderBy: [desc(products.createdAt)],
       })
-      return rows
+
+      // Fetch net revenue from transactions (ledger)
+      const stats = await db
+        .select({
+          productId: orders.productId,
+          netRevenue: sql<number>`sum(${transactions.netAmount})`,
+        })
+        .from(transactions)
+        .leftJoin(orders, eq(transactions.orderId, orders.id))
+        .where(
+          and(
+            eq(transactions.creatorId, input.userId),
+            inArray(transactions.type, [
+              TRANSACTION_TYPE.SALE,
+              TRANSACTION_TYPE.REFUND,
+              TRANSACTION_TYPE.PARTIAL_REFUND,
+            ]),
+          ),
+        )
+        .groupBy(orders.productId)
+
+      const revenueMap = new Map(stats.map((s) => [s.productId, s.netRevenue]))
+
+      return rows.map((product) => ({
+        ...product,
+        totalRevenue: revenueMap.get(product.id) ?? 0,
+      }))
     }),
   create: publicProcedure
     .input(productBaseInput)
@@ -949,6 +975,7 @@ const orderRouter = {
         where: eq(orders.creatorId, input.userId),
         with: {
           product: true, // may be null if product was hard-deleted
+          transactions: true,
         },
         orderBy: [desc(orders.createdAt)],
       })
@@ -1507,20 +1534,26 @@ const analyticsRouter = {
         orderBy: [desc(blocks.clicks)],
       })
 
-      // Orders query — uses snapshot data, not product relation
-      const orderConditions = [eq(orders.creatorId, input.userId)]
-      if (fromDate) orderConditions.push(gte(orders.createdAt, fromDate))
-      if (toDate) orderConditions.push(lte(orders.createdAt, toDate))
+      // Transactions query for revenue calculation (replacing orders query)
+      const txnConditions = [
+        eq(transactions.creatorId, input.userId),
+        inArray(transactions.type, [
+          TRANSACTION_TYPE.SALE,
+          TRANSACTION_TYPE.REFUND,
+          TRANSACTION_TYPE.PARTIAL_REFUND,
+        ]),
+      ]
+      if (fromDate) txnConditions.push(gte(transactions.createdAt, fromDate))
+      if (toDate) txnConditions.push(lte(transactions.createdAt, toDate))
 
-      const orderRows = await db.query.orders.findMany({
-        where: and(...orderConditions),
+      const txnRows = await db.query.transactions.findMany({
+        where: and(...txnConditions),
         columns: {
-          amountPaid: true,
-          refundedAmount: true,
+          netAmount: true,
+          type: true,
           createdAt: true,
-          status: true,
         },
-        orderBy: [asc(orders.createdAt)],
+        orderBy: [asc(transactions.createdAt)],
       })
 
       // Views query for period
@@ -1554,8 +1587,11 @@ const analyticsRouter = {
         }
       >()
 
-      for (const order of orderRows) {
-        const day = order.createdAt.toISOString().slice(0, 10)
+      let rangeRevenue = 0
+      let rangeSales = 0
+
+      for (const txn of txnRows) {
+        const day = txn.createdAt.toISOString().slice(0, 10)
         const existing = byDay.get(day) ?? {
           date: day,
           sales: 0,
@@ -1563,9 +1599,16 @@ const analyticsRouter = {
           views: 0,
           clicks: 0,
         }
-        existing.sales += 1
-        // Use net revenue (amountPaid minus refunds)
-        existing.revenue += order.amountPaid - (order.refundedAmount ?? 0)
+
+        if (txn.type === TRANSACTION_TYPE.SALE) {
+          existing.sales += 1
+          rangeSales += 1
+        }
+
+        // txn.netAmount is already net of fees for sales, and negative for refunds
+        existing.revenue += txn.netAmount
+        rangeRevenue += txn.netAmount
+
         byDay.set(day, existing)
       }
 
@@ -1600,11 +1643,6 @@ const analyticsRouter = {
         a.date.localeCompare(b.date),
       )
 
-      const rangeRevenue = orderRows.reduce(
-        (acc, row) => acc + row.amountPaid - (row.refundedAmount ?? 0),
-        0,
-      )
-      const rangeSales = orderRows.length
       const rangeViews = viewRows.length
       const rangeClicks = clickRows.length
       const totalBlocks = blockRows.length
@@ -1651,12 +1689,34 @@ const analyticsRouter = {
         orderBy: [desc(products.totalRevenue)],
       })
 
+      // Fetch net revenue from transactions (ledger)
+      const stats = await db
+        .select({
+          productId: orders.productId,
+          netRevenue: sql<number>`sum(${transactions.netAmount})`,
+        })
+        .from(transactions)
+        .leftJoin(orders, eq(transactions.orderId, orders.id))
+        .where(
+          and(
+            eq(transactions.creatorId, input.userId),
+            inArray(transactions.type, [
+              TRANSACTION_TYPE.SALE,
+              TRANSACTION_TYPE.REFUND,
+              TRANSACTION_TYPE.PARTIAL_REFUND,
+            ]),
+          ),
+        )
+        .groupBy(orders.productId)
+
+      const revenueMap = new Map(stats.map((s) => [s.productId, s.netRevenue]))
+
       return productRows.map((p) => ({
         id: p.id,
         title: p.title,
         image: p.images?.[0] ?? null,
         salesCount: p.salesCount,
-        totalRevenue: p.totalRevenue,
+        totalRevenue: revenueMap.get(p.id) ?? 0,
         isActive: p.isActive,
         createdAt: p.createdAt,
       }))

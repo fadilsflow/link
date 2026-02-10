@@ -7,6 +7,7 @@ import {
   Copy,
   ExternalLink,
   Grid,
+  Home,
   LogOut,
   Package,
   Search,
@@ -55,6 +56,11 @@ const data = {
     },
   ],
   navMain: [
+    {
+      title: 'Home',
+      url: '/$username/admin',
+      icon: Home,
+    },
     {
       title: 'Profile',
       url: '/$username/admin/editor/profiles',

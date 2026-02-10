@@ -19,9 +19,7 @@ import {
   ShoppingBag,
 } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
-
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Menu,
   MenuPopup,
@@ -44,6 +42,7 @@ import {
 } from '@/components/app-header'
 import { DataTable } from '@/components/ui/data-table'
 import { DataTableColumnHeader } from '@/components/ui/data-table'
+import { Badge } from '@/components/ui/badge'
 
 export const Route = createFileRoute('/$username/admin/products/')({
   component: ProductAdminRoute,
@@ -58,7 +57,9 @@ type ProductRow = {
   salePrice: number | null
   minimumPrice: number | null
   suggestedPrice: number | null
-  createdAt: string | Date
+  images: string[] | null
+  salesCount: number
+  totalRevenue: number
 }
 
 function productPriceLabel(product: ProductRow): string {
@@ -197,26 +198,73 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Product" />
       ),
+      cell: ({ row }) => {
+        const imageUrl = row.original.images?.[0]
+        const href = `/${username}/admin/products/${row.original.id}`
+        const publicUrl = `${window.location.origin}/${username}/products/${row.original.id}`
+        return (
+          <div className="flex items-center gap-4 py-1">
+            <div className="h-12 w-12 shrink-0 rounded-lg bg-zinc-50 overflow-hidden border border-zinc-200 shadow-sm">
+              {imageUrl ? (
+                <img
+                  src={imageUrl}
+                  alt={row.original.title || ''}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center text-zinc-300">
+                  <ShoppingBag className="h-6 w-6" />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col min-w-0">
+              <Link
+                to={href}
+                className="font-bold text-sm hover:underline truncate max-w-[200px] sm:max-w-[300px]"
+              >
+                {row.original.title || 'Untitled Product'}
+              </Link>
+              <Link
+                className="text-xs max-w-[200px] sm:max-w-[300px] line-clamp-1 hover:underline"
+                to={publicUrl}
+                target="_blank"
+              >
+                {publicUrl.replace(/^https?:\/\//, '')}
+              </Link>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'salesCount',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Sales" />
+      ),
       cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-medium text-sm truncate max-w-[250px]">
-            {row.original.title || 'Untitled'}
-          </span>
-        </div>
+        <span className="text-sm font-semibold text-zinc-900">
+          {row.original.salesCount || 0}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'totalRevenue',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Revenue" />
+      ),
+      cell: ({ row }) => (
+        <span className="text-sm font-semibold text-zinc-900">
+          {formatPrice(row.original.totalRevenue || 0)}
+        </span>
       ),
     },
     {
       id: 'pricing',
-      header: 'Pricing',
+      header: 'Price',
       cell: ({ row }) => (
-        <span className="text-sm font-medium text-muted-foreground">
-          {productPriceLabel(row.original)}
-        </span>
+        <span className="text-sm ">{productPriceLabel(row.original)}</span>
       ),
     },
-
-    // ... existing code ...
-
     {
       accessorKey: 'isActive',
       header: 'Status',
@@ -282,17 +330,12 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
             <SelectTrigger
               size="sm"
               className={cn(
-                'h-7 text-xs border-0 shadow-none px-2 gap-1.5 w-auto min-w-[90px] justify-start',
+                'h-7 text-xs shadow-none px-2.5 gap-1.5 w-auto min-w-[95px] justify-start rounded-full',
                 active
                   ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                   : 'bg-zinc-50 text-zinc-600 hover:bg-zinc-100',
               )}
             >
-              {active ? (
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
-              ) : (
-                <span className="h-1.5 w-1.5 rounded-full bg-zinc-400 shrink-0" />
-              )}
               <SelectValue />
             </SelectTrigger>
             <SelectPopup className="w-[120px]">
@@ -310,20 +353,6 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
               </SelectItem>
             </SelectPopup>
           </Select>
-        )
-      },
-    },
-    {
-      accessorKey: 'createdAt',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
-      ),
-      cell: ({ row }) => {
-        const date = new Date(row.original.createdAt)
-        return (
-          <span className="text-xs text-muted-foreground">
-            {date.toLocaleDateString()}
-          </span>
         )
       },
     },
@@ -352,16 +381,22 @@ function ProductAdminRoute() {
 
   const columns = React.useMemo(() => getColumns(username), [username])
 
+  const totalSales = products.reduce((acc, p) => acc + (p.salesCount || 0), 0)
+  const totalRevenue = products.reduce(
+    (acc, p) => acc + (p.totalRevenue || 0),
+    0,
+  )
+
   if (!user) return null
 
   const newHref = `/${username}/admin/products/new`
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <AppHeader>
         <AppHeaderContent title="Products">
           <AppHeaderDescription>
-            Manage the products that appear on your public profile.
+            Manage and track the performance of your digital products.
           </AppHeaderDescription>
         </AppHeaderContent>
         <AppHeaderActions>
@@ -375,12 +410,40 @@ function ProductAdminRoute() {
       {products.length === 0 ? (
         <EmptyProduct />
       ) : (
-        <DataTable
-          columns={columns}
-          data={products}
-          searchKey="title"
-          filterPlaceholder="Search products..."
-        />
+        <div className="space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-8 bg-muted  ">
+            <div className="space-y-1.5">
+              <h3 className="text-xl font-bold tracking-tight">Total</h3>
+              <p className="text-sm">
+                Accumulated stats across all {products.length} products.
+              </p>
+            </div>
+            <div className="flex items-center gap-10 sm:gap-16">
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-[0.2em] mb-1">
+                  Sales
+                </span>
+                <span className="text-3xl font-black tabular-nums">
+                  {totalSales.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex flex-col  border-zinc-700 ">
+                <span className="text-[10px] uppercase tracking-[0.2em] mb-1">
+                  Revenue
+                </span>
+                <span className="text-3xl font-black tabular-nums">
+                  {formatPrice(totalRevenue)}
+                </span>
+              </div>
+            </div>
+          </div>
+          <DataTable
+            columns={columns}
+            data={products}
+            searchKey="title"
+            filterPlaceholder="Search products by name..."
+          />
+        </div>
       )}
     </div>
   )

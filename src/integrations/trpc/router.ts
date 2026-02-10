@@ -63,6 +63,9 @@ const userRouter = {
           blocks: {
             orderBy: [asc(blocks.order)],
           },
+          products: {
+            orderBy: [desc(products.createdAt)],
+          },
           socialLinks: {
             orderBy: [asc(socialLinks.order)],
           },
@@ -72,6 +75,7 @@ const userRouter = {
       return {
         user: userProfile,
         blocks: userProfile.blocks,
+        products: userProfile.products,
         socialLinks: userProfile.socialLinks,
       }
     }),

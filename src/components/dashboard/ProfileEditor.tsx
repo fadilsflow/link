@@ -184,7 +184,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
           {user.bio && (
             <p
               onClick={() => setDialogOpen(true)}
-              className="text-sm text-muted-foreground cursor-pointer hover:underline  line-clamp-1"
+              className="text-sm text-muted-foreground cursor-pointer hover:underline line-clamp-1"
             >
               {user.bio}
             </p>

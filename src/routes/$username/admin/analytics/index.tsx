@@ -3,10 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   CalendarIcon,
-  Eye,
-  MousePointerClick,
   Package,
-  TrendingUp,
 } from 'lucide-react'
 import {
   Area,

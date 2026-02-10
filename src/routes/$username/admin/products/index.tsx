@@ -30,7 +30,6 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from '@/components/ui/menu'
-import { getDashboardData } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
 import EmptyProduct from '@/components/emply-product'
 import { toastManager } from '@/components/ui/toast'
@@ -43,7 +42,6 @@ import {
 } from '@/components/app-header'
 import { DataTable } from '@/components/ui/data-table'
 import { DataTableColumnHeader } from '@/components/ui/data-table'
-import { Badge } from '@/components/ui/badge'
 
 export const Route = createFileRoute('/$username/admin/products/')({
   component: ProductAdminRoute,

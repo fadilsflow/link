@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { and, asc, desc, eq, gte, inArray, lte, sql, isNull } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
@@ -14,7 +14,6 @@ import {
   transactions,
   user,
   TRANSACTION_TYPE,
-  PAYOUT_STATUS,
 } from '@/db/schema'
 import { StorageService } from '@/lib/storage'
 import { sendOrderEmail } from '@/lib/email'

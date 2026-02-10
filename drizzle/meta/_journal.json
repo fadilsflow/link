@@ -43,6 +43,13 @@
       "when": 1770718392052,
       "tag": "0005_spotty_puma",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1770749180513,
+      "tag": "0006_fearless_wind_dancer",
+      "breakpoints": true
     }
   ]
 }

@@ -5,20 +5,12 @@ import {
   CalendarIcon,
   MousePointerClick,
   Package,
-  TrendingUp,
-  DollarSign,
-  ArrowRight,
-  Info,
-  ExternalLink,
-  Share,
 } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
-
 import {
   AppHeader,
   AppHeaderActions,
   AppHeaderContent,
-  AppHeaderDescription,
 } from '@/components/app-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -272,7 +264,7 @@ function EngagementCard({
               <Skeleton className="h-12 w-20" />
               <Skeleton className="h-12 w-20" />
             </div>
-            <Skeleton className="h-[200px] w-full" />
+            <Skeleton className="h-50 w-full" />
           </div>
         ) : (
           <div className="space-y-4">

@@ -64,8 +64,9 @@ function runWhenBrowserIdle(callback: () => void, timeout = 1200) {
 function getVideoMeta(rawUrl?: string | null): {
   embedUrl: string | null
   posterUrl: string | null
+  provider: 'youtube' | 'tiktok' | null
 } {
-  if (!rawUrl) return { embedUrl: null, posterUrl: null }
+  if (!rawUrl) return { embedUrl: null, posterUrl: null, provider: null }
 
   try {
     const url = new URL(rawUrl)
@@ -76,6 +77,7 @@ function getVideoMeta(rawUrl?: string | null): {
       return {
         embedUrl: id ? `https://www.youtube.com/embed/${id}` : null,
         posterUrl: id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null,
+        provider: id ? 'youtube' : null,
       }
     }
 
@@ -84,6 +86,7 @@ function getVideoMeta(rawUrl?: string | null): {
       return {
         embedUrl: id ? `https://www.youtube.com/embed/${id}` : null,
         posterUrl: id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null,
+        provider: id ? 'youtube' : null,
       }
     }
 
@@ -94,13 +97,14 @@ function getVideoMeta(rawUrl?: string | null): {
         return {
           embedUrl: `https://www.tiktok.com/embed/v2/${parts[videoIndex + 1]}`,
           posterUrl: null,
+          provider: 'tiktok',
         }
       }
     }
 
-    return { embedUrl: null, posterUrl: null }
+    return { embedUrl: null, posterUrl: null, provider: null }
   } catch {
-    return { embedUrl: null, posterUrl: null }
+    return { embedUrl: null, posterUrl: null, provider: null }
   }
 }
 
@@ -157,16 +161,88 @@ function DeferredVideoEmbed({
   radiusClass: string
   blockColor?: string | null
 }) {
-  const { embedUrl, posterUrl } = React.useMemo(
+  const { embedUrl, posterUrl, provider } = React.useMemo(
     () => getVideoMeta(block.content),
     [block.content],
   )
-  const [showIframe, setShowIframe] = React.useState(false)
+  const isYouTubeVideo = provider === 'youtube'
+  const [showIframe, setShowIframe] = React.useState(!isYouTubeVideo)
+  const [wasUserActivated, setWasUserActivated] = React.useState(false)
+  const videoContainerRef = React.useRef<HTMLDivElement | null>(null)
+
+  const activateVideo = React.useCallback((fromInteraction: boolean) => {
+    if (fromInteraction) {
+      setWasUserActivated(true)
+    }
+    setShowIframe(true)
+  }, [])
 
   React.useEffect(() => {
-    // Video iframes were the main mobile Speed Index/TBT regressor; idle deferral keeps initial paint visually complete.
-    runWhenBrowserIdle(() => setShowIframe(true), 3000)
-  }, [])
+    if (!isYouTubeVideo || showIframe) {
+      return
+    }
+
+    // Defer iframe insertion so YouTube's third-party JS doesn't execute during hydration/initial paint.
+    // Keeping that work outside the critical window lowers TBT and protects mobile Speed Index.
+    let idleTimeoutId: number | null = null
+    let idleCallbackId: number | null = null
+
+    if ('requestIdleCallback' in window) {
+      idleCallbackId = (
+        window as Window & {
+          requestIdleCallback: (
+            cb: (deadline: IdleDeadline) => void,
+            opts?: { timeout: number },
+          ) => number
+        }
+      ).requestIdleCallback(() => {
+        activateVideo(false)
+      }, { timeout: 5000 })
+    } else {
+      idleTimeoutId = window.setTimeout(() => activateVideo(false), 1800)
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry?.isIntersecting) {
+          activateVideo(false)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '250px 0px' },
+    )
+
+    if (videoContainerRef.current) {
+      observer.observe(videoContainerRef.current)
+    }
+
+    return () => {
+      observer.disconnect()
+      if (idleTimeoutId !== null) {
+        window.clearTimeout(idleTimeoutId)
+      }
+      if (idleCallbackId !== null && 'cancelIdleCallback' in window) {
+        ;(
+          window as Window & {
+            cancelIdleCallback: (handle: number) => void
+          }
+        ).cancelIdleCallback(idleCallbackId)
+      }
+    }
+  }, [activateVideo, isYouTubeVideo, showIframe])
+
+  const embedSrc = React.useMemo(() => {
+    if (!embedUrl) return null
+    if (!isYouTubeVideo) return embedUrl
+
+    const url = new URL(embedUrl)
+    url.searchParams.set('rel', '0')
+    if (wasUserActivated) {
+      url.searchParams.set('autoplay', '1')
+    }
+    return url.toString()
+  }, [embedUrl, isYouTubeVideo, wasUserActivated])
 
   return (
     <Card
@@ -185,10 +261,14 @@ function DeferredVideoEmbed({
       </div>
 
       {embedUrl ? (
-        <div className="relative w-full overflow-hidden rounded-lg border bg-slate-100 aspect-video">
+        <div
+          ref={videoContainerRef}
+          className="relative w-full overflow-hidden rounded-lg border bg-slate-100 aspect-video"
+        >
           {showIframe ? (
             <iframe
-              src={embedUrl}
+              src={embedSrc || embedUrl}
+              title={block.title || 'Embedded video'}
               className="absolute inset-0 h-full w-full"
               loading="lazy"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -197,7 +277,7 @@ function DeferredVideoEmbed({
           ) : (
             <button
               type="button"
-              onClick={() => setShowIframe(true)}
+              onClick={() => activateVideo(true)}
               className="absolute inset-0 flex items-center justify-center bg-black/20"
               aria-label="Play video"
             >

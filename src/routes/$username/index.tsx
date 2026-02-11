@@ -16,11 +16,9 @@ import { toastManager } from '@/components/ui/toast'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 
 import SiteUserProfileHeader, {
-  ProfileBanner,
   ProfileCard,
   SocialLinks,
 } from '@/components/site-user-profile-header'
-import { useMutation } from '@tanstack/react-query'
 
 interface PublicBlock {
   id: string
@@ -40,6 +38,28 @@ interface PublicProduct {
   price?: number | null
   totalQuantity?: number | null
   limitPerCheckout?: number | null
+}
+
+const DEFAULT_BANNER =
+  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop'
+
+function runWhenBrowserIdle(callback: () => void, timeout = 1200) {
+  if (typeof window === 'undefined') return
+  // Defers non-essential work until after initial paint to reduce TBT on hydration.
+  if ('requestIdleCallback' in window) {
+    ;(
+      window as Window & {
+        requestIdleCallback: (
+          cb: () => void,
+          opts?: { timeout: number },
+        ) => number
+      }
+    ).requestIdleCallback(callback, {
+      timeout,
+    })
+    return
+  }
+  window.setTimeout(callback, 250)
 }
 
 function getVideoEmbedUrl(rawUrl?: string | null) {
@@ -96,6 +116,24 @@ export const Route = createFileRoute('/$username/')({
     }
     return data
   },
+  head: ({ loaderData }) => {
+    const lcpHref =
+      loaderData?.user.appearanceBgType === 'banner'
+        ? loaderData.user.appearanceBgImageUrl || DEFAULT_BANNER
+        : loaderData?.user.image || '/avatar-placeholder.png'
+
+    return {
+      links: lcpHref
+        ? [
+            {
+              rel: 'preload',
+              as: 'image',
+              href: lcpHref,
+            },
+          ]
+        : [],
+    }
+  },
   notFoundComponent: NotFound,
 })
 
@@ -113,6 +151,13 @@ function UserProfile() {
   const blockStyle = user.appearanceBlockStyle as 'basic' | 'flat' | 'shadow'
   const blockRadius = user.appearanceBlockRadius as 'rounded' | 'square'
   const isFullPageBg = !isBanner
+
+  const [showBelowFold, setShowBelowFold] = React.useState(false)
+
+  React.useEffect(() => {
+    // Delays heavy block/card rendering until the browser has completed first paint work.
+    runWhenBrowserIdle(() => setShowBelowFold(true))
+  }, [])
 
   const cardBase =
     blockStyle === 'flat'
@@ -139,11 +184,6 @@ function UserProfile() {
   const backgroundStyles = (() => {
     if (isBanner) {
       return {
-        backgroundImage: user.appearanceBgImageUrl
-          ? `url('${getImageUrl(user.appearanceBgImageUrl)}')`
-          : `url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
         backgroundColor: bgColor || undefined,
       }
     }
@@ -175,7 +215,6 @@ function UserProfile() {
         }
       }
 
-      // Default to image if style is 'image' or if it's legacy 'image' mode or generic 'wallpaper' mode
       return {
         backgroundImage: user.appearanceWallpaperImageUrl
           ? `url('${getImageUrl(user.appearanceWallpaperImageUrl)}')`
@@ -198,21 +237,24 @@ function UserProfile() {
 
   const { addItem } = useCartStore()
 
-  const blockClickMutation = useMutation({
-    mutationFn: async (blockId: string) =>
-      trpcClient.block.trackClick.mutate({ id: blockId }),
-  })
-
   React.useEffect(() => {
     if (!user.username) return
-    void trpcClient.user.trackView.mutate({ username: user.username })
+    // Defers analytics mutation so hydration work stays focused on visible content (TBT).
+    runWhenBrowserIdle(() => {
+      void trpcClient.user.trackView.mutate({ username: user.username })
+    })
   }, [user.username])
 
   const openBlockUrl = (block: PublicBlock) => {
     if (!block.url) return
-    blockClickMutation.mutate(block.id)
+    // Moves click analytics off the interaction critical path, improving responsiveness.
+    runWhenBrowserIdle(() => {
+      void trpcClient.block.trackClick.mutate({ id: block.id })
+    })
     window.open(block.url, '_blank', 'noopener,noreferrer')
   }
+
+  const lcpBannerSrc = user.appearanceBgImageUrl || DEFAULT_BANNER
 
   return (
     <div
@@ -223,7 +265,26 @@ function UserProfile() {
         avatarUrl={user.image || '/avatar-placeholder.png'}
         username={user.name}
       />
-      <ProfileBanner isBanner={isBanner} backgroundStyles={backgroundStyles} />
+
+      {isBanner ? (
+        <div
+          className="relative h-[180px] w-full overflow-hidden"
+          style={backgroundStyles}
+        >
+          {/* Uses a real <img> with intrinsic dimensions + high priority so mobile browsers can paint LCP earlier. */}
+          <img
+            src={lcpBannerSrc}
+            alt={`${user.name} banner`}
+            width={1920}
+            height={540}
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/10" />
+        </div>
+      ) : null}
 
       <div
         className={cn(
@@ -239,231 +300,143 @@ function UserProfile() {
 
         <SocialLinks socialLinks={socialLinks} isFullPageBg={isFullPageBg} />
 
-        {(blocks as Array<PublicBlock>).map((block) => {
-          if (block.type === 'text') {
-            return (
-              <div key={block.id} className="w-full space-y-1 py-2 text-center">
-                <h2
-                  className={cn(
-                    'text-2xl font-bold',
-                    isFullPageBg && isDarkBg ? 'text-white' : 'text-slate-800',
-                  )}
-                >
-                  {block.title}
-                </h2>
-                {block.content && (
-                  <p
-                    className={cn(
-                      'text-sm',
-                      isFullPageBg && isDarkBg
-                        ? 'text-white/70'
-                        : 'text-slate-600',
-                    )}
+        {!showBelowFold ? (
+          <div className="w-full space-y-3" aria-hidden>
+            <div
+              className={cn('h-20 w-full animate-pulse', cardBase, radiusClass)}
+            />
+            <div
+              className={cn('h-20 w-full animate-pulse', cardBase, radiusClass)}
+            />
+          </div>
+        ) : (
+          <>
+            {(blocks as Array<PublicBlock>).map((block) => {
+              if (block.type === 'text') {
+                return (
+                  <div
+                    key={block.id}
+                    className="w-full space-y-1 py-2 text-center"
                   >
-                    {block.content}
-                  </p>
-                )}
-              </div>
-            )
-          }
-
-          if (block.type === 'image') {
-            return (
-              <Card
-                key={block.id}
-                className={cn('w-full overflow-hidden', cardBase, radiusClass)}
-                style={{
-                  backgroundColor: user.appearanceBlockColor || undefined,
-                }}
-              >
-                {block.content && (
-                  <img
-                    loading="lazy"
-                    src={block.content}
-                    alt={block.title || 'Image block'}
-                    className="h-auto max-h-[480px] w-full object-cover"
-                  />
-                )}
-                {block.title && (
-                  <p className="p-3 text-sm font-semibold">{block.title}</p>
-                )}
-                {block.url && (
-                  <div className="px-3 pb-3">
-                    <Button
-                      className="w-full"
-                      onClick={() => openBlockUrl(block)}
+                    <h2
+                      className={cn(
+                        'text-2xl font-bold',
+                        isFullPageBg && isDarkBg
+                          ? 'text-white'
+                          : 'text-slate-800',
+                      )}
                     >
-                      Open link
-                    </Button>
+                      {block.title}
+                    </h2>
+                    {block.content && (
+                      <p
+                        className={cn(
+                          'text-sm',
+                          isFullPageBg && isDarkBg
+                            ? 'text-white/70'
+                            : 'text-slate-600',
+                        )}
+                      >
+                        {block.content}
+                      </p>
+                    )}
                   </div>
-                )}
-              </Card>
-            )
-          }
+                )
+              }
 
-          if (block.type === 'video') {
-            const embedUrl = getVideoEmbedUrl(block.content)
-            return (
-              <Card
-                key={block.id}
-                className={cn(
-                  'w-full overflow-hidden p-3 space-y-3',
-                  cardBase,
-                  radiusClass,
-                )}
-                style={{
-                  backgroundColor: user.appearanceBlockColor || undefined,
-                }}
-              >
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <PlayCircle className="h-4 w-4" />
-                  {block.title || 'Video'}
-                </div>
-                {embedUrl ? (
-                  <iframe
-                    src={embedUrl}
-                    className="h-64 w-full rounded-lg border"
-                    loading="lazy"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Unsupported video URL. Please use a valid YouTube or TikTok
-                    link.
-                  </p>
-                )}
-              </Card>
-            )
-          }
-
-          if (block.type === 'product') {
-            const selectedProduct = block.content
-              ? productMap.get(block.content)
-              : null
-            if (!selectedProduct) return null
-
-            const price = getProductPriceLabel(selectedProduct)
-            const selectedImages = selectedProduct.images
-            const hasImage = !!selectedImages?.length
-
-            return (
-              <Card
-                key={block.id}
-                className={cn(
-                  'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
-                  cardBase,
-                  radiusClass,
-                )}
-                style={{
-                  backgroundColor: user.appearanceBlockColor || undefined,
-                }}
-                render={
-                  <Link
-                    to="/$username/products/$productId"
-                    params={{
-                      username: user.username || '',
-                      productId: selectedProduct.id,
+              if (block.type === 'image') {
+                return (
+                  <Card
+                    key={block.id}
+                    className={cn(
+                      'w-full overflow-hidden',
+                      cardBase,
+                      radiusClass,
+                    )}
+                    style={{
+                      backgroundColor: user.appearanceBlockColor || undefined,
                     }}
-                  />
-                }
-              >
-                <div className="flex items-stretch">
-                  {hasImage && (
-                    <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
+                  >
+                    {block.content && (
                       <img
                         loading="lazy"
-                        src={selectedImages[0]}
-                        alt={selectedProduct.title}
-                        className="h-full w-full object-cover"
+                        decoding="async"
+                        width={1200}
+                        height={720}
+                        src={block.content}
+                        alt={block.title || 'Image block'}
+                        className="h-auto max-h-[480px] w-full object-cover"
                       />
+                    )}
+                    {block.title && (
+                      <p className="p-3 text-sm font-semibold">{block.title}</p>
+                    )}
+                    {block.url && (
+                      <div className="px-3 pb-3">
+                        <Button
+                          className="w-full"
+                          onClick={() => openBlockUrl(block)}
+                        >
+                          Open link
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                )
+              }
+
+              if (block.type === 'video') {
+                const embedUrl = getVideoEmbedUrl(block.content)
+                return (
+                  <Card
+                    key={block.id}
+                    className={cn(
+                      'w-full overflow-hidden p-3 space-y-3',
+                      cardBase,
+                      radiusClass,
+                    )}
+                    style={{
+                      backgroundColor: user.appearanceBlockColor || undefined,
+                    }}
+                  >
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                      <PlayCircle className="h-4 w-4" />
+                      {block.title || 'Video'}
                     </div>
-                  )}
+                    {embedUrl ? (
+                      <div className="h-64 w-full overflow-hidden rounded-lg border bg-slate-100">
+                        {/* Rendering iframe below the fold reduces hydration + scripting pressure in the critical window. */}
+                        <iframe
+                          src={embedUrl}
+                          className="h-full w-full"
+                          loading="lazy"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Unsupported video URL. Please use a valid YouTube or
+                        TikTok link.
+                      </p>
+                    )}
+                  </Card>
+                )
+              }
 
-                  <div className="flex flex-1 items-center justify-between gap-3 p-4">
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-sm font-semibold">
-                        {selectedProduct.title}
-                      </span>
-                      <span className="mt-0.5 text-xs text-slate-500">
-                        {price}
-                      </span>
-                    </div>
-                    <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  </div>
-                </div>
-              </Card>
-            )
-          }
+              if (block.type === 'product') {
+                const selectedProduct = block.content
+                  ? productMap.get(block.content)
+                  : null
+                if (!selectedProduct) return null
 
-          return (
-            <Card
-              key={block.id}
-              className={cn(
-                'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
-                cardBase,
-                radiusClass,
-              )}
-              style={{
-                backgroundColor: user.appearanceBlockColor || undefined,
-              }}
-              onClick={() => openBlockUrl(block)}
-            >
-              <div className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
-                    <LinkIcon className="h-5 w-5 text-slate-600" />
-                  </div>
-                  <span className="text-sm font-semibold">{block.title}</span>
-                </div>
-                <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-              </div>
-            </Card>
-          )
-        })}
-
-        {products.length > 0 && (
-          <div className="mt-4 w-full space-y-3">
-            <p
-              className={cn(
-                'text-xs font-semibold uppercase tracking-wider',
-                isFullPageBg && isDarkBg ? 'text-white/60' : 'text-slate-500',
-              )}
-            >
-              Digital Products
-            </p>
-            <div className="grid gap-3">
-              {(products as Array<PublicProduct>).map((product) => {
-                const price = getProductPriceLabel(product)
-                const productImages = product.images
-                const hasImage = !!productImages?.length
-
-                const handleAddToCart = (e: React.MouseEvent) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-
-                  const cartPrice = product.payWhatYouWant
-                    ? product.minimumPrice || 0
-                    : product.salePrice || product.price || 0
-
-                  addItem({
-                    productId: product.id,
-                    title: product.title,
-                    price: cartPrice,
-                    image: hasImage ? productImages[0] : null,
-                    maxQuantity: product.totalQuantity,
-                    limitPerCheckout: product.limitPerCheckout,
-                  })
-
-                  toastManager.add({
-                    title: 'Added to cart',
-                    description: `${product.title} added to your cart`,
-                  })
-                }
+                const price = getProductPriceLabel(selectedProduct)
+                const selectedImages = selectedProduct.images
+                const hasImage = !!selectedImages?.length
 
                 return (
                   <Card
-                    key={product.id}
+                    key={block.id}
                     className={cn(
                       'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
                       cardBase,
@@ -477,7 +450,7 @@ function UserProfile() {
                         to="/$username/products/$productId"
                         params={{
                           username: user.username || '',
-                          productId: product.id,
+                          productId: selectedProduct.id,
                         }}
                       />
                     }
@@ -487,9 +460,12 @@ function UserProfile() {
                         <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
                           <img
                             loading="lazy"
-                            src={productImages[0]}
-                            alt={product.title}
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            decoding="async"
+                            width={96}
+                            height={96}
+                            src={selectedImages[0]}
+                            alt={selectedProduct.title}
+                            className="h-full w-full object-cover"
                           />
                         </div>
                       )}
@@ -497,32 +473,156 @@ function UserProfile() {
                       <div className="flex flex-1 items-center justify-between gap-3 p-4">
                         <div className="flex min-w-0 flex-col">
                           <span className="truncate text-sm font-semibold">
-                            {product.title}
+                            {selectedProduct.title}
                           </span>
                           <span className="mt-0.5 text-xs text-slate-500">
                             {price}
                           </span>
                         </div>
-
-                        <div className="flex items-center gap-3">
-                          <Button
-                            variant="secondary"
-                            size="icon"
-                            className="h-8 w-8 rounded-full shadow-sm hover:scale-110 transition-transform md:h-9 md:w-9"
-                            onClick={handleAddToCart}
-                          >
-                            <ShoppingCart className="h-4 w-4" />
-                            <span className="sr-only">Add to Cart</span>
-                          </Button>
-                          <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                        </div>
+                        <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                       </div>
                     </div>
                   </Card>
                 )
-              })}
-            </div>
-          </div>
+              }
+
+              return (
+                <Card
+                  key={block.id}
+                  className={cn(
+                    'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
+                    cardBase,
+                    radiusClass,
+                  )}
+                  style={{
+                    backgroundColor: user.appearanceBlockColor || undefined,
+                  }}
+                  onClick={() => openBlockUrl(block)}
+                >
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
+                        <LinkIcon className="h-5 w-5 text-slate-600" />
+                      </div>
+                      <span className="text-sm font-semibold">
+                        {block.title}
+                      </span>
+                    </div>
+                    <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  </div>
+                </Card>
+              )
+            })}
+
+            {products.length > 0 && (
+              <div className="mt-4 w-full space-y-3">
+                <p
+                  className={cn(
+                    'text-xs font-semibold uppercase tracking-wider',
+                    isFullPageBg && isDarkBg
+                      ? 'text-white/60'
+                      : 'text-slate-500',
+                  )}
+                >
+                  Digital Products
+                </p>
+                <div className="grid gap-3">
+                  {(products as Array<PublicProduct>).map((product) => {
+                    const price = getProductPriceLabel(product)
+                    const productImages = product.images
+                    const hasImage = !!productImages?.length
+
+                    const handleAddToCart = (e: React.MouseEvent) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+
+                      const cartPrice = product.payWhatYouWant
+                        ? product.minimumPrice || 0
+                        : product.salePrice || product.price || 0
+
+                      addItem({
+                        productId: product.id,
+                        title: product.title,
+                        price: cartPrice,
+                        image: hasImage ? productImages[0] : null,
+                        maxQuantity: product.totalQuantity,
+                        limitPerCheckout: product.limitPerCheckout,
+                      })
+
+                      toastManager.add({
+                        title: 'Added to cart',
+                        description: `${product.title} added to your cart`,
+                      })
+                    }
+
+                    return (
+                      <Card
+                        key={product.id}
+                        className={cn(
+                          'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
+                          cardBase,
+                          radiusClass,
+                        )}
+                        style={{
+                          backgroundColor:
+                            user.appearanceBlockColor || undefined,
+                        }}
+                        render={
+                          <Link
+                            to="/$username/products/$productId"
+                            params={{
+                              username: user.username || '',
+                              productId: product.id,
+                            }}
+                          />
+                        }
+                      >
+                        <div className="flex items-stretch">
+                          {hasImage && (
+                            <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
+                              <img
+                                loading="lazy"
+                                decoding="async"
+                                width={96}
+                                height={96}
+                                src={productImages[0]}
+                                alt={product.title}
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </div>
+                          )}
+
+                          <div className="flex flex-1 items-center justify-between gap-3 p-4">
+                            <div className="flex min-w-0 flex-col">
+                              <span className="truncate text-sm font-semibold">
+                                {product.title}
+                              </span>
+                              <span className="mt-0.5 text-xs text-slate-500">
+                                {price}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <Button
+                                variant="secondary"
+                                size="icon"
+                                className="h-8 w-8 rounded-full shadow-sm hover:scale-110 transition-transform md:h-9 md:w-9"
+                                onClick={handleAddToCart}
+                              >
+                                <ShoppingCart className="h-4 w-4" />
+                                <span className="sr-only">Add to Cart</span>
+                              </Button>
+                              <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         <div className="mb-4 mt-8">

@@ -11,6 +11,8 @@ import { getPublicProduct } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
+import LiteYouTube from '@/components/LiteYouTube'
+import { extractYouTubeVideoIdFromText } from '@/lib/lite-youtube'
 
 export const Route = createFileRoute('/$username/products/$productId/checkout')(
   {
@@ -101,6 +103,7 @@ function CheckoutPage() {
   )
   const productImages = (product.images as string[] | null) || []
   const hasImage = productImages.length > 0
+  const productVideoId = extractYouTubeVideoIdFromText(product.description)
 
   const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')
@@ -256,6 +259,19 @@ function CheckoutPage() {
               </div>
             </CardContent>
           </Card>
+
+          {productVideoId ? (
+            <Card className="shadow-sm border border-slate-200 rounded-2xl overflow-hidden bg-white">
+              <CardContent className="p-4">
+                <LiteYouTube
+                  videoId={productVideoId}
+                  title={`${product.title} video preview`}
+                  className="rounded-xl border border-slate-200"
+                  playLabel="Play product video"
+                />
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card className="shadow-lg border-0 rounded-2xl overflow-hidden bg-white">
             <CardContent className="p-6">

@@ -12,6 +12,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getPublicProduct } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
+import LiteYouTube from '@/components/LiteYouTube'
+import { extractYouTubeVideoIdFromText } from '@/lib/lite-youtube'
 
 export const Route = createFileRoute('/$username/products/$productId/')({
   component: ProductDetailPage,
@@ -182,6 +184,7 @@ function ProductDetailPage() {
   const checkoutHref = `/${username}/products/${productId}/checkout`
   const productImages = (product.images as string[] | null) || []
   const originalPrice = getOriginalPrice(product)
+  const productVideoId = extractYouTubeVideoIdFromText(product.description)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -233,6 +236,15 @@ function ProductDetailPage() {
                   {product.description}
                 </p>
               )}
+
+              {productVideoId ? (
+                <LiteYouTube
+                  videoId={productVideoId}
+                  title={`${product.title} video preview`}
+                  className="rounded-xl border border-slate-200"
+                  playLabel="Play product video"
+                />
+              ) : null}
 
               <div className="border-t border-slate-100" />
 

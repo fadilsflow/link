@@ -61,14 +61,40 @@ function AppearanceEditor({
   blocks: any[]
 }) {
   const queryClient = useQueryClient()
-  const { setUser, setBlocks, updateUser, setStatus } = usePreview()
+  const {
+    user: previewUser,
+    setUser,
+    setBlocks,
+    updateUser,
+    setStatus,
+  } = usePreview()
 
-  // Sync initial data to preview context
+  // Sync user data to preview context.
+  // Only do a full setUser() on first load (preview is null).
+  // After that, use updateUser() to merge appearance-specific fields only —
+  // this preserves profile fields (name, bio, image) that may have been set
+  // by the profiles page.
   useEffect(() => {
-    if (user) {
+    if (!user) return
+    if (!previewUser) {
       setUser(user)
+    } else {
+      updateUser({
+        appearanceBgType: user.appearanceBgType,
+        appearanceBgWallpaperStyle: user.appearanceBgWallpaperStyle,
+        appearanceBgColor: user.appearanceBgColor,
+        appearanceBgImageUrl: user.appearanceBgImageUrl,
+        appearanceWallpaperImageUrl: user.appearanceWallpaperImageUrl,
+        appearanceWallpaperColor: user.appearanceWallpaperColor,
+        appearanceWallpaperGradientTop: user.appearanceWallpaperGradientTop,
+        appearanceWallpaperGradientBottom:
+          user.appearanceWallpaperGradientBottom,
+        appearanceBlockStyle: user.appearanceBlockStyle,
+        appearanceBlockRadius: user.appearanceBlockRadius,
+        appearanceBlockColor: user.appearanceBlockColor,
+      })
     }
-  }, [user, setUser])
+  }, [user])
 
   useEffect(() => {
     setBlocks(blocks)

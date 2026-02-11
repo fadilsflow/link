@@ -7,7 +7,7 @@ import { TextBlock } from './blocks/TextBlock'
 import { ImageBlock } from './blocks/ImageBlock'
 import { VideoBlock } from './blocks/VideoBlock'
 import { ProductBlock } from './blocks/ProductBlock'
-import { StatusBadge } from './StatusBadge'
+// import { StatusBadge } from './StatusBadge'
 import { cn } from '@/lib/utils'
 
 interface ProductOption {
@@ -62,7 +62,7 @@ export function SortableBlockItem({
     >
       <div
         className={cn(
-          'flex-1 flex rounded-xl border overflow-hidden transition-all duration-300 bg-white shadow-sm hover:shadow-md',
+          'flex-1 flex rounded-xl border overflow-hidden transition-colors duration-200 bg-white shadow-sm hover:shadow-md',
           block.syncStatus === 'error' ? 'border-red-500' : 'border-border',
           block.type === 'text' ? 'bg-yellow-50/10' : 'bg-green-50/10',
         )}
@@ -115,9 +115,9 @@ export function SortableBlockItem({
         </Card>
       </div>
 
-      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 pointer-events-none">
+      {/* <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 pointer-events-none">
         <StatusBadge status={block.syncStatus} />
-      </div>
+      </div> */}
     </div>
   )
 }

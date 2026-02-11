@@ -5,7 +5,8 @@ import { ShareProfileModal } from '@/components/share-profile-modal'
 import { BASE_URL } from '@/lib/constans'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
-import { Share } from 'lucide-react'
+import { CircleCheck, Share } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 export const Route = createFileRoute('/$username/admin/editor')({
   component: RouteComponent,
@@ -21,6 +22,16 @@ function RouteComponent() {
 
 function EditorLayout() {
   const { user, blocks, status } = usePreview()
+  const [showCheck, setShowCheck] = useState(false)
+
+  useEffect(() => {
+    if (status.isSaved && !status.isSaving) {
+      setShowCheck(true)
+      setTimeout(() => {
+        setShowCheck(false)
+      }, 5000)
+    }
+  }, [status.isSaved, status.isSaving])
 
   return (
     <main className="grid grid-cols-1 lg:grid-cols-[2.2fr_1.4fr] min-h-screen lg:h-screen lg:overflow-hidden text-zinc-900">
@@ -49,18 +60,26 @@ function EditorLayout() {
                 <Share className="ml-2 h-4 w-4" />
               </Button>
             </ShareProfileModal>
-            {status.isSaving && (
-              <span className="text-xs text-amber-500 font-medium animate-pulse">
-                Saving...
-              </span>
-            )}
-            {status.isSaved && !status.isSaving && (
-              <span className="text-xs text-green-500 font-medium">Saved</span>
-            )}
           </div>
-          <div className="flex-1 w-full min-h-0 pb-10">
+          <div className="pt-5 relative flex-1 w-full min-h-0 pb-10">
             {user ? (
-              <AppearancePreview user={user} blocks={blocks} />
+              <>
+                <div className="absolute top-0 left-0 right-0 flex justify-center mb-6 shrink-0">
+                  {status.isSaving && (
+                    <div className="flex items-center">
+                      <Spinner className="w-4 h-4" />
+                    </div>
+                  )}
+                  {status.isSaved && !status.isSaving && (
+                    <div className="flex items-center">
+                      {showCheck && (
+                        <CircleCheck className="w-4 h-4 text-foreground" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                <AppearancePreview user={user} blocks={blocks} />
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center p-2">
                 <div className="aspect-9/18 w-full max-w-[280px] overflow-hidden rounded-[32px] border-3 bg-muted relative">

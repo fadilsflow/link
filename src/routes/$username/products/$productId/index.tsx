@@ -25,6 +25,20 @@ export const Route = createFileRoute('/$username/products/$productId/')({
     if (!data) throw notFound()
     return data
   },
+  head: ({ loaderData }) => {
+    const heroImage = loaderData?.product.images?.[0]
+    return {
+      links: heroImage
+        ? [
+            {
+              rel: 'preload',
+              as: 'image',
+              href: heroImage,
+            },
+          ]
+        : [],
+    }
+  },
 })
 
 function priceLabel(product: any): string {
@@ -62,6 +76,13 @@ interface ImageCarouselProps {
 
 function ImageCarousel({ images, title }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = React.useState(0)
+  const [enhancedUi, setEnhancedUi] = React.useState(false)
+
+  React.useEffect(() => {
+    // Defers carousel controls + thumbnails until first paint settles, lowering initial hydration pressure (TBT).
+    const timer = window.setTimeout(() => setEnhancedUi(true), 500)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
@@ -85,16 +106,20 @@ function ImageCarousel({ images, title }: ImageCarouselProps) {
 
   return (
     <div className="space-y-3">
-      {/* Main Image */}
       <div className="relative aspect-[4/3] bg-slate-100 rounded-xl overflow-hidden group">
+        {/* Marks the true hero image as eager/high priority so it wins LCP quickly on mobile. */}
         <img
           src={images[currentIndex]}
           alt={`${title} - Image ${currentIndex + 1}`}
+          width={1200}
+          height={900}
+          loading={currentIndex === 0 ? 'eager' : 'lazy'}
+          fetchPriority={currentIndex === 0 ? 'high' : 'auto'}
+          decoding="async"
           className="w-full h-full object-cover transition-transform duration-500"
         />
 
-        {/* Navigation Arrows - Show only if multiple images */}
-        {images.length > 1 && (
+        {enhancedUi && images.length > 1 && (
           <>
             <button
               onClick={goToPrevious}
@@ -113,7 +138,6 @@ function ImageCarousel({ images, title }: ImageCarouselProps) {
           </>
         )}
 
-        {/* Image Counter */}
         {images.length > 1 && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-full text-xs text-white font-medium">
             {currentIndex + 1} / {images.length}
@@ -121,9 +145,8 @@ function ImageCarousel({ images, title }: ImageCarouselProps) {
         )}
       </div>
 
-      {/* Thumbnail Strip - Show only if multiple images */}
-      {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 px-0.5">
+      {enhancedUi && images.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 px-0.5 min-h-16">
           {images.map((image, index) => (
             <button
               key={index}
@@ -138,6 +161,10 @@ function ImageCarousel({ images, title }: ImageCarouselProps) {
               <img
                 src={image}
                 alt={`Thumbnail ${index + 1}`}
+                width={64}
+                height={64}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             </button>
@@ -158,7 +185,6 @@ function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <Button
@@ -187,16 +213,12 @@ function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="space-y-6">
-          {/* Image Carousel */}
           <ImageCarousel images={productImages} title={product.title} />
 
-          {/* Product Info Card */}
           <Card className="shadow-lg border-0 rounded-2xl overflow-hidden bg-white">
             <CardContent className="p-6 space-y-5">
-              {/* Badge & Title */}
               <div className="space-y-2">
                 <span className="inline-flex text-[11px] px-2.5 py-1 rounded-full bg-slate-900 text-white font-medium tracking-wide">
                   Digital Product
@@ -206,17 +228,14 @@ function ProductDetailPage() {
                 </h1>
               </div>
 
-              {/* Description */}
               {product.description && (
                 <p className="text-slate-600 leading-relaxed whitespace-pre-line">
                   {product.description}
                 </p>
               )}
 
-              {/* Divider */}
               <div className="border-t border-slate-100" />
 
-              {/* Price Section */}
               <div className="flex items-end justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-slate-400 mb-1">
@@ -240,7 +259,6 @@ function ProductDetailPage() {
                 )}
               </div>
 
-              {/* CTA Button */}
               <Button
                 className="w-full h-12 rounded-xl text-base font-semibold flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 hover:shadow-xl hover:shadow-slate-900/15 transition-all"
                 render={<Link to={checkoutHref} />}
@@ -249,7 +267,6 @@ function ProductDetailPage() {
                 <ArrowUpRight className="h-4 w-4" />
               </Button>
 
-              {/* Seller Info */}
               <div className="flex items-center justify-center gap-2 pt-2">
                 <span className="text-xs text-slate-400">Sold by</span>
                 <Link

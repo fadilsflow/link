@@ -14,6 +14,8 @@ import { cn, formatPrice } from '@/lib/utils'
 import { useCartStore } from '@/store/cart-store'
 import { toastManager } from '@/components/ui/toast'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
+import LiteYouTube from '@/components/LiteYouTube'
+import { extractYouTubeVideoId } from '@/lib/lite-youtube'
 
 import SiteUserProfileHeader, {
   ProfileCard,
@@ -64,28 +66,31 @@ function runWhenBrowserIdle(callback: () => void, timeout = 1200) {
 function getVideoMeta(rawUrl?: string | null): {
   embedUrl: string | null
   posterUrl: string | null
+  provider: 'youtube' | 'tiktok' | null
+  youtubeVideoId: string | null
 } {
-  if (!rawUrl) return { embedUrl: null, posterUrl: null }
+  if (!rawUrl) {
+    return {
+      embedUrl: null,
+      posterUrl: null,
+      provider: null,
+      youtubeVideoId: null,
+    }
+  }
+
+  const youtubeVideoId = extractYouTubeVideoId(rawUrl)
+  if (youtubeVideoId) {
+    return {
+      embedUrl: `https://www.youtube-nocookie.com/embed/${youtubeVideoId}`,
+      posterUrl: `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`,
+      provider: 'youtube',
+      youtubeVideoId,
+    }
+  }
 
   try {
     const url = new URL(rawUrl)
     const host = url.hostname.toLowerCase()
-
-    if (host.includes('youtube.com')) {
-      const id = url.searchParams.get('v')
-      return {
-        embedUrl: id ? `https://www.youtube.com/embed/${id}` : null,
-        posterUrl: id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null,
-      }
-    }
-
-    if (host.includes('youtu.be')) {
-      const id = url.pathname.replace('/', '')
-      return {
-        embedUrl: id ? `https://www.youtube.com/embed/${id}` : null,
-        posterUrl: id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null,
-      }
-    }
 
     if (host.includes('tiktok.com')) {
       const parts = url.pathname.split('/').filter(Boolean)
@@ -94,13 +99,15 @@ function getVideoMeta(rawUrl?: string | null): {
         return {
           embedUrl: `https://www.tiktok.com/embed/v2/${parts[videoIndex + 1]}`,
           posterUrl: null,
+          provider: 'tiktok',
+          youtubeVideoId: null,
         }
       }
     }
 
-    return { embedUrl: null, posterUrl: null }
+    return { embedUrl: null, posterUrl: null, provider: null, youtubeVideoId: null }
   } catch {
-    return { embedUrl: null, posterUrl: null }
+    return { embedUrl: null, posterUrl: null, provider: null, youtubeVideoId: null }
   }
 }
 
@@ -157,16 +164,10 @@ function DeferredVideoEmbed({
   radiusClass: string
   blockColor?: string | null
 }) {
-  const { embedUrl, posterUrl } = React.useMemo(
+  const { embedUrl, posterUrl, provider, youtubeVideoId } = React.useMemo(
     () => getVideoMeta(block.content),
     [block.content],
   )
-  const [showIframe, setShowIframe] = React.useState(false)
-
-  React.useEffect(() => {
-    // Video iframes were the main mobile Speed Index/TBT regressor; idle deferral keeps initial paint visually complete.
-    runWhenBrowserIdle(() => setShowIframe(true), 3000)
-  }, [])
 
   return (
     <Card
@@ -184,39 +185,36 @@ function DeferredVideoEmbed({
         {block.title || 'Video'}
       </div>
 
-      {embedUrl ? (
+      {provider === 'youtube' && youtubeVideoId ? (
+        // We render a lightweight custom element first and defer iframe creation until interaction.
+        // This removes YouTube's third-party JS cost from hydration, reducing TBT and improving Speed Index.
+        <LiteYouTube
+          videoId={youtubeVideoId}
+          title={block.title || 'Embedded video'}
+          className="w-full overflow-hidden rounded-lg border"
+          playLabel={`Play ${block.title || 'video'}`}
+        />
+      ) : embedUrl ? (
         <div className="relative w-full overflow-hidden rounded-lg border bg-slate-100 aspect-video">
-          {showIframe ? (
-            <iframe
-              src={embedUrl}
-              className="absolute inset-0 h-full w-full"
+          <iframe
+            src={embedUrl}
+            title={block.title || 'Embedded video'}
+            className="absolute inset-0 h-full w-full"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+          {posterUrl ? (
+            <img
+              src={posterUrl}
+              alt={block.title || 'Video preview'}
+              width={1280}
+              height={720}
               loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover -z-10"
             />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowIframe(true)}
-              className="absolute inset-0 flex items-center justify-center bg-black/20"
-              aria-label="Play video"
-            >
-              {posterUrl ? (
-                <img
-                  src={posterUrl}
-                  alt={block.title || 'Video preview'}
-                  width={1280}
-                  height={720}
-                  loading="lazy"
-                  decoding="async"
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : null}
-              <span className="relative z-10 rounded-full bg-black/70 px-3 py-2 text-xs font-semibold text-white">
-                Tap to load video
-              </span>
-            </button>
-          )}
+          ) : null}
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">

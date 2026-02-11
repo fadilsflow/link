@@ -16,11 +16,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { authClient } from '@/lib/auth-client'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { formatPrice } from '@/lib/utils'
 import { toastManager } from '@/components/ui/toast'
+import { Spinner } from '@/components/ui/spinner'
 
 function getFinanceUiError(message: string): string {
   const lower = message.toLowerCase()
@@ -72,7 +72,7 @@ function BalancePage() {
   })
 
   // Payouts list
-  const { data: payoutsList } = useQuery({
+  const { data: payoutsList, isLoading: isPayoutsLoading } = useQuery({
     queryKey: ['balance', 'payouts', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return []
@@ -134,6 +134,8 @@ function BalancePage() {
   })
 
   const isLoading = isSummaryLoading
+  const isTransactionsSectionLoading = isTxnsLoading
+  const isPayoutsSectionLoading = isPayoutsLoading
   const availableBalance = summary?.availableBalance ?? 0
   const hasPendingPayout = (payoutsList ?? []).some(
     (p: any) => p.status === 'pending',
@@ -212,14 +214,19 @@ function BalancePage() {
       </Card>
 
       {/* Payouts Section */}
-      {(payoutsList ?? []).length > 0 && (
+      {(isPayoutsSectionLoading || (payoutsList ?? []).length > 0) && (
         <Card>
           <CardHeader>
             <CardTitle>Payout History</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {(payoutsList ?? []).map((payout: any) => (
+            {isPayoutsSectionLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Spinner className="h-5 w-5 text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(payoutsList ?? []).map((payout: any) => (
                 <div
                   key={payout.id}
                   className="flex items-center justify-between p-4 rounded-lg border bg-card"
@@ -256,8 +263,9 @@ function BalancePage() {
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -268,18 +276,9 @@ function BalancePage() {
           <CardTitle>Transaction History</CardTitle>
         </CardHeader>
         <CardContent>
-          {isTxnsLoading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <Skeleton className="h-10 w-10 rounded-lg" />
-                  <div className="flex-1 space-y-1">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-48" />
-                  </div>
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
+          {isTransactionsSectionLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Spinner className="h-5 w-5 text-muted-foreground" />
             </div>
           ) : (txns ?? []).length === 0 ? (
             <div className="text-center py-12">
@@ -323,9 +322,8 @@ function BalanceCard({
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-7 w-28" />
-            <Skeleton className="h-4 w-20" />
+          <div className="flex items-center justify-center py-4">
+            <Spinner className="h-5 w-5 text-muted-foreground" />
           </div>
         ) : (
           <>

@@ -61,7 +61,7 @@ function getStatusBadge(status: string) {
 
 function OrdersPage() {
   const { data: session } = authClient.useSession()
-  const { data: orders, refetch } = useQuery({
+  const { data: orders, refetch, isLoading: isOrdersLoading, isFetching: isOrdersFetching } = useQuery({
     queryKey: ['orders', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return []
@@ -269,6 +269,8 @@ function OrdersPage() {
         data={orders || []}
         searchKey="buyerEmail"
         filterPlaceholder="Filter by email..."
+        isLoading={(isOrdersLoading || isOrdersFetching) && (orders?.length ?? 0) === 0}
+        loadingText="Loading orders..."
       />
     </div>
   )

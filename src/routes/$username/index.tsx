@@ -45,7 +45,6 @@ const DEFAULT_BANNER =
 
 function runWhenBrowserIdle(callback: () => void, timeout = 1200) {
   if (typeof window === 'undefined') return
-  // Defers non-essential work until after initial paint to reduce TBT on hydration.
   if ('requestIdleCallback' in window) {
     ;(
       window as Window & {
@@ -62,8 +61,11 @@ function runWhenBrowserIdle(callback: () => void, timeout = 1200) {
   window.setTimeout(callback, 250)
 }
 
-function getVideoEmbedUrl(rawUrl?: string | null) {
-  if (!rawUrl) return null
+function getVideoMeta(rawUrl?: string | null): {
+  embedUrl: string | null
+  posterUrl: string | null
+} {
+  if (!rawUrl) return { embedUrl: null, posterUrl: null }
 
   try {
     const url = new URL(rawUrl)
@@ -71,25 +73,34 @@ function getVideoEmbedUrl(rawUrl?: string | null) {
 
     if (host.includes('youtube.com')) {
       const id = url.searchParams.get('v')
-      return id ? `https://www.youtube.com/embed/${id}` : null
+      return {
+        embedUrl: id ? `https://www.youtube.com/embed/${id}` : null,
+        posterUrl: id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null,
+      }
     }
 
     if (host.includes('youtu.be')) {
       const id = url.pathname.replace('/', '')
-      return id ? `https://www.youtube.com/embed/${id}` : null
+      return {
+        embedUrl: id ? `https://www.youtube.com/embed/${id}` : null,
+        posterUrl: id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null,
+      }
     }
 
     if (host.includes('tiktok.com')) {
       const parts = url.pathname.split('/').filter(Boolean)
       const videoIndex = parts.findIndex((part) => part === 'video')
       if (videoIndex !== -1 && parts[videoIndex + 1]) {
-        return `https://www.tiktok.com/embed/v2/${parts[videoIndex + 1]}`
+        return {
+          embedUrl: `https://www.tiktok.com/embed/v2/${parts[videoIndex + 1]}`,
+          posterUrl: null,
+        }
       }
     }
 
-    return null
+    return { embedUrl: null, posterUrl: null }
   } catch {
-    return null
+    return { embedUrl: null, posterUrl: null }
   }
 }
 
@@ -105,6 +116,115 @@ function getProductPriceLabel(product: PublicProduct) {
   }
 
   return product.price ? formatPrice(product.price) : 'Free'
+}
+
+function BlockSkeleton({ block }: { block: PublicBlock }) {
+  // Image/video blocks previously shifted desktop CLS due to unknown media height; fixed aspect placeholders stabilize first layout.
+  if (block.type === 'image') {
+    return (
+      <div className="w-full rounded-2xl bg-slate-200/70 aspect-[4/3] animate-pulse" />
+    )
+  }
+
+  if (block.type === 'video') {
+    return (
+      <div className="w-full rounded-2xl bg-slate-200/70 aspect-video animate-pulse" />
+    )
+  }
+
+  if (block.type === 'text') {
+    return (
+      <div className="w-full rounded-2xl bg-slate-200/60 p-6 space-y-3 animate-pulse">
+        <div className="h-6 w-2/3 mx-auto rounded bg-slate-300/70" />
+        <div className="h-4 w-5/6 mx-auto rounded bg-slate-300/60" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="h-20 w-full rounded-2xl bg-slate-200/70 animate-pulse" />
+  )
+}
+
+function DeferredVideoEmbed({
+  block,
+  cardClass,
+  radiusClass,
+  blockColor,
+}: {
+  block: PublicBlock
+  cardClass: string
+  radiusClass: string
+  blockColor?: string | null
+}) {
+  const { embedUrl, posterUrl } = React.useMemo(
+    () => getVideoMeta(block.content),
+    [block.content],
+  )
+  const [showIframe, setShowIframe] = React.useState(false)
+
+  React.useEffect(() => {
+    // Video iframes were the main mobile Speed Index/TBT regressor; idle deferral keeps initial paint visually complete.
+    runWhenBrowserIdle(() => setShowIframe(true), 3000)
+  }, [])
+
+  return (
+    <Card
+      className={cn(
+        'w-full overflow-hidden p-3 space-y-3',
+        cardClass,
+        radiusClass,
+      )}
+      style={{
+        backgroundColor: blockColor || undefined,
+      }}
+    >
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        <PlayCircle className="h-4 w-4" />
+        {block.title || 'Video'}
+      </div>
+
+      {embedUrl ? (
+        <div className="relative w-full overflow-hidden rounded-lg border bg-slate-100 aspect-video">
+          {showIframe ? (
+            <iframe
+              src={embedUrl}
+              className="absolute inset-0 h-full w-full"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowIframe(true)}
+              className="absolute inset-0 flex items-center justify-center bg-black/20"
+              aria-label="Play video"
+            >
+              {posterUrl ? (
+                <img
+                  src={posterUrl}
+                  alt={block.title || 'Video preview'}
+                  width={1280}
+                  height={720}
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : null}
+              <span className="relative z-10 rounded-full bg-black/70 px-3 py-2 text-xs font-semibold text-white">
+                Tap to load video
+              </span>
+            </button>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Unsupported video URL. Please use a valid YouTube or TikTok link.
+        </p>
+      )}
+    </Card>
+  )
 }
 
 export const Route = createFileRoute('/$username/')({
@@ -152,11 +272,11 @@ function UserProfile() {
   const blockRadius = user.appearanceBlockRadius as 'rounded' | 'square'
   const isFullPageBg = !isBanner
 
-  const [showBelowFold, setShowBelowFold] = React.useState(false)
+  const [areBlocksReady, setAreBlocksReady] = React.useState(false)
 
   React.useEffect(() => {
-    // Delays heavy block/card rendering until the browser has completed first paint work.
-    runWhenBrowserIdle(() => setShowBelowFold(true))
+    // Batch-switching from placeholders to full blocks avoids incremental churn and improves mobile Speed Index.
+    runWhenBrowserIdle(() => setAreBlocksReady(true), 1000)
   }, [])
 
   const cardBase =
@@ -239,7 +359,6 @@ function UserProfile() {
 
   React.useEffect(() => {
     if (!user.username) return
-    // Defers analytics mutation so hydration work stays focused on visible content (TBT).
     runWhenBrowserIdle(() => {
       void trpcClient.user.trackView.mutate({ username: user.username })
     })
@@ -247,7 +366,6 @@ function UserProfile() {
 
   const openBlockUrl = (block: PublicBlock) => {
     if (!block.url) return
-    // Moves click analytics off the interaction critical path, improving responsiveness.
     runWhenBrowserIdle(() => {
       void trpcClient.block.trackClick.mutate({ id: block.id })
     })
@@ -271,7 +389,6 @@ function UserProfile() {
           className="relative h-[180px] w-full overflow-hidden"
           style={backgroundStyles}
         >
-          {/* Uses a real <img> with intrinsic dimensions + high priority so mobile browsers can paint LCP earlier. */}
           <img
             src={lcpBannerSrc}
             alt={`${user.name} banner`}
@@ -300,14 +417,17 @@ function UserProfile() {
 
         <SocialLinks socialLinks={socialLinks} isFullPageBg={isFullPageBg} />
 
-        {!showBelowFold ? (
+        {!areBlocksReady ? (
           <div className="w-full space-y-3" aria-hidden>
-            <div
-              className={cn('h-20 w-full animate-pulse', cardBase, radiusClass)}
-            />
-            <div
-              className={cn('h-20 w-full animate-pulse', cardBase, radiusClass)}
-            />
+            {(blocks as Array<PublicBlock>).map((block) => (
+              <BlockSkeleton key={block.id} block={block} />
+            ))}
+            {(products as Array<PublicProduct>).map((product) => (
+              <div
+                key={`product-skeleton-${product.id}`}
+                className="h-20 w-full rounded-2xl bg-slate-200/70 animate-pulse"
+              />
+            ))}
           </div>
         ) : (
           <>
@@ -316,7 +436,7 @@ function UserProfile() {
                 return (
                   <div
                     key={block.id}
-                    className="w-full space-y-1 py-2 text-center"
+                    className="w-full space-y-1 py-2 text-center min-h-16"
                   >
                     <h2
                       className={cn(
@@ -358,15 +478,17 @@ function UserProfile() {
                     }}
                   >
                     {block.content && (
-                      <img
-                        loading="lazy"
-                        decoding="async"
-                        width={1200}
-                        height={720}
-                        src={block.content}
-                        alt={block.title || 'Image block'}
-                        className="h-auto max-h-[480px] w-full object-cover"
-                      />
+                      <div className="relative w-full overflow-hidden bg-slate-100 aspect-[4/3]">
+                        <img
+                          loading="lazy"
+                          decoding="async"
+                          width={1200}
+                          height={900}
+                          src={block.content}
+                          alt={block.title || 'Image block'}
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      </div>
                     )}
                     {block.title && (
                       <p className="p-3 text-sm font-semibold">{block.title}</p>
@@ -386,41 +508,14 @@ function UserProfile() {
               }
 
               if (block.type === 'video') {
-                const embedUrl = getVideoEmbedUrl(block.content)
                 return (
-                  <Card
+                  <DeferredVideoEmbed
                     key={block.id}
-                    className={cn(
-                      'w-full overflow-hidden p-3 space-y-3',
-                      cardBase,
-                      radiusClass,
-                    )}
-                    style={{
-                      backgroundColor: user.appearanceBlockColor || undefined,
-                    }}
-                  >
-                    <div className="flex items-center gap-2 text-sm font-semibold">
-                      <PlayCircle className="h-4 w-4" />
-                      {block.title || 'Video'}
-                    </div>
-                    {embedUrl ? (
-                      <div className="h-64 w-full overflow-hidden rounded-lg border bg-slate-100">
-                        {/* Rendering iframe below the fold reduces hydration + scripting pressure in the critical window. */}
-                        <iframe
-                          src={embedUrl}
-                          className="h-full w-full"
-                          loading="lazy"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        Unsupported video URL. Please use a valid YouTube or
-                        TikTok link.
-                      </p>
-                    )}
-                  </Card>
+                    block={block}
+                    cardClass={cardBase}
+                    radiusClass={radiusClass}
+                    blockColor={user.appearanceBlockColor}
+                  />
                 )
               }
 
@@ -455,7 +550,7 @@ function UserProfile() {
                       />
                     }
                   >
-                    <div className="flex items-stretch">
+                    <div className="flex items-stretch min-h-20">
                       {hasImage && (
                         <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
                           <img
@@ -490,7 +585,7 @@ function UserProfile() {
                 <Card
                   key={block.id}
                   className={cn(
-                    'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
+                    'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01] min-h-20',
                     cardBase,
                     radiusClass,
                   )}
@@ -577,7 +672,7 @@ function UserProfile() {
                           />
                         }
                       >
-                        <div className="flex items-stretch">
+                        <div className="flex items-stretch min-h-20">
                           {hasImage && (
                             <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
                               <img

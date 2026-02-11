@@ -42,6 +42,7 @@ import {
 } from '@/components/app-header'
 import { DataTable } from '@/components/ui/data-table'
 import { DataTableColumnHeader } from '@/components/ui/data-table'
+import { Spinner } from '@/components/ui/spinner'
 
 export const Route = createFileRoute('/$username/admin/products/')({
   component: ProductAdminRoute,
@@ -371,7 +372,7 @@ function ProductAdminRoute() {
 
   const { data: session } = authClient.useSession()
 
-  const { data: products = [] } = useQuery({
+  const { data: products = [], isLoading: isProductsLoading, isFetching: isProductsFetching } = useQuery({
     queryKey: ['products', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return []
@@ -410,7 +411,11 @@ function ProductAdminRoute() {
         </AppHeaderActions>
       </AppHeader>
 
-      {products.length === 0 ? (
+      {(isProductsLoading || isProductsFetching) && products.length === 0 ? (
+        <div className="flex items-center justify-center py-12">
+          <Spinner className="h-5 w-5 text-muted-foreground" />
+        </div>
+      ) : products.length === 0 ? (
         <EmptyProduct />
       ) : (
         <div className="space-y-8">

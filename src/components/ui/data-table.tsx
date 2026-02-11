@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { Spinner } from '@/components/ui/spinner'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -50,6 +51,9 @@ interface DataTableProps<TData, TValue> {
   filterPlaceholder?: string
   filterColumn?: string
   searchKey?: string
+  isLoading?: boolean
+  loadingText?: string
+  emptyText?: string
 }
 
 export function DataTable<TData, TValue>({
@@ -57,6 +61,9 @@ export function DataTable<TData, TValue>({
   data,
   filterPlaceholder = 'Filter...',
   searchKey,
+  isLoading = false,
+  loadingText = 'Loading...',
+  emptyText = 'No results.',
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -153,7 +160,14 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {isLoading ? (
+                    <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                      <Spinner className="h-4 w-4" />
+                      <span>{loadingText}</span>
+                    </div>
+                  ) : (
+                    emptyText
+                  )}
                 </TableCell>
               </TableRow>
             )}

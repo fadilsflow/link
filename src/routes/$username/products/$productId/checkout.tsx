@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { ArrowLeft, Lock, ShoppingBag } from 'lucide-react'
-import { useMutation } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -25,6 +24,20 @@ export const Route = createFileRoute('/$username/products/$productId/checkout')(
       })
       if (!data) throw notFound()
       return data
+    },
+    head: ({ loaderData }) => {
+      const lcpImage = loaderData?.product.images?.[0]
+      return {
+        links: lcpImage
+          ? [
+              {
+                rel: 'preload',
+                as: 'image',
+                href: lcpImage,
+              },
+            ]
+          : [],
+      }
     },
   },
 )
@@ -81,9 +94,11 @@ function parseAmount(value: string): number | null {
 
 function CheckoutPage() {
   const { product, user } = Route.useLoaderData()
-  const { username } = Route.useParams()
 
-  const questions = parseQuestions(product.customerQuestions)
+  const questions = React.useMemo(
+    () => parseQuestions(product.customerQuestions),
+    [product.customerQuestions],
+  )
   const productImages = (product.images as string[] | null) || []
   const hasImage = productImages.length > 0
 
@@ -92,34 +107,17 @@ function CheckoutPage() {
   const [customAmount, setCustomAmount] = React.useState('')
   const [answers, setAnswers] = React.useState<Record<string, string>>({})
   const [note, setNote] = React.useState('')
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [isRedirecting, setIsRedirecting] = React.useState(false)
 
   const unitPrice = effectiveUnitPrice(
     product,
     customAmount ? parseAmount(customAmount) : null,
   )
 
-  const checkoutMutation = useMutation({
-    mutationKey: ['checkout-order'],
-    mutationFn: async (payload: any) => {
-      console.log('Sending checkout payload:', payload)
-      return await trpcClient.order.create.mutate(payload)
-    },
-    onSuccess: (data) => {
-      window.location.href = data.deliveryUrl
-    },
-    onError: (error) => {
-      console.error('Checkout error:', error)
-      toastManager.add({
-        title: 'Checkout Failed',
-        description: error.message,
-        type: 'error',
-      })
-    },
-  })
-
-  const handleSubmit: React.FormEventHandler = (e) => {
+  const handleSubmit: React.FormEventHandler = async (e) => {
     e.preventDefault()
-    if (checkoutMutation.isPending) return
+    if (isSubmitting) return
 
     const amountCents = unitPrice
     if (product.payWhatYouWant && amountCents <= 0) {
@@ -153,11 +151,23 @@ function CheckoutPage() {
       note,
     }
 
-    checkoutMutation.mutate(payload)
+    try {
+      setIsSubmitting(true)
+      const data = await trpcClient.order.create.mutate(payload)
+      setIsRedirecting(true)
+      window.location.href = data.deliveryUrl
+    } catch (error: any) {
+      toastManager.add({
+        title: 'Checkout Failed',
+        description: error?.message || 'Something went wrong',
+        type: 'error',
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  // Loading state after success (before redirect completes)
-  if (checkoutMutation.isSuccess) {
+  if (isRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
@@ -170,7 +180,6 @@ function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      {/* Header */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <Button
@@ -191,16 +200,20 @@ function CheckoutPage() {
 
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="space-y-6">
-          {/* Product Summary Card */}
           <Card className="shadow-lg border-0 rounded-2xl overflow-hidden bg-white">
             <CardContent className="p-5">
               <div className="flex items-start gap-4">
-                {/* Product Image */}
                 {hasImage ? (
                   <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
+                    {/* Keeps product image dimensions fixed to prevent CLS while prioritizing first contentful media paint. */}
                     <img
                       src={productImages[0]}
                       alt={product.title}
+                      width={80}
+                      height={80}
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -210,7 +223,6 @@ function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Product Info */}
                 <div className="flex-1 min-w-0">
                   <span className="inline-flex text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium mb-1.5">
                     Digital Product
@@ -235,7 +247,6 @@ function CheckoutPage() {
                   </Link>
                 </div>
 
-                {/* Price */}
                 <div className="text-right flex-shrink-0">
                   <p className="text-xs text-slate-400">Total</p>
                   <p className="text-lg font-bold text-slate-900">
@@ -246,7 +257,6 @@ function CheckoutPage() {
             </CardContent>
           </Card>
 
-          {/* Checkout Form Card */}
           <Card className="shadow-lg border-0 rounded-2xl overflow-hidden bg-white">
             <CardContent className="p-6">
               <form className="space-y-5" onSubmit={handleSubmit}>
@@ -291,7 +301,6 @@ function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Pay What You Want */}
                 {product.payWhatYouWant && (
                   <div className="space-y-2 pt-2">
                     <Label
@@ -325,7 +334,6 @@ function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Custom Questions */}
                 {questions.length > 0 && (
                   <div className="space-y-4 pt-2">
                     <h2 className="text-sm font-semibold text-slate-900">
@@ -359,7 +367,6 @@ function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Note */}
                 <div className="space-y-2 pt-2">
                   <Label
                     htmlFor="note"
@@ -378,16 +385,15 @@ function CheckoutPage() {
                   />
                 </div>
 
-                {/* Submit Button */}
                 <Button
                   type="submit"
                   className={cn(
                     'w-full h-12 rounded-xl text-base font-semibold flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 hover:shadow-xl hover:shadow-slate-900/15 transition-all',
                   )}
-                  disabled={checkoutMutation.isPending}
+                  disabled={isSubmitting}
                 >
                   <Lock className="h-4 w-4" />
-                  {checkoutMutation.isPending
+                  {isSubmitting
                     ? 'Processing...'
                     : `Pay ${formatPrice(unitPrice)}`}
                 </Button>

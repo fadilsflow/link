@@ -7,7 +7,7 @@ import {
   Plus,
   User as UserIcon,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import type { PreviewUser } from '@/lib/preview-context'
@@ -60,24 +60,52 @@ const productSchema = z.object({
   content: z.string().min(1, 'Please select a product'),
 })
 
+// Helper: add errors metadata to blocks from server
+function hydrateBlocks(blocks: Array<any>): Array<any> {
+  return blocks.map((b) => ({
+    ...b,
+    errors: b.errors ?? {},
+    syncStatus: b.syncStatus ?? undefined,
+  }))
+}
+
 function AdminDashboard() {
   const queryClient = useQueryClient()
   const { username } = Route.useParams()
-  const hasHydratedRef = useRef(false)
   const { setUser, setBlocks } = usePreview()
 
-  const [localBlocks, setLocalBlocks] = useState<Array<any>>([])
   const [isAddBlockOpen, setIsAddBlockOpen] = useState(false)
 
   const isManipulatingRef = useRef(false)
   const blockDebounceRefs = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
+  const queryKey = ['dashboard', username]
+
   const { data: dashboardData } = useQuery({
-    queryKey: ['dashboard', username],
+    queryKey,
     queryFn: () => getDashboardData(),
     refetchOnWindowFocus: false,
     staleTime: Infinity,
   })
+
+  // Derive localBlocks from cache, with client-side metadata
+  const localBlocks: Array<any> = dashboardData?.blocks
+    ? hydrateBlocks(dashboardData.blocks)
+    : []
+
+  // Helper to optimistically update blocks in the query cache
+  const setCachedBlocks = useCallback(
+    (updater: (prev: Array<any>) => Array<any>) => {
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          blocks: updater(old.blocks ?? []),
+        }
+      })
+    },
+    [queryClient, queryKey[0], queryKey[1]],
+  )
 
   // Sync data to preview context
   useEffect(() => {
@@ -88,20 +116,7 @@ function AdminDashboard() {
 
   useEffect(() => {
     setBlocks(localBlocks)
-  }, [localBlocks, setBlocks])
-
-  useEffect(() => {
-    if (hasHydratedRef.current || !dashboardData?.blocks) return
-
-    setLocalBlocks(
-      dashboardData.blocks.map((l: any) => ({
-        ...l,
-        errors: {},
-      })),
-    )
-
-    hasHydratedRef.current = true
-  }, [dashboardData?.blocks])
+  }, [dashboardData?.blocks, setBlocks])
 
   const user = dashboardData?.user
 
@@ -115,7 +130,7 @@ function AdminDashboard() {
       image?: string | null
     }) => trpcClient.user.updateProfile.mutate(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      queryClient.invalidateQueries({ queryKey })
     },
   })
 
@@ -128,8 +143,9 @@ function AdminDashboard() {
       type?: string
       content?: string
     }) => trpcClient.block.create.mutate(data),
-    onSuccess: (newBlock) => {
-      setLocalBlocks((prev) =>
+    onSuccess: (newBlock, variables) => {
+      // Replace temp block in cache with the real one from server
+      setCachedBlocks((prev) =>
         prev.map((b) =>
           b.id.startsWith('temp-') &&
           b.title === newBlock.title &&
@@ -148,7 +164,7 @@ function AdminDashboard() {
     mutationFn: (data: { items: Array<{ id: string; order: number }> }) =>
       trpcClient.block.reorder.mutate(data),
     onSuccess: () => {
-      setLocalBlocks((prev) =>
+      setCachedBlocks((prev) =>
         prev.map((l) => ({
           ...l,
           syncStatus: l.syncStatus === 'saving' ? 'saved' : l.syncStatus,
@@ -169,7 +185,7 @@ function AdminDashboard() {
       isEnabled?: boolean
     }) => trpcClient.block.update.mutate(data),
     onSuccess: (updatedBlock) => {
-      setLocalBlocks((prev) =>
+      setCachedBlocks((prev) =>
         prev.map((l) =>
           l.id === updatedBlock.id
             ? { ...l, ...updatedBlock, syncStatus: 'saved' }
@@ -183,7 +199,7 @@ function AdminDashboard() {
     mutationKey: ['deleteBlock', username],
     mutationFn: (data: { id: string }) => trpcClient.block.delete.mutate(data),
     onSuccess: (res, variables) => {
-      setLocalBlocks((prev) => prev.filter((l) => l.id !== variables.id))
+      setCachedBlocks((prev) => prev.filter((l) => l.id !== variables.id))
     },
   })
 
@@ -224,7 +240,8 @@ function AdminDashboard() {
     if (!targetBlock) return
     if (targetBlock[field] === value) return
 
-    setLocalBlocks((prev) =>
+    // Optimistically update the cache immediately
+    setCachedBlocks((prev) =>
       prev.map((block) => {
         if (block.id !== id) return block
         const updatedBlock = { ...block, [field]: value }
@@ -285,47 +302,47 @@ function AdminDashboard() {
     }
 
     const timer = setTimeout(() => {
-      const currentBlock = localBlocks.find((l) => l.id === id)
+      // Read the latest block from the cache
+      const cachedData = queryClient.getQueryData<any>(queryKey)
+      const currentBlock = cachedData?.blocks?.find((l: any) => l.id === id)
       if (!currentBlock) return
 
-      const updatedVal = { ...currentBlock, [field]: value }
-
       let isValid = true
-      if (updatedVal.type === 'link') {
+      if (currentBlock.type === 'link') {
         isValid = linkSchema.safeParse({
-          title: updatedVal.title,
-          url: updatedVal.url,
+          title: currentBlock.title,
+          url: currentBlock.url,
         }).success
-      } else if (updatedVal.type === 'text') {
-        isValid = !!updatedVal.title
-      } else if (updatedVal.type === 'image') {
+      } else if (currentBlock.type === 'text') {
+        isValid = !!currentBlock.title
+      } else if (currentBlock.type === 'image') {
         isValid = imageSchema.safeParse({
-          title: updatedVal.title,
-          content: updatedVal.content || '',
-          url: updatedVal.url || '',
+          title: currentBlock.title,
+          content: currentBlock.content || '',
+          url: currentBlock.url || '',
         }).success
-      } else if (updatedVal.type === 'video') {
+      } else if (currentBlock.type === 'video') {
         isValid = videoSchema.safeParse({
-          title: updatedVal.title,
-          content: updatedVal.content || '',
+          title: currentBlock.title,
+          content: currentBlock.content || '',
         }).success
-      } else if (updatedVal.type === 'product') {
+      } else if (currentBlock.type === 'product') {
         isValid = productSchema.safeParse({
-          content: updatedVal.content || '',
+          content: currentBlock.content || '',
         }).success
       }
 
       if (isValid) {
-        setLocalBlocks((prev) =>
+        setCachedBlocks((prev) =>
           prev.map((b) => (b.id === id ? { ...b, syncStatus: 'saving' } : b)),
         )
         if (id.startsWith('temp-')) {
           createBlock.mutate({
             userId: user!.id,
-            title: updatedVal.title,
-            url: updatedVal.url || '',
-            type: updatedVal.type,
-            content: updatedVal.content,
+            title: currentBlock.title,
+            url: currentBlock.url || '',
+            type: currentBlock.type,
+            content: currentBlock.content,
           })
         } else {
           updateBlockMutation.mutate({ id, [field]: value })
@@ -338,7 +355,7 @@ function AdminDashboard() {
   }
 
   const handleDeleteBlock = (id: string) => {
-    setLocalBlocks((prev) => prev.filter((block) => block.id !== id))
+    setCachedBlocks((prev) => prev.filter((block) => block.id !== id))
     if (!id.startsWith('temp-')) {
       deleteBlockMutation.mutate({ id })
     }
@@ -358,7 +375,7 @@ function AdminDashboard() {
       return block
     })
 
-    setLocalBlocks(updatedLocalBlocks)
+    setCachedBlocks(() => updatedLocalBlocks)
     if (updates.length > 0) {
       reorderBlocks.mutate({ items: updates })
     } else {
@@ -397,7 +414,7 @@ function AdminDashboard() {
                 ? { title: 'Title is required', content: 'Invalid video URL' }
                 : { content: 'Please select a product' },
     }
-    setLocalBlocks((prev) => [...prev, newBlock])
+    setCachedBlocks((prev) => [...prev, newBlock])
     setIsAddBlockOpen(false)
   }
 

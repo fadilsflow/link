@@ -1,11 +1,5 @@
 import { useState } from 'react'
-import {
-  Upload,
-  X,
-  Loader2,
-  Link as LinkIcon,
-  Image as ImageIcon,
-} from 'lucide-react'
+import { Upload, X, Loader2, Link as LinkIcon } from 'lucide-react'
 import { useFileUpload } from '@/hooks/use-file-upload'
 import { uploadFile } from '@/lib/upload-client'
 import { Button } from '@/components/ui/button'

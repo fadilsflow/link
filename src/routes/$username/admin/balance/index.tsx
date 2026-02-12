@@ -155,7 +155,7 @@ function BalancePage() {
       </AppHeader>
 
       {/* Balance Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-3">
         <BalanceCard
           title="Available Balance"
           value={summary?.availableBalance ?? 0}

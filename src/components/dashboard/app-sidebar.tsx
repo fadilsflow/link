@@ -1,6 +1,4 @@
 import {
-  ArrowDown,
-  ArrowRightLeft,
   BarChart3,
   ChevronDown,
   CircleHelp,

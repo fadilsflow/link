@@ -224,7 +224,8 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
         const href = `/${username}/admin/products/${row.original.id}`
         const publicUrl = `${window.location.origin}/${username}/products/${row.original.id}`
         return (
-          <div className="flex items-center gap-4 py-1">
+          <div className="relative flex items-center gap-4 py-1 group">
+            <Link to={href} className="absolute inset-0 z-10" />
             <div className="h-12 w-12 shrink-0 rounded-lg overflow-hidden border">
               {imageUrl ? (
                 <img
@@ -239,16 +240,14 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
               )}
             </div>
             <div className="flex flex-col min-w-0">
-              <Link
-                to={href}
-                className="font-bold text-sm hover:underline truncate max-w-[200px] sm:max-w-[300px]"
-              >
+              <span className="font-bold text-sm truncate max-w-[200px] sm:max-w-[300px]">
                 {row.original.title || 'Untitled Product'}
-              </Link>
+              </span>
               <Link
-                className="text-xs max-w-[200px] sm:max-w-[300px] line-clamp-1 hover:underline"
+                className="text-xs max-w-[200px] sm:max-w-[300px] line-clamp-1 hover:underline relative z-20 w-fit"
                 to={publicUrl}
                 target="_blank"
+                onClick={(e) => e.stopPropagation()}
               >
                 {publicUrl.replace(/^https?:\/\//, '')}
               </Link>

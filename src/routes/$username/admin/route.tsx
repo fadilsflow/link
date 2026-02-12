@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute } from '@tanstack/react-router'
 import React from 'react'
 import { AppSidebar } from '@/components/dashboard/app-sidebar'
+import { MobileAdminNav } from '@/components/dashboard/mobile-admin-nav'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 export const Route = createFileRoute('/$username/admin')({
@@ -18,9 +19,10 @@ function AdminLayout() {
       }
     >
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="pb-20 md:pb-0">
         <Outlet />
       </SidebarInset>
+      <MobileAdminNav />
     </SidebarProvider>
   )
 }

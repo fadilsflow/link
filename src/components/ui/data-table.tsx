@@ -24,7 +24,8 @@ import type {
   ColumnDef,
   ColumnFiltersState,
   SortingState,
-  VisibilityState} from '@tanstack/react-table';
+  VisibilityState,
+} from '@tanstack/react-table'
 import {
   Table,
   TableBody,
@@ -120,7 +121,7 @@ export function DataTable<TData, TValue>({
       </div>
       <div className="rounded-md">
         <Table>
-          <TableHeader>
+          <TableHeader className="border-t">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {

@@ -331,495 +331,469 @@ export function ProductForm(props: ProductFormProps) {
   const currentPriceLabel = humanPriceLabel(value.priceSettings)
 
   return (
-    <Card className="border-zinc-100 shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center justify-between gap-3">
-          <span>{value.id ? 'Edit product' : 'Create product'}</span>
-          <span className="text-xs font-normal text-zinc-500">
-            {currentPriceLabel}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form
-          id={formId}
-          onSubmit={handleSubmit}
-          className="space-y-6 text-sm"
-          aria-label="Product form"
+    <form
+      id={formId}
+      onSubmit={handleSubmit}
+      className="space-y-6 text-sm"
+      aria-label="Product form"
+    >
+      <div className="space-y-2">
+        <Label htmlFor="product-title">Title</Label>
+        <Input
+          id="product-title"
+          value={value.title}
+          onChange={(e) => onChange({ ...value, title: e.target.value })}
+          placeholder="My Notion template, e-book, course..."
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="product-description">Description</Label>
+        <Textarea
+          id="product-description"
+          value={value.description}
+          onChange={(e) => onChange({ ...value, description: e.target.value })}
+          placeholder="Short description that appears on the product detail and checkout pages."
+          rows={3}
+        />
+      </div>
+
+      <div className="space-y-3">
+        <Label>Product Images</Label>
+        <div
+          className="grid grid-cols-4 gap-3"
+          onDrop={handleImageDrop}
+          onDragOver={handleImageDragOver}
+          onDragEnter={handleImageDragEnter}
+          onDragLeave={handleImageDragLeave}
         >
-          <div className="space-y-2">
-            <Label htmlFor="product-title">Title</Label>
-            <Input
-              id="product-title"
-              value={value.title}
-              onChange={(e) => onChange({ ...value, title: e.target.value })}
-              placeholder="My Notion template, e-book, course..."
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="product-description">Description</Label>
-            <Textarea
-              id="product-description"
-              value={value.description}
-              onChange={(e) =>
-                onChange({ ...value, description: e.target.value })
-              }
-              placeholder="Short description that appears on the product detail and checkout pages."
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-3">
-            <Label>Product Images</Label>
+          {imageFiles.map((file, i) => (
             <div
-              className="grid grid-cols-4 gap-3"
-              onDrop={handleImageDrop}
-              onDragOver={handleImageDragOver}
-              onDragEnter={handleImageDragEnter}
-              onDragLeave={handleImageDragLeave}
+              key={file.id}
+              className="relative aspect-square rounded-lg overflow-hidden border border-zinc-200 group"
             >
-              {imageFiles.map((file, i) => (
-                <div
-                  key={file.id}
-                  className="relative aspect-square rounded-lg overflow-hidden border border-zinc-200 group"
-                >
-                  <img
-                    src={file.preview}
-                    alt="Product"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(file.id)}
-                    className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-
-              <div
-                onClick={openImageDialog}
-                className="aspect-square flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 text-zinc-500 hover:bg-zinc-50 cursor-pointer transition-colors"
+              <img
+                src={file.preview}
+                alt="Product"
+                className="w-full h-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(file.id)}
+                className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <ImageIcon className="h-6 w-6 mb-1 opacity-50" />
-                <span className="text-[10px]">Add Image</span>
-                <input {...getImageInputProps()} className="hidden" />
-              </div>
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
-            <p className="text-[11px] text-zinc-500">
-              Drag and drop images or click to upload. First image is the cover.
-            </p>
-          </div>
+          ))}
 
-          <div className="space-y-3">
-            <Label>Digital Files</Label>
+          <div
+            onClick={openImageDialog}
+            className="aspect-square flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 text-zinc-500 hover:bg-zinc-50 cursor-pointer transition-colors"
+          >
+            <ImageIcon className="h-6 w-6 mb-1 opacity-50" />
+            <span className="text-[10px]">Add Image</span>
+            <input {...getImageInputProps()} className="hidden" />
+          </div>
+        </div>
+        <p className="text-[11px] text-zinc-500">
+          Drag and drop images or click to upload. First image is the cover.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <Label>Digital Files</Label>
+        <div
+          className="space-y-2"
+          onDrop={handleFileDrop}
+          onDragOver={handleFileDragOver}
+          onDragEnter={handleFileDragEnter}
+          onDragLeave={handleFileDragLeave}
+        >
+          {digitalFiles.map((file) => (
             <div
-              className="space-y-2"
-              onDrop={handleFileDrop}
-              onDragOver={handleFileDragOver}
-              onDragEnter={handleFileDragEnter}
-              onDragLeave={handleFileDragLeave}
+              key={file.id}
+              className="flex items-center gap-3 p-2 rounded-lg border border-zinc-200 bg-zinc-50/50"
             >
-              {digitalFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center gap-3 p-2 rounded-lg border border-zinc-200 bg-zinc-50/50"
-                >
-                  <div className="h-8 w-8 rounded flex items-center justify-center bg-zinc-100 text-zinc-500">
-                    <FileText className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">
-                      {file.file instanceof File
-                        ? file.file.name
-                        : file.file.name}
-                    </p>
-                    <p className="text-[10px] text-zinc-400">
-                      {file.file instanceof File
-                        ? (file.file.size / 1024).toFixed(0)
-                        : (file.file.size / 1024).toFixed(0)}{' '}
-                      KB
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-zinc-400"
-                    onClick={() => removeDigitalFile(file.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-
-              <div
-                onClick={openFileDialog}
-                className="flex items-center justify-center gap-2 p-4 rounded-lg border border-dashed border-zinc-300 text-zinc-500 hover:bg-zinc-50 cursor-pointer transition-colors"
-              >
-                <Upload className="h-4 w-4 opacity-50" />
-                <span className="text-xs">Upload digital files</span>
-                <input {...getFileInputProps()} className="hidden" />
+              <div className="h-8 w-8 rounded flex items-center justify-center bg-zinc-100 text-zinc-500">
+                <FileText className="h-4 w-4" />
               </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <Label className="block">Pricing</Label>
-                <p className="text-xs text-zinc-500">
-                  Choose fixed price or pay-what-you-want.
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate">
+                  {file.file instanceof File ? file.file.name : file.file.name}
                 </p>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-zinc-500">Fixed</span>
-                <Switch
-                  checked={value.priceSettings.payWhatYouWant}
-                  onCheckedChange={(checked) =>
-                    onChange({
-                      ...value,
-                      priceSettings: {
-                        ...value.priceSettings,
-                        payWhatYouWant: checked,
-                      },
-                    })
-                  }
-                />
-                <span className="font-medium">Pay what you want</span>
-              </div>
-            </div>
-
-            {!value.priceSettings.payWhatYouWant ? (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="price">Price</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-500">$</span>
-                    <Input
-                      id="price"
-                      inputMode="decimal"
-                      placeholder="9.99"
-                      value={inputFromCents(value.priceSettings.price ?? null)}
-                      onChange={(e) => {
-                        const cents = centsFromInput(e.target.value)
-                        onChange({
-                          ...value,
-                          priceSettings: {
-                            ...value.priceSettings,
-                            price: cents ?? undefined,
-                          },
-                        })
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="sale-price">Sale price (optional)</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-500">$</span>
-                    <Input
-                      id="sale-price"
-                      inputMode="decimal"
-                      placeholder="7.00"
-                      value={inputFromCents(
-                        value.priceSettings.salePrice ?? null,
-                      )}
-                      onChange={(e) => {
-                        const cents = centsFromInput(e.target.value)
-                        onChange({
-                          ...value,
-                          priceSettings: {
-                            ...value.priceSettings,
-                            salePrice: cents ?? undefined,
-                          },
-                        })
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="min-price">Minimum price</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-500">$</span>
-                    <Input
-                      id="min-price"
-                      inputMode="decimal"
-                      placeholder="0.00"
-                      value={inputFromCents(
-                        value.priceSettings.minimumPrice ?? null,
-                      )}
-                      onChange={(e) => {
-                        const cents = centsFromInput(e.target.value)
-                        onChange({
-                          ...value,
-                          priceSettings: {
-                            ...value.priceSettings,
-                            minimumPrice: cents ?? undefined,
-                          },
-                        })
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="suggested-price">Suggested price</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-500">$</span>
-                    <Input
-                      id="suggested-price"
-                      inputMode="decimal"
-                      placeholder="9.99"
-                      value={inputFromCents(
-                        value.priceSettings.suggestedPrice ?? null,
-                      )}
-                      onChange={(e) => {
-                        const cents = centsFromInput(e.target.value)
-                        onChange({
-                          ...value,
-                          priceSettings: {
-                            ...value.priceSettings,
-                            suggestedPrice: cents ?? undefined,
-                          },
-                        })
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="total-qty">Total quantity (optional)</Label>
-              <Input
-                id="total-qty"
-                inputMode="numeric"
-                placeholder="Unlimited"
-                value={value.totalQuantity?.toString() ?? ''}
-                onChange={(e) => {
-                  const v = e.target.value.trim()
-                  const parsed = v ? Number(v) : NaN
-                  onChange({
-                    ...value,
-                    totalQuantity: Number.isNaN(parsed) ? null : parsed,
-                  })
-                }}
-              />
-              <p className="text-[11px] text-zinc-500">
-                Simple limit only; inventory tracking will be added later.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="limit-per-checkout">Limit per checkout</Label>
-              <Input
-                id="limit-per-checkout"
-                inputMode="numeric"
-                placeholder="1"
-                value={value.limitPerCheckout?.toString() ?? ''}
-                onChange={(e) => {
-                  const v = e.target.value.trim()
-                  const parsed = v ? Number(v) : NaN
-                  onChange({
-                    ...value,
-                    limitPerCheckout: Number.isNaN(parsed) ? null : parsed,
-                  })
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="product-url">Product URL</Label>
-            <div className="flex items-center gap-2">
-              <Link2 className="h-3.5 w-3.5 text-zinc-400" />
-              <Input
-                id="product-url"
-                value={value.productUrl}
-                onChange={(e) =>
-                  onChange({ ...value, productUrl: e.target.value })
-                }
-                type="url"
-                placeholder="https://your-download-or-course.com"
-              />
-            </div>
-            <p className="text-[11px] text-zinc-500">
-              Optional external link (e.g. if you host files elsewhere).
-            </p>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <Label>Checkout questions</Label>
-                <p className="text-xs text-zinc-500">
-                  Ask for extra information after name and email.
+                <p className="text-[10px] text-zinc-400">
+                  {file.file instanceof File
+                    ? (file.file.size / 1024).toFixed(0)
+                    : (file.file.size / 1024).toFixed(0)}{' '}
+                  KB
                 </p>
               </div>
               <Button
                 type="button"
-                variant="outline"
-                size="xs"
-                className="h-7 rounded-full text-[11px]"
-                onClick={() =>
-                  onChange({
-                    ...value,
-                    customerQuestions: [
-                      ...value.customerQuestions,
-                      {
-                        id: crypto.randomUUID(),
-                        label: '',
-                        required: false,
-                      },
-                    ],
-                  })
-                }
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-zinc-400"
+                onClick={() => removeDigitalFile(file.id)}
               >
-                <Plus className="h-3 w-3 mr-1" />
-                Add question
+                <X className="h-4 w-4" />
               </Button>
             </div>
+          ))}
 
-            {value.customerQuestions.length === 0 ? (
-              <p className="text-xs text-zinc-500 italic">
-                No additional questions. Customers will only enter name and
-                email.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {value.customerQuestions.map((q, index) => (
-                  <div
-                    key={q.id}
-                    className="flex items-start gap-2 rounded-lg border border-zinc-200 px-3 py-2"
-                  >
-                    <div className="flex-1 space-y-1">
-                      <Label className="text-[11px] text-zinc-500">
-                        Question {index + 1}
-                      </Label>
-                      <Input
-                        value={q.label}
-                        onChange={(e) =>
-                          onChange({
-                            ...value,
-                            customerQuestions: value.customerQuestions.map(
-                              (cq) =>
-                                cq.id === q.id
-                                  ? { ...cq, label: e.target.value }
-                                  : cq,
-                            ),
-                          })
-                        }
-                        placeholder="What should we print on your certificate?"
-                      />
-                      <div className="flex items-center gap-2 pt-1">
-                        <Switch
-                          checked={q.required}
-                          onCheckedChange={(checked) =>
-                            onChange({
-                              ...value,
-                              customerQuestions: value.customerQuestions.map(
-                                (cq) =>
-                                  cq.id === q.id
-                                    ? { ...cq, required: checked }
-                                    : cq,
-                              ),
-                            })
-                          }
-                        />
-                        <span className="text-[11px] text-zinc-600">
-                          Required
-                        </span>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-zinc-400 hover:text-zinc-700"
-                      onClick={() =>
+          <div
+            onClick={openFileDialog}
+            className="flex items-center justify-center gap-2 p-4 rounded-lg border border-dashed border-zinc-300 text-zinc-500 hover:bg-zinc-50 cursor-pointer transition-colors"
+          >
+            <Upload className="h-4 w-4 opacity-50" />
+            <span className="text-xs">Upload digital files</span>
+            <input {...getFileInputProps()} className="hidden" />
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <Label className="block">Pricing</Label>
+            <p className="text-xs text-zinc-500">
+              Choose fixed price or pay-what-you-want.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-zinc-500">Fixed</span>
+            <Switch
+              checked={value.priceSettings.payWhatYouWant}
+              onCheckedChange={(checked) =>
+                onChange({
+                  ...value,
+                  priceSettings: {
+                    ...value.priceSettings,
+                    payWhatYouWant: checked,
+                  },
+                })
+              }
+            />
+            <span className="font-medium">Pay what you want</span>
+          </div>
+        </div>
+
+        {!value.priceSettings.payWhatYouWant ? (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="price">Price</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-zinc-500">$</span>
+                <Input
+                  id="price"
+                  inputMode="decimal"
+                  placeholder="9.99"
+                  value={inputFromCents(value.priceSettings.price ?? null)}
+                  onChange={(e) => {
+                    const cents = centsFromInput(e.target.value)
+                    onChange({
+                      ...value,
+                      priceSettings: {
+                        ...value.priceSettings,
+                        price: cents ?? undefined,
+                      },
+                    })
+                  }}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sale-price">Sale price (optional)</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-zinc-500">$</span>
+                <Input
+                  id="sale-price"
+                  inputMode="decimal"
+                  placeholder="7.00"
+                  value={inputFromCents(value.priceSettings.salePrice ?? null)}
+                  onChange={(e) => {
+                    const cents = centsFromInput(e.target.value)
+                    onChange({
+                      ...value,
+                      priceSettings: {
+                        ...value.priceSettings,
+                        salePrice: cents ?? undefined,
+                      },
+                    })
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="min-price">Minimum price</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-zinc-500">$</span>
+                <Input
+                  id="min-price"
+                  inputMode="decimal"
+                  placeholder="0.00"
+                  value={inputFromCents(
+                    value.priceSettings.minimumPrice ?? null,
+                  )}
+                  onChange={(e) => {
+                    const cents = centsFromInput(e.target.value)
+                    onChange({
+                      ...value,
+                      priceSettings: {
+                        ...value.priceSettings,
+                        minimumPrice: cents ?? undefined,
+                      },
+                    })
+                  }}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="suggested-price">Suggested price</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-zinc-500">$</span>
+                <Input
+                  id="suggested-price"
+                  inputMode="decimal"
+                  placeholder="9.99"
+                  value={inputFromCents(
+                    value.priceSettings.suggestedPrice ?? null,
+                  )}
+                  onChange={(e) => {
+                    const cents = centsFromInput(e.target.value)
+                    onChange({
+                      ...value,
+                      priceSettings: {
+                        ...value.priceSettings,
+                        suggestedPrice: cents ?? undefined,
+                      },
+                    })
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="total-qty">Total quantity (optional)</Label>
+          <Input
+            id="total-qty"
+            inputMode="numeric"
+            placeholder="Unlimited"
+            value={value.totalQuantity?.toString() ?? ''}
+            onChange={(e) => {
+              const v = e.target.value.trim()
+              const parsed = v ? Number(v) : NaN
+              onChange({
+                ...value,
+                totalQuantity: Number.isNaN(parsed) ? null : parsed,
+              })
+            }}
+          />
+          <p className="text-[11px] text-zinc-500">
+            Simple limit only; inventory tracking will be added later.
+          </p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="limit-per-checkout">Limit per checkout</Label>
+          <Input
+            id="limit-per-checkout"
+            inputMode="numeric"
+            placeholder="1"
+            value={value.limitPerCheckout?.toString() ?? ''}
+            onChange={(e) => {
+              const v = e.target.value.trim()
+              const parsed = v ? Number(v) : NaN
+              onChange({
+                ...value,
+                limitPerCheckout: Number.isNaN(parsed) ? null : parsed,
+              })
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="product-url">Product URL</Label>
+        <div className="flex items-center gap-2">
+          <Link2 className="h-3.5 w-3.5 text-zinc-400" />
+          <Input
+            id="product-url"
+            value={value.productUrl}
+            onChange={(e) => onChange({ ...value, productUrl: e.target.value })}
+            type="url"
+            placeholder="https://your-download-or-course.com"
+          />
+        </div>
+        <p className="text-[11px] text-zinc-500">
+          Optional external link (e.g. if you host files elsewhere).
+        </p>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <Label>Checkout questions</Label>
+            <p className="text-xs text-zinc-500">
+              Ask for extra information after name and email.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            className="h-7 rounded-full text-[11px]"
+            onClick={() =>
+              onChange({
+                ...value,
+                customerQuestions: [
+                  ...value.customerQuestions,
+                  {
+                    id: crypto.randomUUID(),
+                    label: '',
+                    required: false,
+                  },
+                ],
+              })
+            }
+          >
+            <Plus className="h-3 w-3 mr-1" />
+            Add question
+          </Button>
+        </div>
+
+        {value.customerQuestions.length === 0 ? (
+          <p className="text-xs text-zinc-500 italic">
+            No additional questions. Customers will only enter name and email.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {value.customerQuestions.map((q, index) => (
+              <div
+                key={q.id}
+                className="flex items-start gap-2 rounded-lg border border-zinc-200 px-3 py-2"
+              >
+                <div className="flex-1 space-y-1">
+                  <Label className="text-[11px] text-zinc-500">
+                    Question {index + 1}
+                  </Label>
+                  <Input
+                    value={q.label}
+                    onChange={(e) =>
+                      onChange({
+                        ...value,
+                        customerQuestions: value.customerQuestions.map((cq) =>
+                          cq.id === q.id
+                            ? { ...cq, label: e.target.value }
+                            : cq,
+                        ),
+                      })
+                    }
+                    placeholder="What should we print on your certificate?"
+                  />
+                  <div className="flex items-center gap-2 pt-1">
+                    <Switch
+                      checked={q.required}
+                      onCheckedChange={(checked) =>
                         onChange({
                           ...value,
-                          customerQuestions: value.customerQuestions.filter(
-                            (cq) => cq.id !== q.id,
+                          customerQuestions: value.customerQuestions.map(
+                            (cq) =>
+                              cq.id === q.id
+                                ? { ...cq, required: checked }
+                                : cq,
                           ),
                         })
                       }
-                      aria-label="Remove question"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    />
+                    <span className="text-[11px] text-zinc-600">Required</span>
                   </div>
-                ))}
+                </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-zinc-400 hover:text-zinc-700"
+                  onClick={() =>
+                    onChange({
+                      ...value,
+                      customerQuestions: value.customerQuestions.filter(
+                        (cq) => cq.id !== q.id,
+                      ),
+                    })
+                  }
+                  aria-label="Remove question"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
-            )}
+            ))}
           </div>
+        )}
+      </div>
 
-          {!hideFooter && (
-            <>
-              <Separator />
+      {!hideFooter && (
+        <>
+          <Separator />
 
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs">
-                  <Switch
-                    checked={value.isActive}
-                    onCheckedChange={(checked) =>
-                      onChange({ ...value, isActive: checked })
-                    }
-                  />
-                  <span className="text-zinc-700 font-medium">
-                    Active on profile
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {value.id && onDelete && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs text-red-500 hover:text-red-600"
-                      onClick={() => onDelete(value.id!)}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                  <Button
-                    type="submit"
-                    size="sm"
-                    className={cn('rounded-full text-xs')}
-                    disabled={submitting || isUploading}
-                  >
-                    {submitting || isUploading ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        <span>
-                          {isUploading ? 'Uploading...' : 'Saving...'}
-                        </span>
-                      </div>
-                    ) : value.id ? (
-                      'Save changes'
-                    ) : (
-                      'Create product'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </form>
-      </CardContent>
-    </Card>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs">
+              <Switch
+                checked={value.isActive}
+                onCheckedChange={(checked) =>
+                  onChange({ ...value, isActive: checked })
+                }
+              />
+              <span className="text-zinc-700 font-medium">
+                Active on profile
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {value.id && onDelete && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-red-500 hover:text-red-600"
+                  onClick={() => onDelete(value.id!)}
+                >
+                  Delete
+                </Button>
+              )}
+              <Button
+                type="submit"
+                size="sm"
+                className={cn('rounded-full text-xs')}
+                disabled={submitting || isUploading}
+              >
+                {submitting || isUploading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>{isUploading ? 'Uploading...' : 'Saving...'}</span>
+                  </div>
+                ) : value.id ? (
+                  'Save changes'
+                ) : (
+                  'Create product'
+                )}
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+    </form>
   )
 }

@@ -200,12 +200,9 @@ function ProductEditRoute() {
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetContent className="sm:max-w-2xl w-full p-0">
         <SheetHeader className="px-6 pt-6">
-          <SheetTitle>Edit product</SheetTitle>
-          <SheetDescription>
-            Update details for {product?.title || 'this product'}.
-          </SheetDescription>
+          <SheetTitle>Product Details</SheetTitle>
         </SheetHeader>
-        <SheetPanel>
+        <SheetPanel className="mt-5">
           {isReady && form ? (
             <ProductForm
               formId="edit-product-form"

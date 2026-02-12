@@ -146,12 +146,9 @@ function ProductNewRoute() {
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetContent className="sm:max-w-2xl w-full p-0">
         <SheetHeader className="px-6 pt-6">
-          <SheetTitle>New product</SheetTitle>
-          <SheetDescription>
-            Create a new digital product for your profile.
-          </SheetDescription>
+          <SheetTitle>Add Product</SheetTitle>
         </SheetHeader>
-        <SheetPanel>
+        <SheetPanel className="mt-5">
           {isReady && form ? (
             <ProductForm
               formId="create-product-form"

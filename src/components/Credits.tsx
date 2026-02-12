@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 
 import { COMPANY_NAME, LINK_VERSION } from '@/lib/constans'
 
-// eslint-disable-next-line turbo/no-undeclared-env-vars
-const vercelCommitHash = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA
+// Use import.meta.env for Vite-compatible environment variables
+const vercelCommitHash = import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA
 const commitHash = vercelCommitHash ? `-${vercelCommitHash.slice(0, 7)}` : ''
 const LinkVersion = `v.${LINK_VERSION}`
 

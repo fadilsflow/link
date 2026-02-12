@@ -90,21 +90,11 @@ export function ProfileCard({
   return (
     <Card
       id={id}
-      className={cn(
-        'w-full overflow-visible',
-        isFullPageBg
-          ? 'rounded-2xl border-none bg-white/95 shadow-2xl backdrop-blur-md'
-          : 'rounded-2xl border-none',
-      )}
+      className='w-full overflow-visible'
     >
-      <CardContent className="relative rounded-2xl bg-white ">
+      <CardContent className="relative">
         {/* Avatar - Overlapping top */}
-        <Avatar className="mb-2 rounded-lg h-12 w-12  md:h-24 md:w-24 border-2 ring-2 ring-white/50 bg-black">
-          <AvatarImage src={user.image || '/avatar-placeholder.png'} />
-          <AvatarFallback className="bg-black text-2xl font-bold text-white">
-            {user.name?.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+
         <div className="flex justify-between">
           <div className="space-y-4">
             <div>
@@ -115,10 +105,17 @@ export function ProfileCard({
             </div>
 
             {user.bio && (
-              <p className="max-w-lg text-sm leading-relaxed ">{user.bio}</p>
+              <p className="max-w-md text-sm leading-relaxed ">{user.bio}</p>
             )}
           </div>
+          <Avatar className="mb-2 h-15 w-15 md:h-24 md:w-24 border-2 ring-2 ring-white/50 bg-black">
+            <AvatarImage src={user.image || '/avatar-placeholder.png'} />
+            <AvatarFallback className="bg-black text-2xl font-bold text-white">
+              {user.name?.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
         </div>
+
       </CardContent>
 
       {/* Social Links inside the card if needed, or keeping structure same as index.tsx */}
@@ -143,7 +140,7 @@ export function SocialLinks({
   if (!socialLinks || socialLinks.length === 0) return null
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3">
+    <div className="flex w-full justify-end gap-3">
       {socialLinks.map((link: any) => (
         <a
           key={link.id}
@@ -154,18 +151,13 @@ export function SocialLinks({
           <Button
             variant="outline"
             size="icon"
-            className={cn(
-              'h-12 w-12 rounded-full border-none shadow-sm transition-all hover:scale-105 active:scale-95',
-              isFullPageBg
-                ? 'bg-white/90 text-slate-700 backdrop-blur-sm hover:bg-white'
-                : 'bg-white text-slate-700 hover:bg-gray-50',
-            )}
           >
             {getSocialIcon(link.platform)}
           </Button>
         </a>
-      ))}
-    </div>
+      ))
+      }
+    </div >
   )
 }
 
@@ -218,7 +210,7 @@ export default function SiteUserProfileHeader({
       >
         <div
           className={cn(
-            'mx-auto flex h-17 items-center justify-between gap-2 px-2 transition-all duration-300 sm:gap-4 md:max-w-[680px]',
+            'mx-auto flex h-17 items-center justify-between gap-2 px-2 transition-all duration-300 sm:gap-4 md:max-w-170',
             show ? '' : 'border-transparent',
           )}
           data-header-container
@@ -226,7 +218,7 @@ export default function SiteUserProfileHeader({
           <Link
             to="/"
             className={cn(
-              'flex items-center transition-opacity duration-300',
+              'flex items -center transition-opacity duration-300',
               show ? 'opacity-100' : 'opacity-0 pointer-events-none',
             )}
           >

@@ -1,9 +1,9 @@
-"use client";
+'use client'
 
-import { CircleUserRoundIcon, XIcon } from "lucide-react";
+import { CircleUserRoundIcon, XIcon } from 'lucide-react'
 
-import { useFileUpload } from "@/hooks/use-file-upload";
-import { Button } from "@/components/ui/button";
+import { useFileUpload } from '@/hooks/use-file-upload'
+import { Button } from '@/components/ui/button'
 
 export default function Component() {
   const [
@@ -18,17 +18,17 @@ export default function Component() {
       handleDrop,
     },
   ] = useFileUpload({
-    accept: "image/*",
-  });
+    accept: 'image/*',
+  })
 
-  const previewUrl = files[0]?.preview || null;
+  const previewUrl = files[0]?.preview || null
 
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative inline-flex">
         {/* Drop area */}
         <button
-          aria-label={previewUrl ? "Change image" : "Upload image"}
+          aria-label={previewUrl ? 'Change image' : 'Upload image'}
           className="relative flex size-16 items-center justify-center overflow-hidden rounded-full border border-input border-dashed outline-none transition-colors hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-disabled:pointer-events-none has-[img]:border-none has-disabled:opacity-50 data-[dragging=true]:bg-accent/50"
           data-dragging={isDragging || undefined}
           onClick={openFileDialog}
@@ -40,11 +40,11 @@ export default function Component() {
         >
           {previewUrl ? (
             <img
-              alt={files[0]?.file?.name || "Uploaded image"}
+              alt={files[0]?.file?.name || 'Uploaded image'}
               className="size-full object-cover"
               height={64}
               src={previewUrl}
-              style={{ objectFit: "cover" }}
+              style={{ objectFit: 'cover' }}
               width={64}
             />
           ) : (
@@ -75,7 +75,7 @@ export default function Component() {
         className="mt-2 text-muted-foreground text-xs"
         role="region"
       >
-        Avatar uploader with droppable area ∙{" "}
+        Avatar uploader with droppable area ∙{' '}
         <a
           className="underline hover:text-foreground"
           href="https://github.com/cosscom/coss/blob/main/apps/origin/docs/use-file-upload.md"
@@ -84,5 +84,5 @@ export default function Component() {
         </a>
       </p>
     </div>
-  );
+  )
 }

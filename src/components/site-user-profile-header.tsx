@@ -1,14 +1,17 @@
 import { Link } from '@tanstack/react-router'
 import {
   ArrowUpRight,
-  Globe,
-  Link as LinkIcon,
-  Instagram,
-  Github,
-  Youtube,
   Facebook,
+  Github,
+  Globe,
+  Instagram,
+  Link as LinkIcon,
   ShoppingCart,
+  Youtube,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { SiteHeaderWrapper } from './site-header-wrapper'
+import UserButton from './user-button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -17,11 +20,8 @@ import { Gmail } from '@/components/icon/gmail'
 import { LinkedIn } from '@/components/icon/linkedin'
 import { XformerlyTwitter } from '@/components/icon/x'
 import { WhatsApp } from '@/components/icon/whatsapp'
-import { SiteHeaderWrapper } from './site-header-wrapper'
 import { CartDrawer } from '@/components/cart-drawer'
 import { useCartStore } from '@/store/cart-store'
-import { useEffect, useState } from 'react'
-import UserButton from './user-button'
 
 // Platform icon mapping
 export const PLATFORM_ICONS: Record<
@@ -137,7 +137,7 @@ export function SocialLinks({
   socialLinks,
   isFullPageBg,
 }: {
-  socialLinks: any[]
+  socialLinks: Array<any>
   isFullPageBg: boolean
 }) {
   if (!socialLinks || socialLinks.length === 0) return null

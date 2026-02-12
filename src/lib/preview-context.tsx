@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo } from 'react'
+import React, { createContext, useContext, useMemo, useState } from 'react'
 import type {
   BgMode,
   BlockRadius,
@@ -42,10 +42,10 @@ interface PreviewStatus {
 
 interface PreviewContextValue {
   user: PreviewUser | null
-  blocks: PreviewBlock[]
+  blocks: Array<PreviewBlock>
   status: PreviewStatus
   setUser: (user: PreviewUser | null) => void
-  setBlocks: (blocks: PreviewBlock[]) => void
+  setBlocks: (blocks: Array<PreviewBlock>) => void
   updateUser: (updates: Partial<PreviewUser>) => void
   setStatus: (status: PreviewStatus) => void
 }
@@ -54,7 +54,7 @@ const PreviewContext = createContext<PreviewContextValue | null>(null)
 
 export function PreviewProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<PreviewUser | null>(null)
-  const [blocks, setBlocks] = useState<PreviewBlock[]>([])
+  const [blocks, setBlocks] = useState<Array<PreviewBlock>>([])
   const [status, setStatus] = useState<PreviewStatus>({})
 
   const updateUser = (updates: Partial<PreviewUser>) => {

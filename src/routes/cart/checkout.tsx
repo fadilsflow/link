@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { ArrowLeft, CheckCircle, Loader2, ShoppingBag } from 'lucide-react'
 import { useCartStore } from '@/store/cart-store'
 import { cn, formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -9,7 +10,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
-import { Loader2, ArrowLeft, ShoppingBag, CheckCircle } from 'lucide-react'
 
 export const Route = createFileRoute('/cart/checkout')({
   component: CheckoutPage,

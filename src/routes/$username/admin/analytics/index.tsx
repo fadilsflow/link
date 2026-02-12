@@ -1,10 +1,7 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  CalendarIcon,
-  Package,
-} from 'lucide-react'
+import { CalendarIcon, Package } from 'lucide-react'
 import {
   Area,
   AreaChart,
@@ -15,6 +12,8 @@ import {
   YAxis,
 } from 'recharts'
 
+import type {
+  ChartConfig} from '@/components/ui/chart';
 import {
   AppHeader,
   AppHeaderActions,
@@ -26,7 +25,6 @@ import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,

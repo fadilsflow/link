@@ -72,7 +72,7 @@ function getOriginalPrice(product: any): string | null {
 }
 
 interface ImageCarouselProps {
-  images: string[]
+  images: Array<string>
   title: string
 }
 
@@ -182,7 +182,7 @@ function ProductDetailPage() {
   const { user, product } = Route.useLoaderData()
 
   const checkoutHref = `/${username}/products/${productId}/checkout`
-  const productImages = (product.images as string[] | null) || []
+  const productImages = (product.images) || []
   const originalPrice = getOriginalPrice(product)
   const productVideoId = extractYouTubeVideoIdFromText(product.description)
 

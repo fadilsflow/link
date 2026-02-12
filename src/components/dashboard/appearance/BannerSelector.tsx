@@ -1,11 +1,11 @@
 import React from 'react'
 import { LOCAL_BANNER_IMAGES } from './banner-presets'
+import { ImageUploader } from './ImageUploader'
 import type { BannerPreset } from './types'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { ImageUploader } from './ImageUploader'
 
 interface BannerSelectorProps {
   currentBannerUrl?: string

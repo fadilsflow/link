@@ -1,11 +1,7 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { createFileRoute, Link } from '@tanstack/react-router'
-import {
-  CalendarIcon,
-  MousePointerClick,
-  Package,
-} from 'lucide-react'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { CalendarIcon, MousePointerClick, Package } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import {
   AppHeader,

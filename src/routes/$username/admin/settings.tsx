@@ -26,8 +26,7 @@ function SettingsPage() {
     <div className="px-6 py-20">
       <div className="space-y-6 max-w-2xl mx-auto">
         <AppHeader>
-          <AppHeaderContent title="Settings">
-          </AppHeaderContent>
+          <AppHeaderContent title="Settings"></AppHeaderContent>
         </AppHeader>
 
         {/* Account & Security */}
@@ -42,7 +41,11 @@ function SettingsPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="new-password">New Password</Label>
-              <Input id="new-password" type="password" placeholder="Enter new password" />
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="Enter new password"
+              />
             </div>
             <Button variant="outline">Update Password</Button>
           </CardContent>
@@ -57,14 +60,18 @@ function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Email Notifications</Label>
-                <p className="text-sm text-muted-foreground">Receive email when you get new orders</p>
+                <p className="text-sm text-muted-foreground">
+                  Receive email when you get new orders
+                </p>
               </div>
               <Switch defaultChecked />
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <Label>Order Alerts</Label>
-                <p className="text-sm text-muted-foreground">Get notified for every new purchase</p>
+                <p className="text-sm text-muted-foreground">
+                  Get notified for every new purchase
+                </p>
               </div>
               <Switch defaultChecked />
             </div>
@@ -111,21 +118,27 @@ function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Profile Visibility</Label>
-                <p className="text-sm text-muted-foreground">Make your profile public</p>
+                <p className="text-sm text-muted-foreground">
+                  Make your profile public
+                </p>
               </div>
               <Switch defaultChecked />
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <Label>Show Sales Count</Label>
-                <p className="text-sm text-muted-foreground">Display total sales on profile</p>
+                <p className="text-sm text-muted-foreground">
+                  Display total sales on profile
+                </p>
               </div>
               <Switch defaultChecked />
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <Label>Show Revenue</Label>
-                <p className="text-sm text-muted-foreground">Display total revenue on profile</p>
+                <p className="text-sm text-muted-foreground">
+                  Display total revenue on profile
+                </p>
               </div>
               <Switch />
             </div>

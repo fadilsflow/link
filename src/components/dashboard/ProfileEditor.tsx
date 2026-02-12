@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Camera, X } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { uploadFile } from '@/lib/upload-client'
 import { useFileUpload } from '@/hooks/use-file-upload'
 
@@ -20,7 +21,6 @@ import {
 } from '@/components/ui/dialog'
 
 import { Field, FieldLabel } from '@/components/ui/field'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 
 interface ProfileData {
   name: string

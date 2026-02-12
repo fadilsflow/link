@@ -58,7 +58,7 @@ function AppearanceEditor({
 }: {
   user: any
   username: string
-  blocks: any[]
+  blocks: Array<any>
 }) {
   const queryClient = useQueryClient()
   const {

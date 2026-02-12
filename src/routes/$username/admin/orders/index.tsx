@@ -1,26 +1,26 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import {
+  ExternalLink,
+  FileText,
+  Mail,
+  MoreHorizontal,
+  ShoppingBag,
+} from 'lucide-react'
+import type { ColumnDef } from '@tanstack/react-table'
 import {
   AppHeader,
   AppHeaderContent,
   AppHeaderDescription,
 } from '@/components/app-header'
-import {
-  ExternalLink,
-  Mail,
-  MoreHorizontal,
-  ShoppingBag,
-  FileText,
-} from 'lucide-react'
-import { ColumnDef } from '@tanstack/react-table'
 
 import { Button } from '@/components/ui/button'
 import {
   Menu,
-  MenuPopup,
-  MenuItem,
   MenuGroup,
   MenuGroupLabel,
+  MenuItem,
+  MenuPopup,
   MenuTrigger,
 } from '@/components/ui/menu'
 import { Badge } from '@/components/ui/badge'
@@ -29,8 +29,7 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { formatPrice } from '@/lib/utils'
 import { toastManager } from '@/components/ui/toast'
 import { BASE_URL } from '@/lib/constans'
-import { DataTable } from '@/components/ui/data-table'
-import { DataTableColumnHeader } from '@/components/ui/data-table'
+import { DataTable, DataTableColumnHeader  } from '@/components/ui/data-table'
 
 export const Route = createFileRoute('/$username/admin/orders/')({
   component: OrdersPage,
@@ -61,7 +60,12 @@ function getStatusBadge(status: string) {
 
 function OrdersPage() {
   const { data: session } = authClient.useSession()
-  const { data: orders, refetch, isLoading: isOrdersLoading, isFetching: isOrdersFetching } = useQuery({
+  const {
+    data: orders,
+    refetch,
+    isLoading: isOrdersLoading,
+    isFetching: isOrdersFetching,
+  } = useQuery({
     queryKey: ['orders', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return []
@@ -97,7 +101,7 @@ function OrdersPage() {
     },
   })
 
-  const columns: ColumnDef<any>[] = [
+  const columns: Array<ColumnDef<any>> = [
     {
       accessorKey: 'product',
       header: ({ column }) => (
@@ -269,7 +273,9 @@ function OrdersPage() {
         data={orders || []}
         searchKey="buyerEmail"
         filterPlaceholder="Filter by email..."
-        isLoading={(isOrdersLoading || isOrdersFetching) && (orders?.length ?? 0) === 0}
+        isLoading={
+          (isOrdersLoading || isOrdersFetching) && (orders?.length ?? 0) === 0
+        }
         loadingText="Loading orders..."
       />
     </div>

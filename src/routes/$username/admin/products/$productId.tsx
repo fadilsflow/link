@@ -1,9 +1,8 @@
 import * as React from 'react'
 import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import type { ProductFormValues } from '@/components/dashboard/ProductForm'
-import { Button } from '@/components/ui/button'
 import {
   ProductForm,
   parseCustomerQuestions,
@@ -11,6 +10,17 @@ import {
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetPanel,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/$username/admin/products/$productId')({
   component: ProductEditRoute,
@@ -55,11 +65,21 @@ function ProductEditRoute() {
   const user = dashboardData?.user
   const product = dashboardData?.products?.find((p: any) => p.id === productId)
 
+  const [initialForm, setInitialForm] =
+    React.useState<ProductFormValues | null>(null)
   const [form, setForm] = React.useState<ProductFormValues | null>(null)
+  const [isUploading, setIsUploading] = React.useState(false)
+  const [isOpen, setIsOpen] = React.useState(false)
+
+  React.useEffect(() => {
+    setIsOpen(true)
+  }, [])
 
   React.useEffect(() => {
     if (user && product && !form) {
-      setForm(mapProductToForm(user.id, product))
+      const mapped = mapProductToForm(user.id, product)
+      setForm(mapped)
+      setInitialForm(mapped)
     }
   }, [user, product, form])
 
@@ -89,11 +109,27 @@ function ProductEditRoute() {
             ? values.customerQuestions
             : undefined,
       }
-      router.navigate({ to: '/$username/admin/products', params: { username } })
       return trpcClient.product.update.mutate(base)
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      await queryClient.invalidateQueries({
+        queryKey: ['products', user?.id],
+      })
+      toastManager.add({
+        title: 'Product updated',
+        description: 'Your changes have been saved successfully.',
+      })
+      router.navigate({ to: '/$username/admin/products', params: { username } })
+    },
+    onError: (error: any) => {
+      toastManager.add({
+        title: 'Failed to update product',
+        description:
+          error?.message ??
+          'An unexpected error occurred while updating the product.',
+        type: 'error',
+      })
     },
   })
 
@@ -105,78 +141,129 @@ function ProductEditRoute() {
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      await queryClient.invalidateQueries({
+        queryKey: ['products', user?.id],
+      })
+      toastManager.add({
+        title: 'Product deleted',
+        description: 'The product has been deleted successfully.',
+      })
       router.navigate({ to: '/$username/admin/products', params: { username } })
+    },
+    onError: (error: any) => {
+      toastManager.add({
+        title: 'Failed to delete product',
+        description:
+          error?.message ??
+          'An unexpected error occurred while deleting the product.',
+        type: 'error',
+      })
     },
   })
 
-  if (!user || !product || !form) return null
+  const isReady = !!(user && product && form)
+
+  const isDirty =
+    isReady && initialForm
+      ? JSON.stringify(form) !== JSON.stringify(initialForm)
+      : false
+
+  const handleOpenChange = (open: boolean) => {
+    if (isUploading) return
+
+    if (!open) {
+      if (isDirty) {
+        const confirm = window.confirm(
+          'Are you sure you want to leave? You have some unsaved changes!',
+        )
+        if (!confirm) {
+          setIsOpen(true)
+          return
+        }
+      }
+      setIsOpen(false)
+      setTimeout(() => {
+        router.navigate({
+          to: '/$username/admin/products',
+          params: { username },
+        })
+      }, 300)
+    } else {
+      setIsOpen(open)
+    }
+  }
+
+  const isLoading =
+    updateMutation.isPending || deleteMutation.isPending || isUploading
 
   return (
-    <div className="flex-1 w-full max-w-5xl mx-auto p-6 lg:p-10 space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+      <SheetContent className="sm:max-w-2xl w-full p-0">
+        <SheetHeader className="px-6 pt-6">
+          <SheetTitle>Edit product</SheetTitle>
+          <SheetDescription>
+            Update details for {product?.title || 'this product'}.
+          </SheetDescription>
+        </SheetHeader>
+        <SheetPanel>
+          {isReady && form ? (
+            <ProductForm
+              formId="edit-product-form"
+              hideFooter
+              value={form}
+              onChange={setForm}
+              submitting={isLoading}
+              onUploadingChange={setIsUploading}
+              onSubmit={(values) => {
+                updateMutation.mutate(values)
+              }}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center p-6">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </SheetPanel>
+        <SheetFooter className="justify-between sm:justify-between">
           <Button
+            type="button"
             variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            render={
-              <Link to={`/$username/admin/products`} params={{ username }} />
-            }
+            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+            onClick={() => {
+              if (
+                product &&
+                window.confirm('Are you sure you want to delete this product?')
+              ) {
+                deleteMutation.mutate(product.id)
+              }
+            }}
+            disabled={isLoading || !isReady}
           >
-            <ArrowLeft className="h-4 w-4" />
+            {deleteMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              'Delete'
+            )}
           </Button>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-zinc-900">
-              Edit product
-            </h1>
-            <p className="text-sm text-zinc-500 mt-0.5">
-              Update details for {product.title || 'this product'}.
-            </p>
+          <div className="flex items-center gap-2">
+            <SheetClose render={<Button variant="outline" />}>
+              Cancel
+            </SheetClose>
+            <Button
+              type="submit"
+              form="edit-product-form"
+              disabled={isLoading || !isReady}
+            >
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading
+                ? isUploading
+                  ? 'Uploading...'
+                  : 'Saving...'
+                : 'Save changes'}
+            </Button>
           </div>
-        </div>
-      </div>
-
-      <ProductForm
-        value={form}
-        onChange={setForm}
-        submitting={updateMutation.isPending || deleteMutation.isPending}
-        onSubmit={(values) => {
-          toastManager.promise(updateMutation.mutateAsync(values), {
-            loading: {
-              title: 'Saving changes…',
-              description: 'Please wait while we update your product.',
-            },
-            success: () => ({
-              title: 'Product updated',
-              description: 'Your changes have been saved successfully.',
-            }),
-            error: (error: unknown) => ({
-              title: 'Failed to update product',
-              description:
-                (error as Error)?.message ??
-                'An unexpected error occurred while updating the product.',
-            }),
-          })
-        }}
-        onDelete={(id) => {
-          toastManager.promise(deleteMutation.mutateAsync(id), {
-            loading: {
-              title: 'Deleting product…',
-              description: 'Please wait while we delete this product.',
-            },
-            success: () => ({
-              title: 'Product deleted',
-              description: 'The product has been deleted successfully.',
-            }),
-            error: (error: unknown) => ({
-              title: 'Failed to delete product',
-              description:
-                (error as Error)?.message ??
-                'An unexpected error occurred while deleting the product.',
-            }),
-          })
-        }}
-      />
-    </div>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   )
 }

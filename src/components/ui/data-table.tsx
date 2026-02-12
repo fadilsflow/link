@@ -2,10 +2,6 @@
 
 import * as React from 'react'
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFacetedRowModel,
@@ -16,6 +12,19 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  ChevronsLeft,
+  ChevronsRight,
+} from 'lucide-react'
+import type {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState} from '@tanstack/react-table';
 import {
   Table,
   TableBody,
@@ -28,14 +37,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  ChevronUp,
-  ChevronDown,
-} from 'lucide-react'
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -46,8 +47,8 @@ import { cn } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  columns: Array<ColumnDef<TData, TValue>>
+  data: Array<TData>
   filterPlaceholder?: string
   filterColumn?: string
   searchKey?: string

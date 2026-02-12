@@ -105,9 +105,19 @@ function getVideoMeta(rawUrl?: string | null): {
       }
     }
 
-    return { embedUrl: null, posterUrl: null, provider: null, youtubeVideoId: null }
+    return {
+      embedUrl: null,
+      posterUrl: null,
+      provider: null,
+      youtubeVideoId: null,
+    }
   } catch {
-    return { embedUrl: null, posterUrl: null, provider: null, youtubeVideoId: null }
+    return {
+      embedUrl: null,
+      posterUrl: null,
+      provider: null,
+      youtubeVideoId: null,
+    }
   }
 }
 

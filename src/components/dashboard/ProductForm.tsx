@@ -1,16 +1,17 @@
 import * as React from 'react'
 import { z } from 'zod'
 import {
+  FileText,
+  Image as ImageIcon,
   Link2,
+  Loader2,
   Plus,
   Trash2,
-  Image as ImageIcon,
-  FileText,
   Upload,
   X,
-  Loader2,
 } from 'lucide-react'
-import { useFileUpload, type FileWithPreview } from '@/hooks/use-file-upload'
+import type { FileWithPreview } from '@/hooks/use-file-upload'
+import { useFileUpload } from '@/hooks/use-file-upload'
 import { uploadFile } from '@/lib/upload-client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -50,8 +51,8 @@ export type ProductFormValues = {
   title: string
   description: string
   productUrl: string
-  images: string[]
-  productFiles: ProductFile[]
+  images: Array<string>
+  productFiles: Array<ProductFile>
   isActive: boolean
   totalQuantity?: number | null
   limitPerCheckout?: number | null
@@ -194,12 +195,30 @@ export interface ProductFormProps {
   onSubmit: (value: ProductFormValues) => void
   submitting?: boolean
   onDelete?: (id: string) => void
+  formId?: string
+  hideFooter?: boolean
+  onUploadingChange?: (isUploading: boolean) => void
 }
 
 export function ProductForm(props: ProductFormProps) {
-  const { value, onChange, onSubmit, submitting, onDelete } = props
+  const {
+    value,
+    onChange,
+    onSubmit,
+    submitting,
+    onDelete,
+    formId,
+    hideFooter,
+    onUploadingChange,
+  } = props
 
-  const [isUploading, setIsUploading] = React.useState(false)
+  const [isUploadingLocal, setIsUploadingLocal] = React.useState(false)
+  const isUploading = isUploadingLocal
+
+  const setUploading = (val: boolean) => {
+    setIsUploadingLocal(val)
+    onUploadingChange?.(val)
+  }
 
   // Carousel Images Hook
   const [
@@ -248,7 +267,7 @@ export function ProductForm(props: ProductFormProps) {
 
   const handleSubmit: React.FormEventHandler = async (e) => {
     e.preventDefault()
-    setIsUploading(true)
+    setUploading(true)
 
     try {
       const result = productFormClientSchema.safeParse(value)
@@ -260,12 +279,12 @@ export function ProductForm(props: ProductFormProps) {
         if (typeof window !== 'undefined' && firstFieldError) {
           window.alert(firstFieldError)
         }
-        setIsUploading(false)
+        setUploading(false)
         return
       }
 
       // 1. Upload new images
-      const finalImages: string[] = []
+      const finalImages: Array<string> = []
       for (const fileItem of imageFiles) {
         if (fileItem.file instanceof File) {
           const url = await uploadFile(fileItem.file, 'products/images')
@@ -277,7 +296,7 @@ export function ProductForm(props: ProductFormProps) {
       }
 
       // 2. Upload new digital files
-      const finalProductFiles: ProductFile[] = []
+      const finalProductFiles: Array<ProductFile> = []
       for (const fileItem of digitalFiles) {
         if (fileItem.file instanceof File) {
           const url = await uploadFile(fileItem.file, 'products/files')
@@ -297,6 +316,7 @@ export function ProductForm(props: ProductFormProps) {
       onSubmit({
         ...result.data,
         description: result.data.description ?? '',
+        productUrl: result.data.productUrl ?? '',
         images: finalImages,
         productFiles: finalProductFiles,
       })
@@ -304,7 +324,7 @@ export function ProductForm(props: ProductFormProps) {
       console.error('Upload failed', err)
       window.alert('Failed to upload files. Please try again.')
     } finally {
-      setIsUploading(false)
+      setUploading(false)
     }
   }
 
@@ -322,6 +342,7 @@ export function ProductForm(props: ProductFormProps) {
       </CardHeader>
       <CardContent>
         <form
+          id={formId}
           onSubmit={handleSubmit}
           className="space-y-6 text-sm"
           aria-label="Product form"
@@ -746,51 +767,57 @@ export function ProductForm(props: ProductFormProps) {
             )}
           </div>
 
-          <Separator />
+          {!hideFooter && (
+            <>
+              <Separator />
 
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs">
-              <Switch
-                checked={value.isActive}
-                onCheckedChange={(checked) =>
-                  onChange({ ...value, isActive: checked })
-                }
-              />
-              <span className="text-zinc-700 font-medium">
-                Active on profile
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              {value.id && onDelete && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-red-500 hover:text-red-600"
-                  onClick={() => onDelete(value.id!)}
-                >
-                  Delete
-                </Button>
-              )}
-              <Button
-                type="submit"
-                size="sm"
-                className={cn('rounded-full text-xs')}
-                disabled={submitting || isUploading}
-              >
-                {submitting || isUploading ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>{isUploading ? 'Uploading...' : 'Saving...'}</span>
-                  </div>
-                ) : value.id ? (
-                  'Save changes'
-                ) : (
-                  'Create product'
-                )}
-              </Button>
-            </div>
-          </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs">
+                  <Switch
+                    checked={value.isActive}
+                    onCheckedChange={(checked) =>
+                      onChange({ ...value, isActive: checked })
+                    }
+                  />
+                  <span className="text-zinc-700 font-medium">
+                    Active on profile
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {value.id && onDelete && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-red-500 hover:text-red-600"
+                      onClick={() => onDelete(value.id!)}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className={cn('rounded-full text-xs')}
+                    disabled={submitting || isUploading}
+                  >
+                    {submitting || isUploading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>
+                          {isUploading ? 'Uploading...' : 'Saving...'}
+                        </span>
+                      </div>
+                    ) : value.id ? (
+                      'Save changes'
+                    ) : (
+                      'Create product'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </form>
       </CardContent>
     </Card>

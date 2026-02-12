@@ -18,7 +18,11 @@ function parseYouTubeIdFromUrl(rawUrl: string): string | null {
     const url = new URL(rawUrl)
     const host = url.hostname.toLowerCase()
 
-    if (YOUTUBE_DOMAINS.some((domain) => host === domain || host.endsWith(`.${domain}`))) {
+    if (
+      YOUTUBE_DOMAINS.some(
+        (domain) => host === domain || host.endsWith(`.${domain}`),
+      )
+    ) {
       const id = url.searchParams.get('v')
       return id || null
     }
@@ -39,7 +43,9 @@ export function extractYouTubeVideoId(rawUrl?: string | null): string | null {
   return parseYouTubeIdFromUrl(rawUrl)
 }
 
-export function extractYouTubeVideoIdFromText(content?: string | null): string | null {
+export function extractYouTubeVideoIdFromText(
+  content?: string | null,
+): string | null {
   if (!content) return null
   const urls = content.match(/https?:\/\/[^\s)]+/g)
   if (!urls) return null
@@ -57,7 +63,11 @@ function detectNeedsYTApi(el: HTMLElement) {
   const wantsJsApi = el.hasAttribute('js-api')
   const vendor = window.navigator.vendor || ''
   const ua = window.navigator.userAgent || ''
-  return wantsJsApi || vendor.includes('Apple') || /Mobi|Android|iPhone|iPad/i.test(ua)
+  return (
+    wantsJsApi ||
+    vendor.includes('Apple') ||
+    /Mobi|Android|iPhone|iPad/i.test(ua)
+  )
 }
 
 class LiteYouTubeElement extends HTMLElement {
@@ -128,7 +138,10 @@ class LiteYouTubeElement extends HTMLElement {
   static warmConnections() {
     if (LiteYouTubeElement.preconnected || !canUseDOM()) return
 
-    LiteYouTubeElement.addPrefetch('preconnect', 'https://www.youtube-nocookie.com')
+    LiteYouTubeElement.addPrefetch(
+      'preconnect',
+      'https://www.youtube-nocookie.com',
+    )
     LiteYouTubeElement.addPrefetch('preconnect', 'https://www.google.com')
     LiteYouTubeElement.addPrefetch('preconnect', 'https://i.ytimg.com')
 
@@ -187,7 +200,7 @@ class LiteYouTubeElement extends HTMLElement {
 
     const paramsObj = Object.fromEntries(this.getParams().entries())
     if (window.YT?.Player) {
-      // eslint-disable-next-line no-new
+       
       new window.YT.Player(placeholder, {
         width: '100%',
         videoId: this.videoId,

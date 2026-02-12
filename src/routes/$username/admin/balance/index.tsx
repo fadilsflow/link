@@ -1,10 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  AppHeader,
-  AppHeaderContent,
-  AppHeaderDescription,
-} from '@/components/app-header'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -12,6 +7,11 @@ import {
   DollarSign,
   XCircle,
 } from 'lucide-react'
+import {
+  AppHeader,
+  AppHeaderContent,
+  AppHeaderDescription,
+} from '@/components/app-header'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -227,42 +227,42 @@ function BalancePage() {
             ) : (
               <div className="space-y-3">
                 {(payoutsList ?? []).map((payout: any) => (
-                <div
-                  key={payout.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-muted">
-                      <Banknote className="h-4 w-4 text-muted-foreground" />
+                  <div
+                    key={payout.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-muted">
+                        <Banknote className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {formatPrice(payout.amount)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(payout.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {formatPrice(payout.amount)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(payout.createdAt).toLocaleDateString()}
-                      </p>
+                    <div className="flex items-center gap-2">
+                      <PayoutStatusBadge status={payout.status} />
+                      {payout.status === 'pending' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            if (confirm('Cancel this payout request?')) {
+                              cancelPayoutMutation.mutate(payout.id)
+                            }
+                          }}
+                          disabled={cancelPayoutMutation.isPending}
+                        >
+                          <XCircle className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <PayoutStatusBadge status={payout.status} />
-                    {payout.status === 'pending' && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => {
-                          if (confirm('Cancel this payout request?')) {
-                            cancelPayoutMutation.mutate(payout.id)
-                          }
-                        }}
-                        disabled={cancelPayoutMutation.isPending}
-                      >
-                        <XCircle className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
                 ))}
               </div>
             )}

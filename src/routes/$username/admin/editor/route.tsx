@@ -1,12 +1,12 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { CircleCheck, Share } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { PreviewProvider, usePreview } from '@/lib/preview-context'
 import { AppearancePreview } from '@/components/dashboard/appearance/AppearancePreview'
 import { ShareProfileModal } from '@/components/share-profile-modal'
 import { BASE_URL } from '@/lib/constans'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
-import { CircleCheck, Share } from 'lucide-react'
-import { useEffect, useState } from 'react'
 
 export const Route = createFileRoute('/$username/admin/editor')({
   component: RouteComponent,

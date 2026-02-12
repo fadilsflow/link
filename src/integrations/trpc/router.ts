@@ -4,6 +4,7 @@ import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
 import {
+  TRANSACTION_TYPE,
   blockClicks,
   blocks,
   orders,
@@ -13,7 +14,6 @@ import {
   socialLinks,
   transactions,
   user,
-  TRANSACTION_TYPE,
 } from '@/db/schema'
 import { StorageService } from '@/lib/storage'
 import { sendOrderEmail } from '@/lib/email'
@@ -842,7 +842,7 @@ const orderRouter = {
       })
 
       const productMap = new Map(productsList.map((p) => [p.id, p]))
-      const ordersCreated: any[] = []
+      const ordersCreated: Array<any> = []
 
       for (const item of input.items) {
         const product = productMap.get(item.productId)

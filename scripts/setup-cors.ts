@@ -1,4 +1,4 @@
-import { S3Client, PutBucketCorsCommand } from '@aws-sdk/client-s3'
+import { PutBucketCorsCommand, S3Client } from '@aws-sdk/client-s3'
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID

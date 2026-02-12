@@ -1,6 +1,6 @@
-import { checkOnboardingStatus } from '@/lib/onboarding-server'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
+import { checkOnboardingStatus } from '@/lib/onboarding-server'
 import { Spinner } from '@/components/ui/spinner'
 
 export const Route = createFileRoute('/auth/callback')({

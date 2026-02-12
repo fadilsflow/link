@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   AlertCircleIcon,
@@ -12,114 +12,115 @@ import {
   UploadIcon,
   VideoIcon,
   XIcon,
-} from "lucide-react";
-import { useState } from "react";
+} from 'lucide-react'
+import { useState } from 'react'
 
+import type {FileWithPreview} from '@/hooks/use-file-upload';
 import {
-  type FileWithPreview,
+  
   formatBytes,
-  useFileUpload,
-} from "@/hooks/use-file-upload";
-import { Button } from "@/components/ui/button";
+  useFileUpload
+} from '@/hooks/use-file-upload'
+import { Button } from '@/components/ui/button'
 
 // Create some dummy initial files
 const initialFiles = [
   {
-    id: "intro.zip-1744638436563-8u5xuls",
-    name: "intro.zip",
+    id: 'intro.zip-1744638436563-8u5xuls',
+    name: 'intro.zip',
     size: 252873,
-    type: "application/zip",
-    url: "https://example.com/intro.zip",
+    type: 'application/zip',
+    url: 'https://example.com/intro.zip',
   },
   {
-    id: "image-01-123456789",
-    name: "image-01.jpg",
+    id: 'image-01-123456789',
+    name: 'image-01.jpg',
     size: 1528737,
-    type: "image/jpeg",
-    url: "https://picsum.photos/1000/800?grayscale&random=1",
+    type: 'image/jpeg',
+    url: 'https://picsum.photos/1000/800?grayscale&random=1',
   },
   {
-    id: "audio-123456789",
-    name: "audio.mp3",
+    id: 'audio-123456789',
+    name: 'audio.mp3',
     size: 1528737,
-    type: "audio/mpeg",
-    url: "https://example.com/audio.mp3",
+    type: 'audio/mpeg',
+    url: 'https://example.com/audio.mp3',
   },
-];
+]
 
 const getFileIcon = (file: { file: File | { type: string; name: string } }) => {
-  const fileType = file.file instanceof File ? file.file.type : file.file.type;
-  const fileName = file.file instanceof File ? file.file.name : file.file.name;
+  const fileType = file.file instanceof File ? file.file.type : file.file.type
+  const fileName = file.file instanceof File ? file.file.name : file.file.name
 
   const iconMap = {
     archive: {
       conditions: (type: string, name: string) =>
-        type.includes("zip") ||
-        type.includes("archive") ||
-        name.endsWith(".zip") ||
-        name.endsWith(".rar"),
+        type.includes('zip') ||
+        type.includes('archive') ||
+        name.endsWith('.zip') ||
+        name.endsWith('.rar'),
       icon: FileArchiveIcon,
     },
     audio: {
-      conditions: (type: string) => type.includes("audio/"),
+      conditions: (type: string) => type.includes('audio/'),
       icon: HeadphonesIcon,
     },
     excel: {
       conditions: (type: string, name: string) =>
-        type.includes("excel") ||
-        name.endsWith(".xls") ||
-        name.endsWith(".xlsx"),
+        type.includes('excel') ||
+        name.endsWith('.xls') ||
+        name.endsWith('.xlsx'),
       icon: FileSpreadsheetIcon,
     },
     image: {
-      conditions: (type: string) => type.startsWith("image/"),
+      conditions: (type: string) => type.startsWith('image/'),
       icon: ImageIcon,
     },
     pdf: {
       conditions: (type: string, name: string) =>
-        type.includes("pdf") ||
-        name.endsWith(".pdf") ||
-        type.includes("word") ||
-        name.endsWith(".doc") ||
-        name.endsWith(".docx"),
+        type.includes('pdf') ||
+        name.endsWith('.pdf') ||
+        type.includes('word') ||
+        name.endsWith('.doc') ||
+        name.endsWith('.docx'),
       icon: FileTextIcon,
     },
     video: {
-      conditions: (type: string) => type.includes("video/"),
+      conditions: (type: string) => type.includes('video/'),
       icon: VideoIcon,
     },
-  };
+  }
 
   for (const { icon: Icon, conditions } of Object.values(iconMap)) {
     if (conditions(fileType, fileName)) {
-      return <Icon className="size-5 opacity-60" />;
+      return <Icon className="size-5 opacity-60" />
     }
   }
 
-  return <FileIcon className="size-5 opacity-60" />;
-};
+  return <FileIcon className="size-5 opacity-60" />
+}
 
 const _getFilePreview = (file: {
-  file: File | { type: string; name: string; url?: string };
+  file: File | { type: string; name: string; url?: string }
 }) => {
-  const fileType = file.file instanceof File ? file.file.type : file.file.type;
-  const fileName = file.file instanceof File ? file.file.name : file.file.name;
+  const fileType = file.file instanceof File ? file.file.type : file.file.type
+  const fileName = file.file instanceof File ? file.file.name : file.file.name
 
   const renderImage = (src: string) => (
     <img
       alt={fileName}
       className="size-full rounded-t-[inherit] object-cover"
       src={src}
-    />  
-  );
+    />
+  )
 
   return (
     <div className="flex aspect-square items-center justify-center overflow-hidden rounded-t-[inherit] bg-accent">
-      {fileType.startsWith("image/") ? (
+      {fileType.startsWith('image/') ? (
         file.file instanceof File ? (
           (() => {
-            const previewUrl = URL.createObjectURL(file.file);
-            return renderImage(previewUrl);
+            const previewUrl = URL.createObjectURL(file.file)
+            return renderImage(previewUrl)
           })()
         ) : file.file.url ? (
           renderImage(file.file.url)
@@ -130,15 +131,15 @@ const _getFilePreview = (file: {
         getFileIcon(file)
       )}
     </div>
-  );
-};
+  )
+}
 
 // Type for tracking upload progress
 type UploadProgress = {
-  fileId: string;
-  progress: number;
-  completed: boolean;
-};
+  fileId: string
+  progress: number
+  completed: boolean
+}
 
 // Function to simulate file upload with more realistic timing and progress
 const simulateUpload = (
@@ -146,73 +147,73 @@ const simulateUpload = (
   onProgress: (progress: number) => void,
   onComplete: () => void,
 ) => {
-  let timeoutId: NodeJS.Timeout;
-  let uploadedBytes = 0;
-  let lastProgressReport = 0;
+  let timeoutId: NodeJS.Timeout
+  let uploadedBytes = 0
+  let lastProgressReport = 0
 
   const simulateChunk = () => {
     // Simulate variable network conditions with random chunk sizes
-    const chunkSize = Math.floor(Math.random() * 300000) + 2000;
-    uploadedBytes = Math.min(totalBytes, uploadedBytes + chunkSize);
+    const chunkSize = Math.floor(Math.random() * 300000) + 2000
+    uploadedBytes = Math.min(totalBytes, uploadedBytes + chunkSize)
 
     // Calculate progress percentage (0-100)
-    const progressPercent = Math.floor((uploadedBytes / totalBytes) * 100);
+    const progressPercent = Math.floor((uploadedBytes / totalBytes) * 100)
 
     // Only report progress if it's changed by at least 1%
     if (progressPercent > lastProgressReport) {
-      lastProgressReport = progressPercent;
-      onProgress(progressPercent);
+      lastProgressReport = progressPercent
+      onProgress(progressPercent)
     }
 
     // Continue simulation if not complete
     if (uploadedBytes < totalBytes) {
       // Variable delay between 50ms and 500ms to simulate network fluctuations (reduced for faster uploads)
-      const delay = Math.floor(Math.random() * 450) + 50;
+      const delay = Math.floor(Math.random() * 450) + 50
 
       // Occasionally add a longer pause to simulate network congestion (5% chance, shorter duration)
-      const extraDelay = Math.random() < 0.05 ? 500 : 0;
+      const extraDelay = Math.random() < 0.05 ? 500 : 0
 
-      timeoutId = setTimeout(simulateChunk, delay + extraDelay);
+      timeoutId = setTimeout(simulateChunk, delay + extraDelay)
     } else {
       // Upload complete
-      onComplete();
+      onComplete()
     }
-  };
+  }
 
   // Start the simulation
-  timeoutId = setTimeout(simulateChunk, 100);
+  timeoutId = setTimeout(simulateChunk, 100)
 
   // Return a cleanup function to cancel the simulation
   return () => {
     if (timeoutId) {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId)
     }
-  };
-};
+  }
+}
 
 export default function Component() {
-  const maxSizeMB = 5;
-  const maxSize = maxSizeMB * 1024 * 1024; // 5MB default
-  const maxFiles = 6;
+  const maxSizeMB = 5
+  const maxSize = maxSizeMB * 1024 * 1024 // 5MB default
+  const maxFiles = 6
 
   // State to track upload progress for each file
-  const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<Array<UploadProgress>>([])
 
   // Function to handle newly added files
-  const handleFilesAdded = (addedFiles: FileWithPreview[]) => {
+  const handleFilesAdded = (addedFiles: Array<FileWithPreview>) => {
     const newProgressItems = addedFiles.map((file) => ({
       completed: false,
       fileId: file.id,
       progress: 0,
-    }));
+    }))
 
-    setUploadProgress((prev) => [...prev, ...newProgressItems]);
+    setUploadProgress((prev) => [...prev, ...newProgressItems])
 
-    const cleanupFunctions: Array<() => void> = [];
+    const cleanupFunctions: Array<() => void> = []
 
     for (const file of addedFiles) {
       const fileSize =
-        file.file instanceof File ? file.file.size : file.file.size;
+        file.file instanceof File ? file.file.size : file.file.size
 
       const cleanup = simulateUpload(
         fileSize,
@@ -221,31 +222,31 @@ export default function Component() {
             prev.map((item) =>
               item.fileId === file.id ? { ...item, progress } : item,
             ),
-          );
+          )
         },
         () => {
           setUploadProgress((prev) =>
             prev.map((item) =>
               item.fileId === file.id ? { ...item, completed: true } : item,
             ),
-          );
+          )
         },
-      );
+      )
 
-      cleanupFunctions.push(cleanup);
+      cleanupFunctions.push(cleanup)
     }
 
     return () => {
       for (const cleanup of cleanupFunctions) {
-        cleanup();
+        cleanup()
       }
-    };
-  };
+    }
+  }
 
   // Remove the progress tracking for the file
   const handleFileRemoved = (fileId: string) => {
-    setUploadProgress((prev) => prev.filter((item) => item.fileId !== fileId));
-  };
+    setUploadProgress((prev) => prev.filter((item) => item.fileId !== fileId))
+  }
 
   const [
     { files, isDragging, errors },
@@ -265,7 +266,7 @@ export default function Component() {
     maxSize,
     multiple: true,
     onFilesAdded: handleFilesAdded,
-  });
+  })
 
   return (
     <div className="flex flex-col gap-2">
@@ -301,8 +302,8 @@ export default function Component() {
                 <Button
                   onClick={() => {
                     // Clear all progress tracking
-                    setUploadProgress([]);
-                    clearFiles();
+                    setUploadProgress([])
+                    clearFiles()
                   }}
                   size="sm"
                   variant="outline"
@@ -321,8 +322,8 @@ export default function Component() {
                 // Find the upload progress for this file once to avoid repeated lookups
                 const fileProgress = uploadProgress.find(
                   (p) => p.fileId === file.id,
-                );
-                const isUploading = fileProgress && !fileProgress.completed;
+                )
+                const isUploading = fileProgress && !fileProgress.completed
 
                 return (
                   <div
@@ -354,8 +355,8 @@ export default function Component() {
                         aria-label="Remove file"
                         className="-me-2 size-8 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
                         onClick={() => {
-                          handleFileRemoved(file.id);
-                          removeFile(file.id);
+                          handleFileRemoved(file.id)
+                          removeFile(file.id)
                         }}
                         size="icon"
                         variant="ghost"
@@ -367,10 +368,10 @@ export default function Component() {
                     {/* Upload progress bar */}
                     {fileProgress &&
                       (() => {
-                        const progress = fileProgress.progress || 0;
-                        const completed = fileProgress.completed || false;
+                        const progress = fileProgress.progress || 0
+                        const completed = fileProgress.completed || false
 
-                        if (completed) return null;
+                        if (completed) return null
 
                         return (
                           <div className="mt-1 flex items-center gap-2">
@@ -384,10 +385,10 @@ export default function Component() {
                               {progress}%
                             </span>
                           </div>
-                        );
+                        )
                       })()}
                   </div>
-                );
+                )
               })}
             </div>
           </div>
@@ -426,7 +427,7 @@ export default function Component() {
         className="mt-2 text-center text-muted-foreground text-xs"
         role="region"
       >
-        With simulated progress track ∙{" "}
+        With simulated progress track ∙{' '}
         <a
           className="underline hover:text-foreground"
           href="https://github.com/cosscom/coss/blob/main/apps/origin/docs/use-file-upload.md"
@@ -437,5 +438,5 @@ export default function Component() {
         </a>
       </p>
     </div>
-  );
+  )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Upload, X, Loader2, Link as LinkIcon } from 'lucide-react'
+import { Link as LinkIcon, Loader2, Upload, X } from 'lucide-react'
 import { useFileUpload } from '@/hooks/use-file-upload'
 import { uploadFile } from '@/lib/upload-client'
 import { Button } from '@/components/ui/button'
@@ -61,7 +61,7 @@ export function ImageUploader({
   }
 
   // Effect to trigger upload when file is selected via hook
-  const handleFilesAdded = async (newFiles: File[]) => {
+  const handleFilesAdded = async (newFiles: Array<File>) => {
     if (newFiles.length > 0) {
       await processUpload(newFiles[0])
     }

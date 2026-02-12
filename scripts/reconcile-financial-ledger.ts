@@ -1,18 +1,25 @@
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '@/db'
-import { orders, products, transactions, TRANSACTION_TYPE, user } from '@/db/schema'
+import {
+  TRANSACTION_TYPE,
+  orders,
+  products,
+  transactions,
+  user,
+} from '@/db/schema'
 
 async function main() {
-  const issues: string[] = []
+  const issues: Array<string> = []
 
   // 1) cached creator totalRevenue vs ledger aggregate (sale only)
   const creatorRevenueRows = await db
     .select({
       creatorId: user.id,
       cachedRevenue: user.totalRevenue,
-      ledgerRevenue: sql<number>`COALESCE(SUM(${transactions.amount} - ${transactions.platformFeeAmount}), 0)`.as(
-        'ledgerRevenue',
-      ),
+      ledgerRevenue:
+        sql<number>`COALESCE(SUM(${transactions.amount} - ${transactions.platformFeeAmount}), 0)`.as(
+          'ledgerRevenue',
+        ),
     })
     .from(user)
     .leftJoin(
@@ -29,7 +36,10 @@ async function main() {
 
   if (creatorRevenueRows.length > 0) {
     issues.push(`creator cache drift on ${creatorRevenueRows.length} creators`)
-    console.error('[reconcile] creator revenue drift', creatorRevenueRows.slice(0, 20))
+    console.error(
+      '[reconcile] creator revenue drift',
+      creatorRevenueRows.slice(0, 20),
+    )
   }
 
   // 2) cached product totalRevenue vs sales ledger aggregate
@@ -52,7 +62,10 @@ async function main() {
 
   if (productRevenueRows.length > 0) {
     issues.push(`product cache drift on ${productRevenueRows.length} products`)
-    console.error('[reconcile] product revenue drift', productRevenueRows.slice(0, 20))
+    console.error(
+      '[reconcile] product revenue drift',
+      productRevenueRows.slice(0, 20),
+    )
   }
 
   if (issues.length > 0) {

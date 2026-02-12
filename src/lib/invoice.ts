@@ -73,7 +73,6 @@ export async function generateInvoicePdf(
     align: 'right',
   })
 
-
   // Footer
   doc.setFontSize(10)
   doc.text('Thank you for your business!', 14, finalY + 25)

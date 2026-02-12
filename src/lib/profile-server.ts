@@ -144,7 +144,7 @@ export const getOrderByToken = createServerFn({ method: 'GET' })
 
     // Generate download URLs for product files
     const { StorageService } = await import('@/lib/storage')
-    const productFiles = (productData.productFiles as any[]) || []
+    const productFiles = (productData.productFiles as Array<any>) || []
 
     const filesWithDownloadUrls = await Promise.all(
       productFiles.map(async (file) => {

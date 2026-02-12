@@ -101,7 +101,7 @@ function CheckoutPage() {
     () => parseQuestions(product.customerQuestions),
     [product.customerQuestions],
   )
-  const productImages = (product.images as string[] | null) || []
+  const productImages = (product.images) || []
   const hasImage = productImages.length > 0
   const productVideoId = extractYouTubeVideoIdFromText(product.description)
 

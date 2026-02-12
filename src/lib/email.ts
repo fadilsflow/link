@@ -38,7 +38,7 @@ export async function sendOrderEmail({
   })
 
   // Generate invoice
-  const attachments: any[] = []
+  const attachments: Array<any> = []
   try {
     const invoiceBuffer = await generateInvoicePdf(order, product, creator)
     attachments.push({

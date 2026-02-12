@@ -1,10 +1,10 @@
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import {
+  CheckCircle2,
   Download,
+  ExternalLink,
   FileIcon,
   ShoppingBag,
-  ExternalLink,
-  CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -25,8 +25,8 @@ export const Route = createFileRoute('/d/$token')({
 function OrderDeliveryPage() {
   const { order, product, creator } = Route.useLoaderData()
 
-  const productFiles = (product.productFiles as any[]) || []
-  const productImages = (product.images as string[]) || []
+  const productFiles = (product.productFiles) || []
+  const productImages = (product.images as Array<string>) || []
 
   // Use snapshot title from the order (immutable), fallback to product
   const displayTitle = order.productTitle ?? product.title ?? 'Product'
@@ -90,12 +90,14 @@ function OrderDeliveryPage() {
                 </div>
                 {isProductUnavailable && (
                   <p className="text-xs text-amber-600 mt-2">
-                    Product is no longer active, but this purchase remains valid via order snapshot data.
+                    Product is no longer active, but this purchase remains valid
+                    via order snapshot data.
                   </p>
                 )}
                 {isCreatorUnavailable && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Creator profile may be unavailable. Your order access remains valid.
+                    Creator profile may be unavailable. Your order access
+                    remains valid.
                   </p>
                 )}
               </div>

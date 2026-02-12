@@ -1,6 +1,6 @@
+import path from 'node:path'
+import fs from 'node:fs'
 import { Resend } from 'resend'
-import path from 'path'
-import fs from 'fs'
 
 // Manually load .env if not automatically handled by Bun
 const envPath = path.resolve(process.cwd(), '.env')
@@ -19,7 +19,7 @@ async function testEmail() {
 
   // Replace this with your verified domain email
   const from = 'onboarding@webtron.biz.id'
-  
+
   const to = 'wahyufadil1140@gmail.com' // Resend testing address
 
   console.log(`Sending from ${from} to ${to}...`)
@@ -42,4 +42,3 @@ async function testEmail() {
     console.error('Critical Error:', err)
   }
 }
-

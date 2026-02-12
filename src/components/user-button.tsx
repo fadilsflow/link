@@ -1,27 +1,27 @@
 import {
-  UserIcon,
-  Palette,
-  Package,
-  ShoppingBag,
   ExternalLink,
   LinkIcon,
   LogOut,
+  Package,
+  Palette,
+  ShoppingBag,
   User,
+  UserIcon,
 } from 'lucide-react'
 import { Link, useRouter } from '@tanstack/react-router'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { toastManager } from './ui/toast'
 import { authClient } from '@/lib/auth-client'
 import {
   Menu,
-  MenuItem,
-  MenuPopup,
-  MenuTrigger,
-  MenuSeparator,
   MenuGroup,
   MenuGroupLabel,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger,
 } from '@/components/ui/menu'
-import { toastManager } from './ui/toast'
 
 export default function UserButton() {
   const { data: session } = authClient.useSession()

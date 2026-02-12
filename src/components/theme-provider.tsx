@@ -29,7 +29,7 @@ export function ThemeProvider({
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
       return (localStorage.getItem(storageKey) as Theme) || defaultTheme
-    }   
+    }
     return defaultTheme
   })
 

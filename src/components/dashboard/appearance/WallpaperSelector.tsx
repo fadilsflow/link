@@ -1,8 +1,8 @@
 import React from 'react'
+import { ImageUploader } from './ImageUploader'
 import type { WallpaperStyle } from './types'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { ImageUploader } from './ImageUploader'
 import { cn } from '@/lib/utils'
 
 interface WallpaperSelectorProps {

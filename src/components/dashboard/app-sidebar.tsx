@@ -23,6 +23,15 @@ import {
   useRouter,
   useRouterState,
 } from '@tanstack/react-router'
+import Credits from '../Credits'
+import { Button } from '../ui/button'
+import {
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger,
+} from '../ui/menu'
 import { toastManager } from '@/components/ui/toast'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -37,15 +46,6 @@ import {
 } from '@/components/ui/sidebar'
 import { authClient } from '@/lib/auth-client'
 import { BASE_URL } from '@/lib/constans'
-import Credits from '../Credits'
-import { Button } from '../ui/button'
-import {
-  Menu,
-  MenuItem,
-  MenuPopup,
-  MenuSeparator,
-  MenuTrigger,
-} from '../ui/menu'
 
 const data = {
   navBottom: [

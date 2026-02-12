@@ -36,6 +36,7 @@ A bucket stores your objects in R2. To create a new R2 bucket:
      npx wrangler r2 bucket list
 
      ```
+
 - Dashboard
   1. In the Cloudflare Dashboard, go to **R2 object storage**.
 
@@ -143,4 +144,5 @@ The following examples show how to use Python and JavaScript SDKs. For other lan
      Objects: [ 'myfile.txt' ]
 
      ```
-  Refer to [AWS SDK for JavaScript examples](https://developers.cloudflare.com/r2/examples/aws/aws-sdk-js-v3/) for more operations.
+
+     Refer to [AWS SDK for JavaScript examples](https://developers.cloudflare.com/r2/examples/aws/aws-sdk-js-v3/) for more operations.

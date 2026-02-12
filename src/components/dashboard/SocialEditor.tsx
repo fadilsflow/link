@@ -1,29 +1,29 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
+  Github,
   GripVertical,
+  Instagram,
   Mail,
   PlusIcon,
   Trash2,
-  Instagram,
-  Github,
   Youtube,
 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   DndContext,
-  closestCenter,
+  
   KeyboardSensor,
   PointerSensor,
+  closestCenter,
   useSensor,
-  useSensors,
-  type DragEndEvent,
+  useSensors
 } from '@dnd-kit/core'
 import {
-  arrayMove,
   SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
   sortableKeyboardCoordinates,
   useSortable,
-  horizontalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
@@ -70,6 +70,7 @@ import {
   InputGroupText,
 } from '../ui/input-group'
 import { toastManager } from '../ui/toast'
+import type {DragEndEvent} from '@dnd-kit/core';
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { cn } from '@/lib/utils'
 
@@ -193,7 +194,7 @@ interface SocialLink {
 interface SocialEditorProps {
   userId: string
   username: string
-  socialLinks: SocialLink[]
+  socialLinks: Array<SocialLink>
 }
 
 function getPlatformIcon(platform: string) {
@@ -261,7 +262,7 @@ export default function SocialEditor({
 }: SocialEditorProps) {
   const queryClient = useQueryClient()
   const [localSocialLinks, setLocalSocialLinks] =
-    useState<SocialLink[]>(initialSocialLinks)
+    useState<Array<SocialLink>>(initialSocialLinks)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editingLink, setEditingLink] = useState<SocialLink | null>(null)

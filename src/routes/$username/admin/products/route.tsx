@@ -1,15 +1,7 @@
 import * as React from 'react'
 import { Link, Outlet, createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  Copy,
-  Edit,
-  ExternalLink,
-  MoreHorizontal,
-  Plus,
-  ShoppingBag,
-  Trash,
-} from 'lucide-react'
+import { MoreHorizontal, Plus, ShoppingBag } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
   Select,
@@ -18,13 +10,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogClose,
+} from '@/components/ui/alert-dialog'
 import { authClient } from '@/lib/auth-client'
 
 import { Button } from '@/components/ui/button'
 import {
   Menu,
   MenuGroup,
-  MenuGroupLabel,
   MenuItem,
   MenuPopup,
   MenuSeparator,
@@ -83,6 +83,7 @@ function ProductActions({
   username: string
 }) {
   const queryClient = useQueryClient()
+  const [showDeleteAlert, setShowDeleteAlert] = React.useState(false)
 
   const duplicateMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -127,57 +128,87 @@ function ProductActions({
   const checkoutUrl = `${publicUrl}/checkout`
   const href = `/${username}/admin/products/${product.id}`
   return (
-    <Menu>
-      <MenuTrigger
-        render={<Button variant="ghost" size="icon" className="h-8 w-8" />}
-      >
-        <span className="sr-only">Open menu</span>
-        <MoreHorizontal className="h-4 w-4" />
-      </MenuTrigger>
-      <MenuPopup align="end">
-        <MenuGroup>
-          <MenuItem
-            onClick={() => {
-              // Link handles navigation
-            }}
-            render={
-              <Link
-                to={href}
-                className="flex items-center w-full cursor-pointer"
-              />
-            }
-          >
-            Edit
-          </MenuItem>
-          <MenuItem
-            disabled={duplicateMutation.isPending}
-            onClick={() => duplicateMutation.mutate(product.id)}
-          >
-            Duplicate
-          </MenuItem>
-          <MenuItem onClick={() => copyToClipboard(product.id, 'Product ID')}>
-            Copy ID
-          </MenuItem>
-          <MenuItem onClick={() => copyToClipboard(publicUrl, 'Public URL')}>
-            Copy Public URL
-          </MenuItem>
-          <MenuItem
-            onClick={() => copyToClipboard(checkoutUrl, 'Checkout URL')}
-          >
-            Copy Checkout URL
-          </MenuItem>
-        </MenuGroup>
-        <MenuSeparator />
-        <MenuGroup>
-          <MenuItem
-            disabled={deleteMutation.isPending}
-            onClick={() => deleteMutation.mutate(product.id)}
-          >
-            Delete
-          </MenuItem>
-        </MenuGroup>
-      </MenuPopup>
-    </Menu>
+    <>
+      <Menu>
+        <MenuTrigger
+          render={<Button variant="ghost" size="icon" className="h-8 w-8" />}
+        >
+          <span className="sr-only">Open menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </MenuTrigger>
+        <MenuPopup align="end">
+          <MenuGroup>
+            <MenuItem
+              onClick={() => {
+                // Link handles navigation
+              }}
+              render={
+                <Link
+                  to={href}
+                  className="flex items-center w-full cursor-pointer"
+                />
+              }
+            >
+              Edit
+            </MenuItem>
+            <MenuItem
+              disabled={duplicateMutation.isPending}
+              onClick={() => duplicateMutation.mutate(product.id)}
+            >
+              Duplicate
+            </MenuItem>
+            <MenuItem onClick={() => copyToClipboard(product.id, 'Product ID')}>
+              Copy ID
+            </MenuItem>
+            <MenuItem onClick={() => copyToClipboard(publicUrl, 'Public URL')}>
+              Copy Public URL
+            </MenuItem>
+            <MenuItem
+              onClick={() => copyToClipboard(checkoutUrl, 'Checkout URL')}
+            >
+              Copy Checkout URL
+            </MenuItem>
+          </MenuGroup>
+          <MenuSeparator />
+          <MenuGroup>
+            <MenuItem
+              disabled={deleteMutation.isPending}
+              onClick={() => setShowDeleteAlert(true)}
+              className="text-destructive focus:text-destructive"
+            >
+              Delete
+            </MenuItem>
+          </MenuGroup>
+        </MenuPopup>
+      </Menu>
+
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              product "{product.title}" and remove your data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose render={<Button variant="outline" />}>
+              Cancel
+            </AlertDialogClose>
+            <Button
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => {
+                deleteMutation.mutate(product.id)
+                setShowDeleteAlert(false)
+              }}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
 
@@ -329,7 +360,7 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
             >
               <SelectValue />
             </SelectTrigger>
-            <SelectPopup className="w-[120px]">
+            <SelectPopup>
               <SelectItem value="active">
                 <span className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />

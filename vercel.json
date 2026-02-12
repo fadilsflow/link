@@ -1,0 +1,5 @@
+{
+  "buildCommand": "VITE_VERCEL_GIT_COMMIT_SHA=$VERCEL_GIT_COMMIT_SHA vite build",
+  "outputDirectory": "dist/client",
+  "framework": "vite"
+}

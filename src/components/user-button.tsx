@@ -1,11 +1,4 @@
 import {
-  ExternalLink,
-  LinkIcon,
-  LogOut,
-  Package,
-  Palette,
-  ShoppingBag,
-  User,
   UserIcon,
 } from 'lucide-react'
 import { Link, useRouter } from '@tanstack/react-router'
@@ -16,7 +9,6 @@ import { authClient } from '@/lib/auth-client'
 import {
   Menu,
   MenuGroup,
-  MenuGroupLabel,
   MenuItem,
   MenuPopup,
   MenuSeparator,
@@ -79,45 +71,17 @@ export default function UserButton() {
             </p>
           </div>
         </div>
-        <MenuSeparator />
         <MenuGroup>
           <MenuItem
-            className="cursor-pointer"
             render={
-              <Link to={`/$username`} params={{ username }} target="_blank" />
+              <Link
+                to={`/$username/admin`}
+                params={{ username }}
+              />
             }
           >
-            <ExternalLink className="mr-2 size-4" />
-            View My Page
+            Dashboard
           </MenuItem>
-          <MenuItem onClick={copyProfileLink} className="cursor-pointer">
-            <LinkIcon className="mr-2 size-4" />
-            Copy Page Link
-          </MenuItem>
-        </MenuGroup>
-        <MenuSeparator />
-        <MenuGroup>
-          <MenuGroupLabel>Management</MenuGroupLabel>
-          <MenuItem
-            render={
-              <Link to={`/$username/admin/products`} params={{ username }} />
-            }
-          >
-            <Package className="mr-2 size-4" />
-            Products
-          </MenuItem>
-          <MenuItem
-            render={
-              <Link to={`/$username/admin/orders`} params={{ username }} />
-            }
-          >
-            <ShoppingBag className="mr-2 size-4" />
-            Orders
-          </MenuItem>
-        </MenuGroup>
-        <MenuSeparator />
-        <MenuGroup>
-          <MenuGroupLabel>Settings</MenuGroupLabel>
           <MenuItem
             render={
               <Link
@@ -126,7 +90,6 @@ export default function UserButton() {
               />
             }
           >
-            <User className="mr-2 size-4" />
             Edit Profile
           </MenuItem>
           <MenuItem
@@ -137,8 +100,18 @@ export default function UserButton() {
               />
             }
           >
-            <Palette className="mr-2 size-4" />
             Appearance
+          </MenuItem>
+          <MenuItem
+            className="cursor-pointer"
+            render={
+              <Link to={`/$username`} params={{ username }} target="_blank" />
+            }
+          >
+            View My Page
+          </MenuItem>
+          <MenuItem onClick={copyProfileLink} className="cursor-pointer">
+            Copy Page Link
           </MenuItem>
         </MenuGroup>
         <MenuSeparator />
@@ -155,7 +128,6 @@ export default function UserButton() {
             })
           }}
         >
-          <LogOut className="mr-2 size-4" />
           Sign Out
         </MenuItem>
       </MenuPopup>

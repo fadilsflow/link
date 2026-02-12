@@ -16,6 +16,7 @@ import { toastManager } from '@/components/ui/toast'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import LiteYouTube from '@/components/LiteYouTube'
 import { extractYouTubeVideoId } from '@/lib/lite-youtube'
+import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs'
 
 import SiteUserProfileHeader, {
   ProfileCard,
@@ -244,6 +245,11 @@ export const Route = createFileRoute('/$username/')({
     }
     return data
   },
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      tab: (search.tab as string) || 'profile',
+    }
+  },
   head: ({ loaderData }) => {
     const lcpHref =
       loaderData?.user.appearanceBgType === 'banner'
@@ -267,6 +273,8 @@ export const Route = createFileRoute('/$username/')({
 
 function UserProfile() {
   const { user, blocks, products, socialLinks } = Route.useLoaderData()
+  const { tab } = Route.useSearch()
+  const navigate = Route.useNavigate()
 
   type BgMode = 'banner' | 'wallpaper' | 'color' | 'image'
   type WallpaperStyle = 'flat' | 'gradient' | 'avatar' | 'image'
@@ -424,211 +432,219 @@ function UserProfile() {
         />
 
         <SocialLinks socialLinks={socialLinks} isFullPageBg={isFullPageBg} />
-
-        {!areBlocksReady ? (
-          <div className="w-full space-y-3" aria-hidden>
-            {(blocks as Array<PublicBlock>).map((block) => (
-              <BlockSkeleton key={block.id} block={block} />
-            ))}
-            {(products as Array<PublicProduct>).map((product) => (
-              <div
-                key={`product-skeleton-${product.id}`}
-                className="h-20 w-full rounded-2xl bg-slate-200/70 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : (
-          <>
-            {(blocks as Array<PublicBlock>).map((block) => {
-              if (block.type === 'text') {
-                return (
-                  <div
-                    key={block.id}
-                    className="w-full space-y-1 py-2 text-center min-h-16"
-                  >
-                    <h2
-                      className={cn(
-                        'text-2xl font-bold',
-                        isFullPageBg && isDarkBg
-                          ? 'text-white'
-                          : 'text-slate-800',
-                      )}
-                    >
-                      {block.title}
-                    </h2>
-                    {block.content && (
-                      <p
-                        className={cn(
-                          'text-sm',
-                          isFullPageBg && isDarkBg
-                            ? 'text-white/70'
-                            : 'text-slate-600',
-                        )}
-                      >
-                        {block.content}
-                      </p>
-                    )}
-                  </div>
-                )
-              }
-
-              if (block.type === 'image') {
-                return (
-                  <Card
-                    key={block.id}
-                    className={cn(
-                      'w-full overflow-hidden',
-                      cardBase,
-                      radiusClass,
-                    )}
-                    style={{
-                      backgroundColor: user.appearanceBlockColor || undefined,
-                    }}
-                  >
-                    {block.content && (
-                      <div className="relative w-full overflow-hidden bg-slate-100 aspect-[4/3]">
-                        <img
-                          loading="lazy"
-                          decoding="async"
-                          width={1200}
-                          height={900}
-                          src={block.content}
-                          alt={block.title || 'Image block'}
-                          className="absolute inset-0 h-full w-full object-cover"
-                        />
-                      </div>
-                    )}
-                    {block.title && (
-                      <p className="p-3 text-sm font-semibold">{block.title}</p>
-                    )}
-                    {block.url && (
-                      <div className="px-3 pb-3">
-                        <Button
-                          className="w-full"
-                          onClick={() => openBlockUrl(block)}
+        <div className="flex-1 justify-start w-full mt-4">
+          <Tabs
+            value={tab}
+            onValueChange={(val) =>
+              navigate({
+                search: (prev) => ({ ...prev, tab: val }),
+                replace: true,
+              })
+            }
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTab value="profile">Profile</TabsTab>
+              <TabsTab value="products">Products</TabsTab>
+            </TabsList>
+            <TabsPanel value="profile" className="mt-4 space-y-3 outline-none">
+              {!areBlocksReady
+                ? (blocks as Array<PublicBlock>).map((block) => (
+                    <BlockSkeleton key={block.id} block={block} />
+                  ))
+                : (blocks as Array<PublicBlock>).map((block) => {
+                    if (block.type === 'text') {
+                      return (
+                        <div
+                          key={block.id}
+                          className="w-full space-y-1 py-2 text-center min-h-16"
                         >
-                          Open link
-                        </Button>
-                      </div>
-                    )}
-                  </Card>
-                )
-              }
-
-              if (block.type === 'video') {
-                return (
-                  <DeferredVideoEmbed
-                    key={block.id}
-                    block={block}
-                    cardClass={cardBase}
-                    radiusClass={radiusClass}
-                    blockColor={user.appearanceBlockColor}
-                  />
-                )
-              }
-
-              if (block.type === 'product') {
-                const selectedProduct = block.content
-                  ? productMap.get(block.content)
-                  : null
-                if (!selectedProduct) return null
-
-                const price = getProductPriceLabel(selectedProduct)
-                const selectedImages = selectedProduct.images
-                const hasImage = !!selectedImages?.length
-
-                return (
-                  <Card
-                    key={block.id}
-                    className={cn(
-                      'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
-                      cardBase,
-                      radiusClass,
-                    )}
-                    style={{
-                      backgroundColor: user.appearanceBlockColor || undefined,
-                    }}
-                    render={
-                      <Link
-                        to="/$username/products/$productId"
-                        params={{
-                          username: user.username || '',
-                          productId: selectedProduct.id,
-                        }}
-                      />
+                          <h2
+                            className={cn(
+                              'text-2xl font-bold',
+                              isFullPageBg && isDarkBg
+                                ? 'text-white'
+                                : 'text-slate-800',
+                            )}
+                          >
+                            {block.title}
+                          </h2>
+                          {block.content && (
+                            <p
+                              className={cn(
+                                'text-sm',
+                                isFullPageBg && isDarkBg
+                                  ? 'text-white/70'
+                                  : 'text-slate-600',
+                              )}
+                            >
+                              {block.content}
+                            </p>
+                          )}
+                        </div>
+                      )
                     }
-                  >
-                    <div className="flex items-stretch min-h-20">
-                      {hasImage && (
-                        <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
-                          <img
-                            loading="lazy"
-                            decoding="async"
-                            width={96}
-                            height={96}
-                            src={selectedImages[0]}
-                            alt={selectedProduct.title}
-                            className="h-full w-full object-cover"
-                          />
+
+                    if (block.type === 'image') {
+                      return (
+                        <Card
+                          key={block.id}
+                          className={cn(
+                            'w-full overflow-hidden',
+                            cardBase,
+                            radiusClass,
+                          )}
+                          style={{
+                            backgroundColor:
+                              user.appearanceBlockColor || undefined,
+                          }}
+                        >
+                          {block.content && (
+                            <div className="relative w-full overflow-hidden bg-slate-100 aspect-[4/3]">
+                              <img
+                                loading="lazy"
+                                decoding="async"
+                                width={1200}
+                                height={900}
+                                src={block.content}
+                                alt={block.title || 'Image block'}
+                                className="absolute inset-0 h-full w-full object-cover"
+                              />
+                            </div>
+                          )}
+                          {block.title && (
+                            <p className="p-3 text-sm font-semibold">
+                              {block.title}
+                            </p>
+                          )}
+                          {block.url && (
+                            <div className="px-3 pb-3">
+                              <Button
+                                className="w-full"
+                                onClick={() => openBlockUrl(block)}
+                              >
+                                Open link
+                              </Button>
+                            </div>
+                          )}
+                        </Card>
+                      )
+                    }
+
+                    if (block.type === 'video') {
+                      return (
+                        <DeferredVideoEmbed
+                          key={block.id}
+                          block={block}
+                          cardClass={cardBase}
+                          radiusClass={radiusClass}
+                          blockColor={user.appearanceBlockColor}
+                        />
+                      )
+                    }
+
+                    if (block.type === 'product') {
+                      const selectedProduct = block.content
+                        ? productMap.get(block.content)
+                        : null
+                      if (!selectedProduct) return null
+
+                      const price = getProductPriceLabel(selectedProduct)
+                      const selectedImages = selectedProduct.images
+                      const hasImage = !!selectedImages?.length
+
+                      return (
+                        <Card
+                          key={block.id}
+                          className={cn(
+                            'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01]',
+                            cardBase,
+                            radiusClass,
+                          )}
+                          style={{
+                            backgroundColor:
+                              user.appearanceBlockColor || undefined,
+                          }}
+                          render={
+                            <Link
+                              to="/$username/products/$productId"
+                              params={{
+                                username: user.username || '',
+                                productId: selectedProduct.id,
+                              }}
+                            />
+                          }
+                        >
+                          <div className="flex items-stretch min-h-20">
+                            {hasImage && (
+                              <div className="h-20 w-20 shrink-0 overflow-hidden bg-slate-100 sm:h-24 sm:w-24">
+                                <img
+                                  loading="lazy"
+                                  decoding="async"
+                                  width={96}
+                                  height={96}
+                                  src={selectedImages[0]}
+                                  alt={selectedProduct.title}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            )}
+
+                            <div className="flex flex-1 items-center justify-between gap-3 p-4">
+                              <div className="flex min-w-0 flex-col">
+                                <span className="truncate text-sm font-semibold">
+                                  {selectedProduct.title}
+                                </span>
+                                <span className="mt-0.5 text-xs text-slate-500">
+                                  {price}
+                                </span>
+                              </div>
+                              <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            </div>
+                          </div>
+                        </Card>
+                      )
+                    }
+
+                    return (
+                      <Card
+                        key={block.id}
+                        className={cn(
+                          'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01] min-h-20',
+                          cardBase,
+                          radiusClass,
+                        )}
+                        style={{
+                          backgroundColor:
+                            user.appearanceBlockColor || undefined,
+                        }}
+                        onClick={() => openBlockUrl(block)}
+                      >
+                        <div className="flex items-center justify-between p-4">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
+                              <LinkIcon className="h-5 w-5 text-slate-600" />
+                            </div>
+                            <span className="text-sm font-semibold">
+                              {block.title}
+                            </span>
+                          </div>
+                          <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                         </div>
-                      )}
+                      </Card>
+                    )
+                  })}
+            </TabsPanel>
 
-                      <div className="flex flex-1 items-center justify-between gap-3 p-4">
-                        <div className="flex min-w-0 flex-col">
-                          <span className="truncate text-sm font-semibold">
-                            {selectedProduct.title}
-                          </span>
-                          <span className="mt-0.5 text-xs text-slate-500">
-                            {price}
-                          </span>
-                        </div>
-                        <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      </div>
-                    </div>
-                  </Card>
-                )
-              }
-
-              return (
-                <Card
-                  key={block.id}
-                  className={cn(
-                    'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01] min-h-20',
-                    cardBase,
-                    radiusClass,
-                  )}
-                  style={{
-                    backgroundColor: user.appearanceBlockColor || undefined,
-                  }}
-                  onClick={() => openBlockUrl(block)}
-                >
-                  <div className="flex items-center justify-between p-4">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
-                        <LinkIcon className="h-5 w-5 text-slate-600" />
-                      </div>
-                      <span className="text-sm font-semibold">
-                        {block.title}
-                      </span>
-                    </div>
-                    <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                  </div>
-                </Card>
-              )
-            })}
-
-            {products.length > 0 && (
-              <div className="mt-4 w-full space-y-3">
-                <p
-                  className={cn(
-                    'text-xs font-semibold uppercase tracking-wider',
-                    isFullPageBg && isDarkBg
-                      ? 'text-white/60'
-                      : 'text-slate-500',
-                  )}
-                >
-                  Digital Products
-                </p>
+            <TabsPanel value="products" className="mt-4 space-y-3 outline-none">
+              {!areBlocksReady ? (
+                (products as Array<PublicProduct>).map((product) => (
+                  <div
+                    key={`product-skeleton-${product.id}`}
+                    className="h-20 w-full rounded-2xl bg-slate-200/70 animate-pulse"
+                  />
+                ))
+              ) : (
                 <div className="grid gap-3">
                   {(products as Array<PublicProduct>).map((product) => {
                     const price = getProductPriceLabel(product)
@@ -723,10 +739,10 @@ function UserProfile() {
                     )
                   })}
                 </div>
-              </div>
-            )}
-          </>
-        )}
+              )}
+            </TabsPanel>
+          </Tabs>
+        </div>
 
         <div className="mb-4 mt-8">
           <div

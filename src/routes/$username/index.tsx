@@ -325,6 +325,7 @@ function UserProfile() {
     }
 
     if (isFullPageBg) {
+      // For gradient wallpaper, require gradient colors
       if (
         wallpaperStyle === 'gradient' &&
         user.appearanceWallpaperGradientTop
@@ -334,16 +335,17 @@ function UserProfile() {
         }
       }
 
+      // For flat wallpaper, require wallpaper color
       if (
-        (wallpaperStyle === 'flat' && user.appearanceWallpaperColor) ||
-        (bgType === 'color' && bgColor)
+        wallpaperStyle === 'flat' &&
+        user.appearanceWallpaperColor
       ) {
         return {
-          backgroundColor:
-            user.appearanceWallpaperColor || bgColor || undefined,
+          backgroundColor: user.appearanceWallpaperColor,
         }
       }
 
+      // Avatar style has its own radial gradient
       if (wallpaperStyle === 'avatar') {
         return {
           background:
@@ -351,17 +353,21 @@ function UserProfile() {
         }
       }
 
-      return {
-        backgroundImage: user.appearanceWallpaperImageUrl
-          ? `url('${getImageUrl(user.appearanceWallpaperImageUrl)}')`
-          : user.appearanceBgImageUrl
-            ? `url('${getImageUrl(user.appearanceBgImageUrl)}')`
-            : undefined,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+      // Image fallback - only for 'image' wallpaperStyle or when no other style-specific values are set
+      if (wallpaperStyle === 'image' || !wallpaperStyle) {
+        return {
+          backgroundImage: user.appearanceWallpaperImageUrl
+            ? `url('${getImageUrl(user.appearanceWallpaperImageUrl)}')`
+            : user.appearanceBgImageUrl
+              ? `url('${getImageUrl(user.appearanceBgImageUrl)}')`
+              : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }
       }
     }
 
+    // Default fallback for full page background
     return {
       background: 'radial-gradient(circle at top, #1f2937, #020617)',
     }

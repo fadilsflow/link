@@ -16,7 +16,6 @@ import {
 } from 'lucide-react'
 
 import {
-  Link,
   useParams,
   useRouter,
   useRouterState,
@@ -44,6 +43,7 @@ import {
 } from '@/components/ui/sidebar'
 import { authClient } from '@/lib/auth-client'
 import { BASE_URL } from '@/lib/constans'
+import { Link } from '@tanstack/react-router'
 
 const data = {
   navBottom: [
@@ -209,7 +209,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              render={<Link to={'/$username'} params={{ username } as any} />}
+              render={<Link to={'/$username'} params={username} />}
               className="text-foreground"
             >
               <ExternalLink />

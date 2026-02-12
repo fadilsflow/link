@@ -8,15 +8,16 @@ export default function HeroSection() {
         <div className="">
           <div className="pb-20 lg:pb-1 z-10 text-center flex flex-col items-center justify-center">
             <h1 className="text-6xl sm:text-7xl lg:text-9xl font-heading tracking-tight">
-              Monetize <br />
+              Kreasi kamu <br />
               <span className="before:-inset-x-1 before:-rotate-1 relative z-4 before:pointer-events-none before:absolute before:inset-y-0 before:z-4 before:bg-linear-to-r before:from-blue-500 before:via-purple-500 before:to-orange-500 before:opacity-16 before:mix-blend-hard-light">
-                Your Creativity
+                berharga.
               </span>
             </h1>
 
-            <p className="mt-4 max-w-2xl text-base sm:text-3xl text-muted-foreground ">
-              Turn your ideas into income with a single page.
+            <p className="mt-4 max-w-2xl text-base sm:text-3xl text-muted-foreground">
+              Ubah ide menjadi penghasilan dengan satu halaman.
             </p>
+
 
             <Button
               size={'lg'}

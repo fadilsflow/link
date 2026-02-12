@@ -16,7 +16,7 @@ export const Header = () => {
           <div className="flex flex-wrap items-center justify-between gap-6  lg:gap-0">
             <div className="-mt-0.5 flex shrink-0 items-center gap-1.5 font-heading font-semibold   sm:text-2xl sm:text-[1.625em]">
               <Link aria-label="Home" to="/">
-                Karya.top
+                Kreasi
               </Link>
             </div>
 

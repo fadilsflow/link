@@ -116,7 +116,6 @@ export default function UserButton() {
         </MenuGroup>
         <MenuSeparator />
         <MenuItem
-          className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
           onClick={async () => {
             await authClient.signOut({
               fetchOptions: {

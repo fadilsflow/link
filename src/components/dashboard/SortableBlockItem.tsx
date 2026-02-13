@@ -1,6 +1,13 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical } from 'lucide-react'
+import {
+  GripVertical,
+  Image,
+  LinkIcon,
+  Package,
+  PlaySquare,
+  Text,
+} from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { LinkBlock } from './blocks/LinkBlock'
 import { TextBlock } from './blocks/TextBlock'
@@ -50,9 +57,21 @@ export function SortableBlockItem({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isDragging ? 'none' : transition,
-    opacity: isDragging ? 0.5 : 1,
+    // opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 50 : undefined,
   }
+  const icon =
+    block.type === 'text' ? (
+      <Text className="text-blue-500" />
+    ) : block.type === 'image' ? (
+      <Image className="text-green-500" />
+    ) : block.type === 'video' ? (
+      <PlaySquare className="text-red-500" />
+    ) : block.type === 'product' ? (
+      <Package className="bg-yellow-500" />
+    ) : block.type === 'link' ? (
+      <LinkIcon />
+    ) : null
 
   return (
     <div
@@ -60,64 +79,83 @@ export function SortableBlockItem({
       style={style}
       className="relative flex items-center w-full group"
     >
-      <div
+      <Card
         className={cn(
-          'flex-1 flex rounded-xl border overflow-hidden transition-colors duration-200 bg-white shadow-sm hover:shadow-md',
+          'w-full shadow-none',
           block.syncStatus === 'error' ? 'border-red-500' : 'border-border',
-          block.type === 'text' ? 'bg-yellow-50/10' : 'bg-green-50/10',
+          block.type == 'text'
+            ? 'bg-blue-50/80'
+            : block.type == 'image'
+              ? 'bg-green-50'
+              : block.type == 'video'
+                ? 'bg-red-50'
+                : block.type == 'product'
+                  ? 'bg-yellow-50'
+                  : 'bg-gray-50',
         )}
       >
-        <Card className="border-0 rounded-none w-full bg-transparent">
-          <CardContent className="flex items-center p-4 sm:p-6">
-            <div
-              {...attributes}
-              {...listeners}
-              className="flex items-center pr-4 cursor-grab touch-none"
-            >
-              <GripVertical className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-            </div>
+        <CardContent className="flex items-center gap-4 sm:p-6">
+          <div
+            {...attributes}
+            {...listeners}
+            className="flex items-center cursor-grab touch-none"
+          >
+            <GripVertical className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          </div>
 
-            <div className="flex-1 flex flex-col gap-6 min-w-0">
-              {block.type === 'text' ? (
-                <TextBlock
-                  block={block as any}
-                  handleUpdate={handleBlockUpdate as any}
-                  handleDelete={handleDeleteBlock as any}
-                />
-              ) : block.type === 'image' ? (
-                <ImageBlock
-                  block={block as any}
-                  handleUpdate={handleBlockUpdate as any}
-                  handleDelete={handleDeleteBlock as any}
-                />
-              ) : block.type === 'video' ? (
-                <VideoBlock
-                  block={block as any}
-                  handleUpdate={handleBlockUpdate as any}
-                  handleDelete={handleDeleteBlock as any}
-                />
-              ) : block.type === 'product' ? (
-                <ProductBlock
-                  block={block as any}
-                  products={products || []}
-                  handleUpdate={handleBlockUpdate as any}
-                  handleDelete={handleDeleteBlock as any}
-                />
-              ) : (
-                <LinkBlock
-                  block={block as any}
-                  handleUpdate={handleBlockUpdate as any}
-                  handleDelete={handleDeleteBlock as any}
-                />
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          <div
+            className={cn(
+              'rounded-sm h-5 w-5 flex items-center justify-center border border-background ring ring-primary/10',
+              block.type == 'text'
+                ? 'bg-blue-50'
+                : block.type == 'image'
+                  ? 'bg-green-50'
+                  : block.type == 'video'
+                    ? 'bg-red-50'
+                    : block.type == 'product'
+                      ? 'bg-yellow-50'
+                      : 'bg-gray-50',
+            )}
+          >
+            {icon}
+          </div>
 
-      {/* <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 pointer-events-none">
-        <StatusBadge status={block.syncStatus} />
-      </div> */}
+          <div className="flex-1 flex flex-col gap-6 min-w-0">
+            {block.type === 'text' ? (
+              <TextBlock
+                block={block as any}
+                handleUpdate={handleBlockUpdate as any}
+                handleDelete={handleDeleteBlock as any}
+              />
+            ) : block.type === 'image' ? (
+              <ImageBlock
+                block={block as any}
+                handleUpdate={handleBlockUpdate as any}
+                handleDelete={handleDeleteBlock as any}
+              />
+            ) : block.type === 'video' ? (
+              <VideoBlock
+                block={block as any}
+                handleUpdate={handleBlockUpdate as any}
+                handleDelete={handleDeleteBlock as any}
+              />
+            ) : block.type === 'product' ? (
+              <ProductBlock
+                block={block as any}
+                products={products || []}
+                handleUpdate={handleBlockUpdate as any}
+                handleDelete={handleDeleteBlock as any}
+              />
+            ) : (
+              <LinkBlock
+                block={block as any}
+                handleUpdate={handleBlockUpdate as any}
+                handleDelete={handleDeleteBlock as any}
+              />
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

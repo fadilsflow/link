@@ -15,11 +15,7 @@ import {
   Wallet,
 } from 'lucide-react'
 
-import {
-  useParams,
-  useRouter,
-  useRouterState,
-} from '@tanstack/react-router'
+import { useParams, useRouter, useRouterState } from '@tanstack/react-router'
 import Credits from '../Credits'
 import { Button } from '../ui/button'
 import {
@@ -112,13 +108,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     })
   }
   return (
-    <Sidebar {...props} collapsible="icon" variant="sidebar">
+    <Sidebar
+      {...props}
+      collapsible="icon"
+      variant="sidebar"
+      className="border-muted"
+    >
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex gap-3 items-center mt-3">
             <Menu>
               <MenuTrigger render={<SidebarMenuButton size="default" />}>
-                <Avatar className="h-7 w-7 border">
+                <Avatar className="h-6 w-6 border">
                   <AvatarImage src={session?.user.image || ''} />
                   <AvatarFallback>
                     {session?.user.name?.slice(0, 2).toUpperCase() || 'US'}

@@ -140,6 +140,7 @@ const userRouter = {
         title: z.string().optional(),
         bio: z.string().optional(),
         image: z.string().nullable().optional(),
+        publicTheme: z.enum(['system', 'light', 'dark']).optional(),
         appearanceBgImageUrl: z.string().nullable().optional(),
         appearanceBlockStyle: z.enum(['basic', 'flat', 'shadow']).optional(),
         appearanceBlockRadius: z.enum(['rounded', 'square']).optional(),
@@ -153,6 +154,9 @@ const userRouter = {
           ...(input.title !== undefined ? { title: input.title || null } : {}),
           ...(input.bio !== undefined ? { bio: input.bio || null } : {}),
           ...(input.image !== undefined ? { image: input.image } : {}),
+          ...(input.publicTheme !== undefined
+            ? { publicTheme: input.publicTheme }
+            : {}),
           ...(input.appearanceBgImageUrl !== undefined
             ? { appearanceBgImageUrl: input.appearanceBgImageUrl }
             : {}),

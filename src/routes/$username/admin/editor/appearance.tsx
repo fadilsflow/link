@@ -52,6 +52,7 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
       appearanceBgImageUrl: user.appearanceBgImageUrl,
       appearanceBlockStyle: user.appearanceBlockStyle,
       appearanceBlockRadius: user.appearanceBlockRadius,
+      publicTheme: user.publicTheme,
     })
   }, [user, previewUser, setUser, updateUser])
 

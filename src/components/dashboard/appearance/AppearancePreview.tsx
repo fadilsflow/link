@@ -8,6 +8,7 @@ import {
 import { cn } from '@/lib/utils'
 import type { BlockRadius, BlockStyle } from './types'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useResolvedTheme } from '@/lib/theme'
 
 interface AppearancePreviewProps {
   user: {
@@ -19,6 +20,7 @@ interface AppearancePreviewProps {
     appearanceBgImageUrl?: string | null
     appearanceBlockStyle?: BlockStyle | null
     appearanceBlockRadius?: BlockRadius | null
+    publicTheme?: 'system' | 'light' | 'dark' | null
   }
   blocks: Array<{
     id: string
@@ -31,6 +33,7 @@ interface AppearancePreviewProps {
 }
 
 export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
+  const resolvedTheme = useResolvedTheme('public', user.publicTheme)
 
   const blockStyle = (user.appearanceBlockStyle || 'basic') as BlockStyle
   const blockRadius = (user.appearanceBlockRadius || 'rounded') as BlockRadius
@@ -45,7 +48,13 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
   const radiusClass = blockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-none'
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-2">
+    <div
+      className={cn(
+        'w-full h-full flex items-center justify-center p-2',
+        resolvedTheme === 'dark' && 'dark',
+      )}
+      data-theme={resolvedTheme}
+    >
       <div className="aspect-9/18 w-full max-w-[280px] overflow-hidden rounded-[32px] border-3 bg-muted relative">
         <div className="h-full w-full no-scrollbar overflow-y-auto overflow-x-hidden bg-background">
           <div className="min-h-full pb-8">

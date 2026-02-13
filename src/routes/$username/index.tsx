@@ -362,8 +362,21 @@ function UserProfile() {
     runWhenBrowserIdle(() => setAreBlocksReady(true), 1000)
   }, [])
 
-  const cardBase = 'bg-card border border-slate-100 shadow-sm'
-  const radiusClass = 'rounded-2xl'
+  const blockStyle = (user.appearanceBlockStyle || 'basic') as
+    | 'basic'
+    | 'flat'
+    | 'shadow'
+  const blockRadius = (user.appearanceBlockRadius || 'rounded') as
+    | 'rounded'
+    | 'square'
+
+  const cardBase =
+    blockStyle === 'flat'
+      ? 'bg-card border border-slate-200'
+      : blockStyle === 'shadow'
+        ? 'bg-card border border-slate-900 shadow-[8px_8px_0px_#18181b]'
+        : 'bg-card border border-slate-100 shadow-sm'
+  const radiusClass = blockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-none'
   const backgroundStyles = {
     backgroundColor: '#f8fafc',
   }

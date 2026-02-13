@@ -6,6 +6,7 @@ import {
   X as XIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { BlockRadius, BlockStyle } from './types'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface AppearancePreviewProps {
@@ -16,6 +17,8 @@ interface AppearancePreviewProps {
     bio?: string | null
     image?: string | null
     appearanceBgImageUrl?: string | null
+    appearanceBlockStyle?: BlockStyle | null
+    appearanceBlockRadius?: BlockRadius | null
   }
   blocks: Array<{
     id: string
@@ -28,6 +31,19 @@ interface AppearancePreviewProps {
 }
 
 export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
+
+  const blockStyle = (user.appearanceBlockStyle || 'basic') as BlockStyle
+  const blockRadius = (user.appearanceBlockRadius || 'rounded') as BlockRadius
+
+  const cardBase =
+    blockStyle === 'flat'
+      ? 'bg-card border border-slate-200'
+      : blockStyle === 'shadow'
+        ? 'bg-card border border-slate-900 shadow-[4px_4px_0px_#18181b]'
+        : 'bg-card border border-slate-100 shadow-sm'
+
+  const radiusClass = blockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-none'
+
   return (
     <div className="w-full h-full flex items-center justify-center p-2">
       <div className="aspect-9/18 w-full max-w-[280px] overflow-hidden rounded-[32px] border-3 bg-muted relative">
@@ -71,7 +87,9 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
                 <div
                   key={block.id}
                   className={cn(
-                    'w-full rounded-2xl border border-slate-100 shadow-sm bg-card',
+                    'w-full bg-card',
+                    cardBase,
+                    radiusClass,
                     block.type === 'image' ? 'p-0 overflow-hidden' : 'p-3',
                   )}
                 >
@@ -98,7 +116,7 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
               ))}
 
               <button
-                className="w-full rounded-2xl border border-slate-100 shadow-sm bg-card px-3 py-3 text-left"
+                className={cn('w-full bg-card px-3 py-3 text-left', cardBase, radiusClass)}
                 type="button"
               >
                 <div className="flex items-center justify-between gap-2">

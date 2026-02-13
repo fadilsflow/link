@@ -141,6 +141,8 @@ const userRouter = {
         bio: z.string().optional(),
         image: z.string().nullable().optional(),
         appearanceBgImageUrl: z.string().nullable().optional(),
+        appearanceBlockStyle: z.enum(['basic', 'flat', 'shadow']).optional(),
+        appearanceBlockRadius: z.enum(['rounded', 'square']).optional(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -153,6 +155,12 @@ const userRouter = {
           ...(input.image !== undefined ? { image: input.image } : {}),
           ...(input.appearanceBgImageUrl !== undefined
             ? { appearanceBgImageUrl: input.appearanceBgImageUrl }
+            : {}),
+          ...(input.appearanceBlockStyle !== undefined
+            ? { appearanceBlockStyle: input.appearanceBlockStyle }
+            : {}),
+          ...(input.appearanceBlockRadius !== undefined
+            ? { appearanceBlockRadius: input.appearanceBlockRadius }
             : {}),
         })
         .where(eq(user.id, input.userId))

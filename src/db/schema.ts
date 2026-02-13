@@ -53,6 +53,12 @@ export const user = pgTable('user', {
   title: text('title'),
   // Custom profile banner image.
   appearanceBgImageUrl: text('appearance_bg_image_url'),
+  appearanceBlockStyle: text('appearance_block_style')
+    .default('basic')
+    .notNull(),
+  appearanceBlockRadius: text('appearance_block_radius')
+    .default('rounded')
+    .notNull(),
   // Denormalized analytics (cached, derived from transactions & events)
   totalRevenue: integer('total_revenue').notNull().default(0), // in cents — cached from transactions
   totalSalesCount: integer('total_sales_count').notNull().default(0),

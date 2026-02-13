@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Image as ImageIcon } from 'lucide-react'
-import { Card, CardContent, CardTitle } from '@/components/ui/card'
+import { Image as ImageIcon, RotateCcw } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { BannerSelector } from '@/components/dashboard/appearance/BannerSelector'
+import { BlockStyleSelector } from '@/components/dashboard/appearance/BlockStyleSelector'
+import type { BlockRadius, BlockStyle } from '@/components/dashboard/appearance/types'
 import { LOCAL_BANNER_IMAGES } from '@/components/dashboard/appearance/banner-presets'
 import {
   AppHeader,
@@ -47,13 +50,19 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
 
     updateUser({
       appearanceBgImageUrl: user.appearanceBgImageUrl,
+      appearanceBlockStyle: user.appearanceBlockStyle,
+      appearanceBlockRadius: user.appearanceBlockRadius,
     })
   }, [user, previewUser, setUser, updateUser])
 
   const updateAppearance = useMutation({
     mutationKey: ['updateProfile', username],
-    mutationFn: (data: { userId: string; appearanceBgImageUrl?: string | null }) =>
-      trpcClient.user.updateProfile.mutate(data),
+    mutationFn: (data: {
+      userId: string
+      appearanceBgImageUrl?: string | null
+      appearanceBlockStyle?: BlockStyle
+      appearanceBlockRadius?: BlockRadius
+    }) => trpcClient.user.updateProfile.mutate(data),
     onMutate: () => setStatus({ isSaving: true, isSaved: false }),
     onSuccess: () => {
       setStatus({ isSaving: false, isSaved: true })
@@ -70,6 +79,13 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
     return matchedPreset?.id
   })
 
+  const [blockStyle, setBlockStyle] = React.useState<BlockStyle>(
+    (user.appearanceBlockStyle as BlockStyle) || 'basic',
+  )
+  const [blockRadius, setBlockRadius] = React.useState<BlockRadius>(
+    (user.appearanceBlockRadius as BlockRadius) || 'rounded',
+  )
+
   const handleBannerSelect = (imageUrl: string, bannerId?: string) => {
     setCurrentBannerId(bannerId)
     setCurrentBannerUrl(imageUrl || undefined)
@@ -77,11 +93,34 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
     updateAppearance.mutate({ userId: user.id, appearanceBgImageUrl: imageUrl || null })
   }
 
+  const handleStyleChange = (style: BlockStyle) => {
+    setBlockStyle(style)
+    updateUser({ appearanceBlockStyle: style })
+    updateAppearance.mutate({ userId: user.id, appearanceBlockStyle: style })
+  }
+
+  const handleRadiusChange = (radius: BlockRadius) => {
+    setBlockRadius(radius)
+    updateUser({ appearanceBlockRadius: radius })
+    updateAppearance.mutate({ userId: user.id, appearanceBlockRadius: radius })
+  }
+
+  const handleReset = () => {
+    setBlockStyle('basic')
+    setBlockRadius('rounded')
+    updateUser({ appearanceBlockStyle: 'basic', appearanceBlockRadius: 'rounded' })
+    updateAppearance.mutate({
+      userId: user.id,
+      appearanceBlockStyle: 'basic',
+      appearanceBlockRadius: 'rounded',
+    })
+  }
+
   return (
     <>
       <AppHeader>
         <AppHeaderContent title="Appearance">
-          <AppHeaderDescription>Choose a banner image for your profile header.</AppHeaderDescription>
+          <AppHeaderDescription>Choose your banner and block card style.</AppHeaderDescription>
         </AppHeaderContent>
       </AppHeader>
 
@@ -98,6 +137,24 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
             currentBannerUrl={currentBannerUrl}
             currentBannerId={currentBannerId}
             onBannerSelect={handleBannerSelect}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm mt-6">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-4xl font-semibold">Block</CardTitle>
+          <Button type="button" variant="outline" className="gap-2" onClick={handleReset}>
+            <RotateCcw className="h-4 w-4" />
+            Reset
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <BlockStyleSelector
+            blockStyle={blockStyle}
+            blockRadius={blockRadius}
+            onStyleChange={handleStyleChange}
+            onRadiusChange={handleRadiusChange}
           />
         </CardContent>
       </Card>

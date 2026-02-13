@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import type { BlockRadius, BlockStyle } from './types'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useResolvedTheme } from '@/lib/theme'
+import { getBlockCardBase, getBlockRadius } from '@/lib/block-styles'
 
 interface AppearancePreviewProps {
   user: {
@@ -38,14 +39,8 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
   const blockStyle = (user.appearanceBlockStyle || 'basic') as BlockStyle
   const blockRadius = (user.appearanceBlockRadius || 'rounded') as BlockRadius
 
-  const cardBase =
-    blockStyle === 'flat'
-      ? 'bg-card border border-border'
-      : blockStyle === 'shadow'
-        ? 'bg-card border border-border shadow-sm'
-        : 'bg-card border border-border shadow-sm'
-
-  const radiusClass = blockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-none'
+  const cardBase = getBlockCardBase(blockStyle)
+  const radiusClass = getBlockRadius(blockRadius)
 
   return (
     <div
@@ -63,10 +58,10 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
               style={
                 user.appearanceBgImageUrl
                   ? {
-                      backgroundImage: `url('${user.appearanceBgImageUrl}')`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }
+                    backgroundImage: `url('${user.appearanceBgImageUrl}')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }
                   : undefined
               }
             >

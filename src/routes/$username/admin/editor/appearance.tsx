@@ -8,6 +8,7 @@ import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { BannerSelector } from '@/components/dashboard/appearance/BannerSelector'
 import { BlockStyleSelector } from '@/components/dashboard/appearance/BlockStyleSelector'
+import { ThemeOptionCards } from '@/components/dashboard/appearance/ThemeOptionCards'
 import type { BlockRadius, BlockStyle } from '@/components/dashboard/appearance/types'
 import { LOCAL_BANNER_IMAGES } from '@/components/dashboard/appearance/banner-presets'
 import {
@@ -16,6 +17,12 @@ import {
   AppHeaderDescription,
 } from '@/components/app-header'
 import { usePreview } from '@/lib/preview-context'
+import {
+  getDashboardThemePreference,
+  setDashboardThemePreference,
+} from '@/lib/theme'
+
+type ThemeOption = 'system' | 'light' | 'dark'
 
 export const Route = createFileRoute('/$username/admin/editor/appearance')({
   component: AppearanceRouteComponent,
@@ -52,6 +59,7 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
       appearanceBgImageUrl: user.appearanceBgImageUrl,
       appearanceBlockStyle: user.appearanceBlockStyle,
       appearanceBlockRadius: user.appearanceBlockRadius,
+      publicTheme: user.publicTheme,
     })
   }, [user, previewUser, setUser, updateUser])
 
@@ -59,6 +67,7 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
     mutationKey: ['updateProfile', username],
     mutationFn: (data: {
       userId: string
+      publicTheme?: ThemeOption
       appearanceBgImageUrl?: string | null
       appearanceBlockStyle?: BlockStyle
       appearanceBlockRadius?: BlockRadius
@@ -85,6 +94,14 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
   const [blockRadius, setBlockRadius] = React.useState<BlockRadius>(
     (user.appearanceBlockRadius as BlockRadius) || 'rounded',
   )
+  const [publicTheme, setPublicTheme] = React.useState<ThemeOption>(
+    (user.publicTheme as ThemeOption) || 'system',
+  )
+  const [dashboardTheme, setDashboardTheme] = React.useState<ThemeOption>('system')
+
+  React.useEffect(() => {
+    setDashboardTheme(getDashboardThemePreference())
+  }, [])
 
   const handleBannerSelect = (imageUrl: string, bannerId?: string) => {
     setCurrentBannerId(bannerId)
@@ -114,6 +131,12 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
       appearanceBlockStyle: 'basic',
       appearanceBlockRadius: 'rounded',
     })
+  }
+
+  const handlePublicThemeChange = (theme: ThemeOption) => {
+    setPublicTheme(theme)
+    updateUser({ publicTheme: theme })
+    updateAppearance.mutate({ userId: user.id, publicTheme: theme })
   }
 
   return (
@@ -156,6 +179,24 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
             onStyleChange={handleStyleChange}
             onRadiusChange={handleRadiusChange}
           />
+
+          <div className="mt-8 space-y-6 border-t pt-6">
+            <div className="space-y-2">
+              <CardTitle className="text-xl font-semibold">Public Theme</CardTitle>
+              <ThemeOptionCards value={publicTheme} onChange={handlePublicThemeChange} />
+            </div>
+
+            <div className="space-y-2">
+              <CardTitle className="text-xl font-semibold">Dashboard Theme</CardTitle>
+              <ThemeOptionCards
+                value={dashboardTheme}
+                onChange={(theme) => {
+                  setDashboardTheme(theme)
+                  setDashboardThemePreference(theme)
+                }}
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
     </>

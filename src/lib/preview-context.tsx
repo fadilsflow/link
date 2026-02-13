@@ -11,6 +11,7 @@ export interface PreviewUser {
   appearanceBgImageUrl?: string | null
   appearanceBlockStyle?: BlockStyle | null
   appearanceBlockRadius?: BlockRadius | null
+  publicTheme?: 'system' | 'light' | 'dark' | null
 }
 
 interface PreviewBlock {

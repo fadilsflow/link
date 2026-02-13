@@ -1,34 +1,96 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import React from 'react'
 import {
   AppHeader,
   AppHeaderContent,
-  AppHeaderDescription,
 } from '@/components/app-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { getDashboardData } from '@/lib/profile-server'
+import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { ModeToggle } from '@/components/mode-toggle'
+  getDashboardThemePreference,
+  setDashboardThemePreference,
+  useResolvedTheme,
+} from '@/lib/theme'
+import { ThemeOptionCards } from '@/components/dashboard/appearance/ThemeOptionCards'
+
+type ThemeOption = 'system' | 'light' | 'dark'
 
 export const Route = createFileRoute('/$username/admin/settings')({
   component: SettingsPage,
 })
 
 function SettingsPage() {
+  const { username } = Route.useParams()
+  const queryClient = useQueryClient()
+
+  const { data: dashboardData } = useQuery({
+    queryKey: ['dashboard', username],
+    queryFn: () => getDashboardData(),
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+  })
+
+  const user = dashboardData?.user
+  const [dashboardTheme, setDashboardTheme] = React.useState<ThemeOption>('system')
+  const resolvedDashboardTheme = useResolvedTheme('dashboard', undefined, dashboardTheme)
+
+  React.useEffect(() => {
+    setDashboardTheme(getDashboardThemePreference())
+  }, [])
+
+  const updateTheme = useMutation({
+    mutationFn: (publicTheme: ThemeOption) =>
+      trpcClient.user.updateProfile.mutate({
+        userId: user?.id ?? '',
+        publicTheme,
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard', username] }),
+  })
+
   return (
     <div className="px-6 py-20">
       <div className="space-y-6 max-w-2xl mx-auto">
         <AppHeader>
           <AppHeaderContent title="Settings"></AppHeaderContent>
         </AppHeader>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Theme</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-2">
+              <Label>Public theme</Label>
+              <ThemeOptionCards
+                value={(user?.publicTheme as ThemeOption | undefined) || 'system'}
+                onChange={(value) => {
+                  if (!user || updateTheme.isPending) return
+                  updateTheme.mutate(value)
+                }}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Dashboard theme</Label>
+              <ThemeOptionCards
+                value={dashboardTheme}
+                onChange={(value) => {
+                  setDashboardTheme(value)
+                  setDashboardThemePreference(value)
+                }}
+              />
+              <p className="text-sm text-muted-foreground">
+                Dashboard resolved theme: {resolvedDashboardTheme}.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Account & Security */}
         <Card>
@@ -87,16 +149,7 @@ function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid gap-2">
               <Label>Payout Method</Label>
-              <Select defaultValue="bank">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select payout method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bank">Bank Transfer</SelectItem>
-                  <SelectItem value="paypal">PayPal</SelectItem>
-                  <SelectItem value="stripe">Stripe</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input defaultValue="Bank Transfer" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="account-name">Account Name</Label>
@@ -155,7 +208,6 @@ function SettingsPage() {
             <Button variant="destructive">Delete Account</Button>
           </CardContent>
         </Card>
-        <ModeToggle />
       </div>
     </div>
   )

@@ -17,6 +17,7 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import LiteYouTube from '@/components/LiteYouTube'
 import { extractYouTubeVideoId } from '@/lib/lite-youtube'
 import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs'
+import { useApplyRootTheme } from '@/lib/theme'
 
 import SiteUserProfileHeader, {
   ProfileCard,
@@ -349,6 +350,8 @@ export const Route = createFileRoute('/$username/')({
 
 function UserProfile() {
   const { user, blocks, products, socialLinks } = Route.useLoaderData()
+  useApplyRootTheme('public', user.publicTheme)
+
   const { tab } = Route.useSearch()
   const navigate = Route.useNavigate()
 

@@ -18,8 +18,7 @@ import {
 } from '@/components/app-header'
 import { usePreview } from '@/lib/preview-context'
 import {
-  getDashboardThemePreference,
-  setDashboardThemePreference,
+  useDashboardThemePreference,
 } from '@/lib/theme'
 
 type ThemeOption = 'system' | 'light' | 'dark'
@@ -97,11 +96,7 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
   const [publicTheme, setPublicTheme] = React.useState<ThemeOption>(
     (user.publicTheme as ThemeOption) || 'system',
   )
-  const [dashboardTheme, setDashboardTheme] = React.useState<ThemeOption>('system')
-
-  React.useEffect(() => {
-    setDashboardTheme(getDashboardThemePreference())
-  }, [])
+  const [dashboardTheme, setDashboardTheme] = useDashboardThemePreference()
 
   const handleBannerSelect = (imageUrl: string, bannerId?: string) => {
     setCurrentBannerId(bannerId)
@@ -192,7 +187,6 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
                 value={dashboardTheme}
                 onChange={(theme) => {
                   setDashboardTheme(theme)
-                  setDashboardThemePreference(theme)
                 }}
               />
             </div>

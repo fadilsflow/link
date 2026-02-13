@@ -4,6 +4,7 @@ export type ThemeScope = 'public' | 'dashboard'
 export type ThemeOption = 'system' | 'light' | 'dark'
 export type ResolvedTheme = 'light' | 'dark'
 const DASHBOARD_THEME_STORAGE_KEY = 'dashboard-theme'
+const DASHBOARD_THEME_EVENT = 'dashboard-theme-change'
 
 function getSystemColorScheme(): ResolvedTheme {
   if (typeof window === 'undefined') return 'light'
@@ -100,6 +101,7 @@ export function getDashboardThemePreference(): ThemeOption {
 export function setDashboardThemePreference(theme: ThemeOption) {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(DASHBOARD_THEME_STORAGE_KEY, theme)
+  window.dispatchEvent(new CustomEvent<ThemeOption>(DASHBOARD_THEME_EVENT, { detail: theme }))
 }
 
 export function useDashboardThemePreference() {
@@ -107,8 +109,30 @@ export function useDashboardThemePreference() {
     getDashboardThemePreference,
   )
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === DASHBOARD_THEME_STORAGE_KEY) {
+        setDashboardTheme(getDashboardThemePreference())
+      }
+    }
+
+    const onThemeChange = (event: Event) => {
+      const customEvent = event as CustomEvent<ThemeOption>
+      setDashboardTheme(customEvent.detail ?? getDashboardThemePreference())
+    }
+
+    window.addEventListener('storage', onStorage)
+    window.addEventListener(DASHBOARD_THEME_EVENT, onThemeChange)
+
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener(DASHBOARD_THEME_EVENT, onThemeChange)
+    }
+  }, [])
+
   const updateDashboardTheme = (theme: ThemeOption) => {
-    setDashboardTheme(theme)
     setDashboardThemePreference(theme)
   }
 

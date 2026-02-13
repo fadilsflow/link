@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import React from 'react'
 import {
   AppHeader,
   AppHeaderContent,
@@ -13,8 +12,7 @@ import { Switch } from '@/components/ui/switch'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import {
-  getDashboardThemePreference,
-  setDashboardThemePreference,
+  useDashboardThemePreference,
   useResolvedTheme,
 } from '@/lib/theme'
 import { ThemeOptionCards } from '@/components/dashboard/appearance/ThemeOptionCards'
@@ -37,12 +35,8 @@ function SettingsPage() {
   })
 
   const user = dashboardData?.user
-  const [dashboardTheme, setDashboardTheme] = React.useState<ThemeOption>('system')
+  const [dashboardTheme, setDashboardTheme] = useDashboardThemePreference()
   const resolvedDashboardTheme = useResolvedTheme('dashboard', undefined, dashboardTheme)
-
-  React.useEffect(() => {
-    setDashboardTheme(getDashboardThemePreference())
-  }, [])
 
   const updateTheme = useMutation({
     mutationFn: (publicTheme: ThemeOption) =>
@@ -82,7 +76,6 @@ function SettingsPage() {
                 value={dashboardTheme}
                 onChange={(value) => {
                   setDashboardTheme(value)
-                  setDashboardThemePreference(value)
                 }}
               />
               <p className="text-sm text-muted-foreground">

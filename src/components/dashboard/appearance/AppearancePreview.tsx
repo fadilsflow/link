@@ -8,6 +8,7 @@ import {
 import { cn } from '@/lib/utils'
 import type { BlockRadius, BlockStyle } from './types'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useResolvedTheme } from '@/lib/theme'
 
 interface AppearancePreviewProps {
   user: {
@@ -19,6 +20,7 @@ interface AppearancePreviewProps {
     appearanceBgImageUrl?: string | null
     appearanceBlockStyle?: BlockStyle | null
     appearanceBlockRadius?: BlockRadius | null
+    publicTheme?: 'system' | 'light' | 'dark' | null
   }
   blocks: Array<{
     id: string
@@ -31,22 +33,29 @@ interface AppearancePreviewProps {
 }
 
 export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
+  const resolvedTheme = useResolvedTheme('public', user.publicTheme)
 
   const blockStyle = (user.appearanceBlockStyle || 'basic') as BlockStyle
   const blockRadius = (user.appearanceBlockRadius || 'rounded') as BlockRadius
 
   const cardBase =
     blockStyle === 'flat'
-      ? 'bg-card border border-slate-200'
+      ? 'bg-card border border-border'
       : blockStyle === 'shadow'
-        ? 'bg-card border border-slate-900 shadow-[4px_4px_0px_#18181b]'
-        : 'bg-card border border-slate-100 shadow-sm'
+        ? 'bg-card border border-border shadow-sm'
+        : 'bg-card border border-border shadow-sm'
 
   const radiusClass = blockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-none'
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-2">
-      <div className="aspect-9/18 w-full max-w-[280px] overflow-hidden rounded-[32px] border-3 bg-muted relative">
+    <div
+      className={cn(
+        'w-full h-full flex items-center justify-center p-2',
+        resolvedTheme === 'dark' && 'dark',
+      )}
+      data-theme={resolvedTheme}
+    >
+      <div className="aspect-9/18 w-full max-w-[280px] overflow-hidden rounded-[32px] border-3 border-border bg-muted relative">
         <div className="h-full w-full no-scrollbar overflow-y-auto overflow-x-hidden bg-background">
           <div className="min-h-full pb-8">
             <div
@@ -65,9 +74,9 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
             </div>
 
             <div className="px-4 -mt-10 mb-6 flex flex-col items-center relative z-10">
-              <Avatar className="h-20 w-20 ring-4 ring-white shadow-md bg-white">
+              <Avatar className="h-20 w-20 ring-4 ring-background shadow-md bg-background">
                 <AvatarImage src={user.image || ''} />
-                <AvatarFallback className="bg-zinc-900 text-white">
+                <AvatarFallback className="bg-muted text-foreground">
                   {user.name?.[0]?.toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
@@ -106,7 +115,7 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                        <LinkIcon className="h-4 w-4 text-slate-600" />
+                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <p className="text-xs font-medium truncate">{block.title}</p>
                     </div>

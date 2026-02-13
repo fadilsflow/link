@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { ModeToggle } from '@/components/mode-toggle'
 
 export const Route = createFileRoute('/$username/admin/settings')({
   component: SettingsPage,
@@ -146,7 +147,7 @@ function SettingsPage() {
         </Card>
 
         {/* Danger Zone */}
-        <Card className="border-red-200">
+        <Card className="">
           <CardHeader>
             <CardTitle className="text-lg text-red-600">Danger Zone</CardTitle>
           </CardHeader>
@@ -154,6 +155,7 @@ function SettingsPage() {
             <Button variant="destructive">Delete Account</Button>
           </CardContent>
         </Card>
+        <ModeToggle />
       </div>
     </div>
   )

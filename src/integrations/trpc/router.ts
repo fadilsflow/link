@@ -140,19 +140,9 @@ const userRouter = {
         title: z.string().optional(),
         bio: z.string().optional(),
         image: z.string().nullable().optional(),
-        appearanceBgType: z.enum(['banner', 'wallpaper']).optional(),
-        appearanceBgWallpaperStyle: z
-          .enum(['flat', 'gradient', 'avatar', 'image'])
-          .optional(),
-        appearanceBgColor: z.string().nullable().optional(),
         appearanceBgImageUrl: z.string().nullable().optional(),
-        appearanceWallpaperImageUrl: z.string().nullable().optional(),
-        appearanceWallpaperColor: z.string().nullable().optional(),
-        appearanceWallpaperGradientTop: z.string().nullable().optional(),
-        appearanceWallpaperGradientBottom: z.string().nullable().optional(),
         appearanceBlockStyle: z.enum(['basic', 'flat', 'shadow']).optional(),
         appearanceBlockRadius: z.enum(['rounded', 'square']).optional(),
-        appearanceBlockColor: z.string().nullable().optional(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -163,44 +153,14 @@ const userRouter = {
           ...(input.title !== undefined ? { title: input.title || null } : {}),
           ...(input.bio !== undefined ? { bio: input.bio || null } : {}),
           ...(input.image !== undefined ? { image: input.image } : {}),
-          ...(input.appearanceBgType
-            ? { appearanceBgType: input.appearanceBgType }
-            : {}),
-          ...(input.appearanceBgWallpaperStyle !== undefined
-            ? { appearanceBgWallpaperStyle: input.appearanceBgWallpaperStyle }
-            : {}),
-          ...(input.appearanceBgColor !== undefined
-            ? { appearanceBgColor: input.appearanceBgColor }
-            : {}),
           ...(input.appearanceBgImageUrl !== undefined
             ? { appearanceBgImageUrl: input.appearanceBgImageUrl }
             : {}),
-          ...(input.appearanceWallpaperImageUrl !== undefined
-            ? { appearanceWallpaperImageUrl: input.appearanceWallpaperImageUrl }
-            : {}),
-          ...(input.appearanceWallpaperColor !== undefined
-            ? { appearanceWallpaperColor: input.appearanceWallpaperColor }
-            : {}),
-          ...(input.appearanceWallpaperGradientTop !== undefined
-            ? {
-                appearanceWallpaperGradientTop:
-                  input.appearanceWallpaperGradientTop,
-              }
-            : {}),
-          ...(input.appearanceWallpaperGradientBottom !== undefined
-            ? {
-                appearanceWallpaperGradientBottom:
-                  input.appearanceWallpaperGradientBottom,
-              }
-            : {}),
-          ...(input.appearanceBlockStyle
+          ...(input.appearanceBlockStyle !== undefined
             ? { appearanceBlockStyle: input.appearanceBlockStyle }
             : {}),
-          ...(input.appearanceBlockRadius
+          ...(input.appearanceBlockRadius !== undefined
             ? { appearanceBlockRadius: input.appearanceBlockRadius }
-            : {}),
-          ...(input.appearanceBlockColor !== undefined
-            ? { appearanceBlockColor: input.appearanceBlockColor }
             : {}),
         })
         .where(eq(user.id, input.userId))

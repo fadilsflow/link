@@ -1,10 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from 'react'
-import type {
-  BgMode,
-  BlockRadius,
-  BlockStyle,
-  WallpaperStyle,
-} from '@/components/dashboard/appearance/types'
+import type { BlockRadius, BlockStyle } from '@/components/dashboard/appearance/types'
 
 export interface PreviewUser {
   id: string
@@ -13,17 +8,9 @@ export interface PreviewUser {
   title?: string | null
   bio?: string | null
   image?: string | null
-  appearanceBgType?: BgMode | 'color' | 'image'
-  appearanceBgWallpaperStyle?: WallpaperStyle | null
-  appearanceBgColor?: string | null
   appearanceBgImageUrl?: string | null
-  appearanceWallpaperImageUrl?: string | null
-  appearanceWallpaperColor?: string | null
-  appearanceWallpaperGradientTop?: string | null
-  appearanceWallpaperGradientBottom?: string | null
   appearanceBlockStyle?: BlockStyle | null
   appearanceBlockRadius?: BlockRadius | null
-  appearanceBlockColor?: string | null
 }
 
 interface PreviewBlock {

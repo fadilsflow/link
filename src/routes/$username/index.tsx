@@ -141,14 +141,12 @@ function ProductCard({
   username,
   cardBase,
   radiusClass,
-  blockColor,
   onAddToCart,
 }: {
   product: PublicProduct
   username: string
   cardBase: string
   radiusClass: string
-  blockColor?: string | null
   onAddToCart?: (e: React.MouseEvent) => void
 }) {
   const price = getProductPriceLabel(product)
@@ -162,9 +160,6 @@ function ProductCard({
         cardBase,
         radiusClass,
       )}
-      style={{
-        backgroundColor: blockColor || undefined,
-      }}
       render={
         <Link
           to="/$username/products/$productId"
@@ -254,12 +249,10 @@ function DeferredVideoEmbed({
   block,
   cardClass,
   radiusClass,
-  blockColor,
 }: {
   block: PublicBlock
   cardClass: string
   radiusClass: string
-  blockColor?: string | null
 }) {
   const { embedUrl, posterUrl, provider, youtubeVideoId } = React.useMemo(
     () => getVideoMeta(block.content),
@@ -273,9 +266,6 @@ function DeferredVideoEmbed({
         cardClass,
         radiusClass,
       )}
-      style={{
-        backgroundColor: blockColor || undefined,
-      }}
     >
       <div className="flex items-center gap-2 text-sm font-semibold">
         <PlayCircle className="h-4 w-4" />
@@ -338,9 +328,9 @@ export const Route = createFileRoute('/$username/')({
   },
   head: ({ loaderData }) => {
     const lcpHref =
-      loaderData?.user.appearanceBgType === 'banner'
-        ? loaderData.user.appearanceBgImageUrl || DEFAULT_BANNER
-        : loaderData?.user.image || '/avatar-placeholder.png'
+      loaderData?.user.appearanceBgImageUrl ||
+      loaderData?.user.image ||
+      DEFAULT_BANNER
 
     return {
       links: lcpHref
@@ -362,17 +352,8 @@ function UserProfile() {
   const { tab } = Route.useSearch()
   const navigate = Route.useNavigate()
 
-  type BgMode = 'banner' | 'wallpaper' | 'color' | 'image'
-  type WallpaperStyle = 'flat' | 'gradient' | 'avatar' | 'image'
-
-  const bgType = user.appearanceBgType as BgMode
-  const wallpaperStyle = user.appearanceBgWallpaperStyle as WallpaperStyle
-  const bgColor = user.appearanceBgColor
-  const isBanner = bgType === 'banner'
-
-  const blockStyle = user.appearanceBlockStyle as 'basic' | 'flat' | 'shadow'
-  const blockRadius = user.appearanceBlockRadius as 'rounded' | 'square'
-  const isFullPageBg = !isBanner
+  const isBanner = true
+  const isFullPageBg = false
 
   const [areBlocksReady, setAreBlocksReady] = React.useState(false)
 
@@ -381,80 +362,24 @@ function UserProfile() {
     runWhenBrowserIdle(() => setAreBlocksReady(true), 1000)
   }, [])
 
+  const blockStyle = (user.appearanceBlockStyle || 'basic') as
+    | 'basic'
+    | 'flat'
+    | 'shadow'
+  const blockRadius = (user.appearanceBlockRadius || 'rounded') as
+    | 'rounded'
+    | 'square'
+
   const cardBase =
     blockStyle === 'flat'
-      ? 'bg-white/95 backdrop-blur-sm border border-slate-200/50'
+      ? 'bg-card border border-slate-200'
       : blockStyle === 'shadow'
-        ? 'bg-white/95 backdrop-blur-sm border-none shadow-lg'
-        : 'bg-white border border-slate-100 shadow-sm'
-
-  const radiusClass = blockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-md'
-  const isDarkBg =
-    isFullPageBg &&
-    (wallpaperStyle === 'gradient' ||
-      wallpaperStyle === 'avatar' ||
-      wallpaperStyle === 'image' ||
-      (bgType === 'color' &&
-        bgColor &&
-        (bgColor.includes('#0') || bgColor.includes('rgb(0'))))
-
-  const getImageUrl = (imageUrl?: string | null, fallback?: string) => {
-    if (imageUrl) return imageUrl
-    return fallback
+        ? 'bg-card border border-slate-900 shadow-[8px_8px_0px_#18181b]'
+        : 'bg-card border border-slate-100 shadow-sm'
+  const radiusClass = blockRadius === 'rounded' ? 'rounded-2xl' : 'rounded-none'
+  const backgroundStyles = {
+    backgroundColor: '#f8fafc',
   }
-
-  const backgroundStyles = (() => {
-    if (isBanner) {
-      return {
-        backgroundColor: bgColor || undefined,
-      }
-    }
-
-    if (isFullPageBg) {
-      // For gradient wallpaper, require gradient colors
-      if (
-        wallpaperStyle === 'gradient' &&
-        user.appearanceWallpaperGradientTop
-      ) {
-        return {
-          background: `linear-gradient(180deg, ${user.appearanceWallpaperGradientTop}, ${user.appearanceWallpaperGradientBottom || user.appearanceWallpaperGradientTop})`,
-        }
-      }
-
-      // For flat wallpaper, require wallpaper color
-      if (wallpaperStyle === 'flat' && user.appearanceWallpaperColor) {
-        return {
-          backgroundColor: user.appearanceWallpaperColor,
-        }
-      }
-
-      // Avatar style has its own radial gradient
-      if (wallpaperStyle === 'avatar') {
-        return {
-          background:
-            'radial-gradient(circle at center, rgba(15,23,42,0.1), #020617)',
-        }
-      }
-
-      // Image fallback - only for 'image' wallpaperStyle or when no other style-specific values are set
-      if (wallpaperStyle === 'image') {
-        return {
-          backgroundImage: user.appearanceWallpaperImageUrl
-            ? `url('${getImageUrl(user.appearanceWallpaperImageUrl)}')`
-            : user.appearanceBgImageUrl
-              ? `url('${getImageUrl(user.appearanceBgImageUrl)}')`
-              : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }
-      }
-    }
-
-    // Default fallback for full page background
-    return {
-      background: 'radial-gradient(circle at top, #1f2937, #020617)',
-    }
-  })()
 
   const productMap = new Map(
     (products as Array<PublicProduct>).map((product) => [product.id, product]),
@@ -482,7 +407,7 @@ function UserProfile() {
   return (
     <div
       className="relative min-h-screen font-sans text-slate-900"
-      style={isFullPageBg ? backgroundStyles : { backgroundColor: '#f8fafc' }}
+      style={backgroundStyles}
     >
       <SiteUserProfileHeader
         avatarUrl={user.image || '/avatar-placeholder.png'}
@@ -551,9 +476,7 @@ function UserProfile() {
                           <h2
                             className={cn(
                               'text-2xl font-bold',
-                              isFullPageBg && isDarkBg
-                                ? 'text-white'
-                                : 'text-slate-800',
+                              'text-slate-800',
                             )}
                           >
                             {block.title}
@@ -562,9 +485,7 @@ function UserProfile() {
                             <p
                               className={cn(
                                 'text-sm',
-                                isFullPageBg && isDarkBg
-                                  ? 'text-white/70'
-                                  : 'text-slate-600',
+                                'text-slate-600',
                               )}
                             >
                               {block.content}
@@ -583,10 +504,6 @@ function UserProfile() {
                             cardBase,
                             radiusClass,
                           )}
-                          style={{
-                            backgroundColor:
-                              user.appearanceBlockColor || undefined,
-                          }}
                         >
                           {block.content && (
                             <div className="relative w-full overflow-hidden bg-slate-100 aspect-[4/3]">
@@ -627,7 +544,6 @@ function UserProfile() {
                           block={block}
                           cardClass={cardBase}
                           radiusClass={radiusClass}
-                          blockColor={user.appearanceBlockColor}
                         />
                       )
                     }
@@ -645,7 +561,6 @@ function UserProfile() {
                           username={user.username || ''}
                           cardBase={cardBase}
                           radiusClass={radiusClass}
-                          blockColor={user.appearanceBlockColor}
                         />
                       )
                     }
@@ -658,10 +573,6 @@ function UserProfile() {
                           cardBase,
                           radiusClass,
                         )}
-                        style={{
-                          backgroundColor:
-                            user.appearanceBlockColor || undefined,
-                        }}
                         onClick={() => openBlockUrl(block)}
                       >
                         <div className="flex items-center justify-between p-4">
@@ -721,7 +632,6 @@ function UserProfile() {
                         username={user.username || ''}
                         cardBase={cardBase}
                         radiusClass={radiusClass}
-                        blockColor={user.appearanceBlockColor}
                         onAddToCart={handleAddToCart}
                       />
                     )
@@ -734,17 +644,11 @@ function UserProfile() {
 
         <div className="mb-4 mt-8">
           <div
-            className={cn(
-              'flex items-center gap-1.5',
-              isFullPageBg && isDarkBg ? 'text-white/50' : 'text-slate-500',
-            )}
+            className="flex items-center gap-1.5 text-slate-500"
           >
             <span className="text-xs font-medium">Powered by</span>
             <span
-              className={cn(
-                'text-lg font-bold tracking-tighter',
-                isFullPageBg && isDarkBg ? 'text-white' : 'text-slate-900',
-              )}
+              className="text-lg font-bold tracking-tighter text-slate-900"
             >
               BLOCKS
             </span>

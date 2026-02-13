@@ -5,11 +5,20 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
+  CircleCheck,
   ShoppingBag,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import { getPublicProduct } from '@/lib/profile-server'
 import { cn, formatPrice } from '@/lib/utils'
 import LiteYouTube from '@/components/LiteYouTube'
@@ -123,20 +132,24 @@ function ImageCarousel({ images, title }: ImageCarouselProps) {
 
         {enhancedUi && images.length > 1 && (
           <>
-            <button
+            <Button
               onClick={goToPrevious}
-              className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+              variant="outline"
+              size="icon"
+              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity"
               aria-label="Previous image"
             >
               <ChevronLeft className="h-5 w-5 text-slate-700" />
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={goToNext}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+              variant="outline"
+              size="icon"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity"
               aria-label="Next image"
             >
               <ChevronRight className="h-5 w-5 text-slate-700" />
-            </button>
+            </Button>
           </>
         )}
 
@@ -182,14 +195,14 @@ function ProductDetailPage() {
   const { user, product } = Route.useLoaderData()
 
   const checkoutHref = `/${username}/products/${productId}/checkout`
-  const productImages = (product.images) || []
+  const productImages = product.images || []
   const originalPrice = getOriginalPrice(product)
   const productVideoId = extractYouTubeVideoIdFromText(product.description)
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
@@ -216,80 +229,98 @@ function ProductDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="space-y-6">
-          <ImageCarousel images={productImages} title={product.title} />
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr] lg:items-start">
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Preview</CardTitle>
+                <CardDescription>
+                  Browse product images and media.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ImageCarousel images={productImages} title={product.title} />
+              </CardContent>
+            </Card>
 
-          <Card className="shadow-lg border-0 rounded-2xl overflow-hidden bg-white">
-            <CardContent className="p-6 space-y-5">
-              <div className="space-y-2">
-                <span className="inline-flex text-[11px] px-2.5 py-1 rounded-full bg-slate-900 text-white font-medium tracking-wide">
-                  Digital Product
-                </span>
-                <h1 className="text-2xl font-bold text-slate-900 leading-tight">
-                  {product.title}
-                </h1>
-              </div>
+            {productVideoId ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Video preview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <LiteYouTube
+                    videoId={productVideoId}
+                    title={`${product.title} video preview`}
+                    className="rounded-xl border border-slate-200"
+                    playLabel="Play product video"
+                  />
+                </CardContent>
+              </Card>
+            ) : null}
+          </div>
 
+          <Card className="lg:sticky lg:top-20">
+            <CardHeader className="space-y-3">
+              <Badge variant="secondary" className="w-fit">
+                Digital Product
+              </Badge>
+              <CardTitle className="text-2xl leading-tight">
+                {product.title}
+              </CardTitle>
               {product.description && (
-                <p className="text-slate-600 leading-relaxed whitespace-pre-line">
+                <CardDescription className="whitespace-pre-line leading-relaxed text-sm">
                   {product.description}
-                </p>
+                </CardDescription>
               )}
+            </CardHeader>
 
-              {productVideoId ? (
-                <LiteYouTube
-                  videoId={productVideoId}
-                  title={`${product.title} video preview`}
-                  className="rounded-xl border border-slate-200"
-                  playLabel="Play product video"
-                />
-              ) : null}
+            <CardContent className="space-y-4">
+              <Separator />
 
-              <div className="border-t border-slate-100" />
-
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-1">
-                    Price
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Price
+                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-3xl font-bold tracking-tight">
+                    {priceLabel(product)}
                   </p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-slate-900">
-                      {priceLabel(product)}
-                    </span>
-                    {originalPrice && (
-                      <span className="text-sm text-slate-400 line-through">
-                        {originalPrice}
-                      </span>
-                    )}
-                  </div>
+                  {originalPrice && (
+                    <p className="text-sm text-muted-foreground line-through">
+                      {originalPrice}
+                    </p>
+                  )}
+                  {originalPrice && <Badge variant="success">Sale</Badge>}
                 </div>
-                {originalPrice && (
-                  <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                    Sale
-                  </span>
-                )}
               </div>
 
               <Button
-                className="w-full h-12 rounded-xl text-base font-semibold flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10 hover:shadow-xl hover:shadow-slate-900/15 transition-all"
+                size="xl"
+                className="w-full"
                 render={<Link to={checkoutHref} />}
               >
-                Buy Now
+                Buy now
                 <ArrowUpRight className="h-4 w-4" />
               </Button>
 
-              <div className="flex items-center justify-center gap-2 pt-2">
-                <span className="text-xs text-slate-400">Sold by</span>
+              <div className="flex items-center gap-2 rounded-xl border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                <CircleCheck className="h-4 w-4" />
+                Instant digital delivery after purchase
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Sold by</span>
                 <Link
                   to={`/${user.username}`}
-                  className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                  className="inline-flex items-center gap-2 font-medium hover:opacity-80 transition-opacity"
                 >
-                  <Avatar className="h-4 w-4">
+                  <Avatar className="h-6 w-6">
                     <AvatarImage
                       src={user.image || '/avatar-placeholder.png'}
                     />
-                    <AvatarFallback className="bg-slate-900 text-white text-[8px]">
+                    <AvatarFallback className="bg-slate-900 text-white text-[10px]">
                       {user.name.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

@@ -9,23 +9,3 @@ export const LOCAL_BANNER_IMAGES: Array<BannerPreset> = Array.from(
     isLocal: true,
   }),
 )
-
-export const GRADIENT_PRESETS: Array<BannerPreset> = [
-  {
-    id: 'gradient-blue',
-    label: 'Gradient Blue',
-    image: '',
-    isLocal: false,
-  },
-  {
-    id: 'gradient-purple',
-    label: 'Gradient Purple',
-    image: '',
-    isLocal: false,
-  },
-]
-
-export const DEFAULT_BANNER_PRESETS: Array<BannerPreset> = [
-  ...LOCAL_BANNER_IMAGES,
-  ...GRADIENT_PRESETS,
-]

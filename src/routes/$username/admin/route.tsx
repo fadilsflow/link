@@ -3,14 +3,15 @@ import React from 'react'
 import { AppSidebar } from '@/components/dashboard/app-sidebar'
 import { MobileAdminNav } from '@/components/dashboard/mobile-admin-nav'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { useApplyRootTheme } from '@/lib/theme'
+import { useApplyRootTheme, useDashboardThemePreference } from '@/lib/theme'
 
 export const Route = createFileRoute('/$username/admin')({
   component: AdminLayout,
 })
 
 function AdminLayout() {
-  useApplyRootTheme('dashboard')
+  const [dashboardTheme] = useDashboardThemePreference()
+  useApplyRootTheme('dashboard', undefined, dashboardTheme)
 
   return (
     <SidebarProvider

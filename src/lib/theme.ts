@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 export type ThemeScope = 'public' | 'dashboard'
 export type ThemeOption = 'system' | 'light' | 'dark'
 export type ResolvedTheme = 'light' | 'dark'
+const DASHBOARD_THEME_STORAGE_KEY = 'dashboard-theme'
 
 function getSystemColorScheme(): ResolvedTheme {
   if (typeof window === 'undefined') return 'light'
@@ -14,11 +15,15 @@ function getSystemColorScheme(): ResolvedTheme {
 export function resolveTheme(options: {
   scope: ThemeScope
   persistedPublicTheme?: ThemeOption | null
+  dashboardTheme?: ThemeOption | null
   systemColorScheme: ResolvedTheme
 }): ResolvedTheme {
-  const { scope, persistedPublicTheme, systemColorScheme } = options
+  const { scope, persistedPublicTheme, dashboardTheme, systemColorScheme } = options
 
   if (scope === 'dashboard') {
+    if (dashboardTheme && dashboardTheme !== 'system') {
+      return dashboardTheme
+    }
     return systemColorScheme
   }
 
@@ -32,6 +37,7 @@ export function resolveTheme(options: {
 export function useResolvedTheme(
   scope: ThemeScope,
   persistedPublicTheme?: ThemeOption | null,
+  dashboardTheme?: ThemeOption | null,
 ) {
   const [systemColorScheme, setSystemColorScheme] =
     useState<ResolvedTheme>(getSystemColorScheme)
@@ -55,17 +61,23 @@ export function useResolvedTheme(
       resolveTheme({
         scope,
         persistedPublicTheme,
+        dashboardTheme,
         systemColorScheme,
       }),
-    [scope, persistedPublicTheme, systemColorScheme],
+    [scope, persistedPublicTheme, dashboardTheme, systemColorScheme],
   )
 }
 
 export function useApplyRootTheme(
   scope: ThemeScope,
   persistedPublicTheme?: ThemeOption | null,
+  dashboardTheme?: ThemeOption | null,
 ) {
-  const resolvedTheme = useResolvedTheme(scope, persistedPublicTheme)
+  const resolvedTheme = useResolvedTheme(
+    scope,
+    persistedPublicTheme,
+    dashboardTheme,
+  )
 
   useEffect(() => {
     const root = document.documentElement
@@ -76,4 +88,29 @@ export function useApplyRootTheme(
   }, [resolvedTheme])
 
   return resolvedTheme
+}
+
+export function getDashboardThemePreference(): ThemeOption {
+  if (typeof window === 'undefined') return 'system'
+  const value = window.localStorage.getItem(DASHBOARD_THEME_STORAGE_KEY)
+  if (value === 'dark' || value === 'light' || value === 'system') return value
+  return 'system'
+}
+
+export function setDashboardThemePreference(theme: ThemeOption) {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(DASHBOARD_THEME_STORAGE_KEY, theme)
+}
+
+export function useDashboardThemePreference() {
+  const [dashboardTheme, setDashboardTheme] = useState<ThemeOption>(
+    getDashboardThemePreference,
+  )
+
+  const updateDashboardTheme = (theme: ThemeOption) => {
+    setDashboardTheme(theme)
+    setDashboardThemePreference(theme)
+  }
+
+  return [dashboardTheme, updateDashboardTheme] as const
 }

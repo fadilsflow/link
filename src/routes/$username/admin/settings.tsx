@@ -1,25 +1,23 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import React from 'react'
 import {
   AppHeader,
   AppHeaderContent,
-  AppHeaderDescription,
 } from '@/components/app-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
-import { useResolvedTheme } from '@/lib/theme'
+import {
+  getDashboardThemePreference,
+  setDashboardThemePreference,
+  useResolvedTheme,
+} from '@/lib/theme'
+import { ThemeOptionCards } from '@/components/dashboard/appearance/ThemeOptionCards'
 
 type ThemeOption = 'system' | 'light' | 'dark'
 
@@ -39,7 +37,12 @@ function SettingsPage() {
   })
 
   const user = dashboardData?.user
-  const resolvedDashboardTheme = useResolvedTheme('dashboard')
+  const [dashboardTheme, setDashboardTheme] = React.useState<ThemeOption>('system')
+  const resolvedDashboardTheme = useResolvedTheme('dashboard', undefined, dashboardTheme)
+
+  React.useEffect(() => {
+    setDashboardTheme(getDashboardThemePreference())
+  }, [])
 
   const updateTheme = useMutation({
     mutationFn: (publicTheme: ThemeOption) =>
@@ -64,37 +67,26 @@ function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid gap-2">
               <Label>Public theme</Label>
-              <Select
+              <ThemeOptionCards
                 value={(user?.publicTheme as ThemeOption | undefined) || 'system'}
-                onValueChange={(value) => {
-                  if (!user) return
-                  updateTheme.mutate(value as ThemeOption)
+                onChange={(value) => {
+                  if (!user || updateTheme.isPending) return
+                  updateTheme.mutate(value)
                 }}
-                disabled={!user || updateTheme.isPending}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select public theme" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="system">System</SelectItem>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             <div className="grid gap-2">
               <Label>Dashboard theme</Label>
-              <Select value="system" disabled>
-                <SelectTrigger>
-                  <SelectValue placeholder="System" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="system">System</SelectItem>
-                </SelectContent>
-              </Select>
+              <ThemeOptionCards
+                value={dashboardTheme}
+                onChange={(value) => {
+                  setDashboardTheme(value)
+                  setDashboardThemePreference(value)
+                }}
+              />
               <p className="text-sm text-muted-foreground">
-                Dashboard always follows system preference (currently {resolvedDashboardTheme}).
+                Dashboard resolved theme: {resolvedDashboardTheme}.
               </p>
             </div>
           </CardContent>
@@ -157,16 +149,7 @@ function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid gap-2">
               <Label>Payout Method</Label>
-              <Select defaultValue="bank">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select payout method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bank">Bank Transfer</SelectItem>
-                  <SelectItem value="paypal">PayPal</SelectItem>
-                  <SelectItem value="stripe">Stripe</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input defaultValue="Bank Transfer" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="account-name">Account Name</Label>

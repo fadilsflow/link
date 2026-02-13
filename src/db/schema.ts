@@ -59,6 +59,7 @@ export const user = pgTable('user', {
   appearanceBlockRadius: text('appearance_block_radius')
     .default('rounded')
     .notNull(),
+  publicTheme: text('public_theme').default('system').notNull(),
   // Denormalized analytics (cached, derived from transactions & events)
   totalRevenue: integer('total_revenue').notNull().default(0), // in cents — cached from transactions
   totalSalesCount: integer('total_sales_count').notNull().default(0),

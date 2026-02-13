@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AppHeader,
   AppHeaderContent,
@@ -16,19 +17,88 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ModeToggle } from '@/components/mode-toggle'
+import { getDashboardData } from '@/lib/profile-server'
+import { trpcClient } from '@/integrations/tanstack-query/root-provider'
+import { useResolvedTheme } from '@/lib/theme'
+
+type ThemeOption = 'system' | 'light' | 'dark'
 
 export const Route = createFileRoute('/$username/admin/settings')({
   component: SettingsPage,
 })
 
 function SettingsPage() {
+  const { username } = Route.useParams()
+  const queryClient = useQueryClient()
+
+  const { data: dashboardData } = useQuery({
+    queryKey: ['dashboard', username],
+    queryFn: () => getDashboardData(),
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+  })
+
+  const user = dashboardData?.user
+  const resolvedDashboardTheme = useResolvedTheme('dashboard')
+
+  const updateTheme = useMutation({
+    mutationFn: (publicTheme: ThemeOption) =>
+      trpcClient.user.updateProfile.mutate({
+        userId: user?.id ?? '',
+        publicTheme,
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard', username] }),
+  })
+
   return (
     <div className="px-6 py-20">
       <div className="space-y-6 max-w-2xl mx-auto">
         <AppHeader>
           <AppHeaderContent title="Settings"></AppHeaderContent>
         </AppHeader>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Theme</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-2">
+              <Label>Public theme</Label>
+              <Select
+                value={(user?.publicTheme as ThemeOption | undefined) || 'system'}
+                onValueChange={(value) => {
+                  if (!user) return
+                  updateTheme.mutate(value as ThemeOption)
+                }}
+                disabled={!user || updateTheme.isPending}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select public theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Dashboard theme</Label>
+              <Select value="system" disabled>
+                <SelectTrigger>
+                  <SelectValue placeholder="System" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Dashboard always follows system preference (currently {resolvedDashboardTheme}).
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Account & Security */}
         <Card>
@@ -155,7 +225,6 @@ function SettingsPage() {
             <Button variant="destructive">Delete Account</Button>
           </CardContent>
         </Card>
-        <ModeToggle />
       </div>
     </div>
   )

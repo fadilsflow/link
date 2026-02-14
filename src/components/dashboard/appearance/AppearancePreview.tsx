@@ -6,10 +6,14 @@ import {
   X as XIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { BlockRadius, BlockStyle } from './types'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useResolvedTheme } from '@/lib/theme'
-import { getBlockCardBase, getBlockRadius } from '@/lib/block-styles'
+import {
+  getBlockCardBase,
+  getBlockRadius,
+  type BlockRadius,
+  type BlockStyle,
+} from '@/lib/block-styles'
 
 interface AppearancePreviewProps {
   user: {

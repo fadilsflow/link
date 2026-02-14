@@ -1,6 +1,11 @@
 import { Check } from 'lucide-react'
-import type { BlockRadius, BlockStyle } from './types'
 import { cn } from '@/lib/utils'
+import {
+  type BlockRadius,
+  type BlockStyle,
+  getBlockCardBase,
+  getBlockRadius,
+} from '@/lib/block-styles'
 
 interface BlockStyleSelectorProps {
   blockStyle: BlockStyle
@@ -11,33 +16,35 @@ interface BlockStyleSelectorProps {
 
 function OptionCard({
   selected,
-  rounded,
+  radius,
   style,
 }: {
   selected: boolean
-  rounded: boolean
+  radius: BlockRadius
   style: BlockStyle
 }) {
   return (
     <div
       className={cn(
-        'relative border p-3 transition-all',
-        rounded ? 'rounded-2xl' : 'rounded-none',
-        selected ? 'border-emerald-500 ring-4 ring-emerald-200' : 'border-zinc-300',
+        'relative p-4 transition-all duration-200',
+        getBlockRadius(radius),
+        selected ? 'border bg-input/80 ' : '',
       )}
     >
       <div
         className={cn(
-          'h-24 w-full bg-zinc-200',
-          rounded ? 'rounded-xl' : 'rounded-none',
-          style === 'basic' && 'border border-zinc-300 shadow-sm',
-          style === 'flat' && 'border-0 shadow-none',
-          style === 'shadow' && 'border border-zinc-900 shadow-[10px_10px_0px_#18181b]',
+          'h-16 w-full flex items-center justify-center transition-all',
+          getBlockRadius(radius),
+          getBlockCardBase(style),
+          // Override bg-card and border-border with zinc for preview consistency if variables aren't loaded
+          'bg-card',
         )}
-      />
+      >
+        <div className="h-1.5 w-1/3 bg-input rounded-full" />
+      </div>
       {selected ? (
-        <span className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
-          <Check className="h-3.5 w-3.5" />
+        <span className="absolute right-3 top-3 inline-flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-background shadow-sm">
+          <Check className="h-3 w-3" />
         </span>
       ) : null}
     </div>
@@ -51,31 +58,62 @@ export function BlockStyleSelector({
   onRadiusChange,
 }: BlockStyleSelectorProps) {
   const styles: Array<{ key: BlockStyle; label: string }> = [
-    { key: 'basic', label: 'Basic' },
-    { key: 'flat', label: 'Flatten' },
-    { key: 'shadow', label: 'Shadow' },
+    {
+      key: 'basic',
+      label: 'Basic',
+    },
+    {
+      key: 'flat',
+      label: 'Flat',
+    },
+    {
+      key: 'shadow',
+      label: 'Shadow',
+    },
   ]
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {styles.map((styleItem) => (
         <div key={styleItem.key} className="space-y-4">
-          <p className="text-2xl font-medium text-zinc-900">{styleItem.label}</p>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <button type="button" onClick={() => { onStyleChange(styleItem.key); onRadiusChange('rounded') }}>
-              <OptionCard
-                selected={blockStyle === styleItem.key && blockRadius === 'rounded'}
-                rounded
-                style={styleItem.key}
-              />
-            </button>
-            <button type="button" onClick={() => { onStyleChange(styleItem.key); onRadiusChange('square') }}>
-              <OptionCard
-                selected={blockStyle === styleItem.key && blockRadius === 'square'}
-                rounded={false}
-                style={styleItem.key}
-              />
-            </button>
+          <h3 className="text-md">{styleItem.label}</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <button
+                type="button"
+                className="w-full text-left focus:outline-none"
+                onClick={() => {
+                  onStyleChange(styleItem.key)
+                  onRadiusChange('rounded')
+                }}
+              >
+                <OptionCard
+                  selected={
+                    blockStyle === styleItem.key && blockRadius === 'rounded'
+                  }
+                  radius="rounded"
+                  style={styleItem.key}
+                />
+              </button>
+            </div>
+            <div className="space-y-2">
+              <button
+                type="button"
+                className="w-full text-left focus:outline-none"
+                onClick={() => {
+                  onStyleChange(styleItem.key)
+                  onRadiusChange('square')
+                }}
+              >
+                <OptionCard
+                  selected={
+                    blockStyle === styleItem.key && blockRadius === 'square'
+                  }
+                  radius="square"
+                  style={styleItem.key}
+                />
+              </button>
+            </div>
           </div>
         </div>
       ))}

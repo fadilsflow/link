@@ -9,7 +9,10 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { BannerSelector } from '@/components/dashboard/appearance/BannerSelector'
 import { BlockStyleSelector } from '@/components/dashboard/appearance/BlockStyleSelector'
 import { ThemeOptionCards } from '@/components/dashboard/appearance/ThemeOptionCards'
-import type { BlockRadius, BlockStyle } from '@/components/dashboard/appearance/types'
+import type {
+  BlockRadius,
+  BlockStyle,
+} from '@/components/dashboard/appearance/types'
 import { LOCAL_BANNER_IMAGES } from '@/components/dashboard/appearance/banner-presets'
 import {
   AppHeader,
@@ -17,9 +20,7 @@ import {
   AppHeaderDescription,
 } from '@/components/app-header'
 import { usePreview } from '@/lib/preview-context'
-import {
-  useDashboardThemePreference,
-} from '@/lib/theme'
+import { useDashboardThemePreference } from '@/lib/theme'
 
 type ThemeOption = 'system' | 'light' | 'dark'
 
@@ -79,11 +80,15 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
     onError: () => setStatus({ isSaving: false, isSaved: false }),
   })
 
-  const [currentBannerUrl, setCurrentBannerUrl] = React.useState<string | undefined>(
-    user.appearanceBgImageUrl ?? undefined,
-  )
-  const [currentBannerId, setCurrentBannerId] = React.useState<string | undefined>(() => {
-    const matchedPreset = LOCAL_BANNER_IMAGES.find((preset) => preset.image === user.appearanceBgImageUrl)
+  const [currentBannerUrl, setCurrentBannerUrl] = React.useState<
+    string | undefined
+  >(user.appearanceBgImageUrl ?? undefined)
+  const [currentBannerId, setCurrentBannerId] = React.useState<
+    string | undefined
+  >(() => {
+    const matchedPreset = LOCAL_BANNER_IMAGES.find(
+      (preset) => preset.image === user.appearanceBgImageUrl,
+    )
     return matchedPreset?.id
   })
 
@@ -102,7 +107,10 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
     setCurrentBannerId(bannerId)
     setCurrentBannerUrl(imageUrl || undefined)
     updateUser({ appearanceBgImageUrl: imageUrl || null })
-    updateAppearance.mutate({ userId: user.id, appearanceBgImageUrl: imageUrl || null })
+    updateAppearance.mutate({
+      userId: user.id,
+      appearanceBgImageUrl: imageUrl || null,
+    })
   }
 
   const handleStyleChange = (style: BlockStyle) => {
@@ -120,7 +128,10 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
   const handleReset = () => {
     setBlockStyle('basic')
     setBlockRadius('rounded')
-    updateUser({ appearanceBlockStyle: 'basic', appearanceBlockRadius: 'rounded' })
+    updateUser({
+      appearanceBlockStyle: 'basic',
+      appearanceBlockRadius: 'rounded',
+    })
     updateAppearance.mutate({
       userId: user.id,
       appearanceBlockStyle: 'basic',
@@ -138,17 +149,18 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
     <>
       <AppHeader>
         <AppHeaderContent title="Appearance">
-          <AppHeaderDescription>Choose your banner and block card style.</AppHeaderDescription>
+          <AppHeaderDescription>
+            Choose your banner and block card style.
+          </AppHeaderDescription>
         </AppHeaderContent>
       </AppHeader>
 
       <Card className="shadow-sm overflow-hidden">
-        <div className="border-b px-6 py-4">
+        <CardHeader className=" border-b flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <ImageIcon className="h-4 w-4" />
             Banner
           </CardTitle>
-        </div>
+        </CardHeader>
 
         <CardContent className="p-6">
           <BannerSelector
@@ -160,10 +172,14 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
       </Card>
 
       <Card className="shadow-sm mt-6">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-4xl font-semibold">Block</CardTitle>
-          <Button type="button" variant="outline" className="gap-2" onClick={handleReset}>
-            <RotateCcw className="h-4 w-4" />
+        <CardHeader className=" border-b flex flex-row items-center justify-between">
+          <CardTitle>Block</CardTitle>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={handleReset}
+          >
             Reset
           </Button>
         </CardHeader>
@@ -177,12 +193,19 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
 
           <div className="mt-8 space-y-6 border-t pt-6">
             <div className="space-y-2">
-              <CardTitle className="text-xl font-semibold">Public Theme</CardTitle>
-              <ThemeOptionCards value={publicTheme} onChange={handlePublicThemeChange} />
+              <CardTitle className="text-xl font-semibold">
+                Public Theme
+              </CardTitle>
+              <ThemeOptionCards
+                value={publicTheme}
+                onChange={handlePublicThemeChange}
+              />
             </div>
 
             <div className="space-y-2">
-              <CardTitle className="text-xl font-semibold">Dashboard Theme</CardTitle>
+              <CardTitle className="text-xl font-semibold">
+                Dashboard Theme
+              </CardTitle>
               <ThemeOptionCards
                 value={dashboardTheme}
                 onChange={(theme) => {

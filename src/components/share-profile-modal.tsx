@@ -47,7 +47,7 @@ export function ShareProfileModal({
     },
     {
       name: 'X',
-      icon: <XformerlyTwitter className="h-5 w-5 invert" />,
+      icon: <XformerlyTwitter className="h-5 w-5 invert dark:invert-0" />,
       color: 'bg-black/5 text-black hover:bg-black/10',
       url: `https://x.com/intent/tweet?text=${encodeURIComponent(url)}`,
     },

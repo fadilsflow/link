@@ -28,7 +28,7 @@ export const PLATFORM_ICONS: Record<
   string,
   { icon: any; color?: string; className?: string }
 > = {
-  twitter: { icon: XformerlyTwitter, className: 'invert' },
+  twitter: { icon: XformerlyTwitter, className: 'invert dark:invert-0' },
   linkedin: { icon: LinkedIn },
   email: { icon: Gmail },
   instagram: { icon: Instagram, color: '#E4405F' },

@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Link as LinkIcon, Loader2, Upload, X } from 'lucide-react'
+import { Link as LinkIcon, Upload, X } from 'lucide-react'
 import { useFileUpload } from '@/hooks/use-file-upload'
 import { uploadFile } from '@/lib/upload-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Spinner } from '@/components/ui/spinner'
 
 interface ImageUploaderProps {
   value?: string
@@ -127,15 +128,15 @@ export function ImageUploader({
                 />
 
                 <div className="flex flex-col items-center gap-2">
-                  <div className="bg-zinc-100 p-2 rounded-full">
+                  <div className="p-2 rounded-full">
                     {isUploading ? (
-                      <Loader2 className="h-4 w-4 text-zinc-500 animate-spin" />
+                      <Spinner />
                     ) : (
-                      <Upload className="h-4 w-4 text-zinc-500" />
+                      <Upload className="h-4 w-4 " />
                     )}
                   </div>
-                  <div className="text-[10px] text-zinc-500 font-medium">
-                    {isUploading ? 'Uploading...' : 'Upload Image'}
+                  <div className="text-xs">
+                    {isUploading ? null : placeholder}
                   </div>
                 </div>
               </div>
@@ -188,7 +189,6 @@ export function ImageUploader({
           <TabsContent value="url" className="mt-0">
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <LinkIcon className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
                 <Input
                   value={value || ''}
                   onChange={(e) => onChange(e.target.value)}

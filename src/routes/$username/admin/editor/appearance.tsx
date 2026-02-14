@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Image as ImageIcon, RotateCcw } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getDashboardData } from '@/lib/profile-server'
@@ -139,6 +138,13 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
     })
   }
 
+  const handleResetTheme = () => {
+    setPublicTheme('system')
+    updateUser({ publicTheme: 'system' })
+    updateAppearance.mutate({ userId: user.id, publicTheme: 'system' })
+    setDashboardTheme('system')
+  }
+
   const handlePublicThemeChange = (theme: ThemeOption) => {
     setPublicTheme(theme)
     updateUser({ publicTheme: theme })
@@ -157,9 +163,7 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
 
       <Card className="shadow-sm overflow-hidden">
         <CardHeader className=" border-b flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            Banner
-          </CardTitle>
+          <CardTitle>Banner</CardTitle>
         </CardHeader>
 
         <CardContent className="p-6">
@@ -190,30 +194,37 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
             onStyleChange={handleStyleChange}
             onRadiusChange={handleRadiusChange}
           />
+        </CardContent>
+      </Card>
 
-          <div className="mt-8 space-y-6 border-t pt-6">
-            <div className="space-y-2">
-              <CardTitle className="text-xl font-semibold">
-                Public Theme
-              </CardTitle>
-              <ThemeOptionCards
-                value={publicTheme}
-                onChange={handlePublicThemeChange}
-              />
-            </div>
+      <Card className="shadow-sm mt-6">
+        <CardHeader className=" border-b flex flex-row items-center justify-between">
+          <CardTitle>Theme</CardTitle>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={handleResetTheme}
+          >
+            Reset
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <CardTitle className="text-xl font-semibold">Public Theme</CardTitle>
+          <ThemeOptionCards
+            value={publicTheme}
+            onChange={handlePublicThemeChange}
+          />
 
-            <div className="space-y-2">
-              <CardTitle className="text-xl font-semibold">
-                Dashboard Theme
-              </CardTitle>
-              <ThemeOptionCards
-                value={dashboardTheme}
-                onChange={(theme) => {
-                  setDashboardTheme(theme)
-                }}
-              />
-            </div>
-          </div>
+          <CardTitle className="text-xl font-semibold">
+            Dashboard Theme
+          </CardTitle>
+          <ThemeOptionCards
+            value={dashboardTheme}
+            onChange={(theme) => {
+              setDashboardTheme(theme)
+            }}
+          />
         </CardContent>
       </Card>
     </>

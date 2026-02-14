@@ -24,8 +24,8 @@ export function ThemeOptionCards({
             type="button"
             onClick={() => onChange(option)}
             className={cn(
-              'relative rounded-xl border p-4 text-left transition-colors',
-              selected ? 'border-primary bg-muted' : 'border-border hover:bg-muted/50',
+              'relative rounded-xl p-4 text-left transition-colors',
+              selected ? 'bg-input/80' : 'border',
             )}
           >
             <p className="text-sm font-medium capitalize">{option}</p>

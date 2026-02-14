@@ -26,9 +26,9 @@ function OptionCard({
   return (
     <div
       className={cn(
-        'relative p-4 transition-all duration-200',
-        getBlockRadius(radius),
-        selected ? 'border bg-input/80 ' : '',
+        'relative p-4 transition-all duration-200 rounded-xl',
+        // getBlockRadius(radius),
+        selected ? 'bg-input/80 ' : '',
       )}
     >
       <div

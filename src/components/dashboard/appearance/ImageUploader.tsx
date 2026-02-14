@@ -99,7 +99,12 @@ export function ImageUploader({
             {!value ? (
               <div
                 className={cn(
-                  'border-2 border-dashed border-zinc-200 rounded-xl p-8 transition-colors text-center cursor-pointer hover:bg-zinc-50/50 hover:border-zinc-300',
+                  ' rounded-xl bg-input/50 transition-colors text-center cursor-pointer hover:bg-input/80 hover:border-input flex items-center justify-center',
+                  aspectRatio === 'video'
+                    ? 'aspect-video w-full'
+                    : aspectRatio === 'square'
+                      ? 'aspect-square w-full'
+                      : 'w-full h-[93px]',
                   isUploading && 'pointer-events-none opacity-50',
                 )}
                 onClick={openFileDialog}
@@ -122,22 +127,20 @@ export function ImageUploader({
                 />
 
                 <div className="flex flex-col items-center gap-2">
-                  <div className="bg-zinc-100 p-3 rounded-full">
+                  <div className="bg-zinc-100 p-2 rounded-full">
                     {isUploading ? (
-                      <Loader2 className="h-5 w-5 text-zinc-500 animate-spin" />
+                      <Loader2 className="h-4 w-4 text-zinc-500 animate-spin" />
                     ) : (
-                      <Upload className="h-5 w-5 text-zinc-500" />
+                      <Upload className="h-4 w-4 text-zinc-500" />
                     )}
                   </div>
-                  <div className="text-xs text-zinc-500 font-medium">
-                    {isUploading
-                      ? 'Uploading...'
-                      : 'Click or drag image to upload'}
+                  <div className="text-[10px] text-zinc-500 font-medium">
+                    {isUploading ? 'Uploading...' : 'Upload Image'}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="relative group rounded-xl overflow-hidden border border-zinc-200 bg-zinc-50">
+              <div className="relative group rounded-xl overflow-hidden border">
                 <div
                   className={cn(
                     'w-full bg-cover bg-center',
@@ -145,7 +148,7 @@ export function ImageUploader({
                       ? 'aspect-video'
                       : aspectRatio === 'square'
                         ? 'aspect-square'
-                        : 'aspect-3/1',
+                        : 'w-[712px] h-[93px]',
                   )}
                   style={{ backgroundImage: `url(${value})` }}
                 />

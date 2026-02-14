@@ -1,4 +1,5 @@
 import React from 'react'
+import { Check } from 'lucide-react'
 import { LOCAL_BANNER_IMAGES } from './banner-presets'
 import { ImageUploader } from './ImageUploader'
 import type { BannerPreset } from './types'
@@ -28,8 +29,14 @@ export function BannerSelector({
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <Label className="text-xs font-medium text-zinc-700">Banner Images</Label>
-        <div className="grid grid-cols-3 gap-2">
+        <ImageUploader
+          value={isCustomBanner ? currentBannerUrl : undefined}
+          onChange={(url) => onBannerSelect(url || '', 'custom')}
+          aspectRatio="wide"
+          folder="banners"
+          placeholder="1440*190px"
+        />
+        <div className="grid grid-cols-2 gap-2">
           {LOCAL_BANNER_IMAGES.map((preset) => {
             const isSelected =
               currentBannerId === preset.id || currentBannerUrl === preset.image
@@ -40,31 +47,26 @@ export function BannerSelector({
                 type="button"
                 onClick={() => handleLocalImageSelect(preset)}
                 className={cn(
-                  'relative aspect-video w-full overflow-hidden rounded-lg border-2 transition-all',
-                  'border-zinc-200 hover:border-zinc-300',
-                  isSelected && 'border-emerald-500 ring-2 ring-emerald-500/40',
+                  'relative h-[46px] w-[264px] overflow-hidden rounded-lg transition-all',
                 )}
               >
                 <img
                   src={preset.image}
                   alt={preset.label}
-                  className="h-full w-full object-cover"
+                  className={cn(
+                    'h-full w-full object-cover transition-opacity',
+                    isSelected ? 'opacity-90' : 'opacity-100',
+                  )}
                 />
-                {isSelected ? <div className="absolute inset-0 bg-emerald-500/20" /> : null}
+                {isSelected ? (
+                  <span className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-background shadow-sm">
+                    <Check className="h-3 w-3" />
+                  </span>
+                ) : null}
               </button>
             )
           })}
         </div>
-      </div>
-
-      <div className="space-y-3 pt-2 border-t border-zinc-100">
-        <Label className="text-xs font-medium text-zinc-700">Custom Image</Label>
-        <ImageUploader
-          value={isCustomBanner ? currentBannerUrl : undefined}
-          onChange={(url) => onBannerSelect(url || '', 'custom')}
-          aspectRatio="wide"
-          folder="banners"
-        />
       </div>
     </div>
   )

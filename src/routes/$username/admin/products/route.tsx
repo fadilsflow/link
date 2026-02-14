@@ -440,14 +440,12 @@ function ProductAdminLayout() {
           <EmptyProduct url={newHref} />
         </div>
       ) : (
-        <div className="space-y-8">
-          <DataTable
-            columns={columns}
-            data={products}
-            searchKey="title"
-            filterPlaceholder="Search products by name..."
-          />
-        </div>
+        <DataTable
+          columns={columns}
+          data={products}
+          searchKey="title"
+          filterPlaceholder="Search products by name..."
+        />
       )}
       <Outlet />
     </div>

@@ -29,7 +29,9 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { formatPrice } from '@/lib/utils'
 import { toastManager } from '@/components/ui/toast'
 import { BASE_URL } from '@/lib/constans'
-import { DataTable, DataTableColumnHeader  } from '@/components/ui/data-table'
+import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table'
+import { Spinner } from '@/components/ui/spinner'
+import EmptyOrders from '@/components/empty-orders'
 
 export const Route = createFileRoute('/$username/admin/orders/')({
   component: OrdersPage,
@@ -73,6 +75,8 @@ function OrdersPage() {
         userId: session.user.id,
       })
     },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: !!session?.user?.id,
   })
 
@@ -268,16 +272,25 @@ function OrdersPage() {
         </AppHeaderContent>
       </AppHeader>
 
-      <DataTable
-        columns={columns}
-        data={orders || []}
-        searchKey="buyerEmail"
-        filterPlaceholder="Filter by email..."
-        isLoading={
-          (isOrdersLoading || isOrdersFetching) && (orders?.length ?? 0) === 0
-        }
-        loadingText="Loading orders..."
-      />
+      {(isOrdersLoading || isOrdersFetching) && orders?.length === 0 ? (
+        <div className="min-h-[500px] flex items-center justify-center py-12">
+          <Spinner className="h-5 w-5 text-muted-foreground" />
+        </div>
+      ) : orders?.length === 0 ? (
+        <div className="min-h-[500px] flex items-center justify-center py-12">
+          <EmptyOrders />
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={orders || []}
+          searchKey="buyerEmail"
+          filterPlaceholder="Filter by email..."
+          isLoading={
+            (isOrdersLoading || isOrdersFetching) && (orders?.length ?? 0) === 0
+          }
+        />
+      )}
     </div>
   )
 }

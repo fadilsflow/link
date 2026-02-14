@@ -84,14 +84,14 @@ export function SortableBlockItem({
           'w-full shadow-none',
           block.syncStatus === 'error' ? 'border-red-500' : 'border-border',
           block.type == 'text'
-            ? 'bg-blue-50/80'
+            ? 'bg-blue-50/80 dark:bg-blue-500/20'
             : block.type == 'image'
-              ? 'bg-green-50'
-              : block.type == 'video'
-                ? 'bg-red-50'
+              ? 'bg-green-50 dark:bg-green-500/20'
+            : block.type == 'video'
+                ? 'bg-red-50 dark:bg-red-500/20'
                 : block.type == 'product'
-                  ? 'bg-yellow-50'
-                  : 'bg-gray-50',
+                  ? 'bg-yellow-50 dark:bg-yellow-500/20'
+                  : 'bg-gray-50 dark:bg-gray-500/20',
         )}
       >
         <CardContent className="flex items-center gap-4 sm:p-6">
@@ -105,16 +105,16 @@ export function SortableBlockItem({
 
           <div
             className={cn(
-              'rounded-sm h-5 w-5 flex items-center justify-center border border-background ring ring-primary/10',
+              'rounded-sm h-5 w-5 flex items-center justify-center border border-background ring ring-primary/20',
               block.type == 'text'
-                ? 'bg-blue-50'
+                ? 'bg-blue-50 dark:bg-blue-500/20'
                 : block.type == 'image'
-                  ? 'bg-green-50'
+                  ? 'bg-green-50 dark:bg-green-500/20'
                   : block.type == 'video'
-                    ? 'bg-red-50'
+                    ? 'bg-red-50 dark:bg-red-500/20'
                     : block.type == 'product'
-                      ? 'bg-yellow-50'
-                      : 'bg-gray-50',
+                      ? 'bg-yellow-50 dark:bg-yellow-500/20'
+                      : 'bg-gray-50 dark:bg-gray-500/20',
             )}
           >
             {icon}

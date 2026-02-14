@@ -485,72 +485,62 @@ function AdminDashboard() {
             <DialogPanel className="grid grid-cols-2 gap-4">
               <div
                 onClick={() => handleAddBlock('link')}
-                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:border-border cursor-pointer group"
+                className="p-6 text-foreground  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:bg-input/80 cursor-pointer group"
               >
-                <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center">
-                  <Layout className="h-6 w-6 text-zinc-400 group-hover:text-zinc-900" />
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
+                  <Layout className="h-6 w-6 " />
                 </div>
-                <span className="text-sm font-bold text-zinc-900">
-                  Link Block
-                </span>
-                <p className="text-[10px] text-zinc-400 text-center leading-tight">
+                <span className="text-sm font-bold">Link Block</span>
+                <p className="text-[10px] text-center leading-tight">
                   Add a link to your website or profile
                 </p>
               </div>
               <div
                 onClick={() => handleAddBlock('text')}
-                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:border-border cursor-pointer group"
+                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:bg-input/80 cursor-pointer group"
               >
-                <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center">
-                  <UserIcon className="h-6 w-6 text-zinc-400 group-hover:text-zinc-900" />
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
+                  <UserIcon className="h-6 w-6 " />
                 </div>
-                <span className="text-sm font-bold text-zinc-900">
-                  Text Block
-                </span>
-                <p className="text-[10px] text-zinc-400 text-center leading-tight">
+                <span className="text-sm font-bold">Text Block</span>
+                <p className="text-[10px] text-center leading-tight">
                   Write a simple message or bio segment
                 </p>
               </div>
 
               <div
                 onClick={() => handleAddBlock('image')}
-                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:border-border cursor-pointer group"
+                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:bg-input/80 cursor-pointer group"
               >
-                <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center">
-                  <ImageIcon className="h-6 w-6 text-zinc-400 group-hover:text-zinc-900" />
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
+                  <ImageIcon className="h-6 w-6 " />
                 </div>
-                <span className="text-sm font-bold text-zinc-900">
-                  Image Block
-                </span>
-                <p className="text-[10px] text-zinc-400 text-center leading-tight">
+                <span className="text-sm font-bold">Image Block</span>
+                <p className="text-[10px] text-center leading-tight">
                   Showcase an image with optional click link
                 </p>
               </div>
               <div
                 onClick={() => handleAddBlock('video')}
-                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:border-border cursor-pointer group"
+                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:bg-input/80 cursor-pointer group"
               >
-                <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center">
-                  <PlaySquare className="h-6 w-6 text-zinc-400 group-hover:text-zinc-900" />
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
+                  <PlaySquare className="h-6 w-6 " />
                 </div>
-                <span className="text-sm font-bold text-zinc-900">
-                  Video Block
-                </span>
-                <p className="text-[10px] text-zinc-400 text-center leading-tight">
+                <span className="text-sm font-bold">Video Block</span>
+                <p className="text-[10px] text-center leading-tight">
                   Embed videos from YouTube, TikTok, and more
                 </p>
               </div>
               <div
                 onClick={() => handleAddBlock('product')}
-                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:border-border cursor-pointer group"
+                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:bg-input/80 cursor-pointer group"
               >
-                <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center">
-                  <Package className="h-6 w-6 text-zinc-400 group-hover:text-zinc-900" />
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
+                  <Package className="h-6 w-6 " />
                 </div>
-                <span className="text-sm font-bold text-zinc-900">
-                  Product Block
-                </span>
-                <p className="text-[10px] text-zinc-400 text-center leading-tight">
+                <span className="text-sm font-bold">Product Block</span>
+                <p className="text-[10px] text-center leading-tight">
                   Feature one product from your existing catalog
                 </p>
               </div>

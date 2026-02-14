@@ -55,7 +55,7 @@ function EditorLayout() {
                 <span className="truncate max-w-[120px] md:max-w-40">
                   {user?.username
                     ? `${window.location.host}/${user.username}`
-                    : 'loading...'}
+                    : `${window.location.host}/loading`}
                 </span>
                 <Share className="ml-2 h-4 w-4" />
               </Button>

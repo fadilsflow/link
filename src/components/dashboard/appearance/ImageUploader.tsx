@@ -193,7 +193,6 @@ export function ImageUploader({
                   value={value || ''}
                   onChange={(e) => onChange(e.target.value)}
                   placeholder="https://example.com/image.png"
-                  className="pl-9 text-xs"
                 />
               </div>
               {value && (

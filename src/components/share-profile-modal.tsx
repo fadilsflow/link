@@ -77,7 +77,7 @@ export function ShareProfileModal({
         render={
           children || (
             <Button
-              className="rounded-full py-6 px-6 font-semibold"
+              className="py-6 px-6 font-semibold"
               variant={'outline'}
               size={'lg'}
             />

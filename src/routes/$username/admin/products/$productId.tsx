@@ -250,13 +250,13 @@ function ProductEditRoute() {
               type="submit"
               form="edit-product-form"
               disabled={isLoading || !isReady}
+              className="relative min-w-[140px]" // sesuaikan dengan lebar teks terpanjang
             >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLoading
-                ? isUploading
-                  ? 'Uploading...'
-                  : 'Saving...'
-                : 'Save changes'}
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+              ) : (
+                'Save changes'
+              )}
             </Button>
           </div>
         </SheetFooter>

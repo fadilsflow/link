@@ -404,6 +404,8 @@ function ProductAdminLayout() {
         userId: session.user.id,
       })
     },
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: !!session?.user?.id,
   })
 
@@ -430,11 +432,13 @@ function ProductAdminLayout() {
       </AppHeader>
 
       {(isProductsLoading || isProductsFetching) && products.length === 0 ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="min-h-[500px] flex items-center justify-center py-12">
           <Spinner className="h-5 w-5 text-muted-foreground" />
         </div>
       ) : products.length === 0 ? (
-        <EmptyProduct />
+        <div className="min-h-[500px] flex items-center justify-center py-12">
+          <EmptyProduct url={newHref} />
+        </div>
       ) : (
         <div className="space-y-8">
           <DataTable

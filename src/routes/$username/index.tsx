@@ -36,6 +36,7 @@ import SiteUserProfileHeader, {
   ProfileCard,
   SocialLinks,
 } from '@/components/site-user-profile-header'
+import PublicMark from '@/components/public-mark'
 
 interface PublicBlock {
   id: string
@@ -63,7 +64,7 @@ const DEFAULT_BANNER =
 function runWhenBrowserIdle(callback: () => void, timeout = 1200) {
   if (typeof window === 'undefined') return
   if ('requestIdleCallback' in window) {
-    ; (
+    ;(
       window as Window & {
         requestIdleCallback: (
           cb: () => void,
@@ -233,9 +234,7 @@ function ProductCard({
 
 function BlockSkeleton({ block }: { block: PublicBlock }) {
   // Image/video blocks previously shifted desktop CLS due to unknown media height; fixed aspect placeholders stabilize first layout.
-  return (
-    <div className={getBlockSkeletonClasses(block.type)} />
-  )
+  return <div className={getBlockSkeletonClasses(block.type)} />
 }
 
 function DeferredVideoEmbed({
@@ -328,12 +327,12 @@ export const Route = createFileRoute('/$username/')({
     return {
       links: lcpHref
         ? [
-          {
-            rel: 'preload',
-            as: 'image',
-            href: lcpHref,
-          },
-        ]
+            {
+              rel: 'preload',
+              as: 'image',
+              href: lcpHref,
+            },
+          ]
         : [],
     }
   },
@@ -390,7 +389,7 @@ function UserProfile() {
   return (
     <div
       className="relative min-h-screen font-sans text-foreground"
-    // style={backgroundStyles}
+      // style={backgroundStyles}
     >
       <SiteUserProfileHeader
         avatarUrl={user.image || '/avatar-placeholder.png'}
@@ -412,13 +411,13 @@ function UserProfile() {
             decoding="async"
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-black/10" />
+          <div className="absolute inset-0 " />
         </div>
       ) : null}
 
       <div
         className={cn(
-          'relative z-20 mx-auto flex max-w-[680px] flex-col items-center gap-6 px-4 pb-16',
+          'relative z-20 mx-auto flex max-w-[760px] flex-col items-center gap-6 px-4 pb-16',
           isBanner ? '-mt-24' : 'pt-20',
         )}
       >
@@ -447,126 +446,126 @@ function UserProfile() {
             <TabsPanel value="profile" className="mt-4 space-y-3 outline-none">
               {!areBlocksReady
                 ? (blocks as Array<PublicBlock>).map((block) => (
-                  <BlockSkeleton key={block.id} block={block} />
-                ))
+                    <BlockSkeleton key={block.id} block={block} />
+                  ))
                 : (blocks as Array<PublicBlock>).map((block) => {
-                  if (block.type === 'text') {
-                    return (
-                      <div
-                        key={block.id}
-                        className="w-full space-y-1 py-2 text-center min-h-16"
-                      >
-                        <h2
+                    if (block.type === 'text') {
+                      return (
+                        <div
+                          key={block.id}
+                          className="w-full space-y-1 py-2 text-center min-h-16"
+                        >
+                          <h2
+                            className={cn(
+                              'text-2xl font-bold',
+                              'text-foreground',
+                            )}
+                          >
+                            {block.title}
+                          </h2>
+                          {block.content && (
+                            <p className={cn('text-sm', 'text-foreground')}>
+                              {block.content}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    }
+
+                    if (block.type === 'image') {
+                      return (
+                        <Card
+                          key={block.id}
                           className={cn(
-                            'text-2xl font-bold',
-                            'text-foreground',
+                            'w-full overflow-hidden',
+                            cardBase,
+                            radiusClass,
                           )}
                         >
-                          {block.title}
-                        </h2>
-                        {block.content && (
-                          <p className={cn('text-sm', 'text-foreground')}>
-                            {block.content}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  }
+                          {block.content && (
+                            <div className="relative w-full overflow-hidden bg-muted aspect-4/3">
+                              <img
+                                loading="lazy"
+                                decoding="async"
+                                width={1200}
+                                height={900}
+                                src={block.content}
+                                alt={block.title || 'Image block'}
+                                className="absolute inset-0 h-full w-full object-cover"
+                              />
+                            </div>
+                          )}
+                          {block.title && (
+                            <p className="p-3 text-sm font-semibold">
+                              {block.title}
+                            </p>
+                          )}
+                          {block.url && (
+                            <div className="px-3 pb-3">
+                              <Button
+                                className="w-full"
+                                onClick={() => openBlockUrl(block)}
+                              >
+                                Open link
+                              </Button>
+                            </div>
+                          )}
+                        </Card>
+                      )
+                    }
 
-                  if (block.type === 'image') {
+                    if (block.type === 'video') {
+                      return (
+                        <DeferredVideoEmbed
+                          key={block.id}
+                          block={block}
+                          cardClass={cardBase}
+                          radiusClass={radiusClass}
+                        />
+                      )
+                    }
+
+                    if (block.type === 'product') {
+                      const selectedProduct = block.content
+                        ? productMap.get(block.content)
+                        : null
+                      if (!selectedProduct) return null
+
+                      return (
+                        <ProductCard
+                          key={block.id}
+                          product={selectedProduct}
+                          username={user.username || ''}
+                          cardBase={cardBase}
+                          radiusClass={radiusClass}
+                        />
+                      )
+                    }
+
                     return (
                       <Card
                         key={block.id}
                         className={cn(
-                          'w-full overflow-hidden',
+                          'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01] min-h-20',
                           cardBase,
                           radiusClass,
                         )}
+                        onClick={() => openBlockUrl(block)}
                       >
-                        {block.content && (
-                          <div className="relative w-full overflow-hidden bg-[var(--muted)] aspect-[4/3]">
-                            <img
-                              loading="lazy"
-                              decoding="async"
-                              width={1200}
-                              height={900}
-                              src={block.content}
-                              alt={block.title || 'Image block'}
-                              className="absolute inset-0 h-full w-full object-cover"
-                            />
+                        <div className="flex items-center justify-between p-4">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
+                              <LinkIcon className="h-5 w-5" />
+                            </div>
+                            <span className="text-sm font-semibold">
+                              {block.title}
+                            </span>
                           </div>
-                        )}
-                        {block.title && (
-                          <p className="p-3 text-sm font-semibold">
-                            {block.title}
-                          </p>
-                        )}
-                        {block.url && (
-                          <div className="px-3 pb-3">
-                            <Button
-                              className="w-full"
-                              onClick={() => openBlockUrl(block)}
-                            >
-                              Open link
-                            </Button>
-                          </div>
-                        )}
+                          <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                        </div>
                       </Card>
                     )
-                  }
-
-                  if (block.type === 'video') {
-                    return (
-                      <DeferredVideoEmbed
-                        key={block.id}
-                        block={block}
-                        cardClass={cardBase}
-                        radiusClass={radiusClass}
-                      />
-                    )
-                  }
-
-                  if (block.type === 'product') {
-                    const selectedProduct = block.content
-                      ? productMap.get(block.content)
-                      : null
-                    if (!selectedProduct) return null
-
-                    return (
-                      <ProductCard
-                        key={block.id}
-                        product={selectedProduct}
-                        username={user.username || ''}
-                        cardBase={cardBase}
-                        radiusClass={radiusClass}
-                      />
-                    )
-                  }
-
-                  return (
-                    <Card
-                      key={block.id}
-                      className={cn(
-                        'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01] min-h-20',
-                        cardBase,
-                        radiusClass,
-                      )}
-                      onClick={() => openBlockUrl(block)}
-                    >
-                      <div className="flex items-center justify-between p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
-                            <LinkIcon className="h-5 w-5" />
-                          </div>
-                          <span className="text-sm font-semibold">
-                            {block.title}
-                          </span>
-                        </div>
-                        <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                      </div>
-                    </Card>
-                  )
-                })}
+                  })}
             </TabsPanel>
 
             <TabsPanel value="products" className="mt-4 space-y-3 outline-none">
@@ -620,10 +619,9 @@ function UserProfile() {
           </Tabs>
         </div>
 
-        <div className="mb-4 mt-8">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium">Powered by</span>
-            <span className="text-lg font-bold tracking-tighter">BLOCKS</span>
+        <div className="mb-4 mt-16">
+          <div className="flex items-center">
+            <PublicMark />
           </div>
         </div>
       </div>

@@ -58,73 +58,87 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
               style={
                 user.appearanceBgImageUrl
                   ? {
-                    backgroundImage: `url('${user.appearanceBgImageUrl}')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                  }
+                      backgroundImage: `url('${user.appearanceBgImageUrl}')`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }
                   : undefined
               }
             >
               <div className="absolute inset-0 bg-black/5" />
             </div>
 
-            <div className="px-4 -mt-10 mb-6 flex flex-col items-center relative z-10">
+            <div className="px-4 -mt-10 mb-6 flex flex-col relative z-10">
               <Avatar className="h-20 w-20 ring-4 ring-background shadow-md bg-background">
                 <AvatarImage src={user.image || ''} />
                 <AvatarFallback className="bg-muted text-foreground">
                   {user.name?.[0]?.toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
-              <h3 className="text-sm font-semibold mt-3 text-center">{user.name}</h3>
+              <h3 className="text-sm text-foreground font-semibold mt-3">
+                {user.name}
+              </h3>
               {user.title ? (
-                <p className="text-xs text-muted-foreground mt-0.5 text-center">{user.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {user.title}
+                </p>
               ) : null}
               {user.bio ? (
-                <p className="text-xs text-muted-foreground mt-2 text-center line-clamp-3">
+                <p className="text-xs text-foreground mt-2  line-clamp-3">
                   {user.bio}
                 </p>
               ) : null}
             </div>
 
             <div className="px-3 space-y-3">
-              {blocks.filter((b) => b.isEnabled).map((block) => (
-                <div
-                  key={block.id}
-                  className={cn(
-                    'w-full bg-card',
-                    cardBase,
-                    radiusClass,
-                    block.type === 'image' ? 'p-0 overflow-hidden' : 'p-3',
-                  )}
-                >
-                  {block.type === 'image' ? (
-                    <div className="aspect-video bg-muted flex items-center justify-center">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  ) : block.type === 'video' ? (
-                    <div className="aspect-video rounded-xl bg-muted flex items-center justify-center mb-2">
-                      <PlayCircle className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  ) : null}
-
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
+              {blocks
+                .filter((b) => b.isEnabled)
+                .map((block) => (
+                  <div
+                    key={block.id}
+                    className={cn(
+                      'w-full bg-card',
+                      cardBase,
+                      radiusClass,
+                      block.type === 'image' ? 'p-0 overflow-hidden' : 'p-3',
+                    )}
+                  >
+                    {block.type === 'image' ? (
+                      <div className="aspect-video bg-muted flex items-center justify-center">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <p className="text-xs font-medium truncate">{block.title}</p>
+                    ) : block.type === 'video' ? (
+                      <div className="aspect-video rounded-xl bg-muted flex items-center justify-center mb-2">
+                        <PlayCircle className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    ) : null}
+
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                          <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <p className="text-xs text-foreground font-medium truncate">
+                          {block.title}
+                        </p>
+                      </div>
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
                   </div>
-                </div>
-              ))}
+                ))}
 
               <button
-                className={cn('w-full bg-card px-3 py-3 text-left', cardBase, radiusClass)}
+                className={cn(
+                  'w-full bg-card px-3 py-3 text-left',
+                  cardBase,
+                  radiusClass,
+                )}
                 type="button"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium truncate">Sample Button</span>
+                  <span className="text-xs text-foreground *:font-medium truncate">
+                    Sample Button
+                  </span>
                   <XIcon className="h-4 w-4 text-muted-foreground" />
                 </div>
               </button>

@@ -88,34 +88,34 @@ export function ProfileCard({
   id?: string
 }) {
   return (
-    <Card
-      id={id}
-      className='w-full overflow-visible'
-    >
+    <Card id={id} className="w-full overflow-visible">
       <CardContent className="relative">
         {/* Avatar - Overlapping top */}
 
         <div className="flex justify-between">
           <div className="space-y-4">
+            <Avatar className="mb-2 h-15 w-15 md:h-20 md:w-20 border-2 border-background ring ring-primary/10">
+              <AvatarImage src={user.image || '/avatar-placeholder.png'} />
+              <AvatarFallback className="bg-muted text-2xl font-bold text-foreground">
+                {user.name?.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             <div>
-              <h1 className="flex items-center gap-2 text-2xl font-bold leading-tight">
+              <h1 className="flex items-center gap-2 text-2xl font-bold">
                 {user.name}
               </h1>
-              {user.title && <p className="mt-1 text-">{user.title}</p>}
+              {user.title && (
+                <p className="mt-1 text-md text-muted-foreground">
+                  {user.title}
+                </p>
+              )}
             </div>
 
             {user.bio && (
-              <p className="max-w-md text-sm leading-relaxed ">{user.bio}</p>
+              <p className="max-w-md text-md leading-relaxed ">{user.bio}</p>
             )}
           </div>
-          <Avatar className="mb-2 h-15 w-15 md:h-24 md:w-24 border-2 ring-2 ring-white/50 bg-black">
-            <AvatarImage src={user.image || '/avatar-placeholder.png'} />
-            <AvatarFallback className="bg-black text-2xl font-bold text-white">
-              {user.name?.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
         </div>
-
       </CardContent>
 
       {/* Social Links inside the card if needed, or keeping structure same as index.tsx */}
@@ -148,16 +148,12 @@ export function SocialLinks({
           target={link.platform === 'email' ? undefined : '_blank'}
           rel="noopener noreferrer"
         >
-          <Button
-            variant="outline"
-            size="icon"
-          >
+          <Button variant="outline" size="icon">
             {getSocialIcon(link.platform)}
           </Button>
         </a>
-      ))
-      }
-    </div >
+      ))}
+    </div>
   )
 }
 
@@ -210,7 +206,7 @@ export default function SiteUserProfileHeader({
       >
         <div
           className={cn(
-            'mx-auto flex h-17 items-center justify-between gap-2 px-2 transition-all duration-300 sm:gap-4 md:max-w-170',
+            'mx-auto flex h-17 items-center justify-between gap-2 px-2 transition-all duration-300 sm:gap-4 max-w-[760px]',
             show ? '' : 'border-transparent',
           )}
           data-header-container
@@ -218,30 +214,32 @@ export default function SiteUserProfileHeader({
           <Link
             to="/"
             className={cn(
-              'flex items -center transition-opacity duration-300',
+              'flex items-center transition-opacity duration-300',
               show ? 'opacity-100' : 'opacity-0 pointer-events-none',
             )}
           >
-            <Avatar className=" h-8 w-8 rounded-md border-2 ring-2 ring-white/50 bg-black">
+            <Avatar className=" h-8 w-8 border-2 border-background ring ring-primary/10">
               <AvatarImage src={avatarUrl || '/avatar-placeholder.png'} />
               <AvatarFallback>{username}</AvatarFallback>
             </Avatar>
             <span className="ml-2 font-medium">{username}</span>
           </Link>
-          {/* <UserButton /> */}
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 relative"
-            onClick={() => setIsCartOpen(true)}
-          >
-            <ShoppingCart className="h-4 w-4" />
-            {totalItems > 0 && (
-              <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
-                {totalItems > 9 ? '9+' : totalItems}
-              </span>
-            )}
-          </Button>
+          <div className="flex gap-4 items-center">
+            <UserButton />
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 relative"
+              onClick={() => setIsCartOpen(true)}
+            >
+              <ShoppingCart className="h-4 w-4" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
+                  {totalItems > 9 ? '9+' : totalItems}
+                </span>
+              )}
+            </Button>
+          </div>
         </div>
       </SiteHeaderWrapper>
       <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />

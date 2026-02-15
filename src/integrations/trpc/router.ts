@@ -1100,8 +1100,22 @@ const orderRouter = {
   listByCreator: publicProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
+      const creatorItemRows = await db.query.orderItems.findMany({
+        where: eq(orderItems.creatorId, input.userId),
+        columns: { orderId: true },
+      })
+
+      const orderIdsFromItems = creatorItemRows.map((row) => row.orderId)
+      const whereClause =
+        orderIdsFromItems.length > 0
+          ? or(
+              eq(orders.creatorId, input.userId),
+              inArray(orders.id, orderIdsFromItems),
+            )
+          : eq(orders.creatorId, input.userId)
+
       const rows = await db.query.orders.findMany({
-        where: eq(orders.creatorId, input.userId),
+        where: whereClause,
         with: {
           product: true,
           transactions: {

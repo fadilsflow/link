@@ -34,7 +34,7 @@ function OrderDeliveryPage() {
 
   return (
     <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-start gap-4 sm:items-center">
@@ -46,8 +46,8 @@ function OrderDeliveryPage() {
                   Thanks for your order!
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  You now have access to <strong>{items.length}</strong> product
-                  {items.length > 1 ? 's' : ''}. A receipt was sent to{' '}
+                  Your checkout includes <strong>{items.length}</strong> product
+                  {items.length > 1 ? 's' : ''}. We sent your receipt to{' '}
                   <strong>{order.buyerEmail}</strong>.
                 </p>
               </div>
@@ -55,12 +55,13 @@ function OrderDeliveryPage() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr] lg:items-start">
+        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr] lg:items-start">
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">Your Content</CardTitle>
+              <CardTitle className="text-xl">Your Purchased Content</CardTitle>
               <CardDescription>
-                All products from this checkout are available below.
+                Access links, files, and checkout responses for every item in
+                this order.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -81,7 +82,7 @@ function OrderDeliveryPage() {
                       </div>
                     )}
 
-                    <div className="space-y-2 min-w-0">
+                    <div className="space-y-2 min-w-0 flex-1">
                       <Badge variant="secondary" className="w-fit">
                         Purchased
                       </Badge>
@@ -103,6 +104,14 @@ function OrderDeliveryPage() {
                         </Avatar>
                         by {item.creator.name || 'Creator'}
                       </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">
+                        {formatPrice(item.amountPaid)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Qty {item.quantity}
+                      </p>
                     </div>
                   </div>
 
@@ -148,6 +157,11 @@ function OrderDeliveryPage() {
                                   <p className="text-sm font-medium truncate">
                                     {file.name}
                                   </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {file.size
+                                      ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
+                                      : 'Download file'}
+                                  </p>
                                 </div>
                               </div>
                               <Button
@@ -171,6 +185,40 @@ function OrderDeliveryPage() {
                       ))}
                     </div>
                   )}
+
+                  {Object.keys(item.checkoutAnswers ?? {}).length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">
+                          Your checkout responses
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-1 pt-0">
+                        {Object.entries(item.checkoutAnswers).map(
+                          ([key, value]) => (
+                            <p key={key} className="text-xs">
+                              <span className="font-medium">{key}:</span>{' '}
+                              {String(value)}
+                            </p>
+                          ),
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {!item.productUrl && item.productFiles.length === 0 && (
+                    <Card>
+                      <CardContent className="pt-6 text-center space-y-1">
+                        <p className="text-sm text-muted-foreground">
+                          This product currently has no attached delivery
+                          content.
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Contact the creator if this is unexpected.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               ))}
             </CardContent>
@@ -188,6 +236,26 @@ function OrderDeliveryPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Date</span>
                 <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Buyer</span>
+                <span className="truncate max-w-[180px] text-right">
+                  {order.buyerEmail}
+                </span>
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex justify-between text-sm gap-2"
+                  >
+                    <span className="text-muted-foreground truncate">
+                      {item.title} × {item.quantity}
+                    </span>
+                    <span>{formatPrice(item.amountPaid)}</span>
+                  </div>
+                ))}
               </div>
               <Separator />
               <div className="flex justify-between text-sm">

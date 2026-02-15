@@ -1105,6 +1105,34 @@ const orderRouter = {
       return rows
     }),
 
+  getDetail: publicProcedure
+    .input(z.object({ orderId: z.string(), userId: z.string() }))
+    .query(async ({ input }) => {
+      const order = await db.query.orders.findFirst({
+        where: eq(orders.id, input.orderId),
+        with: {
+          product: true,
+          creator: true,
+          transactions: true,
+          items: {
+            with: {
+              product: true,
+              creator: true,
+            },
+          },
+        },
+      })
+
+      if (!order) throw new Error('Order not found')
+
+      const authorized =
+        order.creatorId === input.userId ||
+        order.items.some((item) => item.creatorId === input.userId)
+      if (!authorized) throw new Error('Unauthorized')
+
+      return order
+    }),
+
   resendEmail: publicProcedure
     .input(z.object({ orderId: z.string(), userId: z.string() }))
     .mutation(async ({ input }) => {

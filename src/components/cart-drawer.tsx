@@ -6,9 +6,12 @@ import { Button } from '@/components/ui/button'
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
+  SheetPanel,
   SheetTitle,
 } from '@/components/ui/sheet'
+import Emptys from './empty-state'
 
 interface CartDrawerProps {
   open: boolean
@@ -33,28 +36,35 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
       <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
             Shopping Cart ({totalItems})
           </SheetTitle>
         </SheetHeader>
-
-        <div className="flex-1 overflow-y-auto py-4">
+        <SheetPanel className="mt-5">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-12">
-              <ShoppingCart className="h-16 w-16 text-slate-300 mb-4" />
-              <p className="text-slate-600 font-medium">Your cart is empty</p>
-              <p className="text-sm text-slate-400 mt-1">
-                Add products to get started
-              </p>
+            <div className=" min-h-[500px] flex flex-col items-center justify-center h-full text-center py-12">
+              <Emptys
+                title="Your cart is empty"
+                description="Add products to get started"
+                icon={<ShoppingCart />}
+              >
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="w-full"
+                  onClick={onClose}
+                >
+                  Continue Shopping
+                </Button>
+              </Emptys>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 text-foreground">
               {items.map((item) => (
                 <div
                   key={item.productId}
-                  className="flex gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200"
+                  className="flex gap-4 p-4 border rounded-lg bg-card"
                 >
-                  <div className="w-20 h-20 rounded-md bg-slate-200 shrink-0 overflow-hidden">
+                  <div className="w-20 h-20 rounded-md bg-muted shrink-0 overflow-hidden">
                     {item.image ? (
                       <img
                         src={item.image}
@@ -63,19 +73,15 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingCart className="h-8 w-8 text-slate-400" />
+                        <ShoppingCart className="h-8 w-8 " />
                       </div>
                     )}
                   </div>
 
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-slate-900 truncate">
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-slate-600 mt-1">
-                      {formatPrice(item.price)}
-                    </p>
+                    <h3 className="font-medium truncate">{item.title}</h3>
+                    <p className="text-sm mt-1">{formatPrice(item.price)}</p>
 
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-2 mt-3">
@@ -114,13 +120,12 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                   <div className="flex flex-col items-end justify-between">
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-slate-400 hover:text-red-600"
+                      size="icon-xs"
                       onClick={() => removeItem(item.productId)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    <p className="font-semibold text-slate-900">
+                    <p className="font-semibold">
                       {formatPrice(item.price * item.quantity)}
                     </p>
                   </div>
@@ -128,19 +133,21 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               ))}
             </div>
           )}
-        </div>
+        </SheetPanel>
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="border-t border-slate-200 pt-4 space-y-4">
-            <div className="flex items-center justify-between text-lg font-semibold">
-              <span>Total</span>
-              <span>{formatPrice(totalPrice)}</span>
+          <SheetFooter>
+            <div className="pt-4 space-y-4">
+              <div className="flex items-center justify-between text-lg font-semibold">
+                <span>Total</span>
+                <span>{formatPrice(totalPrice)}</span>
+              </div>
+              <Button className="w-full" size="lg" onClick={handleCheckout}>
+                Proceed to Checkout
+              </Button>
             </div>
-            <Button className="w-full" size="lg" onClick={handleCheckout}>
-              Proceed to Checkout
-            </Button>
-          </div>
+          </SheetFooter>
         )}
       </SheetContent>
     </Sheet>

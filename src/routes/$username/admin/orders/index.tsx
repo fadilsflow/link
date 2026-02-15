@@ -31,7 +31,7 @@ import { toastManager } from '@/components/ui/toast'
 import { BASE_URL } from '@/lib/constans'
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table'
 import { Spinner } from '@/components/ui/spinner'
-import EmptyOrders from '@/components/empty-orders'
+import EmptyState from '@/components/empty-state'
 
 export const Route = createFileRoute('/$username/admin/orders/')({
   component: OrdersPage,
@@ -63,7 +63,7 @@ function getStatusBadge(status: string) {
 function OrdersPage() {
   const { data: session } = authClient.useSession()
   const {
-    data: orders,
+    data: orders = [],
     refetch,
     isLoading: isOrdersLoading,
     isFetching: isOrdersFetching,
@@ -263,7 +263,7 @@ function OrdersPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <AppHeader>
         <AppHeaderContent title="Orders">
           <AppHeaderDescription>
@@ -272,23 +272,25 @@ function OrdersPage() {
         </AppHeaderContent>
       </AppHeader>
 
-      {(isOrdersLoading || isOrdersFetching) && orders?.length === 0 ? (
+      {(isOrdersLoading || isOrdersFetching) && orders.length === 0 ? (
         <div className="min-h-[500px] flex items-center justify-center py-12">
           <Spinner className="h-5 w-5 text-muted-foreground" />
         </div>
-      ) : orders?.length === 0 ? (
+      ) : orders.length === 0 ? (
         <div className="min-h-[500px] flex items-center justify-center py-12">
-          <EmptyOrders />
+          <EmptyState
+            title="No orders yet"
+            description="You haven't received any orders yet. Start make a sale by promoting
+             your products."
+            icon={<ShoppingBag className="h-5 w-5" />}
+          />
         </div>
       ) : (
         <DataTable
           columns={columns}
-          data={orders || []}
+          data={orders}
           searchKey="buyerEmail"
           filterPlaceholder="Filter by email..."
-          isLoading={
-            (isOrdersLoading || isOrdersFetching) && (orders?.length ?? 0) === 0
-          }
         />
       )}
     </div>

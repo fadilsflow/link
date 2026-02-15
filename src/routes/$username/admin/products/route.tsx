@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Link, Outlet, createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { MoreHorizontal, Plus, ShoppingBag } from 'lucide-react'
+import { MoreHorizontal, PackageIcon, Plus } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
   Select,
@@ -31,7 +31,6 @@ import {
   MenuTrigger,
 } from '@/components/ui/menu'
 import { cn, formatPrice } from '@/lib/utils'
-import EmptyProduct from '@/components/emply-product'
 import { toastManager } from '@/components/ui/toast'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import {
@@ -42,6 +41,7 @@ import {
 } from '@/components/app-header'
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table'
 import { Spinner } from '@/components/ui/spinner'
+import EmptyState from '@/components/empty-state'
 
 export const Route = createFileRoute('/$username/admin/products')({
   component: ProductAdminLayout,
@@ -437,7 +437,17 @@ function ProductAdminLayout() {
         </div>
       ) : products.length === 0 ? (
         <div className="min-h-[500px] flex items-center justify-center py-12">
-          <EmptyProduct url={newHref} />
+          <EmptyState
+            title="Create your first product"
+            description="Adding products to your store is easy peasy. Create products in
+          minutes and start making sales."
+            icon={<PackageIcon className="h-5 w-5" />}
+          >
+            <Button render={<Link to={newHref} />}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Create Product
+            </Button>
+          </EmptyState>
         </div>
       ) : (
         <DataTable

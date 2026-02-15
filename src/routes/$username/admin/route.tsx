@@ -1,10 +1,17 @@
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import React from 'react'
+import { z } from 'zod'
 import { AppSidebar } from '@/components/dashboard/app-sidebar'
 import { MobileAdminNav } from '@/components/dashboard/mobile-admin-nav'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { adminAuthQueryOptions } from '@/lib/admin-auth'
 import { useApplyRootTheme, useDashboardThemePreference } from '@/lib/theme'
+
+const getAdminRouteAccess = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ username: z.string() }))
+  .handler(async ({ data }) => {
+    return await getAdminAccessForUsername(data.username)
+  })
 
 export const Route = createFileRoute('/$username/admin')({
   loaderDeps: ({ params }) => ({ username: params.username }),

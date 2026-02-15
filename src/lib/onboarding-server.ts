@@ -1,18 +1,18 @@
 import { createServerFn } from '@tanstack/react-start'
-import { getServerSession } from './auth-server'
+import { getServerAuthContext } from './auth-server'
 
 export const checkOnboardingStatus = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const session = await getServerSession()
+    const authContext = await getServerAuthContext()
 
-    if (!session?.user) {
+    if (!authContext.isAuthenticated) {
       return { isLoggedIn: false, hasUsername: false }
     }
 
     return {
       isLoggedIn: true,
-      hasUsername: !!session.user.username,
-      user: session.user,
+      hasUsername: !!authContext.user.username,
+      user: authContext.user,
     }
   },
 )

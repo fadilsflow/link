@@ -15,7 +15,7 @@ import {
   Wallet,
 } from 'lucide-react'
 
-import { useParams, useRouter, useRouterState } from '@tanstack/react-router'
+import { Link, useParams, useRouter, useRouterState } from '@tanstack/react-router'
 import Credits from '../Credits'
 import { Button } from '../ui/button'
 import {
@@ -39,7 +39,6 @@ import {
 } from '@/components/ui/sidebar'
 import { authClient } from '@/lib/auth-client'
 import { BASE_URL } from '@/lib/constans'
-import { Link } from '@tanstack/react-router'
 
 const data = {
   navBottom: [
@@ -122,7 +121,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <Avatar className="h-6 w-6 border">
                   <AvatarImage src={session?.user.image || ''} />
                   <AvatarFallback>
-                    {session?.user.name?.slice(0, 2).toUpperCase() || 'US'}
+                    {session?.user.name.slice(0, 2).toUpperCase() || 'US'}
                   </AvatarFallback>
                 </Avatar>
 
@@ -188,6 +187,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       <Link
                         to={item.url as any}
                         params={{ username } as any}
+                        preload="intent"
                         activeOptions={{
                           exact: item.url === '/$username/admin',
                         }}
@@ -229,7 +229,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenuButton
                 size={'default'}
                 render={
-                  <Link to={item.url as any} params={{ username } as any} />
+                  <Link to={item.url as any} params={{ username } as any} preload="intent" />
                 }
                 isActive={
                   location.pathname ===

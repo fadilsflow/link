@@ -195,7 +195,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     render={
                       <Link
                         to={item.url as any}
-                        preload="intent"
                         activeOptions={{
                           exact: item.url === '/admin',
                         }}
@@ -244,7 +243,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 size={'default'}
-                render={<Link to={item.url as any} preload="intent" />}
+                render={<Link to={item.url as any} />}
                 isActive={location.pathname === item.url}
                 className="text-foreground"
               >

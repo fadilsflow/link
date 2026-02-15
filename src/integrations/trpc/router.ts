@@ -46,6 +46,13 @@ function getTransactionNetAmount(txn: {
   return txn.amount - txn.platformFeeAmount
 }
 
+function assertActorUserId(inputUserId: string, sessionUserId: string): string {
+  if (inputUserId !== sessionUserId) {
+    throw new TRPCError({ code: 'FORBIDDEN' })
+  }
+  return sessionUserId
+}
+
 type CheckoutQuestion = {
   id: string
   label: string
@@ -107,19 +114,20 @@ const userRouter = {
     }),
   setUsername: protectedProcedure
     .input(z.object({ userId: z.string(), username: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const existing = await db.query.user.findFirst({
         where: eq(user.username, input.username),
       })
 
-      if (existing && existing.id !== input.userId) {
+      if (existing && existing.id !== actorUserId) {
         throw new Error('Username is already taken')
       }
 
       const [updatedUser] = await db
         .update(user)
         .set({ username: input.username })
-        .where(eq(user.id, input.userId))
+        .where(eq(user.id, actorUserId))
         .returning()
 
       return updatedUser
@@ -188,7 +196,8 @@ const userRouter = {
         appearanceBlockRadius: z.enum(['rounded', 'square']).optional(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const [updatedUser] = await db
         .update(user)
         .set({
@@ -209,7 +218,7 @@ const userRouter = {
             ? { appearanceBlockRadius: input.appearanceBlockRadius }
             : {}),
         })
-        .where(eq(user.id, input.userId))
+        .where(eq(user.id, actorUserId))
         .returning()
       return updatedUser
     }),
@@ -254,10 +263,11 @@ const blockRouter = {
         content: z.string().optional(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       // Get max order
       const userBlocks = await db.query.blocks.findMany({
-        where: eq(blocks.userId, input.userId),
+        where: eq(blocks.userId, actorUserId),
         orderBy: [asc(blocks.order)],
       })
       const maxOrder = userBlocks[userBlocks.length - 1]?.order ?? 0
@@ -266,7 +276,7 @@ const blockRouter = {
         .insert(blocks)
         .values({
           id: crypto.randomUUID(),
-          userId: input.userId,
+          userId: actorUserId,
           title: input.title,
           url: input.url ?? null,
           type: input.type,
@@ -401,10 +411,11 @@ export type ProductInput = z.infer<typeof productInputSchema>
 const productRouter = {
   listByUser: protectedProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const rows = await db.query.products.findMany({
         where: and(
-          eq(products.userId, input.userId),
+          eq(products.userId, actorUserId),
           eq(products.isDeleted, false),
         ),
         orderBy: [desc(products.createdAt)],
@@ -420,7 +431,7 @@ const productRouter = {
         .leftJoin(orders, eq(transactions.orderId, orders.id))
         .where(
           and(
-            eq(transactions.creatorId, input.userId),
+            eq(transactions.creatorId, actorUserId),
             eq(transactions.type, TRANSACTION_TYPE.SALE),
           ),
         )
@@ -435,7 +446,8 @@ const productRouter = {
     }),
   create: protectedProcedure
     .input(productBaseInput)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const id = crypto.randomUUID()
       const price = input.priceSettings.payWhatYouWant
         ? null
@@ -448,7 +460,7 @@ const productRouter = {
         .insert(products)
         .values({
           id,
-          userId: input.userId,
+          userId: actorUserId,
           title: input.title,
           description: input.description ?? null,
           productUrl: input.productUrl || null,
@@ -592,9 +604,10 @@ const socialLinkRouter = {
         url: z.string(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const userSocialLinks = await db.query.socialLinks.findMany({
-        where: eq(socialLinks.userId, input.userId),
+        where: eq(socialLinks.userId, actorUserId),
         orderBy: [asc(socialLinks.order)],
       })
       const maxOrder = userSocialLinks[userSocialLinks.length - 1]?.order ?? 0
@@ -603,7 +616,7 @@ const socialLinkRouter = {
         .insert(socialLinks)
         .values({
           id: crypto.randomUUID(),
-          userId: input.userId,
+          userId: actorUserId,
           platform: input.platform,
           url: input.url,
           order: maxOrder + 1,
@@ -1119,9 +1132,10 @@ const orderRouter = {
 
   listByCreator: protectedProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const creatorItemRows = await db.query.orderItems.findMany({
-        where: eq(orderItems.creatorId, input.userId),
+        where: eq(orderItems.creatorId, actorUserId),
         columns: { orderId: true },
       })
 
@@ -1129,20 +1143,20 @@ const orderRouter = {
       const whereClause =
         orderIdsFromItems.length > 0
           ? or(
-              eq(orders.creatorId, input.userId),
+              eq(orders.creatorId, actorUserId),
               inArray(orders.id, orderIdsFromItems),
             )
-          : eq(orders.creatorId, input.userId)
+          : eq(orders.creatorId, actorUserId)
 
       const rows = await db.query.orders.findMany({
         where: whereClause,
         with: {
           product: true,
           transactions: {
-            where: eq(transactions.creatorId, input.userId),
+            where: eq(transactions.creatorId, actorUserId),
           },
           items: {
-            where: eq(orderItems.creatorId, input.userId),
+            where: eq(orderItems.creatorId, actorUserId),
           },
         },
         orderBy: [desc(orders.createdAt)],
@@ -1152,20 +1166,21 @@ const orderRouter = {
 
   getDetail: protectedProcedure
     .input(z.object({ orderId: z.string(), userId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const order = await db.query.orders.findFirst({
         where: and(
           eq(orders.id, input.orderId),
-          eq(orders.creatorId, input.userId),
+          eq(orders.creatorId, actorUserId),
         ),
         with: {
           product: true,
           creator: true,
           transactions: {
-            where: eq(transactions.creatorId, input.userId),
+            where: eq(transactions.creatorId, actorUserId),
           },
           items: {
-            where: eq(orderItems.creatorId, input.userId),
+            where: eq(orderItems.creatorId, actorUserId),
             with: {
               product: true,
               creator: true,
@@ -1181,17 +1196,18 @@ const orderRouter = {
 
   resendEmail: protectedProcedure
     .input(z.object({ orderId: z.string(), userId: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const order = await db.query.orders.findFirst({
         where: and(
           eq(orders.id, input.orderId),
-          eq(orders.creatorId, input.userId),
+          eq(orders.creatorId, actorUserId),
         ),
         with: {
           product: true,
           creator: true,
           items: {
-            where: eq(orderItems.creatorId, input.userId),
+            where: eq(orderItems.creatorId, actorUserId),
             with: {
               creator: true,
             },
@@ -1243,12 +1259,13 @@ const balanceRouter = {
    */
   getSummary: protectedProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const now = new Date()
 
       // Total balance (all transactions)
       const allTxns = await db.query.transactions.findMany({
-        where: eq(transactions.creatorId, input.userId),
+        where: eq(transactions.creatorId, actorUserId),
         columns: {
           amount: true,
           platformFeeAmount: true,
@@ -1307,8 +1324,9 @@ const balanceRouter = {
         type: z.string().optional(),
       }),
     )
-    .query(async ({ input }) => {
-      const conditions = [eq(transactions.creatorId, input.userId)]
+    .query(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
+      const conditions = [eq(transactions.creatorId, actorUserId)]
       if (input.type) {
         conditions.push(eq(transactions.type, input.type))
       }
@@ -1350,7 +1368,8 @@ const payoutRouter = {
         payoutDetails: z.any().optional(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const now = new Date()
 
       try {
@@ -1363,7 +1382,7 @@ const payoutRouter = {
             .from(transactions)
             .where(
               and(
-                eq(transactions.creatorId, input.userId),
+                eq(transactions.creatorId, actorUserId),
                 lte(transactions.availableAt, now),
               ),
             )
@@ -1389,7 +1408,7 @@ const payoutRouter = {
             .insert(payouts)
             .values({
               id: payoutId,
-              creatorId: input.userId,
+              creatorId: actorUserId,
               amount: payoutAmount,
               status: 'pending',
               periodEnd: now,
@@ -1401,7 +1420,7 @@ const payoutRouter = {
           // Insert debit transaction
           await tx.insert(transactions).values({
             id: crypto.randomUUID(),
-            creatorId: input.userId,
+            creatorId: actorUserId,
             payoutId: payoutId,
             type: TRANSACTION_TYPE.PAYOUT,
             amount: -payoutAmount,
@@ -1419,7 +1438,7 @@ const payoutRouter = {
         return result
       } catch (error) {
         console.error('[finance][payout-request] transaction failed', {
-          userId: input.userId,
+          userId: actorUserId,
           amount: input.amount,
           error,
         })
@@ -1439,9 +1458,10 @@ const payoutRouter = {
    */
   list: protectedProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const rows = await db.query.payouts.findMany({
-        where: eq(payouts.creatorId, input.userId),
+        where: eq(payouts.creatorId, actorUserId),
         orderBy: [desc(payouts.createdAt)],
       })
       return rows
@@ -1452,13 +1472,14 @@ const payoutRouter = {
    */
   cancel: protectedProcedure
     .input(z.object({ payoutId: z.string(), userId: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const payout = await db.query.payouts.findFirst({
         where: eq(payouts.id, input.payoutId),
       })
 
       if (!payout) throw new Error('Payout not found')
-      if (payout.creatorId !== input.userId) throw new Error('Unauthorized')
+      if (payout.creatorId !== actorUserId) throw new Error('Unauthorized')
       if (payout.status !== 'pending') {
         throw new Error('Can only cancel pending payouts')
       }
@@ -1472,7 +1493,7 @@ const payoutRouter = {
       // Create reversal transaction (positive amount to restore balance)
       await db.insert(transactions).values({
         id: crypto.randomUUID(),
-        creatorId: input.userId,
+        creatorId: actorUserId,
         payoutId: payout.id,
         type: TRANSACTION_TYPE.ADJUSTMENT,
         amount: payout.amount,
@@ -1499,14 +1520,15 @@ const analyticsRouter = {
         to: z.string().optional(),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const fromDate = input.from
         ? new Date(`${input.from}T00:00:00.000Z`)
         : null
       const toDate = input.to ? new Date(`${input.to}T23:59:59.999Z`) : null
 
       const profile = await db.query.user.findFirst({
-        where: eq(user.id, input.userId),
+        where: eq(user.id, actorUserId),
         columns: {
           totalRevenue: true,
           totalSalesCount: true,
@@ -1515,7 +1537,7 @@ const analyticsRouter = {
       })
 
       const blockRows = await db.query.blocks.findMany({
-        where: eq(blocks.userId, input.userId),
+        where: eq(blocks.userId, actorUserId),
         columns: {
           id: true,
           title: true,
@@ -1528,7 +1550,7 @@ const analyticsRouter = {
 
       // Transactions query for revenue calculation (replacing orders query)
       const txnConditions = [
-        eq(transactions.creatorId, input.userId),
+        eq(transactions.creatorId, actorUserId),
         eq(transactions.type, TRANSACTION_TYPE.SALE),
       ]
       if (fromDate) txnConditions.push(gte(transactions.createdAt, fromDate))
@@ -1545,7 +1567,7 @@ const analyticsRouter = {
       })
 
       // Views query for period
-      const viewsConditions = [eq(profileViews.userId, input.userId)]
+      const viewsConditions = [eq(profileViews.userId, actorUserId)]
       if (fromDate) viewsConditions.push(gte(profileViews.createdAt, fromDate))
       if (toDate) viewsConditions.push(lte(profileViews.createdAt, toDate))
 
@@ -1555,7 +1577,7 @@ const analyticsRouter = {
       })
 
       // Clicks query for period
-      const clicksConditions = [eq(blockClicks.userId, input.userId)]
+      const clicksConditions = [eq(blockClicks.userId, actorUserId)]
       if (fromDate) clicksConditions.push(gte(blockClicks.createdAt, fromDate))
       if (toDate) clicksConditions.push(lte(blockClicks.createdAt, toDate))
 
@@ -1656,10 +1678,11 @@ const analyticsRouter = {
   // Get per-product analytics
   getProductAnalytics: protectedProcedure
     .input(z.object({ userId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
+      const actorUserId = assertActorUserId(input.userId, ctx.session.user.id)
       const productRows = await db.query.products.findMany({
         where: and(
-          eq(products.userId, input.userId),
+          eq(products.userId, actorUserId),
           eq(products.isDeleted, false),
         ),
         columns: {
@@ -1684,7 +1707,7 @@ const analyticsRouter = {
         .leftJoin(orders, eq(transactions.orderId, orders.id))
         .where(
           and(
-            eq(transactions.creatorId, input.userId),
+            eq(transactions.creatorId, actorUserId),
             eq(transactions.type, TRANSACTION_TYPE.SALE),
           ),
         )

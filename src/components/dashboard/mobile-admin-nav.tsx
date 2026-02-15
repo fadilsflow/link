@@ -24,14 +24,14 @@ import { cn } from '@/lib/utils'
 type AdminNavItem = {
   title: string
   url:
-    | '/admin'
-    | '/admin/editor/profiles'
-    | '/admin/editor/appearance'
-    | '/admin/products'
-    | '/admin/orders'
-    | '/admin/balance'
-    | '/admin/analytics'
-    | '/admin/settings'
+  | '/admin'
+  | '/admin/editor/profiles'
+  | '/admin/editor/appearance'
+  | '/admin/products'
+  | '/admin/orders'
+  | '/admin/balance'
+  | '/admin/analytics'
+  | '/admin/settings'
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
 }
 
@@ -73,7 +73,6 @@ export function MobileAdminNav() {
             <Link
               key={item.title}
               to={item.url}
-              preload="intent"
               className={cn(
                 'flex flex-col items-center justify-center gap-1 text-[11px] text-muted-foreground transition-colors',
                 active && 'text-foreground',
@@ -103,7 +102,6 @@ export function MobileAdminNav() {
                     render={
                       <Link
                         to={item.url}
-                        preload="intent"
                         className={cn(
                           'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
                           active && 'border-primary text-primary bg-primary/5',

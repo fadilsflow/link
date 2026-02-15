@@ -82,13 +82,15 @@ export function ProfileCard({
   user,
   isFullPageBg,
   id,
+  className,
 }: {
   user: any
   isFullPageBg: boolean
   id?: string
+  className?: string
 }) {
   return (
-    <Card id={id} className="w-full overflow-visible">
+    <Card id={id} className={cn('w-full overflow-visible', className)}>
       <CardContent className="relative">
         {/* Avatar - Overlapping top */}
 
@@ -133,9 +135,11 @@ export function ProfileCard({
 export function SocialLinks({
   socialLinks,
   isFullPageBg,
+  className,
 }: {
   socialLinks: Array<any>
   isFullPageBg: boolean
+  className?: string
 }) {
   if (!socialLinks || socialLinks.length === 0) return null
 
@@ -148,7 +152,7 @@ export function SocialLinks({
           target={link.platform === 'email' ? undefined : '_blank'}
           rel="noopener noreferrer"
         >
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" className={cn(className)}>
             {getSocialIcon(link.platform)}
           </Button>
         </a>

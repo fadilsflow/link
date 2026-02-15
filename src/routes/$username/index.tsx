@@ -418,12 +418,17 @@ function UserProfile() {
         )}
       >
         <ProfileCard
+          className={cn(cardBase, radiusClass)}
           user={user}
           isFullPageBg={isFullPageBg}
           id="profile-card-section"
         />
 
-        <SocialLinks socialLinks={socialLinks} isFullPageBg={isFullPageBg} />
+        <SocialLinks
+          className={cn(cardBase, radiusClass)}
+          socialLinks={socialLinks}
+          isFullPageBg={isFullPageBg}
+        />
         <div className="flex-1 justify-start w-full mt-4">
           <Tabs
             value={tab}
@@ -542,7 +547,7 @@ function UserProfile() {
                       <Card
                         key={block.id}
                         className={cn(
-                          'group w-full cursor-pointer overflow-hidden transition-all hover:scale-[1.01] min-h-20',
+                          'group w-full cursor-pointer overflow-hidden transition-all min-h-20',
                           cardBase,
                           radiusClass,
                         )}

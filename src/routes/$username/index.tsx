@@ -29,6 +29,7 @@ import {
 } from '@/lib/block-styles'
 
 import SiteUserProfileHeader, {
+  ProfileBanner,
   ProfileCard,
   SocialLinks,
 } from '@/components/site-user-profile-header'
@@ -392,29 +393,17 @@ function UserProfile() {
         username={user.name}
       />
 
-      {isBanner ? (
-        <div
-          className="relative h-[120px] md:h-[180px] w-full overflow-hidden"
-          style={backgroundStyles}
-        >
-          <img
-            src={lcpBannerSrc}
-            alt={`${user.name} banner`}
-            width={1440}
-            height={180}
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 " />
-        </div>
-      ) : null}
+      <ProfileBanner
+        isBanner={isBanner}
+        backgroundStyles={backgroundStyles}
+        bannerUrl={lcpBannerSrc}
+        userName={user.name}
+      />
 
       <div
         className={cn(
           'relative z-20 mx-auto flex max-w-[760px] flex-col items-center gap-6 px-4 pb-16',
-          isBanner ? '-mt-24' : 'pt-20',
+          isBanner ? '-mt-16 md:-mt-24' : 'pt-20',
         )}
       >
         <ProfileCard

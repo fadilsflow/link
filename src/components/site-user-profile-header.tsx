@@ -62,18 +62,34 @@ export function getSocialUrl(link: { platform: string; url: string }) {
 export function ProfileBanner({
   isBanner,
   backgroundStyles,
+  bannerUrl,
+  userName,
 }: {
   isBanner: boolean
   backgroundStyles: any
+  bannerUrl?: string | null
+  userName?: string | null
 }) {
   if (!isBanner) return null
 
   return (
     <div
-      className="relative h-[180px] w-full bg-cover bg-center"
+      className="relative h-[100px] md:h-[180px] w-full overflow-hidden"
       style={backgroundStyles}
     >
-      <div className="absolute inset-0 bg-black/10"></div>
+      {bannerUrl && (
+        <img
+          src={bannerUrl}
+          alt={`${userName} banner`}
+          width={1440}
+          height={180}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          className="h-full w-full object-cover"
+        />
+      )}
+      <div className="absolute inset-0 " />
     </div>
   )
 }
@@ -103,7 +119,10 @@ export function ProfileCard({
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="flex items-center gap-2 text-2xl font-bold">
+              <h1
+                id="profile-name"
+                className="flex items-center gap-2 text-2xl font-bold"
+              >
                 {user.name}
               </h1>
               {user.title && (
@@ -138,6 +157,7 @@ export function SocialLinks({
 }: {
   socialLinks: Array<any>
   className?: string
+  isFullPageBg?: boolean
 }) {
   if (!socialLinks || socialLinks.length === 0) return null
 
@@ -172,18 +192,27 @@ export default function SiteUserProfileHeader({
 
   useEffect(() => {
     const handleScroll = () => {
-      const profileCard = document.getElementById('profile-card-section')
-      if (profileCard) {
-        const rect = profileCard.getBoundingClientRect()
-        // Show header content when profile card hits the header area
+      const nameElement = document.getElementById('profile-name')
+      if (nameElement) {
+        const rect = nameElement.getBoundingClientRect()
+        // Show header content when the name element reaches the top area
+        // We use a stricter threshold for mobile if needed, but 40px is generally safe
         if (rect.top < 40) {
           setShow(true)
         } else {
           setShow(false)
         }
       } else {
-        // Fallback based on scrollY if element not updated/found
-        if (window.scrollY > 150) {
+        // Fallback to profile card if name element not found
+        const profileCard = document.getElementById('profile-card-section')
+        if (profileCard) {
+          const rect = profileCard.getBoundingClientRect()
+          if (rect.top < 20) {
+            setShow(true)
+          } else {
+            setShow(false)
+          }
+        } else if (window.scrollY > 200) {
           setShow(true)
         } else {
           setShow(false)
@@ -209,16 +238,13 @@ export default function SiteUserProfileHeader({
         <div
           className={cn(
             'mx-auto flex h-17 items-center justify-between gap-2 px-2 transition-all duration-300 sm:gap-4 max-w-[760px]',
-            show ? '' : 'border-transparent',
+            show ? 'opacity-100' : 'opacity-0 pointer-events-none',
           )}
           data-header-container
         >
           <Link
             to="/"
-            className={cn(
-              'flex items-center transition-opacity duration-300',
-              show ? 'opacity-100' : 'opacity-0 pointer-events-none',
-            )}
+            className="flex items-center transition-opacity duration-300"
           >
             <Avatar className=" h-8 w-8 border-2 border-background ring ring-primary/10">
               <AvatarImage src={avatarUrl || '/avatar-placeholder.png'} />

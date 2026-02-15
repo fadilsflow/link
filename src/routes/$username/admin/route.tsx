@@ -15,11 +15,9 @@ const getAdminRouteAccess = createServerFn({ method: 'GET' })
   })
 
 export const Route = createFileRoute('/$username/admin')({
-  ssr: false,
-  loaderDeps: ({ params }) => ({ username: params.username }),
-  loader: async ({ deps }) => {
+  beforeLoad: async ({ params }) => {
     const access = await getAdminRouteAccess({
-      data: { username: deps.username },
+      data: { username: params.username },
     })
 
     if (!access.ok) {
@@ -32,12 +30,7 @@ export const Route = createFileRoute('/$username/admin')({
 
       throw redirect({ to: '/' })
     }
-
-    return access
   },
-  staleTime: 1000 * 60 * 5,
-  gcTime: 1000 * 60 * 30,
-  shouldReload: false,
   component: AdminLayout,
 })
 

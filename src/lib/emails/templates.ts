@@ -127,24 +127,28 @@ const BaseEmail = ({ previewText, children }: BaseEmailProps) => `
 
 export type OrderEmailProps = {
   buyerName: string
-  productName: string
   orderId: string
   orderDate: Date
   amountPaid: number
   deliveryUrl: string
   creatorName: string
   supportEmail: string
+  lineItems: Array<{
+    title: string
+    quantity: number
+    totalPrice: number
+  }>
 }
 
 export const getOrderConfirmationEmailHtml = ({
   buyerName,
-  productName,
   orderId,
   orderDate,
   amountPaid,
   deliveryUrl,
   creatorName,
   supportEmail,
+  lineItems,
 }: OrderEmailProps) => {
   const formattedDate = new Date(orderDate).toLocaleDateString(undefined, {
     year: 'numeric',
@@ -179,10 +183,15 @@ export const getOrderConfirmationEmailHtml = ({
         </tr>
       </thead>
       <tbody>
+        ${lineItems
+          .map(
+            (item) => `
         <tr>
-          <td>${productName}</td>
-          <td style="text-align: right;">${formatPrice(amountPaid)}</td>
-        </tr>
+          <td>${item.title}${item.quantity > 1 ? ` <span class="text-muted">× ${item.quantity}</span>` : ''}</td>
+          <td style="text-align: right;">${formatPrice(item.totalPrice)}</td>
+        </tr>`,
+          )
+          .join('')}
         <tr class="total-row">
           <td>Total</td>
           <td style="text-align: right;">${formatPrice(amountPaid)}</td>
@@ -202,7 +211,7 @@ export const getOrderConfirmationEmailHtml = ({
   `
 
   return BaseEmail({
-    previewText: `Your order for ${productName} is confirmed!`,
+    previewText: `Your order is confirmed!`,
     children: content,
   })
 }

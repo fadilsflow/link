@@ -394,14 +394,14 @@ function UserProfile() {
 
       {isBanner ? (
         <div
-          className="relative h-[180px] w-full overflow-hidden"
+          className="relative h-[120px] md:h-[180px] w-full overflow-hidden"
           style={backgroundStyles}
         >
           <img
             src={lcpBannerSrc}
             alt={`${user.name} banner`}
-            width={1920}
-            height={540}
+            width={1440}
+            height={180}
             loading="eager"
             fetchPriority="high"
             decoding="async"

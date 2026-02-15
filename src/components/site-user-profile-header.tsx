@@ -134,11 +134,9 @@ export function ProfileCard({
 
 export function SocialLinks({
   socialLinks,
-  isFullPageBg,
   className,
 }: {
   socialLinks: Array<any>
-  isFullPageBg: boolean
   className?: string
 }) {
   if (!socialLinks || socialLinks.length === 0) return null

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, CheckCircle, ShoppingBag } from 'lucide-react'
 import { useCartStore } from '@/store/cart-store'
 import { formatPrice } from '@/lib/utils'
@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
 
+type Question = { id: string; label: string; required: boolean }
+
 export const Route = createFileRoute('/cart/checkout')({
   component: CheckoutPage,
 })
@@ -20,13 +22,40 @@ function CheckoutPage() {
   const { items, getTotalPrice, clearCart } = useCartStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [deliveryUrl, setDeliveryUrl] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     buyerName: '',
     buyerEmail: '',
     note: '',
   })
+  const [answersByProduct, setAnswersByProduct] = useState<
+    Record<string, Record<string, string>>
+  >({})
 
   const totalPrice = getTotalPrice()
+  const productIds = useMemo(() => items.map((item) => item.productId), [items])
+  const [productsMeta, setProductsMeta] = useState<
+    Array<{ id: string; questions: Array<Question> }>
+  >([])
+
+  useEffect(() => {
+    if (productIds.length === 0) return
+    trpcClient.order.getCheckoutProducts
+      .query({ productIds })
+      .then((res) => {
+        setProductsMeta(
+          res.map((r: any) => ({ id: r.id, questions: r.questions || [] })),
+        )
+      })
+      .catch(() => {
+        setProductsMeta([])
+      })
+  }, [productIds])
+
+  const questionsByProduct = useMemo(
+    () => new Map(productsMeta.map((p) => [p.id, p.questions])),
+    [productsMeta],
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,22 +69,40 @@ function CheckoutPage() {
       return
     }
 
+    for (const item of items) {
+      const questions = questionsByProduct.get(item.productId) ?? []
+      for (const question of questions) {
+        if (
+          question.required &&
+          !(answersByProduct[item.productId]?.[question.id] || '').trim()
+        ) {
+          toastManager.add({
+            title: 'Required question missing',
+            description: `Please answer: ${question.label}`,
+            type: 'destructive',
+          })
+          return
+        }
+      }
+    }
+
     try {
       setIsSubmitting(true)
 
-      await trpcClient.order.createMultiple.mutate({
+      const result = await trpcClient.order.createMultiple.mutate({
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
           amountPaidPerUnit: item.price,
+          answers: answersByProduct[item.productId] ?? {},
         })),
         buyerEmail: formData.buyerEmail,
         buyerName: formData.buyerName,
         note: formData.note,
       })
 
-      // Success
       clearCart()
+      setDeliveryUrl(result.deliveryUrl)
       setIsSuccess(true)
       toastManager.add({
         title: 'Order successful!',
@@ -90,7 +137,19 @@ function CheckoutPage() {
               <strong>{formData.buyerEmail}</strong>.
             </p>
           </div>
-          <Button className="w-full" onClick={() => navigate({ to: '/' })}>
+          {deliveryUrl && (
+            <Button
+              className="w-full"
+              onClick={() => (window.location.href = deliveryUrl)}
+            >
+              View Delivery
+            </Button>
+          )}
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={() => navigate({ to: '/' })}
+          >
             Continue Shopping
           </Button>
         </div>
@@ -131,7 +190,6 @@ function CheckoutPage() {
         </Button>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Order Summary */}
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-slate-900">
               Order Summary
@@ -139,38 +197,60 @@ function CheckoutPage() {
             <Card className="border-0 shadow-sm ring-1 ring-slate-200">
               <CardContent className="p-6 space-y-4">
                 {items.map((item) => (
-                  <div key={item.productId} className="flex gap-4">
-                    <div className="w-16 h-16 bg-slate-100 rounded-md shrink-0 overflow-hidden">
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ShoppingBag className="w-6 h-6 text-slate-300" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-slate-900 truncate">
-                        {item.title}
-                      </h4>
-                      <p className="text-sm text-slate-500">
-                        Qty: {item.quantity}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-slate-900">
-                        {formatPrice(item.price * item.quantity)}
-                      </p>
-                      {item.quantity > 1 && (
-                        <p className="text-xs text-slate-400">
-                          {formatPrice(item.price)} each
+                  <div key={item.productId} className="space-y-3">
+                    <div className="flex gap-4">
+                      <div className="w-16 h-16 bg-slate-100 rounded-md shrink-0 overflow-hidden">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ShoppingBag className="w-6 h-6 text-slate-300" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-slate-900 truncate">
+                          {item.title}
+                        </h4>
+                        <p className="text-sm text-slate-500">
+                          Qty: {item.quantity}
                         </p>
-                      )}
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-slate-900">
+                          {formatPrice(item.price * item.quantity)}
+                        </p>
+                      </div>
                     </div>
+                    {(questionsByProduct.get(item.productId) ?? []).map(
+                      (question) => (
+                        <div key={question.id} className="space-y-1">
+                          <Label className="text-xs">
+                            {question.label}
+                            {question.required ? ' *' : ''}
+                          </Label>
+                          <Input
+                            value={
+                              answersByProduct[item.productId]?.[question.id] ??
+                              ''
+                            }
+                            onChange={(e) =>
+                              setAnswersByProduct((prev) => ({
+                                ...prev,
+                                [item.productId]: {
+                                  ...(prev[item.productId] ?? {}),
+                                  [question.id]: e.target.value,
+                                },
+                              }))
+                            }
+                          />
+                        </div>
+                      ),
+                    )}
                   </div>
                 ))}
 
@@ -184,7 +264,6 @@ function CheckoutPage() {
             </Card>
           </div>
 
-          {/* Checkout Form */}
           <div className="space-y-6">
             <h2 className="text-xl font-semibold text-slate-900">
               Payment Details
@@ -201,42 +280,33 @@ function CheckoutPage() {
                       id="email"
                       type="email"
                       required
-                      placeholder="you@example.com"
                       value={formData.buyerEmail}
                       onChange={(e) =>
                         setFormData({ ...formData, buyerEmail: e.target.value })
                       }
                     />
-                    <p className="text-xs text-slate-500">
-                      We'll send your download links to this email.
-                    </p>
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="name">Name (Optional)</Label>
                     <Input
                       id="name"
                       type="text"
-                      placeholder="Your name"
                       value={formData.buyerName}
                       onChange={(e) =>
                         setFormData({ ...formData, buyerName: e.target.value })
                       }
                     />
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="note">Note to Creator (Optional)</Label>
                     <Textarea
                       id="note"
-                      placeholder="Any special instructions?"
                       value={formData.note}
                       onChange={(e) =>
                         setFormData({ ...formData, note: e.target.value })
                       }
                     />
                   </div>
-
                   <div className="pt-4">
                     <Button
                       type="submit"
@@ -246,9 +316,6 @@ function CheckoutPage() {
                     >
                       Pay {formatPrice(totalPrice)}
                     </Button>
-                    <p className="text-xs text-center text-slate-400 mt-4">
-                      Secure payment powered by Link.
-                    </p>
                   </div>
                 </form>
               </CardContent>

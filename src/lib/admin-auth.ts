@@ -19,6 +19,7 @@ export function adminAuthQueryOptions(username: string) {
     queryFn: async (): Promise<AdminAuthContextData> => {
       return await trpcClient.admin.getContext.query({ username })
     },
+    enabled: username.length > 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
   })

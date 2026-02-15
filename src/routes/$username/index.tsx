@@ -403,7 +403,7 @@ function UserProfile() {
       <div
         className={cn(
           'relative z-20 mx-auto flex max-w-[760px] flex-col items-center gap-6 px-4 pb-16',
-          isBanner ? '-mt-16 md:-mt-24' : 'pt-20',
+          isBanner ? '-mt-8 md:-mt-24' : 'pt-20',
         )}
       >
         <ProfileCard

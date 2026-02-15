@@ -74,7 +74,7 @@ export function ProfileBanner({
 
   return (
     <div
-      className="relative h-[100px] md:h-[180px] w-full overflow-hidden"
+      className="relative h-[50px] md:h-[180px] w-full overflow-hidden"
       style={backgroundStyles}
     >
       {bannerUrl && (
@@ -112,7 +112,7 @@ export function ProfileCard({
 
         <div className="flex justify-between">
           <div className="space-y-4">
-            <Avatar className="mb-2 h-15 w-15 md:h-20 md:w-20 border-2 border-background ring ring-primary/10">
+            <Avatar className="rounded-lg mb-2 h-15 w-15 md:h-20 md:w-20 border-2 border-background ring ring-primary/10">
               <AvatarImage src={user.image || '/avatar-placeholder.png'} />
               <AvatarFallback className="bg-muted text-2xl font-bold text-foreground">
                 {user.name?.slice(0, 2).toUpperCase()}
@@ -197,7 +197,7 @@ export default function SiteUserProfileHeader({
         const rect = nameElement.getBoundingClientRect()
         // Determine threshold based on device (desktop usually has larger header area or user preference)
         const isDesktop = window.innerWidth >= 768
-        const threshold = isDesktop ? 120 : 40 // On desktop, show it much earlier
+        const threshold = isDesktop ? 120 : 100 // Adjusted for 50px banner
 
         if (rect.top < threshold) {
           setShow(true)
@@ -248,7 +248,7 @@ export default function SiteUserProfileHeader({
               show ? 'opacity-100' : 'opacity-0 pointer-events-none',
             )}
           >
-            <Avatar className=" h-8 w-8 border-2 border-background ring ring-primary/10">
+            <Avatar className="rounded-lg h-8 w-8 border-2 border-background ring ring-primary/10">
               <AvatarImage src={avatarUrl || '/avatar-placeholder.png'} />
               <AvatarFallback>{username}</AvatarFallback>
             </Avatar>

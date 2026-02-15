@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { authClient } from '@/lib/auth-client'
+import { Spinner } from '@/components/ui/spinner'
 
 export function LoginModal() {
   const [loading, setLoading] = useState(false)
@@ -47,11 +48,10 @@ export function LoginModal() {
         <DialogPanel className="flex flex-col gap-4 py-4">
           <Button
             onClick={handleGoogleLogin}
-            // disabled={loading}
-            loading={loading}
+            disabled={loading}
             className="w-full flex gap-2 my-4"
           >
-            <Google />
+            {loading ? <Spinner className="h-4 w-4" /> : <Google />}
             Continue with Google
           </Button>
         </DialogPanel>

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, lte, or, sql } from 'drizzle-orm'
 import { createTRPCRouter, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
@@ -7,6 +7,7 @@ import {
   TRANSACTION_TYPE,
   blockClicks,
   blocks,
+  orderItems,
   orders,
   payouts,
   products,
@@ -42,6 +43,46 @@ function getTransactionNetAmount(txn: {
   platformFeeAmount: number
 }): number {
   return txn.amount - txn.platformFeeAmount
+}
+
+type CheckoutQuestion = {
+  id: string
+  label: string
+  required: boolean
+}
+
+function parseCustomerQuestions(raw: unknown): Array<CheckoutQuestion> {
+  if (typeof raw !== 'string') return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .filter(
+        (q: any) =>
+          q &&
+          typeof q.id === 'string' &&
+          typeof q.label === 'string' &&
+          typeof q.required === 'boolean',
+      )
+      .map((q: any) => ({
+        id: q.id,
+        label: q.label,
+        required: q.required,
+      }))
+  } catch {
+    return []
+  }
+}
+
+function getEffectiveUnitPrice(
+  product: any,
+  amountPaidPerUnit: number,
+): number {
+  if (product.payWhatYouWant) return amountPaidPerUnit
+  if (product.salePrice && product.price && product.salePrice < product.price) {
+    return product.salePrice
+  }
+  return product.price ?? 0
 }
 
 // ─── User Router ─────────────────────────────────────────────────────────────
@@ -749,8 +790,7 @@ const orderRouter = {
         to: input.buyerEmail,
         deliveryUrl,
         order: newOrder,
-        product,
-        creator,
+        creators: [creator],
       })
 
       if (emailResult.success) {
@@ -772,9 +812,36 @@ const orderRouter = {
       }
     }),
 
+  getCheckoutProducts: publicProcedure
+    .input(z.object({ productIds: z.array(z.string()).min(1).max(50) }))
+    .query(async ({ input }) => {
+      const rows = await db.query.products.findMany({
+        where: and(
+          inArray(products.id, input.productIds),
+          eq(products.isDeleted, false),
+          eq(products.isActive, true),
+        ),
+        columns: {
+          id: true,
+          title: true,
+          customerQuestions: true,
+          payWhatYouWant: true,
+          price: true,
+          salePrice: true,
+          minimumPrice: true,
+          suggestedPrice: true,
+        },
+      })
+
+      return rows.map((product) => ({
+        ...product,
+        questions: parseCustomerQuestions(product.customerQuestions),
+      }))
+    }),
+
   /**
    * Multi-product cart checkout.
-   * Creates one order + one SALE transaction per product in the cart.
+   * Creates one unified order with one line item per product.
    */
   createMultiple: publicProcedure
     .input(
@@ -784,6 +851,7 @@ const orderRouter = {
             productId: z.string(),
             quantity: z.number().min(1).default(1),
             amountPaidPerUnit: z.number().min(0),
+            answers: z.record(z.string(), z.string()).optional(),
           }),
         ),
         buyerEmail: z.string().email(),
@@ -796,7 +864,7 @@ const orderRouter = {
         throw new Error('No items in cart')
       }
 
-      const productIds = input.items.map((i) => i.productId)
+      const productIds = [...new Set(input.items.map((i) => i.productId))]
       const productsList = await db.query.products.findMany({
         where: and(
           inArray(products.id, productIds),
@@ -806,14 +874,17 @@ const orderRouter = {
       })
 
       const productMap = new Map(productsList.map((p) => [p.id, p]))
-      const ordersCreated: Array<any> = []
+      const normalizedItems: Array<any> = []
 
       for (const item of input.items) {
         const product = productMap.get(item.productId)
-        if (!product) continue
-        if (!product.isActive) continue
+        if (!product) {
+          throw new Error('One or more products in your cart no longer exist')
+        }
+        if (!product.isActive) {
+          throw new Error(`${product.title} is no longer available`)
+        }
 
-        // Check quantity limits
         if (
           product.totalQuantity !== null &&
           product.totalQuantity !== undefined &&
@@ -824,121 +895,242 @@ const orderRouter = {
           )
         }
 
-        const creator = product.user
-        const totalAmount = item.amountPaidPerUnit * item.quantity
+        if (
+          product.limitPerCheckout !== null &&
+          product.limitPerCheckout !== undefined &&
+          item.quantity > product.limitPerCheckout
+        ) {
+          throw new Error(`Product ${product.title} exceeds per-checkout limit`)
+        }
 
-        // Snapshot product data
-        const productImage = product.images?.[0] ?? null
-        const effectivePrice = product.payWhatYouWant
-          ? item.amountPaidPerUnit
-          : product.salePrice &&
-              product.price &&
-              product.salePrice < product.price
-            ? product.salePrice
-            : (product.price ?? 0)
+        const questions = parseCustomerQuestions(product.customerQuestions)
+        for (const question of questions) {
+          if (
+            question.required &&
+            !(item.answers?.[question.id] || '').trim()
+          ) {
+            throw new Error(
+              `Please answer required question for ${product.title}: ${question.label}`,
+            )
+          }
+        }
 
-        const deliveryToken = crypto.randomUUID()
-        const orderId = crypto.randomUUID()
+        const effectivePrice = getEffectiveUnitPrice(
+          product,
+          item.amountPaidPerUnit,
+        )
 
-        const [newOrder] = await db
-          .insert(orders)
-          .values({
-            id: orderId,
-            creatorId: creator.id,
-            productId: product.id,
-            // Snapshot fields
-            productTitle: product.title,
-            productPrice: effectivePrice,
-            productImage,
-            // Buyer info
-            buyerEmail: input.buyerEmail,
-            buyerName: input.buyerName ?? '',
-            amountPaid: totalAmount,
-            quantity: item.quantity,
-            checkoutAnswers: {},
-            note: input.note ?? null,
-            status: 'completed',
-            deliveryToken,
-            emailSent: false,
-          })
-          .returning()
+        if (product.payWhatYouWant && product.minimumPrice) {
+          if (item.amountPaidPerUnit < product.minimumPrice) {
+            throw new Error(
+              `${product.title} requires at least ${product.minimumPrice} cents`,
+            )
+          }
+        }
 
-        // Create SALE transaction
-        const { feeAmount, netAmount } = calculateFee(totalAmount)
+        normalizedItems.push({
+          product,
+          quantity: item.quantity,
+          amountPaidPerUnit: item.amountPaidPerUnit,
+          effectivePrice,
+          totalAmount: item.amountPaidPerUnit * item.quantity,
+          answers: item.answers ?? {},
+        })
+      }
+
+      const orderId = crypto.randomUUID()
+      const deliveryToken = crypto.randomUUID()
+      const totalAmountPaid = normalizedItems.reduce(
+        (acc, item) => acc + item.totalAmount,
+        0,
+      )
+
+      const primaryItem = normalizedItems[0]
+      const firstCreator = primaryItem?.product.user
+      const hasSingleCreator = normalizedItems.every(
+        (item) => item.product.user.id === firstCreator?.id,
+      )
+
+      const [newOrder] = await db
+        .insert(orders)
+        .values({
+          id: orderId,
+          creatorId: hasSingleCreator ? firstCreator.id : null,
+          productId:
+            normalizedItems.length === 1 ? primaryItem.product.id : null,
+          productTitle:
+            normalizedItems.length === 1
+              ? primaryItem.product.title
+              : `${normalizedItems.length} products`,
+          productPrice:
+            normalizedItems.length === 1
+              ? primaryItem.effectivePrice
+              : totalAmountPaid,
+          productImage: primaryItem.product.images?.[0] ?? null,
+          buyerEmail: input.buyerEmail,
+          buyerName: input.buyerName ?? '',
+          amountPaid: totalAmountPaid,
+          quantity: normalizedItems.reduce(
+            (acc, item) => acc + item.quantity,
+            0,
+          ),
+          checkoutAnswers: null,
+          note: input.note ?? null,
+          status: 'completed',
+          deliveryToken,
+          emailSent: false,
+        })
+        .returning()
+
+      await db.insert(orderItems).values(
+        normalizedItems.map((item) => ({
+          id: crypto.randomUUID(),
+          orderId,
+          creatorId: item.product.user.id,
+          productId: item.product.id,
+          productTitle: item.product.title,
+          productPrice: item.effectivePrice,
+          productImage: item.product.images?.[0] ?? null,
+          quantity: item.quantity,
+          amountPaid: item.totalAmount,
+          checkoutAnswers: item.answers,
+        })),
+      )
+
+      for (const item of normalizedItems) {
+        const { feeAmount, netAmount } = calculateFee(item.totalAmount)
+
         await db.insert(transactions).values({
           id: crypto.randomUUID(),
-          creatorId: creator.id,
-          orderId: orderId,
+          creatorId: item.product.user.id,
+          orderId,
           type: TRANSACTION_TYPE.SALE,
-          amount: totalAmount,
+          amount: item.totalAmount,
           netAmount,
           platformFeePercent: PLATFORM_FEE_PERCENT,
           platformFeeAmount: feeAmount,
-          description: `Sale: ${product.title} x${item.quantity}`,
+          description: `Sale: ${item.product.title} x${item.quantity}`,
           availableAt: getAvailableAt(),
           metadata: {
-            productId: product.id,
+            productId: item.product.id,
             buyerEmail: input.buyerEmail,
             quantity: item.quantity,
           },
         })
 
-        // Update cached counters
         await db
           .update(products)
           .set({
             salesCount: sql`${products.salesCount} + ${item.quantity}`,
-            totalRevenue: sql`${products.totalRevenue} + ${totalAmount}`,
+            totalRevenue: sql`${products.totalRevenue} + ${item.totalAmount}`,
           })
-          .where(eq(products.id, product.id))
+          .where(eq(products.id, item.product.id))
 
         await db
           .update(user)
           .set({
             totalSalesCount: sql`${user.totalSalesCount} + ${item.quantity}`,
-            totalRevenue: sql`${user.totalRevenue} + ${totalAmount}`,
+            totalRevenue: sql`${user.totalRevenue} + ${item.totalAmount}`,
           })
-          .where(eq(user.id, creator.id))
-
-        // Send email
-        const deliveryUrl = `${BASE_URL}/d/${deliveryToken}`
-        const emailResult = await sendOrderEmail({
-          to: input.buyerEmail,
-          deliveryUrl,
-          order: newOrder,
-          product,
-          creator,
-        })
-
-        if (emailResult.success) {
-          await db
-            .update(orders)
-            .set({ emailSent: true, emailSentAt: new Date() })
-            .where(eq(orders.id, newOrder.id))
-        }
-
-        ordersCreated.push({
-          ...newOrder,
-          deliveryUrl,
-          productTitle: product.title,
-        })
+          .where(eq(user.id, item.product.user.id))
       }
 
-      return ordersCreated
+      const creators = Array.from(
+        new Map(
+          normalizedItems.map((item) => [
+            item.product.user.id,
+            item.product.user,
+          ]),
+        ).values(),
+      )
+
+      const deliveryUrl = `${BASE_URL}/d/${deliveryToken}`
+      const orderForEmail = {
+        ...newOrder,
+        items: normalizedItems.map((item) => ({
+          productTitle: item.product.title,
+          quantity: item.quantity,
+          productPrice: item.effectivePrice,
+          amountPaid: item.totalAmount,
+        })),
+      }
+
+      const emailResult = await sendOrderEmail({
+        to: input.buyerEmail,
+        deliveryUrl,
+        order: orderForEmail,
+        creators,
+      })
+
+      if (emailResult.success) {
+        await db
+          .update(orders)
+          .set({ emailSent: true, emailSentAt: new Date() })
+          .where(eq(orders.id, newOrder.id))
+      }
+
+      return {
+        ...newOrder,
+        items: orderForEmail.items,
+        deliveryUrl,
+      }
     }),
 
   listByCreator: publicProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
+      const creatorItemRows = await db.query.orderItems.findMany({
+        where: eq(orderItems.creatorId, input.userId),
+        columns: { orderId: true },
+      })
+
+      const orderIdsFromItems = creatorItemRows.map((row) => row.orderId)
+      const whereClause =
+        orderIdsFromItems.length > 0
+          ? or(
+              eq(orders.creatorId, input.userId),
+              inArray(orders.id, orderIdsFromItems),
+            )
+          : eq(orders.creatorId, input.userId)
+
       const rows = await db.query.orders.findMany({
-        where: eq(orders.creatorId, input.userId),
+        where: whereClause,
         with: {
-          product: true, // may be null if product was hard-deleted
+          product: true,
           transactions: true,
+          items: true,
         },
         orderBy: [desc(orders.createdAt)],
       })
       return rows
+    }),
+
+  getDetail: publicProcedure
+    .input(z.object({ orderId: z.string(), userId: z.string() }))
+    .query(async ({ input }) => {
+      const order = await db.query.orders.findFirst({
+        where: eq(orders.id, input.orderId),
+        with: {
+          product: true,
+          creator: true,
+          transactions: true,
+          items: {
+            with: {
+              product: true,
+              creator: true,
+            },
+          },
+        },
+      })
+
+      if (!order) throw new Error('Order not found')
+
+      const authorized =
+        order.creatorId === input.userId ||
+        order.items.some((item) => item.creatorId === input.userId)
+      if (!authorized) throw new Error('Unauthorized')
+
+      return order
     }),
 
   resendEmail: publicProcedure
@@ -949,31 +1141,40 @@ const orderRouter = {
         with: {
           product: true,
           creator: true,
+          items: {
+            with: {
+              creator: true,
+            },
+          },
         },
       })
 
       if (!order) throw new Error('Order not found')
-      if (order.creatorId !== input.userId) throw new Error('Unauthorized')
+
+      const authorized =
+        order.creatorId === input.userId ||
+        order.items.some((item) => item.creatorId === input.userId)
+      if (!authorized) throw new Error('Unauthorized')
 
       const deliveryUrl = `${BASE_URL}/d/${order.deliveryToken}`
+      const creators = Array.from(
+        new Map(
+          order.items
+            .map((item) => item.creator)
+            .filter(Boolean)
+            .map((creator: any) => [creator.id, creator]),
+        ).values(),
+      )
 
-      // Use snapshot data for email, fallback to product relation if available
-      const emailProduct = order.product ?? {
-        title: order.productTitle,
-        images: order.productImage ? [order.productImage] : [],
-      }
-
-      const emailCreator = order.creator ?? {
-        name: 'Creator',
-        email: '',
+      if (creators.length === 0 && order.creator) {
+        creators.push(order.creator)
       }
 
       const emailResult = await sendOrderEmail({
         to: order.buyerEmail,
         deliveryUrl,
         order,
-        product: emailProduct,
-        creator: emailCreator,
+        creators,
       })
 
       if (emailResult.success) {

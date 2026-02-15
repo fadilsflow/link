@@ -30,20 +30,11 @@ export const Route = createFileRoute('/d/$token')({
 })
 
 function OrderDeliveryPage() {
-  const { order, product, creator } = Route.useLoaderData()
-
-  const productFiles = product.productFiles
-  const productImages = product.images as Array<string>
-
-  // Use snapshot title from the order (immutable), fallback to product
-  const displayTitle = order.productTitle
-  const displayImage = order.productImage || productImages[0]
-  const isProductUnavailable = !order.productId || !product.id
-  const isCreatorUnavailable = !order.creatorId || !creator.username
+  const { order, items, creator } = Route.useLoaderData()
 
   return (
     <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-start gap-4 sm:items-center">
@@ -55,150 +46,181 @@ function OrderDeliveryPage() {
                   Thanks for your order!
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  You now have access to <strong>{displayTitle}</strong>. A
-                  receipt was sent to <strong>{order.buyerEmail}</strong>.
+                  Your checkout includes <strong>{items.length}</strong> product
+                  {items.length > 1 ? 's' : ''}. We sent your receipt to{' '}
+                  <strong>{order.buyerEmail}</strong>.
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr] lg:items-start">
+        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr] lg:items-start">
           <Card>
-            <CardHeader className="space-y-4">
-              <div className="flex items-start gap-4">
-                {displayImage ? (
-                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted shrink-0">
-                    <img
-                      src={displayImage}
-                      alt={displayTitle}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                    <ShoppingBag className="h-8 w-8 text-slate-300" />
-                  </div>
-                )}
-
-                <div className="space-y-2 min-w-0">
-                  <Badge variant="secondary" className="w-fit">
-                    Purchased
-                  </Badge>
-                  <CardTitle className="text-xl sm:text-2xl leading-tight">
-                    {displayTitle}
-                  </CardTitle>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage
-                        src={creator.image || '/avatar-placeholder.png'}
-                      />
-                      <AvatarFallback className="text-[9px]">
-                        {(creator.name || 'C').slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    by {creator.name || 'Creator'}
-                  </div>
-                </div>
-              </div>
-
-              {(isProductUnavailable || isCreatorUnavailable) && (
-                <CardDescription className="text-xs">
-                  {isProductUnavailable
-                    ? 'Product is no longer active, but your purchase remains valid via order snapshot data.'
-                    : 'Creator profile may be unavailable. Your order access remains valid.'}
-                </CardDescription>
-              )}
+            <CardHeader>
+              <CardTitle className="text-xl">Your Purchased Content</CardTitle>
+              <CardDescription>
+                Access links, files, and checkout responses for every item in
+                this order.
+              </CardDescription>
             </CardHeader>
-
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Download className="h-4 w-4 text-muted-foreground" />
-                Your Content
-              </div>
-
-              {product.productUrl && (
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">Access link</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {product.productUrl}
-                        </p>
+            <CardContent className="space-y-6">
+              {items.map((item) => (
+                <div key={item.id} className="space-y-4 border rounded-xl p-4">
+                  <div className="flex items-start gap-4">
+                    {item.image ? (
+                      <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted shrink-0">
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <Button
-                        render={
-                          <a
-                            href={product.productUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                          />
-                        }
-                        size="sm"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Open
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                    ) : (
+                      <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                        <ShoppingBag className="h-8 w-8 text-slate-300" />
+                      </div>
+                    )}
 
-              {productFiles.length > 0 && (
-                <div className="space-y-3">
-                  {productFiles.map((file: any, index: number) => (
-                    <Card key={index}>
+                    <div className="space-y-2 min-w-0 flex-1">
+                      <Badge variant="secondary" className="w-fit">
+                        Purchased
+                      </Badge>
+                      <h3 className="text-lg font-semibold leading-tight">
+                        {item.title}
+                      </h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage
+                            src={
+                              item.creator.image || '/avatar-placeholder.png'
+                            }
+                          />
+                          <AvatarFallback className="text-[9px]">
+                            {(item.creator.name || 'C')
+                              .slice(0, 2)
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        by {item.creator.name || 'Creator'}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold">
+                        {formatPrice(item.amountPaid)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Qty {item.quantity}
+                      </p>
+                    </div>
+                  </div>
+
+                  {item.productUrl && (
+                    <Card>
                       <CardContent className="pt-4">
                         <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="size-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                              <FileIcon className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {file.name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {file.size
-                                  ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
-                                  : 'File'}
-                              </p>
-                            </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium">Access link</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {item.productUrl}
+                            </p>
                           </div>
                           <Button
                             render={
                               <a
-                                href={file.url}
-                                download
+                                href={item.productUrl}
                                 target="_blank"
                                 rel="noreferrer"
                               />
                             }
-                            variant="outline"
                             size="sm"
                           >
-                            Download
+                            <ExternalLink className="h-4 w-4" />
+                            Open
                           </Button>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
-                </div>
-              )}
+                  )}
 
-              {!product.productUrl && productFiles.length === 0 && (
-                <Card>
-                  <CardContent className="pt-6 text-center space-y-1">
-                    <p className="text-sm text-muted-foreground">
-                      This product has no digital content attached.
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Contact the creator if this is a mistake.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+                  {item.productFiles.length > 0 && (
+                    <div className="space-y-3">
+                      {item.productFiles.map((file: any, index: number) => (
+                        <Card key={index}>
+                          <CardContent className="pt-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="size-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                                  <FileIcon className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {file.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {file.size
+                                      ? `${(file.size / 1024 / 1024).toFixed(2)} MB`
+                                      : 'Download file'}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                render={
+                                  <a
+                                    href={file.url}
+                                    download
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  />
+                                }
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Download className="h-4 w-4" />
+                                Download
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+
+                  {Object.keys(item.checkoutAnswers ?? {}).length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">
+                          Your checkout responses
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-1 pt-0">
+                        {Object.entries(item.checkoutAnswers).map(
+                          ([key, value]) => (
+                            <p key={key} className="text-xs">
+                              <span className="font-medium">{key}:</span>{' '}
+                              {String(value)}
+                            </p>
+                          ),
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {!item.productUrl && item.productFiles.length === 0 && (
+                    <Card>
+                      <CardContent className="pt-6 text-center space-y-1">
+                        <p className="text-sm text-muted-foreground">
+                          This product currently has no attached delivery
+                          content.
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Contact the creator if this is unexpected.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              ))}
             </CardContent>
           </Card>
 
@@ -214,6 +236,26 @@ function OrderDeliveryPage() {
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Date</span>
                 <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Buyer</span>
+                <span className="truncate max-w-[180px] text-right">
+                  {order.buyerEmail}
+                </span>
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex justify-between text-sm gap-2"
+                  >
+                    <span className="text-muted-foreground truncate">
+                      {item.title} × {item.quantity}
+                    </span>
+                    <span>{formatPrice(item.amountPaid)}</span>
+                  </div>
+                ))}
               </div>
               <Separator />
               <div className="flex justify-between text-sm">

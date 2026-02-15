@@ -59,27 +59,27 @@ function HomePage() {
   const toStr = dateRange.to?.toISOString().slice(0, 10)
 
   const { data: overview, isLoading: isLoadingOverview } = useQuery({
-    queryKey: ['analytics', 'overview', session?.user?.id, fromStr, toStr],
+    queryKey: ['analytics', 'overview', session?.user.id, fromStr, toStr],
     queryFn: async () => {
-      if (!session?.user?.id) return null
+      if (!session?.user.id) return null
       return await trpcClient.analytics.getOverview.query({
         userId: session.user.id,
         from: fromStr,
         to: toStr,
       })
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user.id,
   })
 
   const { data: productAnalytics, isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['analytics', 'products', session?.user?.id],
+    queryKey: ['analytics', 'products', session?.user.id],
     queryFn: async () => {
-      if (!session?.user?.id) return null
+      if (!session?.user.id) return null
       return await trpcClient.analytics.getProductAnalytics.query({
         userId: session.user.id,
       })
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user.id,
   })
 
   const handlePreset = (days: number, label: string) => {
@@ -103,14 +103,14 @@ function HomePage() {
 
   // New Data Fetching for Dashboard Cards
   const { data: balance, isLoading: isLoadingBalance } = useQuery({
-    queryKey: ['balance', session?.user?.id],
+    queryKey: ['balance', session?.user.id],
     queryFn: async () => {
-      if (!session?.user?.id) return null
+      if (!session?.user.id) return null
       return await trpcClient.balance.getSummary.query({
         userId: session.user.id,
       })
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user.id,
   })
 
   return (
@@ -131,14 +131,14 @@ function HomePage() {
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <Avatar className="rounded-md h-14 w-14 border-2 border-background ring-2 ring-primary/10 transition-transform group-hover:scale-105">
-                  <AvatarImage src={session?.user?.image || ''} />
+                  <AvatarImage src={session?.user.image || ''} />
                   <AvatarFallback className="bg-primary/5 text-primary text-lg">
-                    {session?.user?.name?.[0]}
+                    {session?.user.name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-bold tracking-tight truncate">
-                    {session?.user?.name || 'Creator'}
+                    {session?.user.name || 'Creator'}
                   </h3>
                   <a
                     href={`/${username}`}

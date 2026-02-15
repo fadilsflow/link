@@ -29,7 +29,7 @@ function CheckoutPage() {
     note: '',
   })
   const [answersByProduct, setAnswersByProduct] = useState<
-    Record<string, Record<string, string>>
+    Partial<Record<string, Record<string, string>>>
   >({})
 
   const totalPrice = getTotalPrice()

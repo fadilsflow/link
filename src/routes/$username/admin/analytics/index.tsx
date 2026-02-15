@@ -66,27 +66,27 @@ function AnalyticsPage() {
   const toStr = dateRange.to?.toISOString().slice(0, 10)
 
   const { data: overview, isLoading: isLoadingOverview } = useQuery({
-    queryKey: ['analytics', 'overview', session?.user?.id, fromStr, toStr],
+    queryKey: ['analytics', 'overview', session?.user.id, fromStr, toStr],
     queryFn: async () => {
-      if (!session?.user?.id) return null
+      if (!session?.user.id) return null
       return await trpcClient.analytics.getOverview.query({
         userId: session.user.id,
         from: fromStr,
         to: toStr,
       })
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user.id,
   })
 
   const { data: productAnalytics, isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['analytics', 'products', session?.user?.id],
+    queryKey: ['analytics', 'products', session?.user.id],
     queryFn: async () => {
-      if (!session?.user?.id) return null
+      if (!session?.user.id) return null
       return await trpcClient.analytics.getProductAnalytics.query({
         userId: session.user.id,
       })
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user.id,
   })
 
   const handlePreset = (days: number, label: string) => {

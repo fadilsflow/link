@@ -35,35 +35,19 @@ export default function LiteYouTube({
     return `<iframe width="560" height="315" title="${title.replace(/"/g, '&quot;')}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" src="${src}"></iframe>`
   }, [params, title, videoId])
 
-  return (
-    <lite-youtube
-      videoid={videoId}
-      title={title}
-      playlabel={playLabel}
-      params={params}
-      className={className}
-      {...(jsApi ? { 'js-api': '' } : {})}
-    >
-      <button type="button" className="lyt-playbtn" aria-label={playLabel}>
-        <span className="lyt-visually-hidden">{playLabel}</span>
-      </button>
-      <noscript dangerouslySetInnerHTML={{ __html: noscriptHtml }} />
-    </lite-youtube>
+  return React.createElement(
+    'lite-youtube',
+    {
+      videoid: videoId,
+      title,
+      playlabel: playLabel,
+      params,
+      className,
+      ...(jsApi ? { 'js-api': '' } : {}),
+    },
+    <button type="button" className="lyt-playbtn" aria-label={playLabel}>
+      <span className="lyt-visually-hidden">{playLabel}</span>
+    </button>,
+    <noscript dangerouslySetInnerHTML={{ __html: noscriptHtml }} />,
   )
-}
-
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements {
-      'lite-youtube': React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement>,
-        HTMLElement
-      > & {
-        videoid?: string
-        playlabel?: string
-        params?: string
-        'js-api'?: string
-      }
-    }
-  }
 }

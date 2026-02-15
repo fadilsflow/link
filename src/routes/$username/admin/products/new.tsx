@@ -100,7 +100,7 @@ function ProductNewRoute() {
       toastManager.add({
         title: 'Failed to create product',
         description:
-          error?.message ??
+          error.message ??
           'An unexpected error occurred while creating the product.',
         type: 'error',
       })
@@ -148,7 +148,7 @@ function ProductNewRoute() {
           <SheetTitle>Add Product</SheetTitle>
         </SheetHeader>
         <SheetPanel className="mt-5">
-          {isReady && form ? (
+          {isReady ? (
             <ProductForm
               formId="create-product-form"
               hideFooter

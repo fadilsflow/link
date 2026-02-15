@@ -305,15 +305,15 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
           onMutate: async (newValue) => {
             // Optimistic update
             await queryClient.cancelQueries({
-              queryKey: ['products', session?.user?.id],
+              queryKey: ['products', session?.user.id],
             })
             const previousData = queryClient.getQueryData([
               'products',
-              session?.user?.id,
+              session?.user.id,
             ])
 
             queryClient.setQueryData(
-              ['products', session?.user?.id],
+              ['products', session?.user.id],
               (old: any) => {
                 if (!old) return old
                 return old.map((p: any) =>
@@ -332,7 +332,7 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
           },
           onError: (_err, _newTodo, context) => {
             queryClient.setQueryData(
-              ['products', session?.user?.id],
+              ['products', session?.user.id],
               context?.previousData,
             )
             toastManager.add({
@@ -400,16 +400,16 @@ function ProductAdminLayout() {
     isLoading: isProductsLoading,
     isFetching: isProductsFetching,
   } = useQuery({
-    queryKey: ['products', session?.user?.id],
+    queryKey: ['products', session?.user.id],
     queryFn: async () => {
-      if (!session?.user?.id) return []
+      if (!session?.user.id) return []
       return await trpcClient.product.listByUser.query({
         userId: session.user.id,
       })
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user.id,
   })
 
   const columns = React.useMemo(() => getColumns(username), [username])

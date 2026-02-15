@@ -2,10 +2,10 @@ import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { formatPrice } from '@/lib/utils'
 
-export async function generateInvoicePdf(
+export function generateInvoicePdf(
   order: any,
   creators: Array<{ name?: string | null; email?: string | null }>,
-): Promise<Buffer> {
+): Buffer {
   const doc = new jsPDF()
   doc.setFont('helvetica')
 

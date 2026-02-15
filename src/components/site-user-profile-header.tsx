@@ -10,6 +10,7 @@ import {
 import { useEffect, useState } from 'react'
 import { SiteHeaderWrapper } from './site-header-wrapper'
 import UserButton from './user-button'
+import type { CSSProperties, ComponentType } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -21,11 +22,14 @@ import { WhatsApp } from '@/components/icon/whatsapp'
 import { CartDrawer } from '@/components/cart-drawer'
 import { useCartStore } from '@/store/cart-store'
 
+type SocialPlatformIcon = {
+  icon: ComponentType<{ className?: string; style?: CSSProperties }>
+  color?: string
+  className?: string
+}
+
 // Platform icon mapping
-export const PLATFORM_ICONS: Record<
-  string,
-  { icon: any; color?: string; className?: string }
-> = {
+export const PLATFORM_ICONS: Partial<Record<string, SocialPlatformIcon>> = {
   twitter: { icon: XformerlyTwitter, className: 'invert dark:invert-0' },
   linkedin: { icon: LinkedIn },
   email: { icon: Gmail },
@@ -38,16 +42,15 @@ export const PLATFORM_ICONS: Record<
 
 export function getSocialIcon(platform: string) {
   const config = PLATFORM_ICONS[platform]
-  if (config) {
-    const Icon = config.icon
-    return (
-      <Icon
-        className={cn('h-5 w-5', config.className)}
-        style={config.color ? { color: config.color } : undefined}
-      />
-    )
-  }
-  return <Globe className="h-5 w-5" />
+  if (!config) return <Globe className="h-5 w-5" />
+
+  const Icon = config.icon
+  return (
+    <Icon
+      className={cn('h-5 w-5', config.className)}
+      style={config.color ? { color: config.color } : undefined}
+    />
+  )
 }
 
 export function getSocialUrl(link: { platform: string; url: string }) {
@@ -157,7 +160,7 @@ export function SocialLinks({
   className?: string
   isFullPageBg?: boolean
 }) {
-  if (!socialLinks || socialLinks.length === 0) return null
+  if (socialLinks.length === 0) return null
 
   return (
     <div className="flex w-full justify-end gap-3">

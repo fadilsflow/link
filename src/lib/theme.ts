@@ -120,7 +120,7 @@ export function useDashboardThemePreference() {
 
     const onThemeChange = (event: Event) => {
       const customEvent = event as CustomEvent<ThemeOption>
-      setDashboardTheme(customEvent.detail ?? getDashboardThemePreference())
+      setDashboardTheme(customEvent.detail)
     }
 
     window.addEventListener('storage', onStorage)

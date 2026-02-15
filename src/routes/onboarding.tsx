@@ -30,7 +30,7 @@ function OnboardingPage() {
   const handleUsernameSubmit = async (username: string) => {
     const { data: session } = await authClient.getSession()
 
-    if (!session?.user?.id) {
+    if (!session?.user.id) {
       throw new Error('User tidak ditemukan')
     }
 

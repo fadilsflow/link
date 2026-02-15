@@ -11,15 +11,19 @@ export const getPublicProfile = createServerFn({ method: 'GET' })
       where: eq(user.username, username),
       with: {
         blocks: {
-          where: (blocks, { eq }) => eq(blocks.isEnabled, true),
+          where: (blocks, { eq: equals }) => equals(blocks.isEnabled, true),
           orderBy: (blocks, { asc }) => [asc(blocks.order)],
         },
         products: {
-          where: (products, { and, eq }) =>
-            and(eq(products.isActive, true), eq(products.isDeleted, false)),
+          where: (products, { and, eq: equals }) =>
+            and(
+              equals(products.isActive, true),
+              equals(products.isDeleted, false),
+            ),
         },
         socialLinks: {
-          where: (socialLinks, { eq }) => eq(socialLinks.isEnabled, true),
+          where: (socialLinks, { eq: equals }) =>
+            equals(socialLinks.isEnabled, true),
           orderBy: (socialLinks, { asc }) => [asc(socialLinks.order)],
         },
       },
@@ -42,7 +46,7 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
     const { getServerSession } = await import('@/lib/auth-server')
     const session = await getServerSession()
 
-    if (!session?.user?.id) {
+    if (!session?.user.id) {
       throw new Error('Unauthorized')
     }
 
@@ -54,7 +58,7 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
         },
         products: {
           // Show all non-deleted products in dashboard (including inactive)
-          where: (products, { eq }) => eq(products.isDeleted, false),
+          where: (products, { eq: equals }) => equals(products.isDeleted, false),
           orderBy: (products, { desc }) => [desc(products.createdAt)],
         },
         socialLinks: {
@@ -88,11 +92,11 @@ export const getPublicProduct = createServerFn({ method: 'GET' })
       where: eq(user.username, data.username),
       with: {
         products: {
-          where: (product, { and, eq }) =>
+          where: (product, { and, eq: equals }) =>
             and(
-              eq(product.id, data.productId),
-              eq(product.isActive, true),
-              eq(product.isDeleted, false),
+              equals(product.id, data.productId),
+              equals(product.isActive, true),
+              equals(product.isDeleted, false),
             ),
         },
       },
@@ -166,9 +170,11 @@ export const getOrderByToken = createServerFn({ method: 'GET' })
           username: null,
         }
 
-        const productFiles = (productData.productFiles as Array<any>) || []
+        const productFiles = Array.isArray(productData.productFiles)
+          ? productData.productFiles
+          : []
         const filesWithDownloadUrls = await Promise.all(
-          productFiles.map(async (file) => {
+          productFiles.map(async (file: { name: string; url: string }) => {
             const key = StorageService.getKeyFromUrl(file.url)
             if (!key) return file
             try {

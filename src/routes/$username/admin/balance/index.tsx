@@ -48,45 +48,45 @@ function BalancePage() {
 
   // Balance summary
   const { data: summary, isLoading: isSummaryLoading } = useQuery({
-    queryKey: ['balance', 'summary', session?.user?.id],
+    queryKey: ['balance', 'summary', session?.user.id],
     queryFn: async () => {
-      if (!session?.user?.id) return null
+      if (!session?.user.id) return null
       return await trpcClient.balance.getSummary.query({
         userId: session.user.id,
       })
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user.id,
   })
 
   // Transaction history
   const { data: txns, isLoading: isTxnsLoading } = useQuery({
-    queryKey: ['balance', 'transactions', session?.user?.id],
+    queryKey: ['balance', 'transactions', session?.user.id],
     queryFn: async () => {
-      if (!session?.user?.id) return []
+      if (!session?.user.id) return []
       return await trpcClient.balance.getTransactions.query({
         userId: session.user.id,
         limit: 50,
       })
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user.id,
   })
 
   // Payouts list
   const { data: payoutsList, isLoading: isPayoutsLoading } = useQuery({
-    queryKey: ['balance', 'payouts', session?.user?.id],
+    queryKey: ['balance', 'payouts', session?.user.id],
     queryFn: async () => {
-      if (!session?.user?.id) return []
+      if (!session?.user.id) return []
       return await trpcClient.payout.list.query({
         userId: session.user.id,
       })
     },
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user.id,
   })
 
   // Request payout mutation
   const requestPayoutMutation = useMutation({
     mutationFn: async () => {
-      if (!session?.user?.id) throw new Error('Unauthorized')
+      if (!session?.user.id) throw new Error('Unauthorized')
       return await trpcClient.payout.request.mutate({
         userId: session.user.id,
       })
@@ -110,7 +110,7 @@ function BalancePage() {
   // Cancel payout mutation
   const cancelPayoutMutation = useMutation({
     mutationFn: async (payoutId: string) => {
-      if (!session?.user?.id) throw new Error('Unauthorized')
+      if (!session?.user.id) throw new Error('Unauthorized')
       return await trpcClient.payout.cancel.mutate({
         payoutId,
         userId: session.user.id,

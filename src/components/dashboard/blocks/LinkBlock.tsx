@@ -47,7 +47,7 @@ export function LinkBlock({
   const errors = block.errors ?? {}
 
   const TITLE_MAX = 50
-  const [title, setTitle] = useState(block.title ?? '')
+  const [title, setTitle] = useState(block.title)
 
   return (
     <div className="space-y-4">

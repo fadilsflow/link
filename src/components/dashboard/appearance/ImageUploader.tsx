@@ -29,17 +29,7 @@ export function ImageUploader({
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [
-    {},
-    {
-      openFileDialog,
-      getInputProps,
-      handleDrop,
-      handleDragOver,
-      handleDragEnter,
-      handleDragLeave,
-    },
-  ] = useFileUpload({
+  const [, { openFileDialog, getInputProps, handleDrop, handleDragOver, handleDragEnter, handleDragLeave }] = useFileUpload({
     accept: 'image/*',
     maxFiles: 1,
     multiple: false,
@@ -103,9 +93,7 @@ export function ImageUploader({
                 onClick={openFileDialog}
                 onDrop={(e) => {
                   handleDrop(e)
-                  if (e.dataTransfer.files?.[0]) {
-                    processUpload(e.dataTransfer.files[0])
-                  }
+                  processUpload(e.dataTransfer.files[0])
                 }}
                 onDragOver={handleDragOver}
                 onDragEnter={handleDragEnter}

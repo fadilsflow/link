@@ -176,7 +176,7 @@ function CheckoutPage() {
     } catch (error: any) {
       toastManager.add({
         title: 'Checkout Failed',
-        description: error?.message || 'Something went wrong',
+        description: error.message || 'Something went wrong',
         type: 'error',
       })
     } finally {

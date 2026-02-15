@@ -8,7 +8,7 @@ export const Route = createFileRoute('/auth/callback')({
     // 1. FAST PATH: Check on server before rendering anything
     const status = await checkOnboardingStatus()
 
-    if (status.isLoggedIn && status.user) {
+    if (status.isLoggedIn) {
       const username = status.user.username
 
       if (username) {
@@ -37,7 +37,7 @@ function AuthCallbackPage() {
       const status = await checkOnboardingStatus()
       if (isCancelled) return
 
-      if (status.isLoggedIn && status.user) {
+      if (status.isLoggedIn) {
         const username = status.user.username
         if (username) {
           navigate({

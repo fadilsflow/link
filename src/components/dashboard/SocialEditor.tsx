@@ -152,8 +152,8 @@ function extractUsername(input: string, platform: PlatformValue): string {
     return input.replace(/^mailto:/, '').trim()
   }
 
-  const p = PLATFORMS.find((p) => p.value === platform)
-  if (!p) return input
+  const platformDef = PLATFORMS.find((item) => item.value === platform)
+  if (!platformDef) return input
 
   try {
     // If it looks like a URL
@@ -353,8 +353,10 @@ export default function SocialEditor({
 
   const handleAdd = () => {
     const platformDef = PLATFORMS.find((p) => p.value === newPlatform)
-    const username = extractUsername(newUrl, newPlatform)
-    const url = platformDef ? `${platformDef.baseUrl}${username}` : username
+    const extractedUsername = extractUsername(newUrl, newPlatform)
+    const url = platformDef
+      ? `${platformDef.baseUrl}${extractedUsername}`
+      : extractedUsername
 
     // Close dialog immediately
     setAddDialogOpen(false)
@@ -374,7 +376,7 @@ export default function SocialEditor({
         success: () => ({ title: 'Social link added!' }),
         error: (err: unknown) => ({
           title: 'Failed to add social link',
-          description: (err as Error)?.message || 'An error occurred',
+          description: (err as Error).message || 'An error occurred',
         }),
       },
     )
@@ -393,10 +395,10 @@ export default function SocialEditor({
     if (!editingLink) return
 
     const platformDef = PLATFORMS.find((p) => p.value === editPlatform)
-    const username = extractUsername(editUrl, editPlatform)
+    const extractedUsername = extractUsername(editUrl, editPlatform)
     const urlToSave = platformDef
-      ? `${platformDef.baseUrl}${username}`
-      : username
+      ? `${platformDef.baseUrl}${extractedUsername}`
+      : extractedUsername
 
     const hasChanged =
       editPlatform !== editingLink.platform ||
@@ -428,7 +430,7 @@ export default function SocialEditor({
         success: () => ({ title: 'Changes saved!' }),
         error: (err: unknown) => ({
           title: 'Failed to save changes',
-          description: (err as Error)?.message || 'An error occurred',
+          description: (err as Error).message || 'An error occurred',
         }),
       },
     )
@@ -448,7 +450,7 @@ export default function SocialEditor({
       success: () => ({ title: 'Social link deleted!' }),
       error: (err: unknown) => ({
         title: 'Failed to delete social link',
-        description: (err as Error)?.message || 'An error occurred',
+        description: (err as Error).message || 'An error occurred',
       }),
     })
   }

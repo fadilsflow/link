@@ -74,12 +74,12 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
             </div>
 
             <div className="px-4 -mt-10 mb-6 flex flex-col relative z-10">
-              <Avatar className="h-20 w-20 ring-4 ring-background shadow-md bg-background">
-                <AvatarImage src={user.image || ''} />
-                <AvatarFallback className="bg-muted text-foreground">
-                  {user.name?.[0]?.toUpperCase() || '?'}
-                </AvatarFallback>
-              </Avatar>
+                <Avatar className="h-20 w-20 ring-4 ring-background shadow-md bg-background">
+                  <AvatarImage src={user.image || ''} />
+                  <AvatarFallback className="bg-muted text-foreground">
+                    {user.name.charAt(0).toUpperCase() || '?'}
+                  </AvatarFallback>
+                </Avatar>
               <h3 className="text-sm text-foreground font-semibold mt-3">
                 {user.name}
               </h3>

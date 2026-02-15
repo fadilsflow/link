@@ -21,9 +21,11 @@ import {
   ChevronsRight,
 } from 'lucide-react'
 import type {
+  Column,
   ColumnDef,
   ColumnFiltersState,
   SortingState,
+  Table as TanstackTable,
   VisibilityState,
 } from '@tanstack/react-table'
 import {
@@ -106,7 +108,9 @@ export function DataTable<TData, TValue>({
             <Input
               placeholder={filterPlaceholder}
               value={
-                (table.getColumn(searchKey)?.getFilterValue() as string) ?? ''
+                (table.getColumn(searchKey)?.getFilterValue() as
+                  | string
+                  | undefined) ?? ''
               }
               onChange={(event) =>
                 table.getColumn(searchKey)?.setFilterValue(event.target.value)
@@ -140,7 +144,7 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -182,7 +186,7 @@ export function DataTable<TData, TValue>({
 }
 
 interface DataTablePaginationProps<TData> {
-  table: import('@tanstack/react-table').Table<TData>
+  table: TanstackTable<TData>
 }
 
 export function DataTablePagination<TData>({
@@ -262,7 +266,7 @@ interface DataTableColumnHeaderProps<
   TData,
   TValue,
 > extends React.HTMLAttributes<HTMLDivElement> {
-  column: import('@tanstack/react-table').Column<TData, TValue>
+  column: Column<TData, TValue>
   title: string
 }
 

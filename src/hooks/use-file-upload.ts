@@ -1,14 +1,7 @@
 'use client'
 
-import {
-  
-  
-  
-  useCallback,
-  useRef,
-  useState
-} from 'react'
-import type {ChangeEvent, DragEvent, InputHTMLAttributes} from 'react';
+import { useCallback, useRef, useState } from 'react'
+import type { ChangeEvent, DragEvent, InputHTMLAttributes } from 'react'
 
 export type FileMetadata = {
   name: string
@@ -143,7 +136,7 @@ export const useFileUpload = (
   const clearFiles = useCallback(() => {
     setState((prev) => {
       // Clean up object URLs
-      for (const file of prev.files ?? []) {
+      for (const file of prev.files) {
         if (
           file.preview &&
           file.file instanceof File &&
@@ -170,7 +163,7 @@ export const useFileUpload = (
 
   const addFiles = useCallback(
     (newFiles: FileList | Array<File>) => {
-      if (!newFiles || newFiles.length === 0) return
+      if (newFiles.length === 0) return
 
       const newFilesArray = Array.from(newFiles)
       const errors: Array<string> = []
@@ -238,14 +231,14 @@ export const useFileUpload = (
         onFilesAdded?.(validFiles)
 
         setState((prev) => {
-          const newFiles = !multiple
+          const nextFiles = !multiple
             ? validFiles
             : [...prev.files, ...validFiles]
-          onFilesChange?.(newFiles)
+          onFilesChange?.(nextFiles)
           return {
             ...prev,
             errors,
-            files: newFiles,
+            files: nextFiles,
           }
         })
       } else if (errors.length > 0) {
@@ -339,7 +332,7 @@ export const useFileUpload = (
         return
       }
 
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      if (e.dataTransfer.files.length > 0) {
         // In single file mode, only use the first file
         if (!multiple) {
           const file = e.dataTransfer.files[0]

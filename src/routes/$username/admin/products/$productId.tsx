@@ -62,7 +62,7 @@ function ProductEditRoute() {
   })
 
   const user = dashboardData?.user
-  const product = dashboardData?.products?.find((p: any) => p.id === productId)
+  const product = dashboardData?.products.find((p: any) => p.id === productId)
 
   const [initialForm, setInitialForm] =
     React.useState<ProductFormValues | null>(null)
@@ -125,7 +125,7 @@ function ProductEditRoute() {
       toastManager.add({
         title: 'Failed to update product',
         description:
-          error?.message ??
+          error.message ??
           'An unexpected error occurred while updating the product.',
         type: 'error',
       })
@@ -153,7 +153,7 @@ function ProductEditRoute() {
       toastManager.add({
         title: 'Failed to delete product',
         description:
-          error?.message ??
+          error.message ??
           'An unexpected error occurred while deleting the product.',
         type: 'error',
       })
@@ -202,7 +202,7 @@ function ProductEditRoute() {
           <SheetTitle>Product Details</SheetTitle>
         </SheetHeader>
         <SheetPanel className="mt-5">
-          {isReady && form ? (
+          {isReady ? (
             <ProductForm
               formId="edit-product-form"
               hideFooter

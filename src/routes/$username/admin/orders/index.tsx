@@ -84,33 +84,33 @@ function OrdersPage() {
     isLoading: isOrdersLoading,
     isFetching: isOrdersFetching,
   } = useQuery({
-    queryKey: ['orders', session?.user?.id],
+    queryKey: ['orders', session?.user.id],
     queryFn: async () => {
-      if (!session?.user?.id) return []
+      if (!session?.user.id) return []
       return await trpcClient.order.listByCreator.query({
         userId: session.user.id,
       })
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user.id,
   })
 
   const orderDetailQuery = useQuery({
-    queryKey: ['order-detail', selectedOrderId, session?.user?.id],
+    queryKey: ['order-detail', selectedOrderId, session?.user.id],
     queryFn: async () => {
-      if (!session?.user?.id || !selectedOrderId) return null
+      if (!session?.user.id || !selectedOrderId) return null
       return await trpcClient.order.getDetail.query({
         orderId: selectedOrderId,
         userId: session.user.id,
       })
     },
-    enabled: !!session?.user?.id && !!selectedOrderId && isSheetOpen,
+    enabled: !!session?.user.id && !!selectedOrderId && isSheetOpen,
   })
 
   const resendEmailMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      if (!session?.user?.id) throw new Error('Unauthorized')
+      if (!session?.user.id) throw new Error('Unauthorized')
       return await trpcClient.order.resendEmail.mutate({
         orderId,
         userId: session.user.id,
@@ -460,7 +460,7 @@ function OrdersPage() {
                     <span className="text-muted-foreground">Platform fees</span>
                     <span>
                       {formatPrice(
-                        (selectedOrder.transactions ?? []).reduce(
+                        selectedOrder.transactions.reduce(
                           (acc: number, t: any) => acc + t.platformFeeAmount,
                           0,
                         ),
@@ -471,7 +471,7 @@ function OrdersPage() {
                     <span className="text-muted-foreground">Net revenue</span>
                     <span>
                       {formatPrice(
-                        (selectedOrder.transactions ?? []).reduce(
+                        selectedOrder.transactions.reduce(
                           (acc: number, t: any) => acc + t.netAmount,
                           0,
                         ),

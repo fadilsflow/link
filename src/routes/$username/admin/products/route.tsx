@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Link, Outlet, createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { MoreHorizontal, PackageIcon, Plus } from 'lucide-react'
+import { MoreHorizontal, PackageIcon, Plus, ShoppingBag } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
   Select,
@@ -12,12 +12,12 @@ import {
 } from '@/components/ui/select'
 import {
   AlertDialog,
+  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogClose,
 } from '@/components/ui/alert-dialog'
 import { authClient } from '@/lib/auth-client'
 
@@ -324,13 +324,13 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
 
             return { previousData }
           },
-          onSuccess: (data, variables) => {
+          onSuccess: (_data, variables) => {
             toastManager.add({
               title: variables ? 'Product activated' : 'Product deactivated',
               description: `Product is now ${variables ? 'visible on' : 'hidden from'} your profile.`,
             })
           },
-          onError: (err, newTodo, context) => {
+          onError: (_err, _newTodo, context) => {
             queryClient.setQueryData(
               ['products', session?.user?.id],
               context?.previousData,

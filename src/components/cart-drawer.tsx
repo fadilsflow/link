@@ -1,5 +1,6 @@
-import { Minus, Plus, ShoppingCart, Trash2, X } from 'lucide-react'
+import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
+import Emptys from './empty-state'
 import { useCartStore } from '@/store/cart-store'
 import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -11,7 +12,6 @@ import {
   SheetPanel,
   SheetTitle,
 } from '@/components/ui/sheet'
-import Emptys from './empty-state'
 
 interface CartDrawerProps {
   open: boolean

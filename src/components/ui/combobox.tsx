@@ -16,11 +16,6 @@ const ComboboxContext = React.createContext<{
   multiple: false,
 })
 
-type ComboboxRootProps<
-  ItemValue,
-  Multiple extends boolean | undefined,
-> = Parameters<typeof ComboboxPrimitive.Root<ItemValue, Multiple>>[0]
-
 function Combobox<ItemValue, Multiple extends boolean | undefined = false>(
   props: ComboboxPrimitive.Root.Props<ItemValue, Multiple>,
 ) {

@@ -11,13 +11,11 @@ export const Route = createFileRoute('/onboarding')({
 
     // If not logged in, redirect to home
     if (!status.isLoggedIn) {
-      console.log('User is not logged in')
       throw redirect({ to: '/' })
     }
 
     // If already has username, redirect to admin
-    if (status.hasUsername && status.user?.username) {
-      console.log('User already has username, redirecting to admin')
+    if (status.hasUsername && status.user.username) {
       throw redirect({
         to: '/$username/admin/editor/profiles',
         params: { username: status.user.username },
@@ -36,24 +34,21 @@ function OnboardingPage() {
       throw new Error('User tidak ditemukan')
     }
 
-    try {
-      await trpcClient.user.setUsername.mutate({
-        userId: session.user.id,
-        username,
-      })
+    await trpcClient.user.setUsername.mutate({
+      userId: session.user.id,
+      username,
+    })
 
-      // Refresh session to get updated user data
-      const { data: updatedSession } = await authClient.getSession()
-      const newUsername = (updatedSession?.user as any)?.username || username
+    // Refresh session to get updated user data
+    const { data: updatedSession } = await authClient.getSession()
+    const newUsername =
+      (updatedSession?.user as { username?: string }).username || username
 
-      // Redirect to admin
-      navigate({
-        to: '/$username/admin/editor/profiles',
-        params: { username: newUsername },
-      })
-    } catch (error) {
-      throw error
-    }
+    // Redirect to admin
+    navigate({
+      to: '/$username/admin/editor/profiles',
+      params: { username: newUsername },
+    })
   }
 
   return (

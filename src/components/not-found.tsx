@@ -1,7 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Home, Lock, RefreshCw } from 'lucide-react'
-import { Button, buttonVariants } from './ui/button'
-import { cn } from '@/lib/utils'
+import { Button } from './ui/button'
 
 export default function NotFound() {
   return (

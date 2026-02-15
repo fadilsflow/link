@@ -112,7 +112,7 @@ export const getAdminAccessForUsername = cache(async (username: string) => {
     user: {
       id: authContext.user.id,
       username: authContext.user.username,
-      name: authContext.user.name ?? null,
+      name: authContext.user.name,
       email: authContext.user.email,
       image: authContext.user.image ?? null,
     },

@@ -30,10 +30,9 @@ export function ImageUploader({
   const [error, setError] = useState<string | null>(null)
 
   const [
-    { files },
+    {},
     {
       openFileDialog,
-      removeFile,
       getInputProps,
       handleDrop,
       handleDragOver,
@@ -58,13 +57,6 @@ export function ImageUploader({
       setError('Failed to upload image. Please try again.')
     } finally {
       setIsUploading(false)
-    }
-  }
-
-  // Effect to trigger upload when file is selected via hook
-  const handleFilesAdded = async (newFiles: Array<File>) => {
-    if (newFiles.length > 0) {
-      await processUpload(newFiles[0])
     }
   }
 

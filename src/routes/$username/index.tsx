@@ -22,8 +22,8 @@ import {
   getBlockCardBase,
   getBlockRadius,
   getBlockSkeletonClasses,
-  getProductSkeletonClass,
   getPageBackgroundStyle,
+  getProductSkeletonClass,
 } from '@/lib/block-styles'
 
 import SiteUserProfileHeader, {

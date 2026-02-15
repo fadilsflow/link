@@ -3,7 +3,6 @@ import { Check } from 'lucide-react'
 import { LOCAL_BANNER_IMAGES } from './banner-presets'
 import { ImageUploader } from './ImageUploader'
 import type { BannerPreset } from './types'
-import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
 interface BannerSelectorProps {

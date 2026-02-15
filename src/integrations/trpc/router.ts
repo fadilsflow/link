@@ -557,7 +557,7 @@ const productRouter = {
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const [row] = await db
+      await db
         .update(products)
         .set({ isDeleted: true, isActive: false })
         .where(and(eq(products.id, input.id), eq(products.userId, ctx.session.user.id)))
@@ -1626,11 +1626,6 @@ const analyticsRouter = {
         byDay.set(day, existing)
       }
 
-      // Sort chart data by date
-      const chart = Array.from(byDay.values()).sort((a, b) =>
-        a.date.localeCompare(b.date),
-      )
-
       const rangeViews = viewRows.length
       const rangeClicks = clickRows.length
       const totalBlocks = blockRows.length
@@ -1651,7 +1646,9 @@ const analyticsRouter = {
           views: rangeViews,
           clicks: rangeClicks,
         },
-        chart: Array.from(byDay.values()),
+        chart: Array.from(byDay.values()).sort((a, b) =>
+          a.date.localeCompare(b.date),
+        ),
         blocks: blockRows,
       }
     }),

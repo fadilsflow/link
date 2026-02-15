@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from 'react'
-import { type BlockRadius, type BlockStyle } from '@/lib/block-styles'
-import { type ThemeOption } from '@/lib/theme'
+import type {BlockRadius, BlockStyle} from '@/lib/block-styles';
+import type {ThemeOption} from '@/lib/theme';
 
 export interface PreviewUser {
   id: string

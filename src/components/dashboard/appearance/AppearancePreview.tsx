@@ -5,14 +5,15 @@ import {
   PlayCircle,
   X as XIcon,
 } from 'lucide-react'
+import type {BlockRadius, BlockStyle} from '@/lib/block-styles';
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useResolvedTheme } from '@/lib/theme'
 import {
+  
+  
   getBlockCardBase,
-  getBlockRadius,
-  type BlockRadius,
-  type BlockStyle,
+  getBlockRadius
 } from '@/lib/block-styles'
 
 interface AppearancePreviewProps {
@@ -40,8 +41,8 @@ interface AppearancePreviewProps {
 export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
   const resolvedTheme = useResolvedTheme('public', user.publicTheme)
 
-  const blockStyle = (user.appearanceBlockStyle || 'basic') as BlockStyle
-  const blockRadius = (user.appearanceBlockRadius || 'rounded') as BlockRadius
+  const blockStyle = (user.appearanceBlockStyle || 'basic')
+  const blockRadius = (user.appearanceBlockRadius || 'rounded')
 
   const cardBase = getBlockCardBase(blockStyle)
   const radiusClass = getBlockRadius(blockRadius)

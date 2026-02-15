@@ -1,6 +1,4 @@
-import {
-  UserIcon,
-} from 'lucide-react'
+import { UserIcon } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter } from '@tanstack/react-router'
 import { Button } from './ui/button'
@@ -24,7 +22,9 @@ export default function UserButton() {
 
   if (!session?.user) return null
 
-  const username = (session.user as any).username
+  const username =
+    (session.user as { username?: string | null }).username ?? ''
+  const profileSearch = { tab: 'profile' as const }
   const publicUrl = `${window.location.origin}/${username}`
 
   const copyProfileLink = () => {
@@ -108,7 +108,12 @@ export default function UserButton() {
           <MenuItem
             className="cursor-pointer"
             render={
-              <Link to={`/$username`} params={{ username }} target="_blank" />
+              <Link
+                to={`/$username`}
+                params={{ username }}
+                search={profileSearch}
+                target="_blank"
+              />
             }
           >
             View My Page

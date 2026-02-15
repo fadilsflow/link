@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type {BlockRadius, BlockStyle} from '@/lib/block-styles';
+import type {ThemeOption} from '@/lib/theme';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getDashboardData } from '@/lib/profile-server'
@@ -8,8 +10,6 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { BannerSelector } from '@/components/dashboard/appearance/BannerSelector'
 import { BlockStyleSelector } from '@/components/dashboard/appearance/BlockStyleSelector'
 import { ThemeOptionCards } from '@/components/dashboard/appearance/ThemeOptionCards'
-import { type BlockRadius, type BlockStyle } from '@/lib/block-styles'
-import { type ThemeOption } from '@/lib/theme'
 import { LOCAL_BANNER_IMAGES } from '@/components/dashboard/appearance/banner-presets'
 import {
   AppHeader,

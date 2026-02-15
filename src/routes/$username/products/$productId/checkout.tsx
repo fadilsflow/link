@@ -424,6 +424,7 @@ function CheckoutPage() {
                     <Link
                       to="/$username"
                       params={{ username: user.username || '' }}
+                      search={{ tab: 'profile' }}
                       className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors"
                     >
                       <Avatar className="h-4 w-4">

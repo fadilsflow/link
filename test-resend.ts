@@ -42,3 +42,5 @@ async function testEmail() {
     console.error('Critical Error:', err)
   }
 }
+
+void testEmail()

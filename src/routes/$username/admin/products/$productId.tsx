@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link, createFileRoute, useRouter } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import type { ProductFormValues } from '@/components/dashboard/ProductForm'
@@ -14,7 +14,6 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
-  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetPanel,

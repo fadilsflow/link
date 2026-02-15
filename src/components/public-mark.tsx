@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { Group, GroupSeparator } from '@/components/ui/group'
 import {
@@ -7,7 +8,6 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from '@/components/ui/menu'
-import { Link } from '@tanstack/react-router'
 
 export default function PublicMark() {
   return (

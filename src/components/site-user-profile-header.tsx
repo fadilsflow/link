@@ -94,7 +94,7 @@ export function ProfileBanner({
 
 export function ProfileCard({
   user,
-  isFullPageBg,
+  isFullPageBg: _isFullPageBg,
   id,
   className,
 }: {

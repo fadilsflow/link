@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import type { ThemeOption } from '@/lib/theme'
+import { cn } from '@/lib/utils'
 
 interface ThemeOptionCardsProps {
   value: ThemeOption

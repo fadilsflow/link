@@ -1,10 +1,11 @@
 import { Check } from 'lucide-react'
+import type {BlockRadius, BlockStyle} from '@/lib/block-styles';
 import { cn } from '@/lib/utils'
 import {
-  type BlockRadius,
-  type BlockStyle,
+  
+  
   getBlockCardBase,
-  getBlockRadius,
+  getBlockRadius
 } from '@/lib/block-styles'
 
 interface BlockStyleSelectorProps {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Link2, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
@@ -44,7 +44,7 @@ export function LinkBlock({
   handleUpdate,
   handleDelete,
 }: LinkBlockProps) {
-  const errors = block.errors || {}
+  const errors = block.errors ?? {}
 
   const TITLE_MAX = 50
   const [title, setTitle] = useState(block.title ?? '')

@@ -20,6 +20,12 @@ import { Separator } from '@/components/ui/separator'
 import { getOrderByToken } from '@/lib/profile-server'
 import { formatPrice } from '@/lib/utils'
 
+type DeliveredFile = {
+  name: string
+  size?: number | null
+  url: string
+}
+
 export const Route = createFileRoute('/d/$token')({
   component: OrderDeliveryPage,
   loader: async ({ params }) => {
@@ -145,7 +151,8 @@ function OrderDeliveryPage() {
 
                   {item.productFiles.length > 0 && (
                     <div className="space-y-3">
-                      {item.productFiles.map((file: any, index: number) => (
+                      {(item.productFiles as Array<DeliveredFile>).map(
+                        (file, index) => (
                         <Card key={index}>
                           <CardContent className="pt-4">
                             <div className="flex items-center justify-between gap-3">
@@ -182,7 +189,8 @@ function OrderDeliveryPage() {
                             </div>
                           </CardContent>
                         </Card>
-                      ))}
+                        ),
+                      )}
                     </div>
                   )}
 
@@ -273,6 +281,7 @@ function OrderDeliveryPage() {
                     <Link
                       to="/$username"
                       params={{ username: creator.username }}
+                      search={{ tab: 'profile' }}
                     />
                   }
                 >

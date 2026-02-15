@@ -213,7 +213,9 @@ function ProductDetailPage() {
             Back
           </Button>
           <Link
-            to={`/${user.username}`}
+            to="/$username"
+            params={{ username }}
+            search={{ tab: 'profile' }}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <Avatar className="h-6 w-6">
@@ -313,7 +315,9 @@ function ProductDetailPage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Sold by</span>
                 <Link
-                  to={`/${user.username}`}
+                  to="/$username"
+                  params={{ username }}
+                  search={{ tab: 'profile' }}
                   className="inline-flex items-center gap-2 font-medium hover:opacity-80 transition-opacity"
                 >
                   <Avatar className="h-6 w-6">

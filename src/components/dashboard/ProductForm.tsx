@@ -325,8 +325,6 @@ export function ProductForm(props: ProductFormProps) {
     }
   }
 
-  const currentPriceLabel = humanPriceLabel(value.priceSettings)
-
   return (
     <form
       id={formId}
@@ -365,7 +363,7 @@ export function ProductForm(props: ProductFormProps) {
           onDragEnter={handleImageDragEnter}
           onDragLeave={handleImageDragLeave}
         >
-          {imageFiles.map((file, i) => (
+          {imageFiles.map((file) => (
             <div
               key={file.id}
               className="relative aspect-square rounded-lg overflow-hidden border group"

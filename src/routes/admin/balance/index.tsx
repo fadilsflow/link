@@ -38,7 +38,7 @@ function getFinanceUiError(message: string): string {
   return message
 }
 
-export const Route = createFileRoute('/$username/admin/balance/')({
+export const Route = createFileRoute('/admin/balance/')({
   component: BalancePage,
 })
 

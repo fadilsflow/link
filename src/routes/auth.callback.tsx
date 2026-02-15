@@ -13,8 +13,7 @@ export const Route = createFileRoute('/auth/callback')({
 
       if (username) {
         throw redirect({
-          to: '/$username/admin/editor/profiles',
-          params: { username },
+          to: '/admin/editor/profiles',
         })
       } else {
         throw redirect({ to: '/onboarding' })
@@ -41,8 +40,7 @@ function AuthCallbackPage() {
         const username = status.user.username
         if (username) {
           navigate({
-            to: '/$username/admin/editor/profiles',
-            params: { username },
+            to: '/admin/editor/profiles',
           })
         } else {
           navigate({ to: '/onboarding' })

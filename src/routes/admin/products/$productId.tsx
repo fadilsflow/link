@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 
-export const Route = createFileRoute('/$username/admin/products/$productId')({
+export const Route = createFileRoute('/admin/products/$productId')({
   component: ProductEditRoute,
 })
 
@@ -50,12 +50,12 @@ function mapProductToForm(userId: string, product: any): ProductFormValues {
 }
 
 function ProductEditRoute() {
-  const { username, productId } = Route.useParams()
+  const { productId } = Route.useParams()
   const queryClient = useQueryClient()
   const router = useRouter()
 
   const { data: dashboardData } = useQuery({
-    queryKey: ['dashboard', username],
+    queryKey: ['dashboard'],
     queryFn: () => getDashboardData(),
     refetchOnWindowFocus: false,
     staleTime: Infinity,
@@ -83,7 +83,7 @@ function ProductEditRoute() {
   }, [user, product, form])
 
   const updateMutation = useMutation({
-    mutationKey: ['product-update', username, productId],
+    mutationKey: ['product-update', productId],
     mutationFn: async (values: ProductFormValues) => {
       const base = {
         id: values.id!,
@@ -111,7 +111,7 @@ function ProductEditRoute() {
       return trpcClient.product.update.mutate(base)
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       await queryClient.invalidateQueries({
         queryKey: ['products', user?.id],
       })
@@ -119,7 +119,7 @@ function ProductEditRoute() {
         title: 'Product updated',
         description: 'Your changes have been saved successfully.',
       })
-      router.navigate({ to: '/$username/admin/products', params: { username } })
+      router.navigate({ to: '/admin/products' })
     },
     onError: (error: any) => {
       toastManager.add({
@@ -133,13 +133,13 @@ function ProductEditRoute() {
   })
 
   const deleteMutation = useMutation({
-    mutationKey: ['product-delete', username, productId],
+    mutationKey: ['product-delete', productId],
     mutationFn: (id: string) =>
       trpcClient.product.delete.mutate({
         id,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       await queryClient.invalidateQueries({
         queryKey: ['products', user?.id],
       })
@@ -147,7 +147,7 @@ function ProductEditRoute() {
         title: 'Product deleted',
         description: 'The product has been deleted successfully.',
       })
-      router.navigate({ to: '/$username/admin/products', params: { username } })
+      router.navigate({ to: '/admin/products' })
     },
     onError: (error: any) => {
       toastManager.add({
@@ -183,8 +183,7 @@ function ProductEditRoute() {
       setIsOpen(false)
       setTimeout(() => {
         router.navigate({
-          to: '/$username/admin/products',
-          params: { username },
+          to: '/admin/products',
         })
       }, 300)
     } else {

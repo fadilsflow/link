@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 
 const PUBLIC_BASE_HOST = new URL(BASE_URL).host
 
-export const Route = createFileRoute('/$username/admin/editor')({
+export const Route = createFileRoute('/admin/editor')({
   component: RouteComponent,
 })
 

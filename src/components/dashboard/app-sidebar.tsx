@@ -14,9 +14,8 @@ import {
   User as UserIcon,
   Wallet,
 } from 'lucide-react'
-
 import { useQueryClient } from '@tanstack/react-query'
-import { Link, useParams, useRouter, useRouterState } from '@tanstack/react-router'
+import { Link, useRouter, useRouterState } from '@tanstack/react-router'
 import Credits from '../Credits'
 import { Button } from '../ui/button'
 import {
@@ -47,70 +46,72 @@ const data = {
     {
       icon: Settings,
       title: 'Settings',
-      url: '/$username/admin/settings',
+      url: '/admin/settings',
     },
   ],
   navMain: [
     {
       title: 'Home',
-      url: '/$username/admin',
+      url: '/admin',
       icon: Home,
     },
     {
       title: 'Profile',
-      url: '/$username/admin/editor/profiles',
+      url: '/admin/editor/profiles',
       icon: UserIcon,
     },
     {
       title: 'Appearance',
-      url: '/$username/admin/editor/appearance',
+      url: '/admin/editor/appearance',
       icon: Grid,
     },
     {
       title: 'Products',
-      url: '/$username/admin/products',
+      url: '/admin/products',
       icon: Package,
     },
     {
       title: 'Orders',
-      url: '/$username/admin/orders',
+      url: '/admin/orders',
       icon: ShoppingBag,
     },
     {
       title: 'Balance',
-      url: '/$username/admin/balance',
+      url: '/admin/balance',
       icon: Wallet,
     },
     {
       title: 'Analytics',
-      url: '/$username/admin/analytics',
+      url: '/admin/analytics',
       icon: BarChart3,
     },
   ],
 }
-const isAdminpage = (path: string, currentPath: string) => {
-  if (path === '/$username/admin') {
-    return currentPath.endsWith('/admin') || currentPath.endsWith('/admin/')
+
+const isAdminPage = (path: string, currentPath: string) => {
+  if (path === '/admin') {
+    return currentPath === '/admin' || currentPath === '/admin/'
   }
-  return currentPath.includes(path.replace('/$username', ''))
+  return currentPath.startsWith(path)
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const { username } = useParams({ strict: false })
   const location = useRouterState({ select: (s) => s.location })
 
-  const usernameParam = username ?? ''
-  const { data: adminAuth } = useAdminAuthContext(usernameParam)
+  const { data: adminAuth } = useAdminAuthContext()
+  const username = adminAuth?.username ?? ''
 
   const handleCopyLink = async () => {
+    if (!username) return
     await navigator.clipboard.writeText(`${BASE_URL}/${username}`)
     toastManager.add({
       title: 'Copied!',
       description: 'Link copied to clipboard',
     })
   }
+
   return (
     <Sidebar
       {...props}
@@ -158,7 +159,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       fetchOptions: {
                         onSuccess: () => {
                           queryClient.removeQueries({
-                            queryKey: adminAuthQueryKey(usernameParam),
+                            queryKey: adminAuthQueryKey(),
                           })
                           router.invalidate()
                           router.navigate({ to: '/' })
@@ -185,7 +186,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarMenu>
             {data.navMain.map((item) => {
-              const isActive = isAdminpage(item.url, location.pathname)
+              const isActive = isAdminPage(item.url, location.pathname)
               return (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
@@ -194,10 +195,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     render={
                       <Link
                         to={item.url as any}
-                        params={{ username } as any}
                         preload="intent"
                         activeOptions={{
-                          exact: item.url === '/$username/admin',
+                          exact: item.url === '/admin',
                         }}
                       />
                     }
@@ -216,39 +216,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              render={
-                <Link
-                  to={'/$username'}
-                  params={{ username: usernameParam }}
-                  search={{ tab: 'profile' }}
-                />
-              }
-              className="text-foreground"
-            >
-              <ExternalLink />
-              View Public page
-            </SidebarMenuButton>
-            <SidebarMenuButton
-              onClick={handleCopyLink}
-              className="text-foreground"
-            >
-              <Copy />
-              Copy Public page link
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {username ? (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={
+                  <Link
+                    to={'/$username'}
+                    params={{ username }}
+                    search={{ tab: 'profile' }}
+                  />
+                }
+                className="text-foreground"
+              >
+                <ExternalLink />
+                View Public page
+              </SidebarMenuButton>
+              <SidebarMenuButton
+                onClick={handleCopyLink}
+                className="text-foreground"
+              >
+                <Copy />
+                Copy Public page link
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ) : null}
           {data.navBottom.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 size={'default'}
-                render={
-                  <Link to={item.url as any} params={{ username } as any} preload="intent" />
-                }
-                isActive={
-                  location.pathname ===
-                  item.url.replace('/$username', `/${username}`)
-                }
+                render={<Link to={item.url as any} preload="intent" />}
+                isActive={location.pathname === item.url}
                 className="text-foreground"
               >
                 <item.icon className=" h-4 w-4" />

@@ -1,24 +1,12 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
-import { CalendarIcon, Package } from 'lucide-react'
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from 'recharts'
-
-import type {
-  ChartConfig} from '@/components/ui/chart';
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { CalendarIcon, MousePointerClick, Package } from 'lucide-react'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import {
   AppHeader,
   AppHeaderActions,
   AppHeaderContent,
-  AppHeaderDescription,
 } from '@/components/app-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -34,13 +22,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { authClient } from '@/lib/auth-client'
+import { ShareProfileModal } from '@/components/share-profile-modal'
+import { BASE_URL } from '@/lib/constans'
 import { cn, formatPrice } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
 
-export const Route = createFileRoute('/$username/admin/analytics/')({
-  component: AnalyticsPage,
+export const Route = createFileRoute('/admin/')({
+  component: HomePage,
 })
 
 type DateRange = { from: Date | undefined; to: Date | undefined }
@@ -50,9 +41,12 @@ const RANGE_PRESETS = [
   { label: '7D', days: 7 },
   { label: '30D', days: 30 },
 ] as const
+const PUBLIC_BASE_HOST = new URL(BASE_URL).host
 
-function AnalyticsPage() {
+function HomePage() {
   const { data: session, isPending: isSessionPending } = authClient.useSession()
+  const username =
+    (session?.user as { username?: string | null } | undefined)?.username ?? ''
   const today = new Date()
   today.setHours(23, 59, 59, 999)
 
@@ -100,63 +94,124 @@ function AnalyticsPage() {
 
   const isLoading = isSessionPending || isLoadingOverview
   const chartData = overview?.chart ?? []
-  const rangeRevenue = overview?.range.revenue ?? 0
-  const rangeSales = overview?.range.sales ?? 0
+
+  // Calculate specific metrics
   const rangeViews = overview?.range.views ?? 0
   const rangeClicks = overview?.range.clicks ?? 0
-  const ctr =
-    rangeViews > 0 ? ((rangeClicks / rangeViews) * 100).toFixed(1) : '0'
   const blocks = overview?.blocks ?? []
   const topBlocks = blocks.slice(0, 5)
   const topProducts = (productAnalytics ?? []).slice(0, 5)
 
+  // New Data Fetching for Dashboard Cards
+  const { data: balance, isLoading: isLoadingBalance } = useQuery({
+    queryKey: ['balance', session?.user.id],
+    queryFn: async () => {
+      if (!session?.user.id) return null
+      return await trpcClient.balance.getSummary.query({
+        userId: session.user.id,
+      })
+    },
+    enabled: !!session?.user.id,
+  })
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <AppHeader>
-        <AppHeaderContent title="Analytics">
-          <AppHeaderDescription>
-            Net metrics are near-real-time. Product ranking cards below use
-            cached counters.
-          </AppHeaderDescription>
-        </AppHeaderContent>
-        <AppHeaderActions>
-          {/* Date Range Picker */}
-          <div className="flex flex-wrap items-center gap-2">
-            {RANGE_PRESETS.map((preset) => (
-              <Button
-                key={preset.label}
-                variant={activePreset === preset.label ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-8 text-xs font-medium"
-                onClick={() => handlePreset(preset.days, preset.label)}
-              >
-                {preset.label}
-              </Button>
-            ))}
-            <DateRangePicker
-              value={dateRange}
-              onChange={(range) => {
-                setDateRange(range)
-                setActivePreset(null)
-              }}
-            />
-          </div>
-        </AppHeaderActions>
+        <AppHeaderContent title="Home"></AppHeaderContent>
+        <AppHeaderActions></AppHeaderActions>
       </AppHeader>
 
-      {/* Key Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          title="Net Revenue"
-          value={formatPrice(rangeRevenue)}
-          isLoading={isLoading}
-        />
-        <StatCard title="Sales" value={rangeSales} isLoading={isLoading} />
-        <StatCard title="CTR" value={`${ctr}%`} isLoading={isLoading} />
-      </div>
+      {/* Profile and Earnings Cards */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Profile Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 ">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="rounded-md h-14 w-14 border-2 border-background ring-2 ring-primary/10 transition-transform group-hover:scale-105">
+                  <AvatarImage src={session?.user.image || ''} />
+                  <AvatarFallback className="bg-primary/5 text-primary text-lg">
+                    {session?.user.name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold tracking-tight truncate">
+                    {session?.user.name || 'Creator'}
+                  </h3>
+                  {username ? (
+                    <a
+                      href={`/${username}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary flex items-center text-sm hover:text-primary transition-colors mt-0.5 group/link w-fit"
+                    >
+                      <span className="font-medium underline-offset-4 group-hover/link:underline">
+                        {PUBLIC_BASE_HOST}/{username}
+                      </span>
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+              <ShareProfileModal url={username ? `${BASE_URL}/${username}` : BASE_URL}>
+                <Button size="lg" variant={'outline'}>
+                  Share
+                </Button>
+              </ShareProfileModal>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Revenue Chart */}
-      <RevenueChart data={chartData} isLoading={isLoading} />
+        {/* Earnings Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Earnings</CardTitle>
+          </CardHeader>
+
+          <CardContent className="flex items-center justify-between h-full">
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-mono tracking-tight">
+                {isLoadingBalance ? (
+                  <Spinner className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  formatPrice(balance?.currentBalance ?? 0)
+                )}
+              </span>
+            </div>
+            <Button
+              size="lg"
+              render={<Link to="/admin/balance" />}
+            >
+              Payout
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="justify-end flex">
+        {/* Date Range Picker */}
+        <div className="flex flex-wrap items-center gap-2">
+          {RANGE_PRESETS.map((preset) => (
+            <Button
+              key={preset.label}
+              variant={activePreset === preset.label ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 text-xs font-medium"
+              onClick={() => handlePreset(preset.days, preset.label)}
+            >
+              {preset.label}
+            </Button>
+          ))}
+          <DateRangePicker
+            value={dateRange}
+            onChange={(range) => {
+              setDateRange(range)
+              setActivePreset(null)
+            }}
+          />
+        </div>
+      </div>
 
       {/* Engagement Chart */}
       <EngagementCard
@@ -178,35 +233,6 @@ function AnalyticsPage() {
   )
 }
 
-function StatCard({
-  title,
-  value,
-  isLoading,
-}: {
-  title: string
-  value: string | number
-  isLoading?: boolean
-}) {
-  return (
-    <Card className="relative overflow-hidden min-h-28">
-      <CardHeader className="pb-2">
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-4">
-            <Spinner className="h-5 w-5 text-muted-foreground" />
-          </div>
-        ) : (
-          <>
-            <div className="text-2xl font-mono">{value}</div>
-          </>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
 function EngagementCard({
   views,
   clicks,
@@ -225,7 +251,9 @@ function EngagementCard({
   return (
     <Card className="relative overflow-hidden min-h-28">
       <CardHeader className="pb-2">
-        <CardTitle>Total Views & Clicks</CardTitle>
+        <CardTitle className="text-base font-medium">
+          Total Views & Clicks
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -240,14 +268,14 @@ function EngagementCard({
                   <div className="h-3 w-3 rounded-full bg-(--color-chart-4)" />
                   Views
                 </div>
-                <div className="text-3xl font-mono">{views}</div>
+                <div className="text-3xl font-bold">{views}</div>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <div className="h-3 w-3 rounded-full bg-(--color-chart-2)" />
                   Clicks
                 </div>
-                <div className="text-3xl font-mono">{clicks}</div>
+                <div className="text-3xl font-bold">{clicks}</div>
               </div>
             </div>
 
@@ -351,7 +379,10 @@ function TopBlocksCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Top Blocks</CardTitle>
+        <CardTitle className="text-base flex items-center gap-2">
+          <MousePointerClick className="h-4 w-4" />
+          Top Blocks
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -413,7 +444,10 @@ function TopProductsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Top Products (Cached)</CardTitle>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Package className="h-4 w-4" />
+          Top Products (Cached)
+        </CardTitle>
         <p className="text-xs text-muted-foreground">
           Uses cached counters for ranking. Ledger-based balances are
           authoritative in Balance page.
@@ -469,142 +503,6 @@ function TopProductsCard({
   )
 }
 
-const chartConfig = {
-  revenue: {
-    label: 'Net Revenue',
-    color: 'hsl(var(--chart-1))',
-  },
-  sales: {
-    label: 'Sales',
-    color: 'hsl(var(--chart-2))',
-  },
-} satisfies ChartConfig
-
-function RevenueChart({
-  data,
-  isLoading,
-}: {
-  data: Array<{ date: string; sales: number; revenue: number }>
-  isLoading?: boolean
-}) {
-  const totalRevenue = React.useMemo(
-    () => data.reduce((acc, item) => acc + item.revenue, 0),
-    [data],
-  )
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Net Revenue Trend</CardTitle>
-        </CardHeader>
-        <CardContent className="h-[300px] flex items-center justify-center">
-          <Spinner className="h-5 w-5 text-muted-foreground" />
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (data.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Net Revenue Trend</CardTitle>
-        </CardHeader>
-        <CardContent className="h-[200px] flex items-center justify-center text-muted-foreground">
-          No data for this period
-        </CardContent>
-      </Card>
-    )
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Net Revenue Trend</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="h-[250px] w-full">
-          <AreaChart
-            data={data}
-            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-          >
-            <defs>
-              <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="var(--color-revenue)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="var(--color-revenue)"
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })
-              }}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })
-                  }}
-                  formatter={(value, name) => (
-                    <div className="flex min-w-[120px] items-center text-xs text-muted-foreground">
-                      {name === 'revenue' ? 'Revenue' : 'Sales'}
-                      <div className="ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums text-foreground">
-                        {name === 'revenue'
-                          ? formatPrice(value as number)
-                          : value}
-                      </div>
-                    </div>
-                  )}
-                />
-              }
-            />
-            <Area
-              dataKey="revenue"
-              type="monotone"
-              fill="url(#fillRevenue)"
-              stroke="var(--color-revenue)"
-              strokeWidth={2}
-            />
-          </AreaChart>
-        </ChartContainer>
-        <div className="mt-4 flex items-center gap-2 text-sm">
-          <span className="font-medium">Period net total:</span>
-          <span className="font-monon">{formatPrice(totalRevenue)}</span>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
 function DateRangePicker({
   value,
   onChange,
@@ -624,9 +522,6 @@ function DateRangePicker({
       })
     }
     return `${value.from.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    })} - ${value.to.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',

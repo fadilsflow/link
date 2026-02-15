@@ -44,7 +44,7 @@ import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table'
 import { Spinner } from '@/components/ui/spinner'
 import EmptyState from '@/components/empty-state'
 
-export const Route = createFileRoute('/$username/admin/orders/')({
+export const Route = createFileRoute('/admin/orders/')({
   component: OrdersPage,
 })
 

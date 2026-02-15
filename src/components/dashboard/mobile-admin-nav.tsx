@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link, useParams, useRouterState } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import {
   BarChart3,
   Grid,
@@ -23,19 +23,27 @@ import { cn } from '@/lib/utils'
 
 type AdminNavItem = {
   title: string
-  url: '/$username/admin' | '/$username/admin/editor/profiles' | '/$username/admin/editor/appearance' | '/$username/admin/products' | '/$username/admin/orders' | '/$username/admin/balance' | '/$username/admin/analytics' | '/$username/admin/settings'
+  url:
+    | '/admin'
+    | '/admin/editor/profiles'
+    | '/admin/editor/appearance'
+    | '/admin/products'
+    | '/admin/orders'
+    | '/admin/balance'
+    | '/admin/analytics'
+    | '/admin/settings'
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
 }
 
 const navItems: Array<AdminNavItem> = [
-  { title: 'Home', url: '/$username/admin', icon: Home },
-  { title: 'Profile', url: '/$username/admin/editor/profiles', icon: User },
-  { title: 'Appearance', url: '/$username/admin/editor/appearance', icon: Grid },
-  { title: 'Products', url: '/$username/admin/products', icon: Package },
-  { title: 'Orders', url: '/$username/admin/orders', icon: ShoppingBag },
-  { title: 'Balance', url: '/$username/admin/balance', icon: Wallet },
-  { title: 'Analytics', url: '/$username/admin/analytics', icon: BarChart3 },
-  { title: 'Settings', url: '/$username/admin/settings', icon: Settings },
+  { title: 'Home', url: '/admin', icon: Home },
+  { title: 'Profile', url: '/admin/editor/profiles', icon: User },
+  { title: 'Appearance', url: '/admin/editor/appearance', icon: Grid },
+  { title: 'Products', url: '/admin/products', icon: Package },
+  { title: 'Orders', url: '/admin/orders', icon: ShoppingBag },
+  { title: 'Balance', url: '/admin/balance', icon: Wallet },
+  { title: 'Analytics', url: '/admin/analytics', icon: BarChart3 },
+  { title: 'Settings', url: '/admin/settings', icon: Settings },
 ]
 
 const quickNav: Array<AdminNavItem> = [
@@ -46,17 +54,15 @@ const quickNav: Array<AdminNavItem> = [
 ]
 
 function isActivePath(path: string, currentPath: string) {
-  if (path === '/$username/admin') {
-    return currentPath.endsWith('/admin') || currentPath.endsWith('/admin/')
+  if (path === '/admin') {
+    return currentPath === '/admin' || currentPath === '/admin/'
   }
 
-  return currentPath.includes(path.replace('/$username', ''))
+  return currentPath.startsWith(path)
 }
 
 export function MobileAdminNav() {
-  const { username } = useParams({ strict: false })
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const params = { username: username ?? '' }
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90 md:hidden">
@@ -67,7 +73,6 @@ export function MobileAdminNav() {
             <Link
               key={item.title}
               to={item.url}
-              params={params}
               preload="intent"
               className={cn(
                 'flex flex-col items-center justify-center gap-1 text-[11px] text-muted-foreground transition-colors',
@@ -98,7 +103,6 @@ export function MobileAdminNav() {
                     render={
                       <Link
                         to={item.url}
-                        params={params}
                         preload="intent"
                         className={cn(
                           'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',

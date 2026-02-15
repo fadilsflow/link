@@ -1,47 +1,38 @@
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import React from 'react'
-import { z } from 'zod'
 import type { AdminAuthContextData } from '@/lib/admin-auth'
 import { AppSidebar } from '@/components/dashboard/app-sidebar'
 import { MobileAdminNav } from '@/components/dashboard/mobile-admin-nav'
+import { Spinner } from '@/components/ui/spinner'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { adminAuthQueryKey } from '@/lib/admin-auth'
-import { getAdminAccessForUsername } from '@/lib/auth-server'
+import { authClient } from '@/lib/auth-client'
+import { getServerAuthContext } from '@/lib/auth-server'
 import { useApplyRootTheme, useDashboardThemePreference } from '@/lib/theme'
 
 const getAdminRouteAccess = createServerFn({ method: 'GET' })
-  .inputValidator(z.object({ username: z.string() }))
-  .handler(async ({ data }) => {
-    return await getAdminAccessForUsername(data.username)
+  .handler(async () => {
+    return await getServerAuthContext()
   })
 
-export const Route = createFileRoute('/$username/admin')({
-  beforeLoad: async ({ context, params }) => {
-    const access = await getAdminRouteAccess({
-      data: { username: params.username },
-    })
+export const Route = createFileRoute('/admin')({
+  beforeLoad: async ({ context }) => {
+    const access = await getAdminRouteAccess()
 
-    if (!access.ok) {
-      if (access.reason === 'WRONG_OWNER' && access.expectedUsername) {
-        throw redirect({
-          to: '/$username/admin',
-          params: { username: access.expectedUsername },
-        })
-      }
-
+    if (!access.isAuthenticated || !access.user.username) {
       throw redirect({ to: '/' })
     }
 
     const authData: AdminAuthContextData = {
       userId: access.user.id,
-      username: params.username,
+      username: access.user.username,
       name: access.user.name,
       email: access.user.email,
-      image: access.user.image,
+      image: access.user.image ?? null,
     }
 
-    context.queryClient.setQueryData(adminAuthQueryKey(params.username), authData)
+    context.queryClient.setQueryData(adminAuthQueryKey(), authData)
 
     return authData
   },
@@ -49,8 +40,21 @@ export const Route = createFileRoute('/$username/admin')({
 })
 
 function AdminLayout() {
+  const { data: session, isPending } = authClient.useSession()
   const [dashboardTheme] = useDashboardThemePreference()
   useApplyRootTheme('dashboard', undefined, dashboardTheme)
+
+  if (isPending) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner className="h-5 w-5 text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (!session?.user) {
+    return null
+  }
 
   return (
     <SidebarProvider

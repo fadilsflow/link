@@ -20,7 +20,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { authClient } from '@/lib/auth-client'
-
 import { Button } from '@/components/ui/button'
 import {
   Menu,
@@ -44,7 +43,7 @@ import { Spinner } from '@/components/ui/spinner'
 import EmptyState from '@/components/empty-state'
 import { BASE_URL } from '@/lib/constans'
 
-export const Route = createFileRoute('/$username/admin/products')({
+export const Route = createFileRoute('/admin/products')({
   component: ProductAdminLayout,
 })
 
@@ -83,7 +82,7 @@ function ProductActions({
   username,
 }: {
   product: ProductRow
-  username: string
+  username: string | null
 }) {
   const queryClient = useQueryClient()
   const [showDeleteAlert, setShowDeleteAlert] = React.useState(false)
@@ -127,9 +126,12 @@ function ProductActions({
     })
   }
 
-  const publicUrl = `${PUBLIC_BASE_ORIGIN}/${username}/products/${product.id}`
+  const publicUrl = username
+    ? `${PUBLIC_BASE_ORIGIN}/${username}/products/${product.id}`
+    : `${PUBLIC_BASE_ORIGIN}/products/${product.id}`
   const checkoutUrl = `${publicUrl}/checkout`
-  const href = `/${username}/admin/products/${product.id}`
+  const href = `/admin/products/${product.id}`
+
   return (
     <>
       <Menu>
@@ -215,7 +217,7 @@ function ProductActions({
   )
 }
 
-function getColumns(username: string): Array<ColumnDef<ProductRow>> {
+function getColumns(username: string | null): Array<ColumnDef<ProductRow>> {
   return [
     {
       accessorKey: 'title',
@@ -224,8 +226,11 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
       ),
       cell: ({ row }) => {
         const imageUrl = row.original.images?.[0]
-        const href = `/${username}/admin/products/${row.original.id}`
-        const publicUrl = `${PUBLIC_BASE_ORIGIN}/${username}/products/${row.original.id}`
+        const href = `/admin/products/${row.original.id}`
+        const publicUrl = username
+          ? `${PUBLIC_BASE_ORIGIN}/${username}/products/${row.original.id}`
+          : `${PUBLIC_BASE_ORIGIN}/products/${row.original.id}`
+
         return (
           <div className="relative flex items-center gap-4 py-1 group">
             <Link to={href} className="absolute inset-0 z-10" />
@@ -246,14 +251,15 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
               <span className="font-bold text-sm truncate max-w-[200px] sm:max-w-[300px]">
                 {row.original.title || 'Untitled Product'}
               </span>
-              <Link
+              <a
                 className="text-xs max-w-[200px] sm:max-w-[300px] line-clamp-1 hover:underline relative z-20 w-fit"
-                to={publicUrl}
+                href={publicUrl}
                 target="_blank"
+                rel="noreferrer"
                 onClick={(e) => e.stopPropagation()}
               >
                 {publicUrl.replace(/^https?:\/\//, '')}
-              </Link>
+              </a>
             </div>
           </div>
         )
@@ -303,7 +309,6 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
               isActive: value,
             }),
           onMutate: async (newValue) => {
-            // Optimistic update
             await queryClient.cancelQueries({
               queryKey: ['products', session?.user.id],
             })
@@ -391,9 +396,10 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
 }
 
 function ProductAdminLayout() {
-  const { username } = Route.useParams()
-
   const { data: session } = authClient.useSession()
+  const username =
+    (session?.user as { username?: string | null } | undefined)?.username ??
+    null
 
   const {
     data: products = [],
@@ -408,15 +414,13 @@ function ProductAdminLayout() {
       })
     },
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
     enabled: !!session?.user.id,
   })
 
   const columns = React.useMemo(() => getColumns(username), [username])
 
   if (!session?.user) return null
-
-  const newHref = `/${username}/admin/products/new`
 
   return (
     <div className="space-y-6 pb-20 p-6">
@@ -427,7 +431,7 @@ function ProductAdminLayout() {
           </AppHeaderDescription>
         </AppHeaderContent>
         <AppHeaderActions>
-          <Button size="sm" render={<Link to={newHref} />}>
+          <Button size="sm" render={<Link to="/admin/products/new" />}>
             <Plus className="h-4 w-4 mr-1.5" />
             New product
           </Button>
@@ -446,7 +450,7 @@ function ProductAdminLayout() {
           minutes and start making sales."
             icon={<PackageIcon className="h-5 w-5" />}
           >
-            <Button render={<Link to={newHref} />}>
+            <Button render={<Link to="/admin/products/new" />}>
               <Plus className="h-4 w-4 mr-1.5" />
               Create Product
             </Button>

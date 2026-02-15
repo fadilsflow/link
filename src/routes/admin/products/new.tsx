@@ -22,17 +22,16 @@ import {
 
 import { Button } from '@/components/ui/button'
 
-export const Route = createFileRoute('/$username/admin/products/new')({
+export const Route = createFileRoute('/admin/products/new')({
   component: ProductNewRoute,
 })
 
 function ProductNewRoute() {
-  const { username } = Route.useParams()
   const queryClient = useQueryClient()
   const router = useRouter()
 
   const { data: dashboardData } = useQuery({
-    queryKey: ['dashboard', username],
+    queryKey: ['dashboard'],
     queryFn: () => getDashboardData(),
     refetchOnWindowFocus: false,
     staleTime: Infinity,
@@ -59,7 +58,7 @@ function ProductNewRoute() {
   }, [user, form])
 
   const createMutation = useMutation({
-    mutationKey: ['product-create', username],
+    mutationKey: ['product-create'],
     mutationFn: async (values: ProductFormValues) => {
       const base = {
         userId: values.userId,
@@ -86,7 +85,7 @@ function ProductNewRoute() {
       return trpcClient.product.create.mutate(base)
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       await queryClient.invalidateQueries({
         queryKey: ['products', user?.id],
       })
@@ -94,7 +93,7 @@ function ProductNewRoute() {
         title: 'Product created',
         description: 'Your product has been created successfully.',
       })
-      router.navigate({ to: '/$username/admin/products', params: { username } })
+      router.navigate({ to: '/admin/products' })
     },
     onError: (error: any) => {
       toastManager.add({
@@ -130,8 +129,7 @@ function ProductNewRoute() {
       setIsOpen(false)
       setTimeout(() => {
         router.navigate({
-          to: '/$username/admin/products',
-          params: { username },
+          to: '/admin/products',
         })
       }, 300)
     } else {

@@ -33,7 +33,7 @@ import SocialEditor from '@/components/dashboard/SocialEditor'
 import { toastManager } from '@/components/ui/toast'
 import { usePreview } from '@/lib/preview-context'
 
-export const Route = createFileRoute('/$username/admin/editor/profiles')({
+export const Route = createFileRoute('/admin/editor/profiles')({
   component: AdminDashboard,
   loader: async () => {
     return await getDashboardData()
@@ -62,7 +62,6 @@ const productSchema = z.object({
 
 function AdminDashboard() {
   const queryClient = useQueryClient()
-  const { username } = Route.useParams()
   const hasHydratedRef = useRef(false)
   const { user: previewUser, setUser, setBlocks, updateUser } = usePreview()
 
@@ -73,7 +72,7 @@ function AdminDashboard() {
   const isManipulatingRef = useRef(false)
   const blockDebounceRefs = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
-  const queryKey = ['dashboard', username]
+  const queryKey = ['dashboard']
 
   const { data: dashboardData } = useQuery({
     queryKey,
@@ -132,12 +131,12 @@ function AdminDashboard() {
       if (!old) return old
       return { ...old, blocks: localBlocks }
     })
-  }, [localBlocks, queryClient, username])
+  }, [localBlocks, queryClient])
 
   const user = dashboardData?.user
 
   const updateProfile = useMutation({
-    mutationKey: ['updateProfile', username],
+    mutationKey: ['updateProfile'],
     mutationFn: (data: {
       userId: string
       name?: string
@@ -151,7 +150,7 @@ function AdminDashboard() {
   })
 
   const createBlock = useMutation({
-    mutationKey: ['createBlock', username],
+    mutationKey: ['createBlock'],
     mutationFn: (data: {
       userId: string
       title: string
@@ -175,7 +174,7 @@ function AdminDashboard() {
   })
 
   const reorderBlocks = useMutation({
-    mutationKey: ['reorderBlocks', username],
+    mutationKey: ['reorderBlocks'],
     mutationFn: (data: { items: Array<{ id: string; order: number }> }) =>
       trpcClient.block.reorder.mutate(data),
     onSuccess: () => {
@@ -190,7 +189,7 @@ function AdminDashboard() {
   })
 
   const updateBlockMutation = useMutation({
-    mutationKey: ['updateBlock', username],
+    mutationKey: ['updateBlock'],
     mutationFn: (data: {
       id: string
       title?: string
@@ -211,7 +210,7 @@ function AdminDashboard() {
   })
 
   const deleteBlockMutation = useMutation({
-    mutationKey: ['deleteBlock', username],
+    mutationKey: ['deleteBlock'],
     mutationFn: (data: { id: string }) => trpcClient.block.delete.mutate(data),
     onSuccess: (_res, variables) => {
       setLocalBlocks((prev) => prev.filter((l) => l.id !== variables.id))
@@ -458,7 +457,7 @@ function AdminDashboard() {
       <section>
         <SocialEditor
           userId={user.id}
-          username={username}
+          username={user.username ?? ''}
           socialLinks={dashboardData.socialLinks}
         />
       </section>

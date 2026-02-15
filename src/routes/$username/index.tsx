@@ -415,7 +415,7 @@ function UserProfile() {
             value={tab}
             onValueChange={(val) =>
               navigate({
-                search: (prev) => ({ ...prev, tab: val }),
+                search: (prev: Record<string, unknown>) => ({ ...prev, tab: val }),
                 replace: true,
               })
             }

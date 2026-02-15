@@ -17,8 +17,7 @@ export const Route = createFileRoute('/onboarding')({
     // If already has username, redirect to admin
     if (status.hasUsername && status.user.username) {
       throw redirect({
-        to: '/$username/admin/editor/profiles',
-        params: { username: status.user.username },
+        to: '/admin/editor/profiles',
       })
     }
   },
@@ -39,15 +38,9 @@ function OnboardingPage() {
       username,
     })
 
-    // Refresh session to get updated user data
-    const { data: updatedSession } = await authClient.getSession()
-    const newUsername =
-      (updatedSession?.user as { username?: string }).username || username
-
     // Redirect to admin
     navigate({
-      to: '/$username/admin/editor/profiles',
-      params: { username: newUsername },
+      to: '/admin/editor/profiles',
     })
   }
 

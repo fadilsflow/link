@@ -77,30 +77,21 @@ export default function UserButton() {
         <MenuGroup>
           <MenuItem
             render={
-              <Link
-                to={`/$username/admin`}
-                params={{ username }}
-              />
+              <Link to="/admin" />
             }
           >
             Dashboard
           </MenuItem>
           <MenuItem
             render={
-              <Link
-                to={`/$username/admin/editor/profiles`}
-                params={{ username }}
-              />
+              <Link to="/admin/editor/profiles" />
             }
           >
             Edit Profile
           </MenuItem>
           <MenuItem
             render={
-              <Link
-                to={`/$username/admin/editor/appearance`}
-                params={{ username }}
-              />
+              <Link to="/admin/editor/appearance" />
             }
           >
             Appearance
@@ -128,9 +119,7 @@ export default function UserButton() {
             await authClient.signOut({
               fetchOptions: {
                 onSuccess: () => {
-                  if (username) {
-                    queryClient.removeQueries({ queryKey: adminAuthQueryKey(username) })
-                  }
+                  queryClient.removeQueries({ queryKey: adminAuthQueryKey() })
                   router.invalidate()
                   router.navigate({ to: '/' })
                 },

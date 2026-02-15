@@ -19,15 +19,13 @@ import {
 import { usePreview } from '@/lib/preview-context'
 import { useDashboardThemePreference } from '@/lib/theme'
 
-export const Route = createFileRoute('/$username/admin/editor/appearance')({
+export const Route = createFileRoute('/admin/editor/appearance')({
   component: AppearanceRouteComponent,
 })
 
 function AppearanceRouteComponent() {
-  const { username } = Route.useParams()
-
   const { data: dashboardData } = useQuery({
-    queryKey: ['dashboard', username],
+    queryKey: ['dashboard'],
     queryFn: () => getDashboardData(),
     refetchOnWindowFocus: false,
     staleTime: Infinity,
@@ -36,10 +34,10 @@ function AppearanceRouteComponent() {
   const user = dashboardData?.user
   if (!user) return null
 
-  return <AppearanceEditor user={user} username={username} />
+  return <AppearanceEditor user={user} />
 }
 
-function AppearanceEditor({ user, username }: { user: any; username: string }) {
+function AppearanceEditor({ user }: { user: any }) {
   const queryClient = useQueryClient()
   const { user: previewUser, setUser, updateUser, setStatus } = usePreview()
 
@@ -59,7 +57,7 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
   }, [user, previewUser, setUser, updateUser])
 
   const updateAppearance = useMutation({
-    mutationKey: ['updateProfile', username],
+    mutationKey: ['updateProfile'],
     mutationFn: (data: {
       userId: string
       publicTheme?: ThemeOption
@@ -70,7 +68,7 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
     onMutate: () => setStatus({ isSaving: true, isSaved: false }),
     onSuccess: () => {
       setStatus({ isSaving: false, isSaved: true })
-      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
     onError: () => setStatus({ isSaving: false, isSaved: false }),
   })

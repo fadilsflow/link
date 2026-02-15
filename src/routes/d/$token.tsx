@@ -71,7 +71,7 @@ function OrderDeliveryPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {items.map((item) => (
+              {items.map((item: any) => (
                 <div key={item.id} className="space-y-4 border rounded-xl p-4">
                   <div className="flex items-start gap-4">
                     {item.image ? (
@@ -253,7 +253,7 @@ function OrderDeliveryPage() {
               </div>
               <Separator />
               <div className="space-y-2">
-                {items.map((item) => (
+                {items.map((item: any) => (
                   <div
                     key={item.id}
                     className="flex justify-between text-sm gap-2"

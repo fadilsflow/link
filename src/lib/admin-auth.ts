@@ -9,22 +9,21 @@ export type AdminAuthContextData = {
   image: string | null
 }
 
-export function adminAuthQueryKey(username: string) {
-  return ['admin-auth', username] as const
+export function adminAuthQueryKey() {
+  return ['admin-auth'] as const
 }
 
-export function adminAuthQueryOptions(username: string) {
+export function adminAuthQueryOptions() {
   return queryOptions({
-    queryKey: adminAuthQueryKey(username),
+    queryKey: adminAuthQueryKey(),
     queryFn: async (): Promise<AdminAuthContextData> => {
-      return await trpcClient.admin.getContext.query({ username })
+      return await trpcClient.admin.getContext.query()
     },
-    enabled: username.length > 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 30,
   })
 }
 
-export function useAdminAuthContext(username: string) {
-  return useQuery(adminAuthQueryOptions(username))
+export function useAdminAuthContext() {
+  return useQuery(adminAuthQueryOptions())
 }

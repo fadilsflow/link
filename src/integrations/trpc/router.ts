@@ -1710,22 +1710,20 @@ const adminRouter = {
     username: ctx.session.user.username ?? null,
   })),
 
-  getContext: protectedProcedure
-    .input(z.object({ username: z.string() }))
-    .query(({ input, ctx }) => {
-      const currentUsername = ctx.session.user.username
-      if (!currentUsername || currentUsername !== input.username) {
-        throw new TRPCError({ code: 'FORBIDDEN' })
-      }
+  getContext: protectedProcedure.query(({ ctx }) => {
+    const currentUsername = ctx.session.user.username
+    if (!currentUsername) {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    }
 
-      return {
-        userId: ctx.session.user.id,
-        username: currentUsername,
-        name: ctx.session.user.name,
-        email: ctx.session.user.email,
-        image: ctx.session.user.image ?? null,
-      }
-    }),
+    return {
+      userId: ctx.session.user.id,
+      username: currentUsername,
+      name: ctx.session.user.name,
+      email: ctx.session.user.email,
+      image: ctx.session.user.image ?? null,
+    }
+  }),
 } satisfies TRPCRouterRecord
 
 // ─── Main Router ─────────────────────────────────────────────────────────────

@@ -19,16 +19,15 @@ import { ThemeOptionCards } from '@/components/dashboard/appearance/ThemeOptionC
 
 type ThemeOption = 'system' | 'light' | 'dark'
 
-export const Route = createFileRoute('/$username/admin/settings')({
+export const Route = createFileRoute('/admin/settings')({
   component: SettingsPage,
 })
 
 function SettingsPage() {
-  const { username } = Route.useParams()
   const queryClient = useQueryClient()
 
   const { data: dashboardData } = useQuery({
-    queryKey: ['dashboard', username],
+    queryKey: ['dashboard'],
     queryFn: () => getDashboardData(),
     refetchOnWindowFocus: false,
     staleTime: Infinity,
@@ -44,7 +43,7 @@ function SettingsPage() {
         userId: user?.id ?? '',
         publicTheme,
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard', username] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
   })
 
   return (

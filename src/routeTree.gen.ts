@@ -10,41 +10,51 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as UsernameIndexRouteImport } from './routes/$username/index'
 import { Route as DTokenRouteImport } from './routes/d/$token'
 import { Route as CartCheckoutRouteImport } from './routes/cart/checkout'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
-import { Route as UsernameAdminRouteRouteImport } from './routes/$username/admin/route'
-import { Route as UsernameAdminIndexRouteImport } from './routes/$username/admin/index'
+import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminProductsRouteRouteImport } from './routes/admin/products/route'
+import { Route as AdminOrdersRouteRouteImport } from './routes/admin/orders/route'
+import { Route as AdminEditorRouteRouteImport } from './routes/admin/editor/route'
+import { Route as AdminBalanceRouteRouteImport } from './routes/admin/balance/route'
+import { Route as AdminAnalyticsRouteRouteImport } from './routes/admin/analytics/route'
+import { Route as AdminProductsIndexRouteImport } from './routes/admin/products/index'
+import { Route as AdminOrdersIndexRouteImport } from './routes/admin/orders/index'
+import { Route as AdminBalanceIndexRouteImport } from './routes/admin/balance/index'
+import { Route as AdminAnalyticsIndexRouteImport } from './routes/admin/analytics/index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as UsernameAdminSettingsRouteImport } from './routes/$username/admin/settings'
-import { Route as UsernameAdminProductsRouteRouteImport } from './routes/$username/admin/products/route'
-import { Route as UsernameAdminOrdersRouteRouteImport } from './routes/$username/admin/orders/route'
-import { Route as UsernameAdminEditorRouteRouteImport } from './routes/$username/admin/editor/route'
-import { Route as UsernameAdminBalanceRouteRouteImport } from './routes/$username/admin/balance/route'
-import { Route as UsernameAdminAnalyticsRouteRouteImport } from './routes/$username/admin/analytics/route'
+import { Route as AdminProductsNewRouteImport } from './routes/admin/products/new'
+import { Route as AdminProductsProductIdRouteImport } from './routes/admin/products/$productId'
+import { Route as AdminEditorProfilesRouteImport } from './routes/admin/editor/profiles'
+import { Route as AdminEditorAppearanceRouteImport } from './routes/admin/editor/appearance'
 import { Route as UsernameProductsProductIdIndexRouteImport } from './routes/$username/products/$productId/index'
-import { Route as UsernameAdminProductsIndexRouteImport } from './routes/$username/admin/products/index'
-import { Route as UsernameAdminOrdersIndexRouteImport } from './routes/$username/admin/orders/index'
-import { Route as UsernameAdminBalanceIndexRouteImport } from './routes/$username/admin/balance/index'
-import { Route as UsernameAdminAnalyticsIndexRouteImport } from './routes/$username/admin/analytics/index'
 import { Route as UsernameProductsProductIdCheckoutRouteImport } from './routes/$username/products/$productId/checkout'
-import { Route as UsernameAdminProductsNewRouteImport } from './routes/$username/admin/products/new'
-import { Route as UsernameAdminProductsProductIdRouteImport } from './routes/$username/admin/products/$productId'
-import { Route as UsernameAdminEditorProfilesRouteImport } from './routes/$username/admin/editor/profiles'
-import { Route as UsernameAdminEditorAppearanceRouteImport } from './routes/$username/admin/editor/appearance'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const UsernameIndexRoute = UsernameIndexRouteImport.update({
   id: '/$username/',
@@ -66,15 +76,55 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UsernameAdminRouteRoute = UsernameAdminRouteRouteImport.update({
-  id: '/$username/admin',
-  path: '/$username/admin',
-  getParentRoute: () => rootRouteImport,
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const UsernameAdminIndexRoute = UsernameAdminIndexRouteImport.update({
+const AdminProductsRouteRoute = AdminProductsRouteRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminOrdersRouteRoute = AdminOrdersRouteRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminEditorRouteRoute = AdminEditorRouteRouteImport.update({
+  id: '/editor',
+  path: '/editor',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminBalanceRouteRoute = AdminBalanceRouteRouteImport.update({
+  id: '/balance',
+  path: '/balance',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAnalyticsRouteRoute = AdminAnalyticsRouteRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminProductsIndexRoute = AdminProductsIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => UsernameAdminRouteRoute,
+  getParentRoute: () => AdminProductsRouteRoute,
+} as any)
+const AdminOrdersIndexRoute = AdminOrdersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminOrdersRouteRoute,
+} as any)
+const AdminBalanceIndexRoute = AdminBalanceIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminBalanceRouteRoute,
+} as any)
+const AdminAnalyticsIndexRoute = AdminAnalyticsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminAnalyticsRouteRoute,
 } as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
@@ -86,70 +136,31 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UsernameAdminSettingsRoute = UsernameAdminSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => UsernameAdminRouteRoute,
+const AdminProductsNewRoute = AdminProductsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AdminProductsRouteRoute,
 } as any)
-const UsernameAdminProductsRouteRoute =
-  UsernameAdminProductsRouteRouteImport.update({
-    id: '/products',
-    path: '/products',
-    getParentRoute: () => UsernameAdminRouteRoute,
-  } as any)
-const UsernameAdminOrdersRouteRoute =
-  UsernameAdminOrdersRouteRouteImport.update({
-    id: '/orders',
-    path: '/orders',
-    getParentRoute: () => UsernameAdminRouteRoute,
-  } as any)
-const UsernameAdminEditorRouteRoute =
-  UsernameAdminEditorRouteRouteImport.update({
-    id: '/editor',
-    path: '/editor',
-    getParentRoute: () => UsernameAdminRouteRoute,
-  } as any)
-const UsernameAdminBalanceRouteRoute =
-  UsernameAdminBalanceRouteRouteImport.update({
-    id: '/balance',
-    path: '/balance',
-    getParentRoute: () => UsernameAdminRouteRoute,
-  } as any)
-const UsernameAdminAnalyticsRouteRoute =
-  UsernameAdminAnalyticsRouteRouteImport.update({
-    id: '/analytics',
-    path: '/analytics',
-    getParentRoute: () => UsernameAdminRouteRoute,
-  } as any)
+const AdminProductsProductIdRoute = AdminProductsProductIdRouteImport.update({
+  id: '/$productId',
+  path: '/$productId',
+  getParentRoute: () => AdminProductsRouteRoute,
+} as any)
+const AdminEditorProfilesRoute = AdminEditorProfilesRouteImport.update({
+  id: '/profiles',
+  path: '/profiles',
+  getParentRoute: () => AdminEditorRouteRoute,
+} as any)
+const AdminEditorAppearanceRoute = AdminEditorAppearanceRouteImport.update({
+  id: '/appearance',
+  path: '/appearance',
+  getParentRoute: () => AdminEditorRouteRoute,
+} as any)
 const UsernameProductsProductIdIndexRoute =
   UsernameProductsProductIdIndexRouteImport.update({
     id: '/$username/products/$productId/',
     path: '/$username/products/$productId/',
     getParentRoute: () => rootRouteImport,
-  } as any)
-const UsernameAdminProductsIndexRoute =
-  UsernameAdminProductsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => UsernameAdminProductsRouteRoute,
-  } as any)
-const UsernameAdminOrdersIndexRoute =
-  UsernameAdminOrdersIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => UsernameAdminOrdersRouteRoute,
-  } as any)
-const UsernameAdminBalanceIndexRoute =
-  UsernameAdminBalanceIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => UsernameAdminBalanceRouteRoute,
-  } as any)
-const UsernameAdminAnalyticsIndexRoute =
-  UsernameAdminAnalyticsIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => UsernameAdminAnalyticsRouteRoute,
   } as any)
 const UsernameProductsProductIdCheckoutRoute =
   UsernameProductsProductIdCheckoutRouteImport.update({
@@ -157,197 +168,173 @@ const UsernameProductsProductIdCheckoutRoute =
     path: '/$username/products/$productId/checkout',
     getParentRoute: () => rootRouteImport,
   } as any)
-const UsernameAdminProductsNewRoute =
-  UsernameAdminProductsNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => UsernameAdminProductsRouteRoute,
-  } as any)
-const UsernameAdminProductsProductIdRoute =
-  UsernameAdminProductsProductIdRouteImport.update({
-    id: '/$productId',
-    path: '/$productId',
-    getParentRoute: () => UsernameAdminProductsRouteRoute,
-  } as any)
-const UsernameAdminEditorProfilesRoute =
-  UsernameAdminEditorProfilesRouteImport.update({
-    id: '/profiles',
-    path: '/profiles',
-    getParentRoute: () => UsernameAdminEditorRouteRoute,
-  } as any)
-const UsernameAdminEditorAppearanceRoute =
-  UsernameAdminEditorAppearanceRouteImport.update({
-    id: '/appearance',
-    path: '/appearance',
-    getParentRoute: () => UsernameAdminEditorRouteRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/onboarding': typeof OnboardingRoute
-  '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
+  '/admin/analytics': typeof AdminAnalyticsRouteRouteWithChildren
+  '/admin/balance': typeof AdminBalanceRouteRouteWithChildren
+  '/admin/editor': typeof AdminEditorRouteRouteWithChildren
+  '/admin/orders': typeof AdminOrdersRouteRouteWithChildren
+  '/admin/products': typeof AdminProductsRouteRouteWithChildren
+  '/admin/settings': typeof AdminSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/cart/checkout': typeof CartCheckoutRoute
   '/d/$token': typeof DTokenRoute
   '/$username/': typeof UsernameIndexRoute
-  '/$username/admin/analytics': typeof UsernameAdminAnalyticsRouteRouteWithChildren
-  '/$username/admin/balance': typeof UsernameAdminBalanceRouteRouteWithChildren
-  '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
-  '/$username/admin/orders': typeof UsernameAdminOrdersRouteRouteWithChildren
-  '/$username/admin/products': typeof UsernameAdminProductsRouteRouteWithChildren
-  '/$username/admin/settings': typeof UsernameAdminSettingsRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/editor/appearance': typeof AdminEditorAppearanceRoute
+  '/admin/editor/profiles': typeof AdminEditorProfilesRoute
+  '/admin/products/$productId': typeof AdminProductsProductIdRoute
+  '/admin/products/new': typeof AdminProductsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
-  '/$username/admin/': typeof UsernameAdminIndexRoute
-  '/$username/admin/editor/appearance': typeof UsernameAdminEditorAppearanceRoute
-  '/$username/admin/editor/profiles': typeof UsernameAdminEditorProfilesRoute
-  '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
-  '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
+  '/admin/analytics/': typeof AdminAnalyticsIndexRoute
+  '/admin/balance/': typeof AdminBalanceIndexRoute
+  '/admin/orders/': typeof AdminOrdersIndexRoute
+  '/admin/products/': typeof AdminProductsIndexRoute
   '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
-  '/$username/admin/analytics/': typeof UsernameAdminAnalyticsIndexRoute
-  '/$username/admin/balance/': typeof UsernameAdminBalanceIndexRoute
-  '/$username/admin/orders/': typeof UsernameAdminOrdersIndexRoute
-  '/$username/admin/products/': typeof UsernameAdminProductsIndexRoute
   '/$username/products/$productId/': typeof UsernameProductsProductIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/admin/editor': typeof AdminEditorRouteRouteWithChildren
+  '/admin/settings': typeof AdminSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/cart/checkout': typeof CartCheckoutRoute
   '/d/$token': typeof DTokenRoute
   '/$username': typeof UsernameIndexRoute
-  '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
-  '/$username/admin/settings': typeof UsernameAdminSettingsRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/editor/appearance': typeof AdminEditorAppearanceRoute
+  '/admin/editor/profiles': typeof AdminEditorProfilesRoute
+  '/admin/products/$productId': typeof AdminProductsProductIdRoute
+  '/admin/products/new': typeof AdminProductsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
-  '/$username/admin': typeof UsernameAdminIndexRoute
-  '/$username/admin/editor/appearance': typeof UsernameAdminEditorAppearanceRoute
-  '/$username/admin/editor/profiles': typeof UsernameAdminEditorProfilesRoute
-  '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
-  '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
+  '/admin/analytics': typeof AdminAnalyticsIndexRoute
+  '/admin/balance': typeof AdminBalanceIndexRoute
+  '/admin/orders': typeof AdminOrdersIndexRoute
+  '/admin/products': typeof AdminProductsIndexRoute
   '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
-  '/$username/admin/analytics': typeof UsernameAdminAnalyticsIndexRoute
-  '/$username/admin/balance': typeof UsernameAdminBalanceIndexRoute
-  '/$username/admin/orders': typeof UsernameAdminOrdersIndexRoute
-  '/$username/admin/products': typeof UsernameAdminProductsIndexRoute
   '/$username/products/$productId': typeof UsernameProductsProductIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/onboarding': typeof OnboardingRoute
-  '/$username/admin': typeof UsernameAdminRouteRouteWithChildren
+  '/admin/analytics': typeof AdminAnalyticsRouteRouteWithChildren
+  '/admin/balance': typeof AdminBalanceRouteRouteWithChildren
+  '/admin/editor': typeof AdminEditorRouteRouteWithChildren
+  '/admin/orders': typeof AdminOrdersRouteRouteWithChildren
+  '/admin/products': typeof AdminProductsRouteRouteWithChildren
+  '/admin/settings': typeof AdminSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/cart/checkout': typeof CartCheckoutRoute
   '/d/$token': typeof DTokenRoute
   '/$username/': typeof UsernameIndexRoute
-  '/$username/admin/analytics': typeof UsernameAdminAnalyticsRouteRouteWithChildren
-  '/$username/admin/balance': typeof UsernameAdminBalanceRouteRouteWithChildren
-  '/$username/admin/editor': typeof UsernameAdminEditorRouteRouteWithChildren
-  '/$username/admin/orders': typeof UsernameAdminOrdersRouteRouteWithChildren
-  '/$username/admin/products': typeof UsernameAdminProductsRouteRouteWithChildren
-  '/$username/admin/settings': typeof UsernameAdminSettingsRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/editor/appearance': typeof AdminEditorAppearanceRoute
+  '/admin/editor/profiles': typeof AdminEditorProfilesRoute
+  '/admin/products/$productId': typeof AdminProductsProductIdRoute
+  '/admin/products/new': typeof AdminProductsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
-  '/$username/admin/': typeof UsernameAdminIndexRoute
-  '/$username/admin/editor/appearance': typeof UsernameAdminEditorAppearanceRoute
-  '/$username/admin/editor/profiles': typeof UsernameAdminEditorProfilesRoute
-  '/$username/admin/products/$productId': typeof UsernameAdminProductsProductIdRoute
-  '/$username/admin/products/new': typeof UsernameAdminProductsNewRoute
+  '/admin/analytics/': typeof AdminAnalyticsIndexRoute
+  '/admin/balance/': typeof AdminBalanceIndexRoute
+  '/admin/orders/': typeof AdminOrdersIndexRoute
+  '/admin/products/': typeof AdminProductsIndexRoute
   '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
-  '/$username/admin/analytics/': typeof UsernameAdminAnalyticsIndexRoute
-  '/$username/admin/balance/': typeof UsernameAdminBalanceIndexRoute
-  '/$username/admin/orders/': typeof UsernameAdminOrdersIndexRoute
-  '/$username/admin/products/': typeof UsernameAdminProductsIndexRoute
   '/$username/products/$productId/': typeof UsernameProductsProductIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/onboarding'
-    | '/$username/admin'
+    | '/admin/analytics'
+    | '/admin/balance'
+    | '/admin/editor'
+    | '/admin/orders'
+    | '/admin/products'
+    | '/admin/settings'
     | '/auth/callback'
     | '/cart/checkout'
     | '/d/$token'
     | '/$username/'
-    | '/$username/admin/analytics'
-    | '/$username/admin/balance'
-    | '/$username/admin/editor'
-    | '/$username/admin/orders'
-    | '/$username/admin/products'
-    | '/$username/admin/settings'
+    | '/admin/'
+    | '/admin/editor/appearance'
+    | '/admin/editor/profiles'
+    | '/admin/products/$productId'
+    | '/admin/products/new'
     | '/api/auth/$'
     | '/api/trpc/$'
-    | '/$username/admin/'
-    | '/$username/admin/editor/appearance'
-    | '/$username/admin/editor/profiles'
-    | '/$username/admin/products/$productId'
-    | '/$username/admin/products/new'
+    | '/admin/analytics/'
+    | '/admin/balance/'
+    | '/admin/orders/'
+    | '/admin/products/'
     | '/$username/products/$productId/checkout'
-    | '/$username/admin/analytics/'
-    | '/$username/admin/balance/'
-    | '/$username/admin/orders/'
-    | '/$username/admin/products/'
     | '/$username/products/$productId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/onboarding'
+    | '/admin/editor'
+    | '/admin/settings'
     | '/auth/callback'
     | '/cart/checkout'
     | '/d/$token'
     | '/$username'
-    | '/$username/admin/editor'
-    | '/$username/admin/settings'
+    | '/admin'
+    | '/admin/editor/appearance'
+    | '/admin/editor/profiles'
+    | '/admin/products/$productId'
+    | '/admin/products/new'
     | '/api/auth/$'
     | '/api/trpc/$'
-    | '/$username/admin'
-    | '/$username/admin/editor/appearance'
-    | '/$username/admin/editor/profiles'
-    | '/$username/admin/products/$productId'
-    | '/$username/admin/products/new'
+    | '/admin/analytics'
+    | '/admin/balance'
+    | '/admin/orders'
+    | '/admin/products'
     | '/$username/products/$productId/checkout'
-    | '/$username/admin/analytics'
-    | '/$username/admin/balance'
-    | '/$username/admin/orders'
-    | '/$username/admin/products'
     | '/$username/products/$productId'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/onboarding'
-    | '/$username/admin'
+    | '/admin/analytics'
+    | '/admin/balance'
+    | '/admin/editor'
+    | '/admin/orders'
+    | '/admin/products'
+    | '/admin/settings'
     | '/auth/callback'
     | '/cart/checkout'
     | '/d/$token'
     | '/$username/'
-    | '/$username/admin/analytics'
-    | '/$username/admin/balance'
-    | '/$username/admin/editor'
-    | '/$username/admin/orders'
-    | '/$username/admin/products'
-    | '/$username/admin/settings'
+    | '/admin/'
+    | '/admin/editor/appearance'
+    | '/admin/editor/profiles'
+    | '/admin/products/$productId'
+    | '/admin/products/new'
     | '/api/auth/$'
     | '/api/trpc/$'
-    | '/$username/admin/'
-    | '/$username/admin/editor/appearance'
-    | '/$username/admin/editor/profiles'
-    | '/$username/admin/products/$productId'
-    | '/$username/admin/products/new'
+    | '/admin/analytics/'
+    | '/admin/balance/'
+    | '/admin/orders/'
+    | '/admin/products/'
     | '/$username/products/$productId/checkout'
-    | '/$username/admin/analytics/'
-    | '/$username/admin/balance/'
-    | '/$username/admin/orders/'
-    | '/$username/admin/products/'
     | '/$username/products/$productId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
-  UsernameAdminRouteRoute: typeof UsernameAdminRouteRouteWithChildren
   AuthCallbackRoute: typeof AuthCallbackRoute
   CartCheckoutRoute: typeof CartCheckoutRoute
   DTokenRoute: typeof DTokenRoute
@@ -367,12 +354,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/$username/': {
       id: '/$username/'
@@ -402,19 +403,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/$username/admin': {
-      id: '/$username/admin'
-      path: '/$username/admin'
-      fullPath: '/$username/admin'
-      preLoaderRoute: typeof UsernameAdminRouteRouteImport
-      parentRoute: typeof rootRouteImport
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/$username/admin/': {
-      id: '/$username/admin/'
+    '/admin/products': {
+      id: '/admin/products'
+      path: '/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AdminProductsRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/orders': {
+      id: '/admin/orders'
+      path: '/orders'
+      fullPath: '/admin/orders'
+      preLoaderRoute: typeof AdminOrdersRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/editor': {
+      id: '/admin/editor'
+      path: '/editor'
+      fullPath: '/admin/editor'
+      preLoaderRoute: typeof AdminEditorRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/balance': {
+      id: '/admin/balance'
+      path: '/balance'
+      fullPath: '/admin/balance'
+      preLoaderRoute: typeof AdminBalanceRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/products/': {
+      id: '/admin/products/'
       path: '/'
-      fullPath: '/$username/admin/'
-      preLoaderRoute: typeof UsernameAdminIndexRouteImport
-      parentRoute: typeof UsernameAdminRouteRoute
+      fullPath: '/admin/products/'
+      preLoaderRoute: typeof AdminProductsIndexRouteImport
+      parentRoute: typeof AdminProductsRouteRoute
+    }
+    '/admin/orders/': {
+      id: '/admin/orders/'
+      path: '/'
+      fullPath: '/admin/orders/'
+      preLoaderRoute: typeof AdminOrdersIndexRouteImport
+      parentRoute: typeof AdminOrdersRouteRoute
+    }
+    '/admin/balance/': {
+      id: '/admin/balance/'
+      path: '/'
+      fullPath: '/admin/balance/'
+      preLoaderRoute: typeof AdminBalanceIndexRouteImport
+      parentRoute: typeof AdminBalanceRouteRoute
+    }
+    '/admin/analytics/': {
+      id: '/admin/analytics/'
+      path: '/'
+      fullPath: '/admin/analytics/'
+      preLoaderRoute: typeof AdminAnalyticsIndexRouteImport
+      parentRoute: typeof AdminAnalyticsRouteRoute
     }
     '/api/trpc/$': {
       id: '/api/trpc/$'
@@ -430,47 +487,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/$username/admin/settings': {
-      id: '/$username/admin/settings'
-      path: '/settings'
-      fullPath: '/$username/admin/settings'
-      preLoaderRoute: typeof UsernameAdminSettingsRouteImport
-      parentRoute: typeof UsernameAdminRouteRoute
+    '/admin/products/new': {
+      id: '/admin/products/new'
+      path: '/new'
+      fullPath: '/admin/products/new'
+      preLoaderRoute: typeof AdminProductsNewRouteImport
+      parentRoute: typeof AdminProductsRouteRoute
     }
-    '/$username/admin/products': {
-      id: '/$username/admin/products'
-      path: '/products'
-      fullPath: '/$username/admin/products'
-      preLoaderRoute: typeof UsernameAdminProductsRouteRouteImport
-      parentRoute: typeof UsernameAdminRouteRoute
+    '/admin/products/$productId': {
+      id: '/admin/products/$productId'
+      path: '/$productId'
+      fullPath: '/admin/products/$productId'
+      preLoaderRoute: typeof AdminProductsProductIdRouteImport
+      parentRoute: typeof AdminProductsRouteRoute
     }
-    '/$username/admin/orders': {
-      id: '/$username/admin/orders'
-      path: '/orders'
-      fullPath: '/$username/admin/orders'
-      preLoaderRoute: typeof UsernameAdminOrdersRouteRouteImport
-      parentRoute: typeof UsernameAdminRouteRoute
+    '/admin/editor/profiles': {
+      id: '/admin/editor/profiles'
+      path: '/profiles'
+      fullPath: '/admin/editor/profiles'
+      preLoaderRoute: typeof AdminEditorProfilesRouteImport
+      parentRoute: typeof AdminEditorRouteRoute
     }
-    '/$username/admin/editor': {
-      id: '/$username/admin/editor'
-      path: '/editor'
-      fullPath: '/$username/admin/editor'
-      preLoaderRoute: typeof UsernameAdminEditorRouteRouteImport
-      parentRoute: typeof UsernameAdminRouteRoute
-    }
-    '/$username/admin/balance': {
-      id: '/$username/admin/balance'
-      path: '/balance'
-      fullPath: '/$username/admin/balance'
-      preLoaderRoute: typeof UsernameAdminBalanceRouteRouteImport
-      parentRoute: typeof UsernameAdminRouteRoute
-    }
-    '/$username/admin/analytics': {
-      id: '/$username/admin/analytics'
-      path: '/analytics'
-      fullPath: '/$username/admin/analytics'
-      preLoaderRoute: typeof UsernameAdminAnalyticsRouteRouteImport
-      parentRoute: typeof UsernameAdminRouteRoute
+    '/admin/editor/appearance': {
+      id: '/admin/editor/appearance'
+      path: '/appearance'
+      fullPath: '/admin/editor/appearance'
+      preLoaderRoute: typeof AdminEditorAppearanceRouteImport
+      parentRoute: typeof AdminEditorRouteRoute
     }
     '/$username/products/$productId/': {
       id: '/$username/products/$productId/'
@@ -479,34 +522,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsernameProductsProductIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/$username/admin/products/': {
-      id: '/$username/admin/products/'
-      path: '/'
-      fullPath: '/$username/admin/products/'
-      preLoaderRoute: typeof UsernameAdminProductsIndexRouteImport
-      parentRoute: typeof UsernameAdminProductsRouteRoute
-    }
-    '/$username/admin/orders/': {
-      id: '/$username/admin/orders/'
-      path: '/'
-      fullPath: '/$username/admin/orders/'
-      preLoaderRoute: typeof UsernameAdminOrdersIndexRouteImport
-      parentRoute: typeof UsernameAdminOrdersRouteRoute
-    }
-    '/$username/admin/balance/': {
-      id: '/$username/admin/balance/'
-      path: '/'
-      fullPath: '/$username/admin/balance/'
-      preLoaderRoute: typeof UsernameAdminBalanceIndexRouteImport
-      parentRoute: typeof UsernameAdminBalanceRouteRoute
-    }
-    '/$username/admin/analytics/': {
-      id: '/$username/admin/analytics/'
-      path: '/'
-      fullPath: '/$username/admin/analytics/'
-      preLoaderRoute: typeof UsernameAdminAnalyticsIndexRouteImport
-      parentRoute: typeof UsernameAdminAnalyticsRouteRoute
-    }
     '/$username/products/$productId/checkout': {
       id: '/$username/products/$productId/checkout'
       path: '/$username/products/$productId/checkout'
@@ -514,141 +529,98 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsernameProductsProductIdCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/$username/admin/products/new': {
-      id: '/$username/admin/products/new'
-      path: '/new'
-      fullPath: '/$username/admin/products/new'
-      preLoaderRoute: typeof UsernameAdminProductsNewRouteImport
-      parentRoute: typeof UsernameAdminProductsRouteRoute
-    }
-    '/$username/admin/products/$productId': {
-      id: '/$username/admin/products/$productId'
-      path: '/$productId'
-      fullPath: '/$username/admin/products/$productId'
-      preLoaderRoute: typeof UsernameAdminProductsProductIdRouteImport
-      parentRoute: typeof UsernameAdminProductsRouteRoute
-    }
-    '/$username/admin/editor/profiles': {
-      id: '/$username/admin/editor/profiles'
-      path: '/profiles'
-      fullPath: '/$username/admin/editor/profiles'
-      preLoaderRoute: typeof UsernameAdminEditorProfilesRouteImport
-      parentRoute: typeof UsernameAdminEditorRouteRoute
-    }
-    '/$username/admin/editor/appearance': {
-      id: '/$username/admin/editor/appearance'
-      path: '/appearance'
-      fullPath: '/$username/admin/editor/appearance'
-      preLoaderRoute: typeof UsernameAdminEditorAppearanceRouteImport
-      parentRoute: typeof UsernameAdminEditorRouteRoute
-    }
   }
 }
 
-interface UsernameAdminAnalyticsRouteRouteChildren {
-  UsernameAdminAnalyticsIndexRoute: typeof UsernameAdminAnalyticsIndexRoute
+interface AdminAnalyticsRouteRouteChildren {
+  AdminAnalyticsIndexRoute: typeof AdminAnalyticsIndexRoute
 }
 
-const UsernameAdminAnalyticsRouteRouteChildren: UsernameAdminAnalyticsRouteRouteChildren =
-  {
-    UsernameAdminAnalyticsIndexRoute: UsernameAdminAnalyticsIndexRoute,
-  }
-
-const UsernameAdminAnalyticsRouteRouteWithChildren =
-  UsernameAdminAnalyticsRouteRoute._addFileChildren(
-    UsernameAdminAnalyticsRouteRouteChildren,
-  )
-
-interface UsernameAdminBalanceRouteRouteChildren {
-  UsernameAdminBalanceIndexRoute: typeof UsernameAdminBalanceIndexRoute
+const AdminAnalyticsRouteRouteChildren: AdminAnalyticsRouteRouteChildren = {
+  AdminAnalyticsIndexRoute: AdminAnalyticsIndexRoute,
 }
 
-const UsernameAdminBalanceRouteRouteChildren: UsernameAdminBalanceRouteRouteChildren =
-  {
-    UsernameAdminBalanceIndexRoute: UsernameAdminBalanceIndexRoute,
-  }
+const AdminAnalyticsRouteRouteWithChildren =
+  AdminAnalyticsRouteRoute._addFileChildren(AdminAnalyticsRouteRouteChildren)
 
-const UsernameAdminBalanceRouteRouteWithChildren =
-  UsernameAdminBalanceRouteRoute._addFileChildren(
-    UsernameAdminBalanceRouteRouteChildren,
-  )
-
-interface UsernameAdminEditorRouteRouteChildren {
-  UsernameAdminEditorAppearanceRoute: typeof UsernameAdminEditorAppearanceRoute
-  UsernameAdminEditorProfilesRoute: typeof UsernameAdminEditorProfilesRoute
+interface AdminBalanceRouteRouteChildren {
+  AdminBalanceIndexRoute: typeof AdminBalanceIndexRoute
 }
 
-const UsernameAdminEditorRouteRouteChildren: UsernameAdminEditorRouteRouteChildren =
-  {
-    UsernameAdminEditorAppearanceRoute: UsernameAdminEditorAppearanceRoute,
-    UsernameAdminEditorProfilesRoute: UsernameAdminEditorProfilesRoute,
-  }
-
-const UsernameAdminEditorRouteRouteWithChildren =
-  UsernameAdminEditorRouteRoute._addFileChildren(
-    UsernameAdminEditorRouteRouteChildren,
-  )
-
-interface UsernameAdminOrdersRouteRouteChildren {
-  UsernameAdminOrdersIndexRoute: typeof UsernameAdminOrdersIndexRoute
+const AdminBalanceRouteRouteChildren: AdminBalanceRouteRouteChildren = {
+  AdminBalanceIndexRoute: AdminBalanceIndexRoute,
 }
 
-const UsernameAdminOrdersRouteRouteChildren: UsernameAdminOrdersRouteRouteChildren =
-  {
-    UsernameAdminOrdersIndexRoute: UsernameAdminOrdersIndexRoute,
-  }
+const AdminBalanceRouteRouteWithChildren =
+  AdminBalanceRouteRoute._addFileChildren(AdminBalanceRouteRouteChildren)
 
-const UsernameAdminOrdersRouteRouteWithChildren =
-  UsernameAdminOrdersRouteRoute._addFileChildren(
-    UsernameAdminOrdersRouteRouteChildren,
-  )
-
-interface UsernameAdminProductsRouteRouteChildren {
-  UsernameAdminProductsProductIdRoute: typeof UsernameAdminProductsProductIdRoute
-  UsernameAdminProductsNewRoute: typeof UsernameAdminProductsNewRoute
-  UsernameAdminProductsIndexRoute: typeof UsernameAdminProductsIndexRoute
+interface AdminEditorRouteRouteChildren {
+  AdminEditorAppearanceRoute: typeof AdminEditorAppearanceRoute
+  AdminEditorProfilesRoute: typeof AdminEditorProfilesRoute
 }
 
-const UsernameAdminProductsRouteRouteChildren: UsernameAdminProductsRouteRouteChildren =
-  {
-    UsernameAdminProductsProductIdRoute: UsernameAdminProductsProductIdRoute,
-    UsernameAdminProductsNewRoute: UsernameAdminProductsNewRoute,
-    UsernameAdminProductsIndexRoute: UsernameAdminProductsIndexRoute,
-  }
-
-const UsernameAdminProductsRouteRouteWithChildren =
-  UsernameAdminProductsRouteRoute._addFileChildren(
-    UsernameAdminProductsRouteRouteChildren,
-  )
-
-interface UsernameAdminRouteRouteChildren {
-  UsernameAdminAnalyticsRouteRoute: typeof UsernameAdminAnalyticsRouteRouteWithChildren
-  UsernameAdminBalanceRouteRoute: typeof UsernameAdminBalanceRouteRouteWithChildren
-  UsernameAdminEditorRouteRoute: typeof UsernameAdminEditorRouteRouteWithChildren
-  UsernameAdminOrdersRouteRoute: typeof UsernameAdminOrdersRouteRouteWithChildren
-  UsernameAdminProductsRouteRoute: typeof UsernameAdminProductsRouteRouteWithChildren
-  UsernameAdminSettingsRoute: typeof UsernameAdminSettingsRoute
-  UsernameAdminIndexRoute: typeof UsernameAdminIndexRoute
+const AdminEditorRouteRouteChildren: AdminEditorRouteRouteChildren = {
+  AdminEditorAppearanceRoute: AdminEditorAppearanceRoute,
+  AdminEditorProfilesRoute: AdminEditorProfilesRoute,
 }
 
-const UsernameAdminRouteRouteChildren: UsernameAdminRouteRouteChildren = {
-  UsernameAdminAnalyticsRouteRoute:
-    UsernameAdminAnalyticsRouteRouteWithChildren,
-  UsernameAdminBalanceRouteRoute: UsernameAdminBalanceRouteRouteWithChildren,
-  UsernameAdminEditorRouteRoute: UsernameAdminEditorRouteRouteWithChildren,
-  UsernameAdminOrdersRouteRoute: UsernameAdminOrdersRouteRouteWithChildren,
-  UsernameAdminProductsRouteRoute: UsernameAdminProductsRouteRouteWithChildren,
-  UsernameAdminSettingsRoute: UsernameAdminSettingsRoute,
-  UsernameAdminIndexRoute: UsernameAdminIndexRoute,
+const AdminEditorRouteRouteWithChildren =
+  AdminEditorRouteRoute._addFileChildren(AdminEditorRouteRouteChildren)
+
+interface AdminOrdersRouteRouteChildren {
+  AdminOrdersIndexRoute: typeof AdminOrdersIndexRoute
 }
 
-const UsernameAdminRouteRouteWithChildren =
-  UsernameAdminRouteRoute._addFileChildren(UsernameAdminRouteRouteChildren)
+const AdminOrdersRouteRouteChildren: AdminOrdersRouteRouteChildren = {
+  AdminOrdersIndexRoute: AdminOrdersIndexRoute,
+}
+
+const AdminOrdersRouteRouteWithChildren =
+  AdminOrdersRouteRoute._addFileChildren(AdminOrdersRouteRouteChildren)
+
+interface AdminProductsRouteRouteChildren {
+  AdminProductsProductIdRoute: typeof AdminProductsProductIdRoute
+  AdminProductsNewRoute: typeof AdminProductsNewRoute
+  AdminProductsIndexRoute: typeof AdminProductsIndexRoute
+}
+
+const AdminProductsRouteRouteChildren: AdminProductsRouteRouteChildren = {
+  AdminProductsProductIdRoute: AdminProductsProductIdRoute,
+  AdminProductsNewRoute: AdminProductsNewRoute,
+  AdminProductsIndexRoute: AdminProductsIndexRoute,
+}
+
+const AdminProductsRouteRouteWithChildren =
+  AdminProductsRouteRoute._addFileChildren(AdminProductsRouteRouteChildren)
+
+interface AdminRouteRouteChildren {
+  AdminAnalyticsRouteRoute: typeof AdminAnalyticsRouteRouteWithChildren
+  AdminBalanceRouteRoute: typeof AdminBalanceRouteRouteWithChildren
+  AdminEditorRouteRoute: typeof AdminEditorRouteRouteWithChildren
+  AdminOrdersRouteRoute: typeof AdminOrdersRouteRouteWithChildren
+  AdminProductsRouteRoute: typeof AdminProductsRouteRouteWithChildren
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAnalyticsRouteRoute: AdminAnalyticsRouteRouteWithChildren,
+  AdminBalanceRouteRoute: AdminBalanceRouteRouteWithChildren,
+  AdminEditorRouteRoute: AdminEditorRouteRouteWithChildren,
+  AdminOrdersRouteRoute: AdminOrdersRouteRouteWithChildren,
+  AdminProductsRouteRoute: AdminProductsRouteRouteWithChildren,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
-  UsernameAdminRouteRoute: UsernameAdminRouteRouteWithChildren,
   AuthCallbackRoute: AuthCallbackRoute,
   CartCheckoutRoute: CartCheckoutRoute,
   DTokenRoute: DTokenRoute,
@@ -662,12 +634,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

@@ -27,7 +27,7 @@ type AdminNavItem = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
 }
 
-const navItems: AdminNavItem[] = [
+const navItems: Array<AdminNavItem> = [
   { title: 'Home', url: '/$username/admin', icon: Home },
   { title: 'Profile', url: '/$username/admin/editor/profiles', icon: User },
   { title: 'Appearance', url: '/$username/admin/editor/appearance', icon: Grid },
@@ -38,7 +38,7 @@ const navItems: AdminNavItem[] = [
   { title: 'Settings', url: '/$username/admin/settings', icon: Settings },
 ]
 
-const quickNav: AdminNavItem[] = [
+const quickNav: Array<AdminNavItem> = [
   navItems[0],
   navItems[3],
   navItems[4],
@@ -68,6 +68,7 @@ export function MobileAdminNav() {
               key={item.title}
               to={item.url}
               params={params}
+              preload="intent"
               className={cn(
                 'flex flex-col items-center justify-center gap-1 text-[11px] text-muted-foreground transition-colors',
                 active && 'text-foreground',
@@ -98,6 +99,7 @@ export function MobileAdminNav() {
                       <Link
                         to={item.url}
                         params={params}
+                        preload="intent"
                         className={cn(
                           'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
                           active && 'border-primary text-primary bg-primary/5',

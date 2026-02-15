@@ -1,11 +1,13 @@
 import {
   UserIcon,
 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter } from '@tanstack/react-router'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { toastManager } from './ui/toast'
 import { authClient } from '@/lib/auth-client'
+import { adminAuthQueryKey } from '@/lib/admin-auth'
 import {
   Menu,
   MenuGroup,
@@ -18,6 +20,7 @@ import {
 export default function UserButton() {
   const { data: session } = authClient.useSession()
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   if (!session?.user) return null
 
@@ -49,7 +52,7 @@ export default function UserButton() {
               alt={session.user.name || 'User'}
               src={session.user.image}
             />
-            <AvatarFallback>{session.user.name?.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{session.user.name.charAt(0)}</AvatarFallback>
           </Avatar>
         ) : (
           <div className="size-5 rounded-full bg-muted flex items-center justify-center">
@@ -57,7 +60,7 @@ export default function UserButton() {
           </div>
         )}
         <span className="text-sm font-medium">
-          {username || session.user.name?.split(' ')[0]}
+          {username || session.user.name.split(' ')[0]}
         </span>
       </MenuTrigger>
       <MenuPopup align="end" sideOffset={8} className="w-56">
@@ -120,6 +123,9 @@ export default function UserButton() {
             await authClient.signOut({
               fetchOptions: {
                 onSuccess: () => {
+                  if (username) {
+                    queryClient.removeQueries({ queryKey: adminAuthQueryKey(username) })
+                  }
                   router.invalidate()
                   router.navigate({ to: '/' })
                 },

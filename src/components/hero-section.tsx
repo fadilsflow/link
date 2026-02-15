@@ -18,7 +18,6 @@ export default function HeroSection() {
               Ubah ide menjadi penghasilan dengan satu halaman.
             </p>
 
-
             <Button
               size={'lg'}
               className=" text-sm mt-8 rounded-full lg:text-base  sm:w-auto hover:shadow-lg"

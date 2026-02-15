@@ -69,9 +69,6 @@ function AuthCallbackPage() {
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background">
       <div className="flex flex-col items-center gap-2">
         <Spinner className="h-8 w-8 text-primary" />
-        <p className="text-sm text-muted-foreground animate-pulse">
-          Verifying your session...
-        </p>
       </div>
     </div>
   )

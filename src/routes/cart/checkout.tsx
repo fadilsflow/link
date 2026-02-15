@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { ArrowLeft, CheckCircle, Loader2, ShoppingBag } from 'lucide-react'
+import { ArrowLeft, CheckCircle, ShoppingBag } from 'lucide-react'
 import { useCartStore } from '@/store/cart-store'
-import { cn, formatPrice } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -35,7 +35,7 @@ function CheckoutPage() {
       toastManager.add({
         title: 'Cart is empty',
         description: 'Please add items to cart before checkout',
-        variant: 'destructive',
+        type: 'destructive',
       })
       return
     }
@@ -67,7 +67,7 @@ function CheckoutPage() {
         title: 'Checkout failed',
         description:
           error instanceof Error ? error.message : 'Something went wrong',
-        variant: 'destructive',
+        type: 'destructive',
       })
     } finally {
       setIsSubmitting(false)
@@ -242,11 +242,8 @@ function CheckoutPage() {
                       type="submit"
                       className="w-full"
                       size="lg"
-                      disabled={isSubmitting}
+                      loading={isSubmitting}
                     >
-                      {isSubmitting && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
                       Pay {formatPrice(totalPrice)}
                     </Button>
                     <p className="text-xs text-center text-slate-400 mt-4">

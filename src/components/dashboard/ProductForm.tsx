@@ -4,17 +4,14 @@ import {
   FileText,
   Image as ImageIcon,
   Link2,
-  Loader2,
   Plus,
   Trash2,
   Upload,
   X,
 } from 'lucide-react'
-import type { FileWithPreview } from '@/hooks/use-file-upload'
 import { useFileUpload } from '@/hooks/use-file-upload'
 import { uploadFile } from '@/lib/upload-client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,7 +19,6 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { cn, formatPrice } from '@/lib/utils'
-import { Spinner } from '../ui/spinner'
 
 export type PriceSettings = {
   payWhatYouWant: boolean
@@ -778,17 +774,9 @@ export function ProductForm(props: ProductFormProps) {
                 type="submit"
                 size="sm"
                 className={cn('rounded-full text-xs')}
-                disabled={submitting || isUploading}
+                loading={submitting || isUploading}
               >
-                {submitting || isUploading ? (
-                  <div className="flex items-center gap-2">
-                    <Spinner />
-                  </div>
-                ) : value.id ? (
-                  'Save changes'
-                ) : (
-                  'Create product'
-                )}
+                {value.id ? 'Save changes' : 'Create product'}
               </Button>
             </div>
           </div>

@@ -282,8 +282,8 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
               <DialogClose render={<Button variant="ghost" />}>
                 Cancel
               </DialogClose>
-              <Button type="submit" disabled={isUploading}>
-                {isUploading ? 'Saving...' : 'Save'}
+              <Button type="submit" loading={isUploading}>
+                Save
               </Button>
             </DialogFooter>
           </Form>

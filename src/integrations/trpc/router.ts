@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { and, asc, desc, eq, gte, inArray, lte, or, sql } from 'drizzle-orm'
-import { createTRPCRouter, publicProcedure } from './init'
+import { TRPCError } from '@trpc/server'
+import { createTRPCRouter, protectedProcedure, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
 import {
@@ -104,7 +105,7 @@ const userRouter = {
       })
       return foundUser ?? null
     }),
-  setUsername: publicProcedure
+  setUsername: protectedProcedure
     .input(z.object({ userId: z.string(), username: z.string() }))
     .mutation(async ({ input }) => {
       const existing = await db.query.user.findFirst({
@@ -173,7 +174,7 @@ const userRouter = {
 
       return { success: true }
     }),
-  updateProfile: publicProcedure
+  updateProfile: protectedProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -243,7 +244,7 @@ const blockRouter = {
 
       return { success: true }
     }),
-  create: publicProcedure
+  create: protectedProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -276,7 +277,7 @@ const blockRouter = {
         .returning()
       return newBlock
     }),
-  update: publicProcedure
+  update: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -287,7 +288,7 @@ const blockRouter = {
         isEnabled: z.boolean().optional(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const [updatedBlock] = await db
         .update(blocks)
         .set({
@@ -299,17 +300,25 @@ const blockRouter = {
             ? { isEnabled: input.isEnabled }
             : {}),
         })
-        .where(eq(blocks.id, input.id))
+        .where(and(eq(blocks.id, input.id), eq(blocks.userId, ctx.session.user.id)))
         .returning()
+
       return updatedBlock
     }),
-  delete: publicProcedure
+  delete: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ input }) => {
-      await db.delete(blocks).where(eq(blocks.id, input.id))
+    .mutation(async ({ input, ctx }) => {
+      const deleted = await db
+        .delete(blocks)
+        .where(and(eq(blocks.id, input.id), eq(blocks.userId, ctx.session.user.id)))
+        .returning({ id: blocks.id })
+
+      if (!deleted.length) {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      }
       return { success: true }
     }),
-  reorder: publicProcedure
+  reorder: protectedProcedure
     .input(
       z.object({
         items: z.array(
@@ -320,7 +329,7 @@ const blockRouter = {
         ),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       console.log('TRPC: Reordering blocks', input.items.length, 'items')
       // neon-http driver does not support transactions, so we run these in parallel
       await Promise.all(
@@ -328,7 +337,7 @@ const blockRouter = {
           db
             .update(blocks)
             .set({ order: item.order })
-            .where(eq(blocks.id, item.id)),
+            .where(and(eq(blocks.id, item.id), eq(blocks.userId, ctx.session.user.id))),
         ),
       )
       return { success: true }
@@ -390,7 +399,7 @@ export type CustomerQuestionInput = z.infer<typeof customerQuestionInputSchema>
 export type ProductInput = z.infer<typeof productInputSchema>
 
 const productRouter = {
-  listByUser: publicProcedure
+  listByUser: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       const rows = await db.query.products.findMany({
@@ -424,7 +433,7 @@ const productRouter = {
         totalRevenue: revenueMap.get(product.id) ?? 0,
       }))
     }),
-  create: publicProcedure
+  create: protectedProcedure
     .input(productBaseInput)
     .mutation(async ({ input }) => {
       const id = crypto.randomUUID()
@@ -459,15 +468,16 @@ const productRouter = {
         })
         .returning()
 
+
       return row
     }),
-  update: publicProcedure
+  update: protectedProcedure
     .input(
       productBaseInput.extend({
         id: z.string(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const price = input.priceSettings.payWhatYouWant
         ? null
         : (input.priceSettings.price ?? null)
@@ -495,16 +505,17 @@ const productRouter = {
             ? JSON.stringify(input.customerQuestions)
             : null,
         })
-        .where(eq(products.id, input.id))
+        .where(and(eq(products.id, input.id), eq(products.userId, ctx.session.user.id)))
         .returning()
+
 
       return row
     }),
-  duplicate: publicProcedure
+  duplicate: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const product = await db.query.products.findFirst({
-        where: eq(products.id, input.id),
+        where: and(eq(products.id, input.id), eq(products.userId, ctx.session.user.id)),
       })
 
       if (!product) {
@@ -543,24 +554,29 @@ const productRouter = {
    * SOFT DELETE — sets isDeleted = true, preserving historical data.
    * Orders, transactions, and payouts referencing this product remain intact.
    */
-  delete: publicProcedure
+  delete: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ input }) => {
-      await db
+    .mutation(async ({ input, ctx }) => {
+      const [row] = await db
         .update(products)
         .set({ isDeleted: true, isActive: false })
-        .where(eq(products.id, input.id))
+        .where(and(eq(products.id, input.id), eq(products.userId, ctx.session.user.id)))
+        .returning({ id: products.id })
+
+
       return { success: true }
     }),
 
-  toggleActive: publicProcedure
+  toggleActive: protectedProcedure
     .input(z.object({ id: z.string(), isActive: z.boolean() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const [row] = await db
         .update(products)
         .set({ isActive: input.isActive })
-        .where(eq(products.id, input.id))
+        .where(and(eq(products.id, input.id), eq(products.userId, ctx.session.user.id)))
         .returning()
+
+
       return row
     }),
 } satisfies TRPCRouterRecord
@@ -568,7 +584,7 @@ const productRouter = {
 // ─── Social Link Router ──────────────────────────────────────────────────────
 
 const socialLinkRouter = {
-  create: publicProcedure
+  create: protectedProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -596,7 +612,7 @@ const socialLinkRouter = {
         .returning()
       return newSocialLink
     }),
-  update: publicProcedure
+  update: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -605,7 +621,7 @@ const socialLinkRouter = {
         isEnabled: z.boolean().optional(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const [updatedSocialLink] = await db
         .update(socialLinks)
         .set({
@@ -615,17 +631,25 @@ const socialLinkRouter = {
             ? { isEnabled: input.isEnabled }
             : {}),
         })
-        .where(eq(socialLinks.id, input.id))
+        .where(and(eq(socialLinks.id, input.id), eq(socialLinks.userId, ctx.session.user.id)))
         .returning()
+
       return updatedSocialLink
     }),
-  delete: publicProcedure
+  delete: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ input }) => {
-      await db.delete(socialLinks).where(eq(socialLinks.id, input.id))
+    .mutation(async ({ input, ctx }) => {
+      const deleted = await db
+        .delete(socialLinks)
+        .where(and(eq(socialLinks.id, input.id), eq(socialLinks.userId, ctx.session.user.id)))
+        .returning({ id: socialLinks.id })
+
+      if (!deleted.length) {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      }
       return { success: true }
     }),
-  reorder: publicProcedure
+  reorder: protectedProcedure
     .input(
       z.object({
         items: z.array(
@@ -636,13 +660,13 @@ const socialLinkRouter = {
         ),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       await Promise.all(
         input.items.map((item) =>
           db
             .update(socialLinks)
             .set({ order: item.order })
-            .where(eq(socialLinks.id, item.id)),
+            .where(and(eq(socialLinks.id, item.id), eq(socialLinks.userId, ctx.session.user.id))),
         ),
       )
       return { success: true }
@@ -652,7 +676,7 @@ const socialLinkRouter = {
 // ─── Storage Router ──────────────────────────────────────────────────────────
 
 export const storageRouter = {
-  getUploadUrl: publicProcedure
+  getUploadUrl: protectedProcedure
     .input(z.object({ key: z.string(), contentType: z.string() }))
     .mutation(async ({ input }) => {
       return await StorageService.getUploadUrl(input.key, input.contentType)
@@ -701,9 +725,7 @@ const orderRouter = {
 
       // Check quantity limits
       if (
-        product.totalQuantity !== null &&
-        product.totalQuantity !== undefined &&
-        product.totalQuantity <= 0
+        product.totalQuantity !== null && product.totalQuantity <= 0
       ) {
         throw new Error('Product sold out')
       }
@@ -889,7 +911,6 @@ const orderRouter = {
 
         if (
           product.totalQuantity !== null &&
-          product.totalQuantity !== undefined &&
           product.totalQuantity < item.quantity
         ) {
           throw new Error(
@@ -899,7 +920,6 @@ const orderRouter = {
 
         if (
           product.limitPerCheckout !== null &&
-          product.limitPerCheckout !== undefined &&
           item.quantity > product.limitPerCheckout
         ) {
           throw new Error(`Product ${product.title} exceeds per-checkout limit`)
@@ -1097,7 +1117,7 @@ const orderRouter = {
       }
     }),
 
-  listByCreator: publicProcedure
+  listByCreator: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       const creatorItemRows = await db.query.orderItems.findMany({
@@ -1130,7 +1150,7 @@ const orderRouter = {
       return rows
     }),
 
-  getDetail: publicProcedure
+  getDetail: protectedProcedure
     .input(z.object({ orderId: z.string(), userId: z.string() }))
     .query(async ({ input }) => {
       const order = await db.query.orders.findFirst({
@@ -1159,7 +1179,7 @@ const orderRouter = {
       return order
     }),
 
-  resendEmail: publicProcedure
+  resendEmail: protectedProcedure
     .input(z.object({ orderId: z.string(), userId: z.string() }))
     .mutation(async ({ input }) => {
       const order = await db.query.orders.findFirst({
@@ -1221,7 +1241,7 @@ const balanceRouter = {
    * Get creator's financial summary.
    * Balance is computed from the transactions ledger (single source of truth).
    */
-  getSummary: publicProcedure
+  getSummary: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       const now = new Date()
@@ -1278,7 +1298,7 @@ const balanceRouter = {
   /**
    * Get transaction history for a creator.
    */
-  getTransactions: publicProcedure
+  getTransactions: protectedProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -1321,7 +1341,7 @@ const payoutRouter = {
    * Request a payout of available balance.
    * Creates a payout record + debit transaction.
    */
-  request: publicProcedure
+  request: protectedProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -1417,7 +1437,7 @@ const payoutRouter = {
   /**
    * List all payouts for a creator.
    */
-  list: publicProcedure
+  list: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       const rows = await db.query.payouts.findMany({
@@ -1430,7 +1450,7 @@ const payoutRouter = {
   /**
    * Cancel a pending payout (reverses the debit transaction).
    */
-  cancel: publicProcedure
+  cancel: protectedProcedure
     .input(z.object({ payoutId: z.string(), userId: z.string() }))
     .mutation(async ({ input }) => {
       const payout = await db.query.payouts.findFirst({
@@ -1471,7 +1491,7 @@ const payoutRouter = {
 // ─── Analytics Router ────────────────────────────────────────────────────────
 
 const analyticsRouter = {
-  getOverview: publicProcedure
+  getOverview: protectedProcedure
     .input(
       z.object({
         userId: z.string(),
@@ -1637,7 +1657,7 @@ const analyticsRouter = {
     }),
 
   // Get per-product analytics
-  getProductAnalytics: publicProcedure
+  getProductAnalytics: protectedProcedure
     .input(z.object({ userId: z.string() }))
     .query(async ({ input }) => {
       const productRows = await db.query.products.findMany({
@@ -1687,6 +1707,30 @@ const analyticsRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+
+const adminRouter = {
+  getCurrentUser: protectedProcedure.query(({ ctx }) => ({
+    username: ctx.session.user.username ?? null,
+  })),
+
+  getContext: protectedProcedure
+    .input(z.object({ username: z.string() }))
+    .query(({ input, ctx }) => {
+      const currentUsername = ctx.session.user.username
+      if (!currentUsername || currentUsername !== input.username) {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      }
+
+      return {
+        userId: ctx.session.user.id,
+        username: currentUsername,
+        name: ctx.session.user.name,
+        email: ctx.session.user.email,
+        image: ctx.session.user.image ?? null,
+      }
+    }),
+} satisfies TRPCRouterRecord
+
 // ─── Main Router ─────────────────────────────────────────────────────────────
 
 export const trpcRouter = createTRPCRouter({
@@ -1699,5 +1743,6 @@ export const trpcRouter = createTRPCRouter({
   balance: balanceRouter,
   payout: payoutRouter,
   analytics: analyticsRouter,
+  admin: adminRouter,
 })
 export type TRPCRouter = typeof trpcRouter

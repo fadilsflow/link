@@ -131,6 +131,7 @@ export type OrderEmailProps = {
   orderDate: Date
   amountPaid: number
   deliveryUrl: string
+  deliveryLinks?: Array<{ label: string; url: string }>
   creatorName: string
   supportEmail: string
   lineItems: Array<{
@@ -149,12 +150,23 @@ export const getOrderConfirmationEmailHtml = ({
   creatorName,
   supportEmail,
   lineItems,
+  deliveryLinks,
 }: OrderEmailProps) => {
   const formattedDate = new Date(orderDate).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
+
+  const deliveryLinksHtml =
+    deliveryLinks && deliveryLinks.length > 0
+      ? `<div style="margin: 8px 0 0;">${deliveryLinks
+          .map(
+            (link) =>
+              `<p class="text-sm" style="margin: 8px 0;"><a href="${link.url}" class="link">${link.label}</a></p>`,
+          )
+          .join('')}</div>`
+      : ''
 
   // Order summary content
   const content = `
@@ -167,6 +179,7 @@ export const getOrderConfirmationEmailHtml = ({
     
     <div style="text-align: center; margin: 32px 0;">
       <a href="${deliveryUrl}" class="button">Access Your Content</a>
+      ${deliveryLinksHtml}
     </div>
 
     <div class="divider"></div>

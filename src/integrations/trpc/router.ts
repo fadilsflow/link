@@ -17,7 +17,7 @@ import {
   user,
 } from '@/db/schema'
 import { StorageService } from '@/lib/storage'
-import { sendOrderEmail } from '@/lib/email'
+import { sendConsolidatedCheckoutEmail, sendOrderEmail } from '@/lib/email'
 import { BASE_URL } from '@/lib/constans'
 
 // ─── Hold period for funds (in days) ─────────────────────────────────────────
@@ -743,6 +743,7 @@ const orderRouter = {
           status: 'completed',
           deliveryToken,
           emailSent: false,
+          checkoutGroupId: orderId,
         })
         .returning()
 
@@ -841,7 +842,7 @@ const orderRouter = {
 
   /**
    * Multi-product cart checkout.
-   * Creates one unified order with one line item per product.
+   * Processes one checkout transaction but splits into one order per store.
    */
   createMultiple: publicProcedure
     .input(
@@ -864,6 +865,7 @@ const orderRouter = {
         throw new Error('No items in cart')
       }
 
+      const checkoutGroupId = crypto.randomUUID()
       const productIds = [...new Set(input.items.map((i) => i.productId))]
       const productsList = await db.query.products.findMany({
         where: and(
@@ -935,144 +937,163 @@ const orderRouter = {
           effectivePrice,
           totalAmount: item.amountPaidPerUnit * item.quantity,
           answers: item.answers ?? {},
+          creatorId: product.user.id,
         })
       }
 
-      const orderId = crypto.randomUUID()
-      const deliveryToken = crypto.randomUUID()
-      const totalAmountPaid = normalizedItems.reduce(
-        (acc, item) => acc + item.totalAmount,
-        0,
-      )
-
-      const primaryItem = normalizedItems[0]
-      const firstCreator = primaryItem?.product.user
-      const hasSingleCreator = normalizedItems.every(
-        (item) => item.product.user.id === firstCreator?.id,
-      )
-
-      const [newOrder] = await db
-        .insert(orders)
-        .values({
-          id: orderId,
-          creatorId: hasSingleCreator ? firstCreator.id : null,
-          productId:
-            normalizedItems.length === 1 ? primaryItem.product.id : null,
-          productTitle:
-            normalizedItems.length === 1
-              ? primaryItem.product.title
-              : `${normalizedItems.length} products`,
-          productPrice:
-            normalizedItems.length === 1
-              ? primaryItem.effectivePrice
-              : totalAmountPaid,
-          productImage: primaryItem.product.images?.[0] ?? null,
-          buyerEmail: input.buyerEmail,
-          buyerName: input.buyerName ?? '',
-          amountPaid: totalAmountPaid,
-          quantity: normalizedItems.reduce(
-            (acc, item) => acc + item.quantity,
-            0,
-          ),
-          checkoutAnswers: null,
-          note: input.note ?? null,
-          status: 'completed',
-          deliveryToken,
-          emailSent: false,
-        })
-        .returning()
-
-      await db.insert(orderItems).values(
-        normalizedItems.map((item) => ({
-          id: crypto.randomUUID(),
-          orderId,
-          creatorId: item.product.user.id,
-          productId: item.product.id,
-          productTitle: item.product.title,
-          productPrice: item.effectivePrice,
-          productImage: item.product.images?.[0] ?? null,
-          quantity: item.quantity,
-          amountPaid: item.totalAmount,
-          checkoutAnswers: item.answers,
-        })),
-      )
-
+      const itemsByCreator = new Map<string, Array<any>>()
       for (const item of normalizedItems) {
-        const { feeAmount, netAmount } = calculateFee(item.totalAmount)
+        const existing = itemsByCreator.get(item.creatorId) ?? []
+        existing.push(item)
+        itemsByCreator.set(item.creatorId, existing)
+      }
 
-        await db.insert(transactions).values({
-          id: crypto.randomUUID(),
-          creatorId: item.product.user.id,
-          orderId,
-          type: TRANSACTION_TYPE.SALE,
-          amount: item.totalAmount,
-          netAmount,
-          platformFeePercent: PLATFORM_FEE_PERCENT,
-          platformFeeAmount: feeAmount,
-          description: `Sale: ${item.product.title} x${item.quantity}`,
-          availableAt: getAvailableAt(),
-          metadata: {
-            productId: item.product.id,
+      const createdOrders: Array<any> = []
+
+      for (const [creatorId, creatorItems] of itemsByCreator.entries()) {
+        const orderId = crypto.randomUUID()
+        const deliveryToken = crypto.randomUUID()
+        const orderAmount = creatorItems.reduce(
+          (acc, item) => acc + item.totalAmount,
+          0,
+        )
+        const totalQuantity = creatorItems.reduce(
+          (acc, item) => acc + item.quantity,
+          0,
+        )
+        const primaryItem = creatorItems[0]
+
+        const [newOrder] = await db
+          .insert(orders)
+          .values({
+            id: orderId,
+            creatorId,
+            productId:
+              creatorItems.length === 1 ? primaryItem.product.id : null,
+            productTitle:
+              creatorItems.length === 1
+                ? primaryItem.product.title
+                : `${creatorItems.length} products`,
+            productPrice:
+              creatorItems.length === 1
+                ? primaryItem.effectivePrice
+                : orderAmount,
+            productImage: primaryItem.product.images?.[0] ?? null,
             buyerEmail: input.buyerEmail,
+            buyerName: input.buyerName ?? '',
+            amountPaid: orderAmount,
+            quantity: totalQuantity,
+            checkoutAnswers: null,
+            note: input.note ?? null,
+            status: 'completed',
+            deliveryToken,
+            emailSent: false,
+            checkoutGroupId,
+          })
+          .returning()
+
+        await db.insert(orderItems).values(
+          creatorItems.map((item) => ({
+            id: crypto.randomUUID(),
+            orderId,
+            creatorId,
+            productId: item.product.id,
+            productTitle: item.product.title,
+            productPrice: item.effectivePrice,
+            productImage: item.product.images?.[0] ?? null,
             quantity: item.quantity,
-          },
+            amountPaid: item.totalAmount,
+            checkoutAnswers: item.answers,
+          })),
+        )
+
+        for (const item of creatorItems) {
+          const { feeAmount, netAmount } = calculateFee(item.totalAmount)
+
+          await db.insert(transactions).values({
+            id: crypto.randomUUID(),
+            creatorId,
+            orderId,
+            type: TRANSACTION_TYPE.SALE,
+            amount: item.totalAmount,
+            netAmount,
+            platformFeePercent: PLATFORM_FEE_PERCENT,
+            platformFeeAmount: feeAmount,
+            description: `Sale: ${item.product.title} x${item.quantity}`,
+            availableAt: getAvailableAt(),
+            metadata: {
+              productId: item.product.id,
+              buyerEmail: input.buyerEmail,
+              quantity: item.quantity,
+              checkoutGroupId,
+            },
+          })
+
+          await db
+            .update(products)
+            .set({
+              salesCount: sql`${products.salesCount} + ${item.quantity}`,
+              totalRevenue: sql`${products.totalRevenue} + ${item.totalAmount}`,
+            })
+            .where(eq(products.id, item.product.id))
+
+          await db
+            .update(user)
+            .set({
+              totalSalesCount: sql`${user.totalSalesCount} + ${item.quantity}`,
+              totalRevenue: sql`${user.totalRevenue} + ${item.totalAmount}`,
+            })
+            .where(eq(user.id, creatorId))
+        }
+
+        createdOrders.push({
+          ...newOrder,
+          items: creatorItems.map((item) => ({
+            productTitle: item.product.title,
+            quantity: item.quantity,
+            productPrice: item.effectivePrice,
+            amountPaid: item.totalAmount,
+          })),
+          creator: primaryItem.product.user,
         })
-
-        await db
-          .update(products)
-          .set({
-            salesCount: sql`${products.salesCount} + ${item.quantity}`,
-            totalRevenue: sql`${products.totalRevenue} + ${item.totalAmount}`,
-          })
-          .where(eq(products.id, item.product.id))
-
-        await db
-          .update(user)
-          .set({
-            totalSalesCount: sql`${user.totalSalesCount} + ${item.quantity}`,
-            totalRevenue: sql`${user.totalRevenue} + ${item.totalAmount}`,
-          })
-          .where(eq(user.id, item.product.user.id))
       }
 
-      const creators = Array.from(
-        new Map(
-          normalizedItems.map((item) => [
-            item.product.user.id,
-            item.product.user,
-          ]),
-        ).values(),
-      )
-
-      const deliveryUrl = `${BASE_URL}/d/${deliveryToken}`
-      const orderForEmail = {
-        ...newOrder,
-        items: normalizedItems.map((item) => ({
-          productTitle: item.product.title,
-          quantity: item.quantity,
-          productPrice: item.effectivePrice,
-          amountPaid: item.totalAmount,
-        })),
-      }
-
-      const emailResult = await sendOrderEmail({
+      const emailResult = await sendConsolidatedCheckoutEmail({
         to: input.buyerEmail,
-        deliveryUrl,
-        order: orderForEmail,
-        creators,
+        checkoutGroupId,
+        buyerName: input.buyerName ?? null,
+        buyerEmail: input.buyerEmail,
+        createdAt: new Date(),
+        orders: createdOrders.map((order) => ({
+          id: order.id,
+          deliveryToken: order.deliveryToken,
+          amountPaid: order.amountPaid,
+          creatorName: order.creator?.name ?? 'Creator',
+          creatorEmail: order.creator?.email ?? null,
+          items: order.items,
+        })),
       })
 
       if (emailResult.success) {
         await db
           .update(orders)
           .set({ emailSent: true, emailSentAt: new Date() })
-          .where(eq(orders.id, newOrder.id))
+          .where(
+            inArray(
+              orders.id,
+              createdOrders.map((order) => order.id),
+            ),
+          )
       }
 
+      const firstOrder = createdOrders[0]
       return {
-        ...newOrder,
-        items: orderForEmail.items,
-        deliveryUrl,
+        checkoutGroupId,
+        deliveryUrl: `${BASE_URL}/d/${firstOrder.deliveryToken}`,
+        deliveryUrls: createdOrders.map(
+          (order) => `${BASE_URL}/d/${order.deliveryToken}`,
+        ),
+        orders: createdOrders,
       }
     }),
 
@@ -1097,8 +1118,12 @@ const orderRouter = {
         where: whereClause,
         with: {
           product: true,
-          transactions: true,
-          items: true,
+          transactions: {
+            where: eq(transactions.creatorId, input.userId),
+          },
+          items: {
+            where: eq(orderItems.creatorId, input.userId),
+          },
         },
         orderBy: [desc(orders.createdAt)],
       })
@@ -1109,12 +1134,18 @@ const orderRouter = {
     .input(z.object({ orderId: z.string(), userId: z.string() }))
     .query(async ({ input }) => {
       const order = await db.query.orders.findFirst({
-        where: eq(orders.id, input.orderId),
+        where: and(
+          eq(orders.id, input.orderId),
+          eq(orders.creatorId, input.userId),
+        ),
         with: {
           product: true,
           creator: true,
-          transactions: true,
+          transactions: {
+            where: eq(transactions.creatorId, input.userId),
+          },
           items: {
+            where: eq(orderItems.creatorId, input.userId),
             with: {
               product: true,
               creator: true,
@@ -1125,11 +1156,6 @@ const orderRouter = {
 
       if (!order) throw new Error('Order not found')
 
-      const authorized =
-        order.creatorId === input.userId ||
-        order.items.some((item) => item.creatorId === input.userId)
-      if (!authorized) throw new Error('Unauthorized')
-
       return order
     }),
 
@@ -1137,11 +1163,15 @@ const orderRouter = {
     .input(z.object({ orderId: z.string(), userId: z.string() }))
     .mutation(async ({ input }) => {
       const order = await db.query.orders.findFirst({
-        where: eq(orders.id, input.orderId),
+        where: and(
+          eq(orders.id, input.orderId),
+          eq(orders.creatorId, input.userId),
+        ),
         with: {
           product: true,
           creator: true,
           items: {
+            where: eq(orderItems.creatorId, input.userId),
             with: {
               creator: true,
             },
@@ -1150,11 +1180,6 @@ const orderRouter = {
       })
 
       if (!order) throw new Error('Order not found')
-
-      const authorized =
-        order.creatorId === input.userId ||
-        order.items.some((item) => item.creatorId === input.userId)
-      if (!authorized) throw new Error('Unauthorized')
 
       const deliveryUrl = `${BASE_URL}/d/${order.deliveryToken}`
       const creators = Array.from(

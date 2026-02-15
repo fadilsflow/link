@@ -253,6 +253,8 @@ export const orders = pgTable(
     // Email tracking
     emailSent: boolean('email_sent').notNull().default(false),
     emailSentAt: timestamp('email_sent_at'),
+    // Groups orders created from one unified checkout/payment intent
+    checkoutGroupId: text('checkout_group_id'),
     // Idempotency key to prevent duplicate orders
     idempotencyKey: text('idempotency_key').unique(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -264,6 +266,43 @@ export const orders = pgTable(
     index('order_buyer_email_idx').on(table.buyerEmail),
     index('order_delivery_token_idx').on(table.deliveryToken),
     index('order_status_idx').on(table.status),
+    index('order_checkout_group_id_idx').on(table.checkoutGroupId),
+  ],
+)
+
+/**
+ * Order items table — line items that belong to a single order.
+ *
+ * This enables unified multi-product checkout while keeping order-level
+ * snapshots for backward compatibility with legacy single-product records.
+ */
+export const orderItems = pgTable(
+  'order_item',
+  {
+    id: text('id').primaryKey(),
+    orderId: text('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    creatorId: text('creator_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    productId: text('product_id').references(() => products.id, {
+      onDelete: 'set null',
+    }),
+    productTitle: text('product_title').notNull(),
+    productPrice: integer('product_price').notNull(),
+    productImage: text('product_image'),
+    quantity: integer('quantity').notNull().default(1),
+    amountPaid: integer('amount_paid').notNull().default(0),
+    // Checkout answers for this specific product item
+    checkoutAnswers: json('checkout_answers').$type<Record<string, string>>(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('order_item_order_id_idx').on(table.orderId),
+    index('order_item_creator_id_idx').on(table.creatorId),
+    index('order_item_product_id_idx').on(table.productId),
   ],
 )
 

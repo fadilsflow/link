@@ -15,6 +15,7 @@ import {
   Wallet,
 } from 'lucide-react'
 
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useParams, useRouter, useRouterState } from '@tanstack/react-router'
 import Credits from '../Credits'
 import { Button } from '../ui/button'
@@ -38,6 +39,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { authClient } from '@/lib/auth-client'
+import { adminAuthQueryKey, useAdminAuthContext } from '@/lib/admin-auth'
 import { BASE_URL } from '@/lib/constans'
 
 const data = {
@@ -95,9 +97,12 @@ const isAdminpage = (path: string, currentPath: string) => {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter()
-  const { data: session } = authClient.useSession()
+  const queryClient = useQueryClient()
   const { username } = useParams({ strict: false })
   const location = useRouterState({ select: (s) => s.location })
+
+  const usernameParam = username ?? ''
+  const { data: adminAuth } = useAdminAuthContext(usernameParam)
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(`${BASE_URL}/${username}`)
@@ -119,15 +124,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <Menu>
               <MenuTrigger render={<SidebarMenuButton size="default" />}>
                 <Avatar className="h-6 w-6 border">
-                  <AvatarImage src={session?.user.image || ''} />
+                  <AvatarImage src={adminAuth?.image || ''} />
                   <AvatarFallback>
-                    {session?.user.name.slice(0, 2).toUpperCase() || 'US'}
+                    {adminAuth?.name?.slice(0, 2).toUpperCase() || 'US'}
                   </AvatarFallback>
                 </Avatar>
 
                 <div className="min-w-0 flex-1 text-left">
                   <h3 className="truncate text-sm text-foreground">
-                    {username || session?.user.name}
+                    {username || adminAuth?.name}
                   </h3>
                 </div>
 
@@ -152,6 +157,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     await authClient.signOut({
                       fetchOptions: {
                         onSuccess: () => {
+                          queryClient.removeQueries({
+                            queryKey: adminAuthQueryKey(usernameParam),
+                          })
                           router.invalidate()
                           router.navigate({ to: '/' })
                         },

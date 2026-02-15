@@ -1,11 +1,10 @@
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
 import React from 'react'
 import { z } from 'zod'
 import { AppSidebar } from '@/components/dashboard/app-sidebar'
 import { MobileAdminNav } from '@/components/dashboard/mobile-admin-nav'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { getAdminAccessForUsername } from '@/lib/auth-server'
+import { adminAuthQueryOptions } from '@/lib/admin-auth'
 import { useApplyRootTheme, useDashboardThemePreference } from '@/lib/theme'
 
 const getAdminRouteAccess = createServerFn({ method: 'GET' })
@@ -15,22 +14,20 @@ const getAdminRouteAccess = createServerFn({ method: 'GET' })
   })
 
 export const Route = createFileRoute('/$username/admin')({
-  beforeLoad: async ({ params }) => {
-    const access = await getAdminRouteAccess({
-      data: { username: params.username },
-    })
-
-    if (!access.ok) {
-      if (access.reason === 'WRONG_OWNER' && access.expectedUsername) {
-        throw redirect({
-          to: '/$username/admin',
-          params: { username: access.expectedUsername },
-        })
-      }
-
+  loaderDeps: ({ params }) => ({ username: params.username }),
+  loader: async ({ context, deps }) => {
+    try {
+      const auth = await context.queryClient.ensureQueryData(
+        adminAuthQueryOptions(deps.username),
+      )
+      return auth
+    } catch {
       throw redirect({ to: '/' })
     }
   },
+  staleTime: 1000 * 60 * 5,
+  gcTime: 1000 * 60 * 30,
+  shouldReload: false,
   component: AdminLayout,
 })
 

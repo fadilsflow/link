@@ -1707,6 +1707,30 @@ const analyticsRouter = {
     }),
 } satisfies TRPCRouterRecord
 
+
+const adminRouter = {
+  getCurrentUser: protectedProcedure.query(({ ctx }) => ({
+    username: ctx.session.user.username ?? null,
+  })),
+
+  getContext: protectedProcedure
+    .input(z.object({ username: z.string() }))
+    .query(({ input, ctx }) => {
+      const currentUsername = ctx.session.user.username
+      if (!currentUsername || currentUsername !== input.username) {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      }
+
+      return {
+        userId: ctx.session.user.id,
+        username: currentUsername,
+        name: ctx.session.user.name,
+        email: ctx.session.user.email,
+        image: ctx.session.user.image ?? null,
+      }
+    }),
+} satisfies TRPCRouterRecord
+
 // ─── Main Router ─────────────────────────────────────────────────────────────
 
 export const trpcRouter = createTRPCRouter({
@@ -1719,5 +1743,6 @@ export const trpcRouter = createTRPCRouter({
   balance: balanceRouter,
   payout: payoutRouter,
   analytics: analyticsRouter,
+  admin: adminRouter,
 })
 export type TRPCRouter = typeof trpcRouter

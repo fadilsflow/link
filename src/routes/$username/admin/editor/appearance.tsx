@@ -8,10 +8,8 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { BannerSelector } from '@/components/dashboard/appearance/BannerSelector'
 import { BlockStyleSelector } from '@/components/dashboard/appearance/BlockStyleSelector'
 import { ThemeOptionCards } from '@/components/dashboard/appearance/ThemeOptionCards'
-import type {
-  BlockRadius,
-  BlockStyle,
-} from '@/components/dashboard/appearance/types'
+import { type BlockRadius, type BlockStyle } from '@/lib/block-styles'
+import { type ThemeOption } from '@/lib/theme'
 import { LOCAL_BANNER_IMAGES } from '@/components/dashboard/appearance/banner-presets'
 import {
   AppHeader,
@@ -20,8 +18,6 @@ import {
 } from '@/components/app-header'
 import { usePreview } from '@/lib/preview-context'
 import { useDashboardThemePreference } from '@/lib/theme'
-
-type ThemeOption = 'system' | 'light' | 'dark'
 
 export const Route = createFileRoute('/$username/admin/editor/appearance')({
   component: AppearanceRouteComponent,
@@ -92,13 +88,13 @@ function AppearanceEditor({ user, username }: { user: any; username: string }) {
   })
 
   const [blockStyle, setBlockStyle] = React.useState<BlockStyle>(
-    (user.appearanceBlockStyle as BlockStyle) || 'basic',
+    user.appearanceBlockStyle || 'basic',
   )
   const [blockRadius, setBlockRadius] = React.useState<BlockRadius>(
-    (user.appearanceBlockRadius as BlockRadius) || 'rounded',
+    user.appearanceBlockRadius || 'rounded',
   )
   const [publicTheme, setPublicTheme] = React.useState<ThemeOption>(
-    (user.publicTheme as ThemeOption) || 'system',
+    user.publicTheme || 'system',
   )
   const [dashboardTheme, setDashboardTheme] = useDashboardThemePreference()
 

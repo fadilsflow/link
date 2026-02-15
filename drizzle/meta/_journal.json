@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1770379719930,
-      "tag": "0000_polite_taskmaster",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1770648255852,
-      "tag": "0001_secret_abomination",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1770651350821,
-      "tag": "0002_past_vanisher",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1770713004089,
-      "tag": "0003_dear_ulik",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1770714927869,
-      "tag": "0004_audit_financial_hardening",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1770718392052,
-      "tag": "0005_spotty_puma",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1770749180513,
-      "tag": "0006_fearless_wind_dancer",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1771008422303,
-      "tag": "0007_public_theme",
+      "when": 1771142644672,
+      "tag": "0000_flaky_spitfire",
       "breakpoints": true
     }
   ]

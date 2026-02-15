@@ -1,11 +1,9 @@
 import { Link } from '@tanstack/react-router'
 import {
-  ArrowUpRight,
   Facebook,
   Github,
   Globe,
   Instagram,
-  Link as LinkIcon,
   ShoppingCart,
   Youtube,
 } from 'lucide-react'

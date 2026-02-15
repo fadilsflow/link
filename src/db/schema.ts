@@ -9,6 +9,8 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
+import { type ThemeOption } from '@/lib/theme'
+import { type BlockStyle, type BlockRadius } from '@/lib/block-styles'
 
 // ─── Status Enums ────────────────────────────────────────────────────────────
 
@@ -54,12 +56,17 @@ export const user = pgTable('user', {
   // Custom profile banner image.
   appearanceBgImageUrl: text('appearance_bg_image_url'),
   appearanceBlockStyle: text('appearance_block_style')
+    .$type<BlockStyle>()
     .default('basic')
     .notNull(),
   appearanceBlockRadius: text('appearance_block_radius')
+    .$type<BlockRadius>()
     .default('rounded')
     .notNull(),
-  publicTheme: text('public_theme').default('system').notNull(),
+  publicTheme: text('public_theme')
+    .$type<ThemeOption>()
+    .default('system')
+    .notNull(),
   // Denormalized analytics (cached, derived from transactions & events)
   totalRevenue: integer('total_revenue').notNull().default(0), // in cents — cached from transactions
   totalSalesCount: integer('total_sales_count').notNull().default(0),

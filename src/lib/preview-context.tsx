@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from 'react'
-import type { BlockRadius, BlockStyle } from '@/components/dashboard/appearance/types'
+import { type BlockRadius, type BlockStyle } from '@/lib/block-styles'
+import { type ThemeOption } from '@/lib/theme'
 
 export interface PreviewUser {
   id: string
@@ -11,7 +12,7 @@ export interface PreviewUser {
   appearanceBgImageUrl?: string | null
   appearanceBlockStyle?: BlockStyle | null
   appearanceBlockRadius?: BlockRadius | null
-  publicTheme?: 'system' | 'light' | 'dark' | null
+  publicTheme?: ThemeOption | null
 }
 
 interface PreviewBlock {

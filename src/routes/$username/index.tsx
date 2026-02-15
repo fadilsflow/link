@@ -24,8 +24,6 @@ import {
   getBlockSkeletonClasses,
   getProductSkeletonClass,
   getPageBackgroundStyle,
-  type BlockStyle,
-  type BlockRadius,
 } from '@/lib/block-styles'
 
 import SiteUserProfileHeader, {
@@ -60,20 +58,13 @@ const DEFAULT_BANNER =
 
 function runWhenBrowserIdle(callback: () => void, timeout = 1200) {
   if (typeof window === 'undefined') return
-  if ('requestIdleCallback' in window) {
-    ;(
-      window as Window & {
-        requestIdleCallback: (
-          cb: () => void,
-          opts?: { timeout: number },
-        ) => number
-      }
-    ).requestIdleCallback(callback, {
-      timeout,
-    })
-    return
+
+  const win = window as any
+  if (typeof win.requestIdleCallback === 'function') {
+    win.requestIdleCallback(callback, { timeout })
+  } else {
+    win.setTimeout(callback, 250)
   }
-  window.setTimeout(callback, 250)
 }
 
 function getVideoMeta(rawUrl?: string | null): {
@@ -353,8 +344,8 @@ function UserProfile() {
     runWhenBrowserIdle(() => setAreBlocksReady(true), 1000)
   }, [])
 
-  const blockStyle = (user.appearanceBlockStyle || 'basic') as BlockStyle
-  const blockRadius = (user.appearanceBlockRadius || 'rounded') as BlockRadius
+  const blockStyle = user.appearanceBlockStyle
+  const blockRadius = user.appearanceBlockRadius
 
   const cardBase = getBlockCardBase(blockStyle)
   const radiusClass = getBlockRadius(blockRadius)
@@ -367,9 +358,10 @@ function UserProfile() {
   const { addItem } = useCartStore()
 
   React.useEffect(() => {
-    if (!user.username) return
+    const username = user.username
+    if (!username) return
     runWhenBrowserIdle(() => {
-      void trpcClient.user.trackView.mutate({ username: user.username })
+      void trpcClient.user.trackView.mutate({ username })
     })
   }, [user.username])
 

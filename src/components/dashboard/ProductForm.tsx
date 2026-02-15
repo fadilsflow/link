@@ -44,7 +44,6 @@ export type ProductFile = {
 
 export type ProductFormValues = {
   id?: string
-  userId: string
   title: string
   description: string
   productUrl: string
@@ -93,7 +92,6 @@ export const customerQuestionClientSchema = z.object({
 
 export const productFormClientSchema = z.object({
   id: z.string().optional(),
-  userId: z.string(),
   title: z.string().min(1, 'Title is required.'),
   description: z.string().optional(),
   productUrl: z
@@ -111,9 +109,8 @@ export const productFormClientSchema = z.object({
   customerQuestions: z.array(customerQuestionClientSchema),
 })
 
-export function emptyProductForm(userId: string): ProductFormValues {
+export function emptyProductForm(): ProductFormValues {
   return {
-    userId,
     title: '',
     description: '',
     productUrl: '',

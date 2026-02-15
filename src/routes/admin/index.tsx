@@ -64,7 +64,6 @@ function HomePage() {
     queryFn: async () => {
       if (!session?.user.id) return null
       return await trpcClient.analytics.getOverview.query({
-        userId: session.user.id,
         from: fromStr,
         to: toStr,
       })
@@ -76,9 +75,7 @@ function HomePage() {
     queryKey: ['analytics', 'products', session?.user.id],
     queryFn: async () => {
       if (!session?.user.id) return null
-      return await trpcClient.analytics.getProductAnalytics.query({
-        userId: session.user.id,
-      })
+      return await trpcClient.analytics.getProductAnalytics.query()
     },
     enabled: !!session?.user.id,
   })
@@ -107,9 +104,7 @@ function HomePage() {
     queryKey: ['balance', session?.user.id],
     queryFn: async () => {
       if (!session?.user.id) return null
-      return await trpcClient.balance.getSummary.query({
-        userId: session.user.id,
-      })
+      return await trpcClient.balance.getSummary.query()
     },
     enabled: !!session?.user.id,
   })

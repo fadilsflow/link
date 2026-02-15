@@ -33,10 +33,7 @@ function OnboardingPage() {
       throw new Error('User tidak ditemukan')
     }
 
-    await trpcClient.user.setUsername.mutate({
-      userId: session.user.id,
-      username,
-    })
+    await trpcClient.user.setUsername.mutate({ username })
 
     // Redirect to admin
     navigate({

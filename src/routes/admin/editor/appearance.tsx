@@ -59,7 +59,6 @@ function AppearanceEditor({ user }: { user: any }) {
   const updateAppearance = useMutation({
     mutationKey: ['updateProfile'],
     mutationFn: (data: {
-      userId: string
       publicTheme?: ThemeOption
       appearanceBgImageUrl?: string | null
       appearanceBlockStyle?: BlockStyle
@@ -101,7 +100,6 @@ function AppearanceEditor({ user }: { user: any }) {
     setCurrentBannerUrl(imageUrl || undefined)
     updateUser({ appearanceBgImageUrl: imageUrl || null })
     updateAppearance.mutate({
-      userId: user.id,
       appearanceBgImageUrl: imageUrl || null,
     })
   }
@@ -109,13 +107,13 @@ function AppearanceEditor({ user }: { user: any }) {
   const handleStyleChange = (style: BlockStyle) => {
     setBlockStyle(style)
     updateUser({ appearanceBlockStyle: style })
-    updateAppearance.mutate({ userId: user.id, appearanceBlockStyle: style })
+    updateAppearance.mutate({ appearanceBlockStyle: style })
   }
 
   const handleRadiusChange = (radius: BlockRadius) => {
     setBlockRadius(radius)
     updateUser({ appearanceBlockRadius: radius })
-    updateAppearance.mutate({ userId: user.id, appearanceBlockRadius: radius })
+    updateAppearance.mutate({ appearanceBlockRadius: radius })
   }
 
   const handleReset = () => {
@@ -126,7 +124,6 @@ function AppearanceEditor({ user }: { user: any }) {
       appearanceBlockRadius: 'rounded',
     })
     updateAppearance.mutate({
-      userId: user.id,
       appearanceBlockStyle: 'basic',
       appearanceBlockRadius: 'rounded',
     })
@@ -135,14 +132,14 @@ function AppearanceEditor({ user }: { user: any }) {
   const handleResetTheme = () => {
     setPublicTheme('system')
     updateUser({ publicTheme: 'system' })
-    updateAppearance.mutate({ userId: user.id, publicTheme: 'system' })
+    updateAppearance.mutate({ publicTheme: 'system' })
     setDashboardTheme('system')
   }
 
   const handlePublicThemeChange = (theme: ThemeOption) => {
     setPublicTheme(theme)
     updateUser({ publicTheme: theme })
-    updateAppearance.mutate({ userId: user.id, publicTheme: theme })
+    updateAppearance.mutate({ publicTheme: theme })
   }
 
   return (

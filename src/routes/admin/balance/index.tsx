@@ -51,9 +51,7 @@ function BalancePage() {
     queryKey: ['balance', 'summary', session?.user.id],
     queryFn: async () => {
       if (!session?.user.id) return null
-      return await trpcClient.balance.getSummary.query({
-        userId: session.user.id,
-      })
+      return await trpcClient.balance.getSummary.query()
     },
     enabled: !!session?.user.id,
   })
@@ -64,7 +62,6 @@ function BalancePage() {
     queryFn: async () => {
       if (!session?.user.id) return []
       return await trpcClient.balance.getTransactions.query({
-        userId: session.user.id,
         limit: 50,
       })
     },
@@ -76,9 +73,7 @@ function BalancePage() {
     queryKey: ['balance', 'payouts', session?.user.id],
     queryFn: async () => {
       if (!session?.user.id) return []
-      return await trpcClient.payout.list.query({
-        userId: session.user.id,
-      })
+      return await trpcClient.payout.list.query()
     },
     enabled: !!session?.user.id,
   })
@@ -87,9 +82,7 @@ function BalancePage() {
   const requestPayoutMutation = useMutation({
     mutationFn: async () => {
       if (!session?.user.id) throw new Error('Unauthorized')
-      return await trpcClient.payout.request.mutate({
-        userId: session.user.id,
-      })
+      return await trpcClient.payout.request.mutate({})
     },
     onSuccess: () => {
       toastManager.add({
@@ -111,10 +104,7 @@ function BalancePage() {
   const cancelPayoutMutation = useMutation({
     mutationFn: async (payoutId: string) => {
       if (!session?.user.id) throw new Error('Unauthorized')
-      return await trpcClient.payout.cancel.mutate({
-        payoutId,
-        userId: session.user.id,
-      })
+      return await trpcClient.payout.cancel.mutate({ payoutId })
     },
     onSuccess: () => {
       toastManager.add({

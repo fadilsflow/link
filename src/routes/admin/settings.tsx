@@ -40,7 +40,6 @@ function SettingsPage() {
   const updateTheme = useMutation({
     mutationFn: (publicTheme: ThemeOption) =>
       trpcClient.user.updateProfile.mutate({
-        userId: user?.id ?? '',
         publicTheme,
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),

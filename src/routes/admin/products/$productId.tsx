@@ -25,11 +25,10 @@ export const Route = createFileRoute('/admin/products/$productId')({
   component: ProductEditRoute,
 })
 
-function mapProductToForm(userId: string, product: any): ProductFormValues {
+function mapProductToForm(product: any): ProductFormValues {
   const questions = parseCustomerQuestions(product.customerQuestions)
   return {
     id: product.id,
-    userId,
     title: product.title ?? '',
     description: product.description ?? '',
     productUrl: product.productUrl ?? '',
@@ -76,7 +75,7 @@ function ProductEditRoute() {
 
   React.useEffect(() => {
     if (user && product && !form) {
-      const mapped = mapProductToForm(user.id, product)
+      const mapped = mapProductToForm(product)
       setForm(mapped)
       setInitialForm(mapped)
     }
@@ -87,7 +86,6 @@ function ProductEditRoute() {
     mutationFn: async (values: ProductFormValues) => {
       const base = {
         id: values.id!,
-        userId: values.userId,
         title: values.title,
         description: values.description || undefined,
         productUrl: values.productUrl || undefined,

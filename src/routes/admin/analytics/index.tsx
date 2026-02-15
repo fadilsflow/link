@@ -70,7 +70,6 @@ function AnalyticsPage() {
     queryFn: async () => {
       if (!session?.user.id) return null
       return await trpcClient.analytics.getOverview.query({
-        userId: session.user.id,
         from: fromStr,
         to: toStr,
       })
@@ -82,9 +81,7 @@ function AnalyticsPage() {
     queryKey: ['analytics', 'products', session?.user.id],
     queryFn: async () => {
       if (!session?.user.id) return null
-      return await trpcClient.analytics.getProductAnalytics.query({
-        userId: session.user.id,
-      })
+      return await trpcClient.analytics.getProductAnalytics.query()
     },
     enabled: !!session?.user.id,
   })

@@ -87,9 +87,7 @@ function OrdersPage() {
     queryKey: ['orders', session?.user.id],
     queryFn: async () => {
       if (!session?.user.id) return []
-      return await trpcClient.order.listByCreator.query({
-        userId: session.user.id,
-      })
+      return await trpcClient.order.listByCreator.query()
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
@@ -102,7 +100,6 @@ function OrdersPage() {
       if (!session?.user.id || !selectedOrderId) return null
       return await trpcClient.order.getDetail.query({
         orderId: selectedOrderId,
-        userId: session.user.id,
       })
     },
     enabled: !!session?.user.id && !!selectedOrderId && isSheetOpen,
@@ -111,10 +108,7 @@ function OrdersPage() {
   const resendEmailMutation = useMutation({
     mutationFn: async (orderId: string) => {
       if (!session?.user.id) throw new Error('Unauthorized')
-      return await trpcClient.order.resendEmail.mutate({
-        orderId,
-        userId: session.user.id,
-      })
+      return await trpcClient.order.resendEmail.mutate({ orderId })
     },
     onSuccess: () => {
       toastManager.add({

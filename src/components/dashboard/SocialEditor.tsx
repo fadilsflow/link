@@ -192,7 +192,6 @@ interface SocialLink {
 }
 
 interface SocialEditorProps {
-  userId: string
   username: string
   socialLinks: Array<SocialLink>
 }
@@ -256,7 +255,6 @@ function SortableSocialItem({ link, onEdit }: SortableSocialItemProps) {
 }
 
 export default function SocialEditor({
-  userId,
   username,
   socialLinks: initialSocialLinks,
 }: SocialEditorProps) {
@@ -290,7 +288,7 @@ export default function SocialEditor({
   // Mutations
   const createMutation = useMutation({
     mutationKey: ['createSocialLink', username],
-    mutationFn: (data: { userId: string; platform: string; url: string }) =>
+    mutationFn: (data: { platform: string; url: string }) =>
       trpcClient.socialLink.create.mutate(data),
     onSuccess: (newLink) => {
       setLocalSocialLinks((prev) => [...prev, newLink])
@@ -367,7 +365,6 @@ export default function SocialEditor({
 
     toastManager.promise(
       createMutation.mutateAsync({
-        userId,
         platform: platformToAdd,
         url: urlToAdd,
       }),

@@ -138,7 +138,6 @@ function AdminDashboard() {
   const updateProfile = useMutation({
     mutationKey: ['updateProfile'],
     mutationFn: (data: {
-      userId: string
       name?: string
       title?: string
       bio?: string
@@ -152,7 +151,6 @@ function AdminDashboard() {
   const createBlock = useMutation({
     mutationKey: ['createBlock'],
     mutationFn: (data: {
-      userId: string
       title: string
       url: string
       type?: string
@@ -233,7 +231,6 @@ function AdminDashboard() {
 
     return toastManager.promise(
       updateProfile.mutateAsync({
-        userId: user!.id,
         name: data.name,
         title: data.title ?? undefined,
         bio: data.bio ?? undefined,
@@ -359,7 +356,6 @@ function AdminDashboard() {
         )
         if (id.startsWith('temp-')) {
           createBlock.mutate({
-            userId: user!.id,
             title: updatedVal.title,
             url: updatedVal.url || '',
             type: updatedVal.type,
@@ -456,7 +452,6 @@ function AdminDashboard() {
 
       <section>
         <SocialEditor
-          userId={user.id}
           username={user.username ?? ''}
           socialLinks={dashboardData.socialLinks}
         />

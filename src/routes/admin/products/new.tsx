@@ -51,7 +51,7 @@ function ProductNewRoute() {
 
   React.useEffect(() => {
     if (user && !form) {
-      const empty = emptyProductForm(user.id)
+      const empty = emptyProductForm()
       setForm(empty)
       setInitialForm(empty)
     }
@@ -61,7 +61,6 @@ function ProductNewRoute() {
     mutationKey: ['product-create'],
     mutationFn: async (values: ProductFormValues) => {
       const base = {
-        userId: values.userId,
         title: values.title,
         description: values.description || undefined,
         productUrl: values.productUrl,

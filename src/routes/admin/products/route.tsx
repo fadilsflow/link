@@ -409,9 +409,7 @@ function ProductAdminLayout() {
     queryKey: ['products', session?.user.id],
     queryFn: async () => {
       if (!session?.user.id) return []
-      return await trpcClient.product.listByUser.query({
-        userId: session.user.id,
-      })
+      return await trpcClient.product.listByUser.query()
     },
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,

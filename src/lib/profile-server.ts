@@ -1,8 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db'
-import { products, user } from '@/db/schema'
+import { user } from '@/db/schema'
 
 export const getPublicProfile = createServerFn({ method: 'GET' })
   .inputValidator(z.string())
@@ -113,67 +113,102 @@ export const getOrderByToken = createServerFn({ method: 'GET' })
   .handler(async ({ data }) => {
     const { orders } = await import('@/db/schema')
 
-    // Find order by token — order always exists even if product is deleted
     const order = await db.query.orders.findFirst({
       where: eq(orders.deliveryToken, data.token),
       with: {
-        product: true, // may be null if product was hard-deleted
-        creator: true, // may be null if account was deleted
+        product: true,
+        creator: true,
+        items: {
+          with: {
+            product: true,
+            creator: true,
+          },
+        },
       },
     })
 
-    if (!order) {
-      return null
-    }
+    if (!order) return null
 
-    // Use live product data for file delivery (if product still exists)
-    // Fall back to snapshot data for display if product is gone
-    const productData = order.product ?? {
-      title: order.productTitle,
-      images: order.productImage ? [order.productImage] : [],
-      productUrl: null,
-      productFiles: [],
-    }
+    const itemSnapshots =
+      order.items.length > 0
+        ? order.items
+        : [
+            {
+              id: 'legacy',
+              orderId: order.id,
+              creatorId: order.creatorId,
+              productId: order.productId,
+              productTitle: order.productTitle,
+              productImage: order.productImage,
+              quantity: order.quantity,
+              amountPaid: order.amountPaid,
+              checkoutAnswers: order.checkoutAnswers ?? {},
+              product: order.product,
+              creator: order.creator,
+            },
+          ]
 
-    const creatorData = order.creator ?? {
+    const { StorageService } = await import('@/lib/storage')
+
+    const deliveryItems = await Promise.all(
+      itemSnapshots.map(async (item: any) => {
+        const productData = item.product ?? {
+          title: item.productTitle,
+          images: item.productImage ? [item.productImage] : [],
+          productUrl: null,
+          productFiles: [],
+        }
+
+        const creatorData = item.creator ?? {
+          name: 'Creator',
+          email: '',
+          image: null,
+          username: null,
+        }
+
+        const productFiles = (productData.productFiles as Array<any>) || []
+        const filesWithDownloadUrls = await Promise.all(
+          productFiles.map(async (file) => {
+            const key = StorageService.getKeyFromUrl(file.url)
+            if (!key) return file
+            try {
+              const downloadUrl = await StorageService.getDownloadUrl(
+                key,
+                file.name,
+              )
+              return { ...file, url: downloadUrl }
+            } catch (e) {
+              console.error('Failed to sign url', e)
+              return file
+            }
+          }),
+        )
+
+        return {
+          id: item.id,
+          productId: item.productId,
+          title: item.productTitle ?? productData.title,
+          image: item.productImage || productData.images?.[0] || null,
+          quantity: item.quantity ?? 1,
+          amountPaid: item.amountPaid ?? 0,
+          checkoutAnswers: item.checkoutAnswers ?? {},
+          productUrl: productData.productUrl,
+          productFiles: filesWithDownloadUrls,
+          creator: creatorData,
+        }
+      }),
+    )
+
+    const primaryCreator = deliveryItems[0]?.creator ?? {
       name: 'Creator',
       email: '',
       image: null,
       username: null,
     }
 
-    // Generate download URLs for product files
-    const { StorageService } = await import('@/lib/storage')
-    const productFiles = (productData.productFiles as Array<any>) || []
-
-    const filesWithDownloadUrls = await Promise.all(
-      productFiles.map(async (file) => {
-        const key = StorageService.getKeyFromUrl(file.url)
-        if (key) {
-          try {
-            const downloadUrl = await StorageService.getDownloadUrl(
-              key,
-              file.name,
-            )
-            return {
-              ...file,
-              url: downloadUrl,
-            }
-          } catch (e) {
-            console.error('Failed to sign url', e)
-            return file
-          }
-        }
-        return file
-      }),
-    )
-
     return {
       order,
-      product: {
-        ...productData,
-        productFiles: filesWithDownloadUrls,
-      },
-      creator: creatorData,
+      items: deliveryItems,
+      creator: primaryCreator,
     }
   })

@@ -268,6 +268,42 @@ export const orders = pgTable(
 )
 
 /**
+ * Order items table — line items that belong to a single order.
+ *
+ * This enables unified multi-product checkout while keeping order-level
+ * snapshots for backward compatibility with legacy single-product records.
+ */
+export const orderItems = pgTable(
+  'order_item',
+  {
+    id: text('id').primaryKey(),
+    orderId: text('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    creatorId: text('creator_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    productId: text('product_id').references(() => products.id, {
+      onDelete: 'set null',
+    }),
+    productTitle: text('product_title').notNull(),
+    productPrice: integer('product_price').notNull(),
+    productImage: text('product_image'),
+    quantity: integer('quantity').notNull().default(1),
+    amountPaid: integer('amount_paid').notNull().default(0),
+    // Checkout answers for this specific product item
+    checkoutAnswers: json('checkout_answers').$type<Record<string, string>>(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('order_item_order_id_idx').on(table.orderId),
+    index('order_item_creator_id_idx').on(table.creatorId),
+    index('order_item_product_id_idx').on(table.productId),
+  ],
+)
+
+/**
  * Transactions table — append-only financial ledger.
  *
  * This is the SINGLE SOURCE OF TRUTH for all money movement.
@@ -413,6 +449,7 @@ export const userRelations = relations(user, ({ many }) => ({
   products: many(products),
   socialLinks: many(socialLinks),
   orders: many(orders, { relationName: 'creatorOrders' }),
+  orderItems: many(orderItems),
   transactions: many(transactions),
   payouts: many(payouts),
 }))
@@ -444,6 +481,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
     references: [user.id],
   }),
   orders: many(orders),
+  orderItems: many(orderItems),
 }))
 
 export const socialLinksRelations = relations(socialLinks, ({ one }) => ({
@@ -464,6 +502,22 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
     references: [products.id],
   }),
   transactions: many(transactions),
+  items: many(orderItems),
+}))
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderItems.orderId],
+    references: [orders.id],
+  }),
+  creator: one(user, {
+    fields: [orderItems.creatorId],
+    references: [user.id],
+  }),
+  product: one(products, {
+    fields: [orderItems.productId],
+    references: [products.id],
+  }),
 }))
 
 export const transactionsRelations = relations(transactions, ({ one }) => ({

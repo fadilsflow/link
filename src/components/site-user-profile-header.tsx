@@ -195,9 +195,11 @@ export default function SiteUserProfileHeader({
       const nameElement = document.getElementById('profile-name')
       if (nameElement) {
         const rect = nameElement.getBoundingClientRect()
-        // Show header content when the name element reaches the top area
-        // We use a stricter threshold for mobile if needed, but 40px is generally safe
-        if (rect.top < 40) {
+        // Determine threshold based on device (desktop usually has larger header area or user preference)
+        const isDesktop = window.innerWidth >= 768
+        const threshold = isDesktop ? 120 : 40 // On desktop, show it much earlier
+
+        if (rect.top < threshold) {
           setShow(true)
         } else {
           setShow(false)
@@ -236,15 +238,15 @@ export default function SiteUserProfileHeader({
         )}
       >
         <div
-          className={cn(
-            'mx-auto flex h-17 items-center justify-between gap-2 px-2 transition-all duration-300 sm:gap-4 max-w-[760px]',
-            show ? 'opacity-100' : 'opacity-0 pointer-events-none',
-          )}
+          className="mx-auto flex h-17 items-center justify-between gap-2 px-2 transition-all duration-300 sm:gap-4 max-w-[760px]"
           data-header-container
         >
           <Link
             to="/"
-            className="flex items-center transition-opacity duration-300"
+            className={cn(
+              'flex items-center transition-opacity duration-300',
+              show ? 'opacity-100' : 'opacity-0 pointer-events-none',
+            )}
           >
             <Avatar className=" h-8 w-8 border-2 border-background ring ring-primary/10">
               <AvatarImage src={avatarUrl || '/avatar-placeholder.png'} />
@@ -252,7 +254,15 @@ export default function SiteUserProfileHeader({
             </Avatar>
             <span className="ml-2 font-medium">{username}</span>
           </Link>
-          <div className="flex gap-4 items-center">
+          <div
+            className={cn(
+              'flex gap-4 items-center transition-opacity duration-300',
+              // On mobile (hidden show), we hide it. On desktop, we always show it.
+              !show
+                ? 'max-md:opacity-0 max-md:pointer-events-none'
+                : 'opacity-100',
+            )}
+          >
             <UserButton />
             <Button
               variant="outline"

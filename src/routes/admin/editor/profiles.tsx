@@ -406,7 +406,6 @@ function AdminDashboard() {
     const tempId = 'temp-' + Date.now()
     const newBlock = {
       id: tempId,
-      userId: user!.id,
       title: '',
       url: '',
       type,

@@ -218,7 +218,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              render={<Link to={'/$username'} params={username} />}
+              render={
+                <Link
+                  to={'/$username'}
+                  params={{ username: usernameParam }}
+                  search={{ tab: 'profile' }}
+                />
+              }
               className="text-foreground"
             >
               <ExternalLink />

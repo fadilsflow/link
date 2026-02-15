@@ -17,10 +17,9 @@ const getAdminRouteAccess = createServerFn({ method: 'GET' })
   })
 
 export const Route = createFileRoute('/$username/admin')({
-  loaderDeps: ({ params }) => ({ username: params.username }),
-  loader: async ({ context, deps }) => {
+  beforeLoad: async ({ context, params }) => {
     const access = await getAdminRouteAccess({
-      data: { username: deps.username },
+      data: { username: params.username },
     })
 
     if (!access.ok) {
@@ -36,19 +35,16 @@ export const Route = createFileRoute('/$username/admin')({
 
     const authData: AdminAuthContextData = {
       userId: access.user.id,
-      username: access.user.username,
+      username: params.username,
       name: access.user.name,
       email: access.user.email,
       image: access.user.image,
     }
 
-    context.queryClient.setQueryData(adminAuthQueryKey(deps.username), authData)
+    context.queryClient.setQueryData(adminAuthQueryKey(params.username), authData)
 
     return authData
   },
-  staleTime: 1000 * 60 * 5,
-  gcTime: 1000 * 60 * 30,
-  shouldReload: false,
   component: AdminLayout,
 })
 

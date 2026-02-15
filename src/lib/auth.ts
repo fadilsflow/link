@@ -4,6 +4,10 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from '@/db'
 import * as schema from '@/db/schema'
 
+const trustedOrigins = [process.env.BETTER_AUTH_URL].filter(
+  (origin): origin is string => typeof origin === 'string' && origin.length > 0,
+)
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
@@ -17,6 +21,10 @@ export const auth = betterAuth({
       enabled: true,
       maxAge: 60 * 5,
     },
+  },
+  trustedOrigins,
+  advanced: {
+    useSecureCookies: process.env.NODE_ENV === 'production',
   },
   socialProviders: {
     google: {

@@ -81,6 +81,15 @@ export const getServerAuthContext = cache(async () => {
 })
 
 export const getAdminAccessForUsername = cache(async (username: string) => {
+  const normalizedUsername = username.trim()
+
+  if (!normalizedUsername) {
+    return {
+      ok: false as const,
+      reason: 'INVALID_USERNAME' as const,
+    }
+  }
+
   const authContext = await getServerAuthContext()
 
   if (!authContext.isAuthenticated || !authContext.user.username) {
@@ -90,7 +99,7 @@ export const getAdminAccessForUsername = cache(async (username: string) => {
     }
   }
 
-  if (authContext.user.username !== username) {
+  if (authContext.user.username !== normalizedUsername) {
     return {
       ok: false as const,
       reason: 'WRONG_OWNER' as const,
@@ -100,7 +109,13 @@ export const getAdminAccessForUsername = cache(async (username: string) => {
 
   return {
     ok: true as const,
-    user: authContext.user,
+    user: {
+      id: authContext.user.id,
+      username: authContext.user.username,
+      name: authContext.user.name ?? null,
+      email: authContext.user.email,
+      image: authContext.user.image ?? null,
+    },
     session: authContext.session,
   }
 })

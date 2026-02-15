@@ -41,6 +41,7 @@ const RANGE_PRESETS = [
   { label: '7D', days: 7 },
   { label: '30D', days: 30 },
 ] as const
+const PUBLIC_BASE_HOST = new URL(BASE_URL).host
 
 function HomePage() {
   const { username } = Route.useParams()
@@ -146,7 +147,7 @@ function HomePage() {
                     className="text-primary flex items-center text-sm hover:text-primary transition-colors mt-0.5 group/link w-fit"
                   >
                     <span className="font-medium underline-offset-4 group-hover/link:underline">
-                      {window.location.host}/{username}
+                      {PUBLIC_BASE_HOST}/{username}
                     </span>
                   </a>
                 </div>

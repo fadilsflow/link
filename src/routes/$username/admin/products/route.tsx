@@ -42,6 +42,7 @@ import {
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table'
 import { Spinner } from '@/components/ui/spinner'
 import EmptyState from '@/components/empty-state'
+import { BASE_URL } from '@/lib/constans'
 
 export const Route = createFileRoute('/$username/admin/products')({
   component: ProductAdminLayout,
@@ -60,6 +61,8 @@ type ProductRow = {
   salesCount: number
   totalRevenue: number
 }
+
+const PUBLIC_BASE_ORIGIN = BASE_URL.replace(/\/$/, '')
 
 function productPriceLabel(product: ProductRow): string {
   if (product.payWhatYouWant) {
@@ -124,7 +127,7 @@ function ProductActions({
     })
   }
 
-  const publicUrl = `${window.location.origin}/${username}/products/${product.id}`
+  const publicUrl = `${PUBLIC_BASE_ORIGIN}/${username}/products/${product.id}`
   const checkoutUrl = `${publicUrl}/checkout`
   const href = `/${username}/admin/products/${product.id}`
   return (
@@ -222,7 +225,7 @@ function getColumns(username: string): Array<ColumnDef<ProductRow>> {
       cell: ({ row }) => {
         const imageUrl = row.original.images?.[0]
         const href = `/${username}/admin/products/${row.original.id}`
-        const publicUrl = `${window.location.origin}/${username}/products/${row.original.id}`
+        const publicUrl = `${PUBLIC_BASE_ORIGIN}/${username}/products/${row.original.id}`
         return (
           <div className="relative flex items-center gap-4 py-1 group">
             <Link to={href} className="absolute inset-0 z-10" />

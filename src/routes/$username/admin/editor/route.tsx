@@ -8,6 +8,8 @@ import { BASE_URL } from '@/lib/constans'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 
+const PUBLIC_BASE_HOST = new URL(BASE_URL).host
+
 export const Route = createFileRoute('/$username/admin/editor')({
   component: RouteComponent,
 })
@@ -54,8 +56,8 @@ function EditorLayout() {
               >
                 <span className="truncate max-w-[120px] md:max-w-40">
                   {user?.username
-                    ? `${window.location.host}/${user.username}`
-                    : `${window.location.host}/loading`}
+                    ? `${PUBLIC_BASE_HOST}/${user.username}`
+                    : `${PUBLIC_BASE_HOST}/loading`}
                 </span>
                 <Share className="ml-2 h-4 w-4" />
               </Button>

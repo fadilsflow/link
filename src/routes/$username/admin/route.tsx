@@ -1,26 +1,43 @@
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
+import { createServerFn } from '@tanstack/react-start'
 import React from 'react'
+import { z } from 'zod'
 import { AppSidebar } from '@/components/dashboard/app-sidebar'
 import { MobileAdminNav } from '@/components/dashboard/mobile-admin-nav'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { checkOnboardingStatus } from '@/lib/onboarding-server'
+import { getAdminAccessForUsername } from '@/lib/auth-server'
 import { useApplyRootTheme, useDashboardThemePreference } from '@/lib/theme'
 
-export const Route = createFileRoute('/$username/admin')({
-  beforeLoad: async ({ params }) => {
-    const status = await checkOnboardingStatus()
+const getAdminRouteAccess = createServerFn({ method: 'GET' })
+  .inputValidator(z.object({ username: z.string() }))
+  .handler(async ({ data }) => {
+    return await getAdminAccessForUsername(data.username)
+  })
 
-    if (!status.isLoggedIn || !status.user.username) {
+export const Route = createFileRoute('/$username/admin')({
+  ssr: false,
+  loaderDeps: ({ params }) => ({ username: params.username }),
+  loader: async ({ deps }) => {
+    const access = await getAdminRouteAccess({
+      data: { username: deps.username },
+    })
+
+    if (!access.ok) {
+      if (access.reason === 'WRONG_OWNER' && access.expectedUsername) {
+        throw redirect({
+          to: '/$username/admin',
+          params: { username: access.expectedUsername },
+        })
+      }
+
       throw redirect({ to: '/' })
     }
 
-    if (status.user.username !== params.username) {
-      throw redirect({
-        to: '/$username/admin',
-        params: { username: status.user.username },
-      })
-    }
+    return access
   },
+  staleTime: 1000 * 60 * 5,
+  gcTime: 1000 * 60 * 30,
+  shouldReload: false,
   component: AdminLayout,
 })
 

@@ -2,27 +2,22 @@ import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import {
   ArrowLeft,
-  ArrowUpRight,
-  ChevronLeft,
-  ChevronRight,
   CircleCheck,
+  Share2,
   ShoppingBag,
+  ShoppingCart,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getPublicProduct } from '@/lib/profile-server'
-import { cn, formatPrice } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 import LiteYouTube from '@/components/LiteYouTube'
 import { extractYouTubeVideoIdFromText } from '@/lib/lite-youtube'
+import { toastManager } from '@/components/ui/toast'
+import { useCartStore } from '@/store/cart-store'
+import { ShareProfileModal } from '@/components/share-profile-modal'
+import { CartDrawer } from '@/components/cart-drawer'
+import { BASE_URL } from '@/lib/constans'
 
 export const Route = createFileRoute('/$username/products/$productId/')({
   component: ProductDetailPage,
@@ -41,12 +36,12 @@ export const Route = createFileRoute('/$username/products/$productId/')({
     return {
       links: heroImage
         ? [
-            {
-              rel: 'preload',
-              as: 'image',
-              href: heroImage,
-            },
-          ]
+          {
+            rel: 'preload',
+            as: 'image',
+            href: heroImage,
+          },
+        ]
         : [],
     }
   },
@@ -80,261 +75,163 @@ function getOriginalPrice(product: any): string | null {
   return null
 }
 
-interface ImageCarouselProps {
+interface ProductImageProps {
   images: Array<string>
   title: string
 }
 
-function ImageCarousel({ images, title }: ImageCarouselProps) {
-  const [currentIndex, setCurrentIndex] = React.useState(0)
-  const [enhancedUi, setEnhancedUi] = React.useState(false)
-
-  React.useEffect(() => {
-    // Defers carousel controls + thumbnails until first paint settles, lowering initial hydration pressure (TBT).
-    const timer = window.setTimeout(() => setEnhancedUi(true), 500)
-    return () => window.clearTimeout(timer)
-  }, [])
-
-  const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
-  }
-
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
-  }
-
-  const goToSlide = (index: number) => {
-    setCurrentIndex(index)
-  }
-
+function ProductImage({ images, title }: ProductImageProps) {
   if (images.length === 0) {
     return (
-      <div className="aspect-[4/3] bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center">
-        <ShoppingBag className="h-16 w-16 text-slate-300" />
+      <div className="flex aspect-4/3 items-center justify-center border bg-muted">
+        <ShoppingBag className="h-10 w-10 text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-3">
-      <div className="relative aspect-[4/3] bg-slate-100 rounded-xl overflow-hidden group">
-        {/* Marks the true hero image as eager/high priority so it wins LCP quickly on mobile. */}
-        <img
-          src={images[currentIndex]}
-          alt={`${title} - Image ${currentIndex + 1}`}
-          width={1200}
-          height={900}
-          loading={currentIndex === 0 ? 'eager' : 'lazy'}
-          fetchPriority={currentIndex === 0 ? 'high' : 'auto'}
-          decoding="async"
-          className="w-full h-full object-cover transition-transform duration-500"
-        />
-
-        {enhancedUi && images.length > 1 && (
-          <>
-            <Button
-              onClick={goToPrevious}
-              variant="outline"
-              size="icon"
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Previous image"
-            >
-              <ChevronLeft className="h-5 w-5 text-slate-700" />
-            </Button>
-            <Button
-              onClick={goToNext}
-              variant="outline"
-              size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Next image"
-            >
-              <ChevronRight className="h-5 w-5 text-slate-700" />
-            </Button>
-          </>
-        )}
-
-        {images.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-full text-xs text-white font-medium">
-            {currentIndex + 1} / {images.length}
-          </div>
-        )}
-      </div>
-
-      {enhancedUi && images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 px-0.5 min-h-16">
-          {images.map((image, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={cn(
-                'flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ring-2',
-                index === currentIndex
-                  ? 'ring-slate-900'
-                  : 'ring-transparent hover:ring-slate-300 opacity-60 hover:opacity-100',
-              )}
-            >
-              <img
-                src={image}
-                alt={`Thumbnail ${index + 1}`}
-                width={64}
-                height={64}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover"
-              />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <img
+      src={images[0]}
+      alt={title}
+      width={1200}
+      height={900}
+      loading="eager"
+      fetchPriority="high"
+      decoding="async"
+      className="h-auto w-full rounded-md border object-cover"
+    />
   )
 }
 
 function ProductDetailPage() {
   const { username, productId } = Route.useParams()
   const { user, product } = Route.useLoaderData()
+  const [isCartOpen, setIsCartOpen] = React.useState(false)
+  const { addItem, getTotalItems } = useCartStore()
 
   const checkoutHref = `/${username}/products/${productId}/checkout`
+  const productHref = `${BASE_URL.replace(/\/$/, '')}/${username}/products/${productId}`
   const productImages = product.images || []
   const originalPrice = getOriginalPrice(product)
   const productVideoId = extractYouTubeVideoIdFromText(product.description)
+  const totalItems = getTotalItems()
+
+  const handleAddToCart = () => {
+    const cartPrice = product.payWhatYouWant
+      ? product.suggestedPrice ?? product.minimumPrice ?? 0
+      : product.salePrice ?? product.price ?? 0
+
+    addItem({
+      productId: product.id,
+      title: product.title,
+      price: cartPrice,
+      image: product.images?.[0] ?? null,
+      maxQuantity: product.totalQuantity ?? null,
+      limitPerCheckout: product.limitPerCheckout ?? null,
+    })
+
+    toastManager.add({
+      title: 'Added to cart',
+      description: `${product.title} added to your cart`,
+    })
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="mx-auto w-full max-w-xl space-y-6 px-4 py-4 pb-36 sm:py-8 sm:pb-40">
+        <div className="flex items-center justify-between">
           <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs text-slate-600 -ml-2 hover:bg-slate-100"
+            variant="outline"
+            size="icon"
             onClick={() => window.history.back()}
+            aria-label="Back"
           >
-            <ArrowLeft className="h-4 w-4 mr-1.5" />
-            Back
+            <ArrowLeft />
           </Button>
-          <Link
-            to="/$username"
-            params={{ username }}
-            search={{ tab: 'profile' }}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          >
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={user.image || '/avatar-placeholder.png'} />
-              <AvatarFallback className="bg-slate-900 text-white text-xs">
-                {user.name.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm font-medium text-slate-700">
-              @{user.username}
-            </span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <ShareProfileModal url={productHref}>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Share product"
+              >
+                <Share2 />
+              </Button>
+            </ShareProfileModal>
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsCartOpen(true)}
+                aria-label="Open cart"
+              >
+                <ShoppingCart />
+              </Button>
+              {totalItems > 0 ? (
+                <span className="absolute -right-2 -top-2 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-semibold text-primary-foreground">
+                  {totalItems}
+                </span>
+              ) : null}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr] lg:items-start">
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Preview</CardTitle>
-                <CardDescription>
-                  Browse product images and media.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ImageCarousel images={productImages} title={product.title} />
-              </CardContent>
-            </Card>
+        <ProductImage images={productImages} title={product.title} />
 
-            {productVideoId ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Video preview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <LiteYouTube
-                    videoId={productVideoId}
-                    title={`${product.title} video preview`}
-                    className="rounded-xl border border-slate-200"
-                    playLabel="Play product video"
-                  />
-                </CardContent>
-              </Card>
-            ) : null}
+        <div className="space-y-4 pb-2">
+          <h1 className="text-3xl font-bold">{product.title}</h1>
+          {product.description ? (
+            <p className="whitespace-pre-line text-muted-foreground">{product.description}</p>
+          ) : null}
+
+          <div className="flex items-center gap-2">
+            <p className="text-2xl font-semibold">{priceLabel(product)}</p>
+            {originalPrice && (
+              <p className="text-sm text-muted-foreground line-through">{originalPrice}</p>
+            )}
           </div>
 
-          <Card className="lg:sticky lg:top-20">
-            <CardHeader className="space-y-3">
-              <Badge variant="secondary" className="w-fit">
-                Digital Product
-              </Badge>
-              <CardTitle className="text-2xl leading-tight">
-                {product.title}
-              </CardTitle>
-              {product.description && (
-                <CardDescription className="whitespace-pre-line leading-relaxed text-sm">
-                  {product.description}
-                </CardDescription>
-              )}
+
+          <p className="text-sm text-muted-foreground">
+            Sold by{' '}
+            <Link
+              to="/$username"
+              params={{ username }}
+              search={{ tab: 'profile' }}
+              className="font-semibold text-foreground hover:underline"
+            >
+              @{user.username}
+            </Link>
+          </p>
+        </div>
+
+        {productVideoId ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Video preview</CardTitle>
             </CardHeader>
-
-            <CardContent className="space-y-4">
-              <Separator />
-
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Price
-                </p>
-                <div className="flex items-center gap-2">
-                  <p className="text-3xl font-bold tracking-tight">
-                    {priceLabel(product)}
-                  </p>
-                  {originalPrice && (
-                    <p className="text-sm text-muted-foreground line-through">
-                      {originalPrice}
-                    </p>
-                  )}
-                  {originalPrice && <Badge variant="success">Sale</Badge>}
-                </div>
-              </div>
-
-              <Button
-                size="xl"
-                className="w-full"
-                render={<Link to={checkoutHref} />}
-              >
-                Buy now
-                <ArrowUpRight className="h-4 w-4" />
-              </Button>
-
-              <div className="flex items-center gap-2 rounded-xl border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-                <CircleCheck className="h-4 w-4" />
-                Instant digital delivery after purchase
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Sold by</span>
-                <Link
-                  to="/$username"
-                  params={{ username }}
-                  search={{ tab: 'profile' }}
-                  className="inline-flex items-center gap-2 font-medium hover:opacity-80 transition-opacity"
-                >
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage
-                      src={user.image || '/avatar-placeholder.png'}
-                    />
-                    <AvatarFallback className="bg-slate-900 text-white text-[10px]">
-                      {user.name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  {user.name}
-                </Link>
-              </div>
+            <CardContent>
+              <LiteYouTube
+                videoId={productVideoId}
+                title={`${product.title} video preview`}
+                playLabel="Play product video"
+              />
             </CardContent>
           </Card>
+        ) : null}
+
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-20 bg-background">
+        <div className="mx-auto grid w-full max-w-xl grid-cols-[auto_1fr] items-center gap-3 px-4 py-4">
+          <Button size={"icon-lg"} variant="outline" onClick={handleAddToCart}>
+            <ShoppingCart />
+          </Button>
+          <Button size={'lg'} render={<Link to={checkoutHref} />}>Checkout</Button>
         </div>
       </div>
+
+      <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </div>
   )
 }

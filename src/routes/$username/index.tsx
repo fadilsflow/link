@@ -17,14 +17,18 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import LiteYouTube from '@/components/LiteYouTube'
 import { extractYouTubeVideoId } from '@/lib/lite-youtube'
 import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs'
-import { useApplyRootTheme } from '@/lib/theme'
 import {
   getBlockCardBase,
   getBlockRadius,
   getBlockSkeletonClasses,
-  getPageBackgroundStyle,
   getProductSkeletonClass,
 } from '@/lib/block-styles'
+import {
+  getAppearanceBlockStyle,
+  getAppearanceFontClass,
+  getAppearancePageBackgroundStyle,
+  getAppearanceTextVars,
+} from '@/lib/appearance'
 
 import SiteUserProfileHeader, {
   ProfileBanner,
@@ -52,9 +56,6 @@ interface PublicProduct {
   totalQuantity?: number | null
   limitPerCheckout?: number | null
 }
-
-const DEFAULT_BANNER =
-  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2672&auto=format&fit=crop'
 
 function runWhenBrowserIdle(callback: () => void, timeout = 1200) {
   if (typeof window === 'undefined') return
@@ -144,12 +145,14 @@ function ProductCard({
   username,
   cardBase,
   radiusClass,
+  cardStyle,
   onAddToCart,
 }: {
   product: PublicProduct
   username: string
   cardBase: string
   radiusClass: string
+  cardStyle?: React.CSSProperties
   onAddToCart?: (e: React.MouseEvent) => void
 }) {
   const price = getProductPriceLabel(product)
@@ -163,6 +166,7 @@ function ProductCard({
         cardBase,
         radiusClass,
       )}
+      style={cardStyle}
       render={
         <Link
           to="/$username/products/$productId"
@@ -229,10 +233,12 @@ function DeferredVideoEmbed({
   block,
   cardClass,
   radiusClass,
+  cardStyle,
 }: {
   block: PublicBlock
   cardClass: string
   radiusClass: string
+  cardStyle?: React.CSSProperties
 }) {
   const { embedUrl, posterUrl, provider, youtubeVideoId } = React.useMemo(
     () => getVideoMeta(block.content),
@@ -246,6 +252,7 @@ function DeferredVideoEmbed({
         cardClass,
         radiusClass,
       )}
+      style={cardStyle}
     >
       <div className="flex items-center gap-2 text-sm font-semibold">
         <PlayCircle className="h-4 w-4" />
@@ -307,10 +314,8 @@ export const Route = createFileRoute('/$username/')({
     }
   },
   head: ({ loaderData }) => {
-    const lcpHref =
-      loaderData?.user.appearanceBgImageUrl ||
-      loaderData?.user.image ||
-      DEFAULT_BANNER
+    const showBanner = loaderData?.user.appearanceBannerEnabled !== false
+    const lcpHref = showBanner ? loaderData?.user.appearanceBgImageUrl : null
 
     return {
       links: lcpHref
@@ -329,12 +334,12 @@ export const Route = createFileRoute('/$username/')({
 
 function UserProfile() {
   const { user, blocks, products, socialLinks } = Route.useLoaderData()
-  useApplyRootTheme('public', user.publicTheme)
 
   const { tab } = Route.useSearch()
   const navigate = Route.useNavigate()
 
-  const isBanner = true
+  const isBanner =
+    user.appearanceBannerEnabled !== false && !!user.appearanceBgImageUrl
   const isFullPageBg = false
 
   const [areBlocksReady, setAreBlocksReady] = React.useState(false)
@@ -349,7 +354,20 @@ function UserProfile() {
 
   const cardBase = getBlockCardBase(blockStyle)
   const radiusClass = getBlockRadius(blockRadius)
-  const backgroundStyles = getPageBackgroundStyle()
+  const blockInlineStyle = getAppearanceBlockStyle({
+    blockStyle,
+    blockColor: user.appearanceBlockColor,
+    blockShadowColor: user.appearanceBlockShadowColor,
+  })
+  const backgroundStyles = getAppearancePageBackgroundStyle({
+    backgroundType: user.appearanceBackgroundType,
+    backgroundColor: user.appearanceBackgroundColor,
+    backgroundGradientTop: user.appearanceBackgroundGradientTop,
+    backgroundGradientBottom: user.appearanceBackgroundGradientBottom,
+    backgroundImageUrl: user.appearanceBackgroundImageUrl,
+  })
+  const textStyle = getAppearanceTextVars(user.appearanceTextColor)
+  const textFontClass = getAppearanceFontClass(user.appearanceTextFont)
 
   const productMap = new Map(
     (products as Array<PublicProduct>).map((product) => [product.id, product]),
@@ -373,13 +391,23 @@ function UserProfile() {
     window.open(block.url, '_blank', 'noopener,noreferrer')
   }
 
-  const lcpBannerSrc = user.appearanceBgImageUrl || DEFAULT_BANNER
+  const lcpBannerSrc = user.appearanceBgImageUrl
 
   return (
     <div
-      className="relative min-h-screen font-sans text-foreground"
-    // style={backgroundStyles}
+      className={cn('relative min-h-screen text-foreground', textFontClass)}
+      style={{ ...backgroundStyles, ...textStyle }}
     >
+      {user.appearanceBackgroundType === 'avatar-blur' && user.image ? (
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img
+            src={user.image}
+            alt=""
+            className="h-full w-full object-cover scale-125 blur-3xl"
+          />
+          <div className="absolute inset-0 bg-background/45" />
+        </div>
+      ) : null}
       <SiteUserProfileHeader
         avatarUrl={user.image || '/avatar-placeholder.png'}
         username={user.name}
@@ -400,6 +428,7 @@ function UserProfile() {
       >
         <ProfileCard
           className={cn(cardBase, radiusClass)}
+          style={blockInlineStyle}
           user={user}
           isFullPageBg={isFullPageBg}
           id="profile-card-section"
@@ -407,6 +436,7 @@ function UserProfile() {
 
         <SocialLinks
           className={cn(cardBase, radiusClass)}
+          style={blockInlineStyle}
           socialLinks={socialLinks}
           isFullPageBg={isFullPageBg}
         />
@@ -463,6 +493,7 @@ function UserProfile() {
                           cardBase,
                           radiusClass,
                         )}
+                        style={blockInlineStyle}
                       >
                         {block.content && (
                           <div className="relative w-full overflow-hidden bg-muted aspect-4/3">
@@ -503,6 +534,7 @@ function UserProfile() {
                         block={block}
                         cardClass={cardBase}
                         radiusClass={radiusClass}
+                        cardStyle={blockInlineStyle}
                       />
                     )
                   }
@@ -520,6 +552,7 @@ function UserProfile() {
                         username={user.username || ''}
                         cardBase={cardBase}
                         radiusClass={radiusClass}
+                        cardStyle={blockInlineStyle}
                       />
                     )
                   }
@@ -532,6 +565,7 @@ function UserProfile() {
                         cardBase,
                         radiusClass,
                       )}
+                      style={blockInlineStyle}
                       onClick={() => openBlockUrl(block)}
                     >
                       <div className="flex items-center justify-between p-4">
@@ -591,6 +625,7 @@ function UserProfile() {
                         username={user.username || ''}
                         cardBase={cardBase}
                         radiusClass={radiusClass}
+                        cardStyle={blockInlineStyle}
                         onAddToCart={handleAddToCart}
                       />
                     )

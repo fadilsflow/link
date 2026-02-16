@@ -10,6 +10,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
+
+    environment:
+      name: production
+      url: https://link.kreeasi.web.id/
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4

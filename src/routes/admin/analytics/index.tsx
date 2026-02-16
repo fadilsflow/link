@@ -558,7 +558,7 @@ function RevenueChart({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
+              tickFormatter={(value) => formatPrice(value as number)}
             />
             <ChartTooltip
               cursor={false}

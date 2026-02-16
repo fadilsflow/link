@@ -948,7 +948,7 @@ const orderRouter = {
         if (product.payWhatYouWant && product.minimumPrice) {
           if (item.amountPaidPerUnit < product.minimumPrice) {
             throw new Error(
-              `${product.title} requires at least ${product.minimumPrice} cents`,
+              `${product.title} requires at least ${product.minimumPrice}`,
             )
           }
         }

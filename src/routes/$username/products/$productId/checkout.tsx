@@ -22,7 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { getPublicProduct } from '@/lib/profile-server'
-import { cn, formatPrice } from '@/lib/utils'
+import { cn, formatPrice, formatPriceInput, parsePriceInput } from '@/lib/utils'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
 import LiteYouTube from '@/components/LiteYouTube'
@@ -87,9 +87,9 @@ function parseQuestions(raw: unknown): Array<Question> {
   }
 }
 
-function effectiveUnitPrice(product: any, customAmountCents: number | null) {
+function effectiveUnitPrice(product: any, customAmount: number | null) {
   if (product.payWhatYouWant) {
-    if (customAmountCents != null) return customAmountCents
+    if (customAmount != null) return customAmount
     if (product.suggestedPrice) return product.suggestedPrice
     if (product.minimumPrice) return product.minimumPrice
     return 0
@@ -100,13 +100,6 @@ function effectiveUnitPrice(product: any, customAmountCents: number | null) {
   return product.price ?? 0
 }
 
-function parseAmount(value: string): number | null {
-  const trimmed = value.trim()
-  if (!trimmed) return null
-  const num = Number(trimmed.replace(',', '.'))
-  if (Number.isNaN(num) || num < 0) return null
-  return Math.round(num * 100)
-}
 
 function CheckoutPage() {
   const { product, user } = Route.useLoaderData()
@@ -129,20 +122,20 @@ function CheckoutPage() {
 
   const unitPrice = effectiveUnitPrice(
     product,
-    customAmount ? parseAmount(customAmount) : null,
+    customAmount ? parsePriceInput(customAmount) : null,
   )
 
   const handleSubmit: React.FormEventHandler = async (e) => {
     e.preventDefault()
     if (isSubmitting) return
 
-    const amountCents = unitPrice
-    if (product.payWhatYouWant && amountCents <= 0) {
+    const amount = unitPrice
+    if (product.payWhatYouWant && amount <= 0) {
       alert('Please enter a valid amount.')
       return
     }
     if (product.payWhatYouWant && product.minimumPrice) {
-      if (amountCents < product.minimumPrice) {
+      if (amount < product.minimumPrice) {
         alert(
           `Minimum price is ${formatPrice(
             product.minimumPrice,
@@ -292,15 +285,15 @@ function CheckoutPage() {
                       </Label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
-                          $
+                          Rp
                         </span>
                         <Input
                           id="amount"
-                          inputMode="decimal"
+                          inputMode="numeric"
                           placeholder={
                             product.suggestedPrice
-                              ? (product.suggestedPrice / 100).toString()
-                              : '0.00'
+                              ? formatPriceInput(product.suggestedPrice)
+                              : '0'
                           }
                           value={customAmount}
                           onChange={(e) => setCustomAmount(e.target.value)}

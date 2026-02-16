@@ -67,14 +67,14 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
     multiple: false,
     initialFiles: user.image
       ? [
-          {
-            id: 'current-avatar',
-            name: 'Current Avatar',
-            url: user.image,
-            size: 0,
-            type: 'image/ping',
-          },
-        ]
+        {
+          id: 'current-avatar',
+          name: 'Current Avatar',
+          url: user.image,
+          size: 0,
+          type: 'image/ping',
+        },
+      ]
       : [],
   })
 
@@ -121,8 +121,6 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
       return
     }
 
-    // Close dialog immediately as requested
-    setDialogOpen(false)
     setIsUploading(true)
 
     try {
@@ -136,12 +134,11 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
       }
 
       await onSave({ ...formData, image: imageUrl })
+      // Close dialog only after save completes successfully
+      setDialogOpen(false)
     } catch (error) {
       console.error('Failed to save profile:', error)
-      // Since dialog is closed, maybe we should use a toast for error?
-      // But onSave in profiles.tsx already uses toastManager.promise which handles errors.
-      // However, if the uploadFile fails, onSave is never called.
-      // In that case, we might need a manual toast or a way to notify the user.
+      // Keep dialog open on error so user can retry
     } finally {
       setIsUploading(false)
     }
@@ -282,7 +279,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
               <DialogClose render={<Button variant="ghost" />}>
                 Cancel
               </DialogClose>
-              <Button type="submit" loading={isUploading}>
+              <Button on type="submit" loading={isUploading}>
                 Save
               </Button>
             </DialogFooter>

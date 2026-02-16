@@ -30,7 +30,6 @@ import {
   AppHeaderDescription,
 } from '@/components/app-header'
 import SocialEditor from '@/components/dashboard/SocialEditor'
-import { toastManager } from '@/components/ui/toast'
 import { usePreview } from '@/lib/preview-context'
 
 export const Route = createFileRoute('/admin/editor/profiles')({
@@ -160,9 +159,9 @@ function AdminDashboard() {
       setLocalBlocks((prev) =>
         prev.map((b) =>
           b.id.startsWith('temp-') &&
-          b.title === newBlock.title &&
-          b.url === newBlock.url &&
-          b.type === newBlock.type
+            b.title === newBlock.title &&
+            b.url === newBlock.url &&
+            b.type === newBlock.type
             ? { ...newBlock, syncStatus: 'saved', errors: {} }
             : b,
         ),
@@ -229,29 +228,12 @@ function AdminDashboard() {
       image: data.image,
     })
 
-    return toastManager.promise(
-      updateProfile.mutateAsync({
-        name: data.name,
-        title: data.title ?? undefined,
-        bio: data.bio ?? undefined,
-        image: data.image ?? undefined,
-      }),
-      {
-        loading: {
-          title: 'Saving profile...',
-          description: 'Please wait while we update your profile.',
-        },
-        success: () => ({
-          title: 'Profile saved!',
-          description: 'Your profile has been updated successfully.',
-        }),
-        error: (err: unknown) => ({
-          title: 'Failed to save profile',
-          description:
-            (err as Error).message || 'An unexpected error occurred.',
-        }),
-      },
-    )
+    await updateProfile.mutateAsync({
+      name: data.name,
+      title: data.title ?? undefined,
+      bio: data.bio ?? undefined,
+      image: data.image ?? undefined,
+    })
   }
 
   const handleBlockUpdate = (id: string, field: string, value: any) => {
@@ -411,9 +393,9 @@ function AdminDashboard() {
       type,
       content:
         type === 'text' ||
-        type === 'image' ||
-        type === 'video' ||
-        type === 'product'
+          type === 'image' ||
+          type === 'video' ||
+          type === 'product'
           ? ''
           : undefined,
       isEnabled: true,

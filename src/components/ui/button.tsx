@@ -75,7 +75,10 @@ function Button({
   }
 
   const content = loading ? (
-    <Spinner className="mx-0 size-4 text-current!" />
+    <>
+      <span className="invisible">{children}</span>
+      <Spinner className="absolute size-4 text-current!" />
+    </>
   ) : (
     children
   )

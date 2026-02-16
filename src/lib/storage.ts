@@ -1,7 +1,7 @@
 import { formatUrl } from '@aws-sdk/util-format-url'
+import { S3RequestPresigner } from '@aws-sdk/s3-request-presigner'
 import { Sha256 } from '@aws-crypto/sha256-js'
 import { HttpRequest } from '@smithy/protocol-http'
-import { SignatureV4 } from '@smithy/signature-v4'
 
 type R2Config = {
   accountId: string
@@ -29,7 +29,7 @@ function getR2Config(): R2Config {
   }
 }
 
-let cachedSigner: SignatureV4 | null = null
+let cachedSigner: S3RequestPresigner | null = null
 let cachedCredentialsKey: string | null = null
 
 function encodeR2Key(key: string): string {
@@ -39,15 +39,14 @@ function encodeR2Key(key: string): string {
     .join('/')
 }
 
-function getR2Signer(config: R2Config): SignatureV4 {
+function getR2Signer(config: R2Config): S3RequestPresigner {
   const credentialsKey = `${config.accessKeyId}:${config.secretAccessKey}`
   if (cachedSigner && cachedCredentialsKey === credentialsKey) {
     return cachedSigner
   }
 
   cachedCredentialsKey = credentialsKey
-  cachedSigner = new SignatureV4({
-    service: 's3',
+  cachedSigner = new S3RequestPresigner({
     region: 'auto',
     sha256: Sha256,
     credentials: {

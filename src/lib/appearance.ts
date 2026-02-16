@@ -106,6 +106,7 @@ export function getAppearancePageBackgroundStyle(options: {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
       }
     case 'avatar-blur':
     case 'none':

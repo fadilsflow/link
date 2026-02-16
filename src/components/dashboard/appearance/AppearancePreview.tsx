@@ -93,11 +93,27 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
             <div className="absolute inset-0 bg-background/45" />
           </div>
         ) : null}
+        {user.appearanceBackgroundType === 'image' && user.appearanceBackgroundImageUrl ? (
+          <div
+            className="absolute inset-0 z-0"
+            style={{
+              backgroundImage: `url('${user.appearanceBackgroundImageUrl}')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }}
+          />
+        ) : null}
         <div
-          className="h-full w-full no-scrollbar overflow-y-auto overflow-x-hidden bg-background relative z-10"
+          className={cn(
+            'h-full w-full no-scrollbar overflow-y-auto overflow-x-hidden relative z-10',
+            user.appearanceBackgroundType === 'image' ? '' : 'bg-background',
+          )}
           style={{
-            ...pageBackgroundStyle,
             ...textStyle,
+            ...(user.appearanceBackgroundType === 'flat' || user.appearanceBackgroundType === 'gradient'
+              ? pageBackgroundStyle
+              : {}),
           }}
         >
           <div className="min-h-full pb-8">
@@ -117,12 +133,12 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
             )}
 
             <div className="px-4 -mt-10 mb-6 flex flex-col relative z-10">
-                <Avatar className="h-20 w-20 ring-4 ring-background shadow-md bg-background">
-                  <AvatarImage src={user.image || ''} />
-                  <AvatarFallback className="bg-muted text-foreground">
-                    {user.name.charAt(0).toUpperCase() || '?'}
-                  </AvatarFallback>
-                </Avatar>
+              <Avatar className="h-20 w-20 ring-4 ring-background shadow-md bg-background">
+                <AvatarImage src={user.image || ''} />
+                <AvatarFallback className="bg-muted text-foreground">
+                  {user.name.charAt(0).toUpperCase() || '?'}
+                </AvatarFallback>
+              </Avatar>
               <h3 className="text-sm text-foreground font-semibold mt-3">
                 {user.name}
               </h3>

@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware'
 export interface CartItem {
   productId: string
   title: string
-  price: number // in cents
+  price: number // in IDR (Rupiah)
   image?: string | null
   quantity: number
   maxQuantity?: number | null // from product.totalQuantity

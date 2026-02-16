@@ -68,7 +68,7 @@ export const user = pgTable('user', {
     .default('system')
     .notNull(),
   // Denormalized analytics (cached, derived from transactions & events)
-  totalRevenue: integer('total_revenue').notNull().default(0), // in cents — cached from transactions
+  totalRevenue: integer('total_revenue').notNull().default(0), // in IDR (Rupiah) — cached from transactions
   totalSalesCount: integer('total_sales_count').notNull().default(0),
   totalViews: integer('total_views').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -87,7 +87,7 @@ export const products = pgTable('product', {
   description: text('description'),
   // Pricing
   payWhatYouWant: boolean('pay_what_you_want').notNull().default(false),
-  price: integer('price'), // in smallest currency unit (e.g. cents)
+  price: integer('price'), // in IDR (Rupiah)
   salePrice: integer('sale_price'),
   minimumPrice: integer('minimum_price'),
   suggestedPrice: integer('suggested_price'),
@@ -110,7 +110,7 @@ export const products = pgTable('product', {
   customerQuestions: text('customer_questions'),
   // Denormalized analytics (cached, derived from transactions)
   salesCount: integer('sales_count').notNull().default(0),
-  totalRevenue: integer('total_revenue').notNull().default(0), // in cents — cached
+  totalRevenue: integer('total_revenue').notNull().default(0), // in IDR (Rupiah) — cached
   // Visibility
   isActive: boolean('is_active').notNull().default(true),
   // Soft delete — product stays in DB for historical orders & audit
@@ -233,14 +233,14 @@ export const orders = pgTable(
     }),
     // ── Product snapshot at checkout time (immutable) ──
     productTitle: text('product_title').notNull(),
-    productPrice: integer('product_price').notNull(), // unit price in cents at checkout
+    productPrice: integer('product_price').notNull(), // unit price in IDR (Rupiah) at checkout
     productImage: text('product_image'), // first image URL at checkout
     // Buyer information
     buyerEmail: text('buyer_email').notNull(),
     buyerName: text('buyer_name'),
     // Quantity of items purchased
     quantity: integer('quantity').notNull().default(1),
-    // Amount paid (in cents) — immutable historical record
+    // Amount paid (in IDR/Rupiah) — immutable historical record
     amountPaid: integer('amount_paid').notNull().default(0),
     // Checkout answers (JSON: { questionId: answer })
     checkoutAnswers: json('checkout_answers').$type<Record<string, string>>(),
@@ -341,7 +341,7 @@ export const transactions = pgTable(
     }),
     // Transaction type
     type: text('type').notNull(), // sale | payout | fee | adjustment
-    // Amount in cents (positive = credit, negative = debit)
+    // Amount in IDR/Rupiah (positive = credit, negative = debit)
     amount: integer('amount').notNull(),
     // Net amount after platform fee (if applicable)
     netAmount: integer('net_amount').notNull(),
@@ -379,7 +379,7 @@ export const payouts = pgTable(
     creatorId: text('creator_id')
       .notNull()
       .references(() => user.id, { onDelete: 'restrict' }),
-    // Amount to be paid out (positive, in cents)
+    // Amount to be paid out (positive, in IDR/Rupiah)
     amount: integer('amount').notNull(),
     // Payout status
     status: text('status').notNull().default('pending'), // pending | processing | completed | failed | cancelled

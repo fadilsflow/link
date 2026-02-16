@@ -18,7 +18,12 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
-import { cn, formatPrice } from '@/lib/utils'
+import {
+  cn,
+  formatPrice,
+  formatPriceInput,
+  parsePriceInput,
+} from '@/lib/utils'
 
 export type PriceSettings = {
   payWhatYouWant: boolean
@@ -128,19 +133,6 @@ export function emptyProductForm(): ProductFormValues {
     },
     customerQuestions: [],
   }
-}
-
-export function centsFromInput(value: string): number | null {
-  const trimmed = value.trim()
-  if (!trimmed) return null
-  const num = Number(trimmed.replace(',', '.'))
-  if (Number.isNaN(num) || num < 0) return null
-  return Math.round(num * 100)
-}
-
-export function inputFromCents(value: number | null | undefined): string {
-  if (value == null) return ''
-  return (value / 100).toString()
 }
 
 export function humanPriceLabel(p: PriceSettings): string {
@@ -478,19 +470,19 @@ export function ProductForm(props: ProductFormProps) {
             <div className="space-y-1.5">
               <Label htmlFor="price">Price</Label>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-500">$</span>
+                <span className="text-xs text-zinc-500">Rp</span>
                 <Input
                   id="price"
-                  inputMode="decimal"
-                  placeholder="9.99"
-                  value={inputFromCents(value.priceSettings.price ?? null)}
+                  inputMode="numeric"
+                  placeholder="10000"
+                  value={formatPriceInput(value.priceSettings.price ?? null)}
                   onChange={(e) => {
-                    const cents = centsFromInput(e.target.value)
+                    const amount = parsePriceInput(e.target.value)
                     onChange({
                       ...value,
                       priceSettings: {
                         ...value.priceSettings,
-                        price: cents ?? undefined,
+                        price: amount ?? undefined,
                       },
                     })
                   }}
@@ -500,19 +492,19 @@ export function ProductForm(props: ProductFormProps) {
             <div className="space-y-1.5">
               <Label htmlFor="sale-price">Sale price (optional)</Label>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-500">$</span>
+                <span className="text-xs text-zinc-500">Rp</span>
                 <Input
                   id="sale-price"
-                  inputMode="decimal"
-                  placeholder="7.00"
-                  value={inputFromCents(value.priceSettings.salePrice ?? null)}
+                  inputMode="numeric"
+                  placeholder="7000"
+                  value={formatPriceInput(value.priceSettings.salePrice ?? null)}
                   onChange={(e) => {
-                    const cents = centsFromInput(e.target.value)
+                    const amount = parsePriceInput(e.target.value)
                     onChange({
                       ...value,
                       priceSettings: {
                         ...value.priceSettings,
-                        salePrice: cents ?? undefined,
+                        salePrice: amount ?? undefined,
                       },
                     })
                   }}
@@ -525,21 +517,19 @@ export function ProductForm(props: ProductFormProps) {
             <div className="space-y-1.5">
               <Label htmlFor="min-price">Minimum price</Label>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-500">$</span>
+                <span className="text-xs text-zinc-500">Rp</span>
                 <Input
                   id="min-price"
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  value={inputFromCents(
-                    value.priceSettings.minimumPrice ?? null,
-                  )}
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={formatPriceInput(value.priceSettings.minimumPrice ?? null)}
                   onChange={(e) => {
-                    const cents = centsFromInput(e.target.value)
+                    const amount = parsePriceInput(e.target.value)
                     onChange({
                       ...value,
                       priceSettings: {
                         ...value.priceSettings,
-                        minimumPrice: cents ?? undefined,
+                        minimumPrice: amount ?? undefined,
                       },
                     })
                   }}
@@ -549,21 +539,21 @@ export function ProductForm(props: ProductFormProps) {
             <div className="space-y-1.5">
               <Label htmlFor="suggested-price">Suggested price</Label>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-500">$</span>
+                <span className="text-xs text-zinc-500">Rp</span>
                 <Input
                   id="suggested-price"
-                  inputMode="decimal"
-                  placeholder="9.99"
-                  value={inputFromCents(
+                  inputMode="numeric"
+                  placeholder="10000"
+                  value={formatPriceInput(
                     value.priceSettings.suggestedPrice ?? null,
                   )}
                   onChange={(e) => {
-                    const cents = centsFromInput(e.target.value)
+                    const amount = parsePriceInput(e.target.value)
                     onChange({
                       ...value,
                       priceSettings: {
                         ...value.priceSettings,
-                        suggestedPrice: cents ?? undefined,
+                        suggestedPrice: amount ?? undefined,
                       },
                     })
                   }}

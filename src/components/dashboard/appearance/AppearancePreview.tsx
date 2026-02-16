@@ -5,16 +5,20 @@ import {
   PlayCircle,
   X as XIcon,
 } from 'lucide-react'
-import type {BlockRadius, BlockStyle} from '@/lib/block-styles';
-import { cn } from '@/lib/utils'
+import type { AppearanceBackgroundType, AppearanceTextFont } from '@/lib/appearance'
+import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useResolvedTheme } from '@/lib/theme'
 import {
-  
-  
+  getAppearanceBlockStyle,
+  getAppearanceFontClass,
+  getAppearancePageBackgroundStyle,
+  getAppearanceTextVars,
+} from '@/lib/appearance'
+import {
   getBlockCardBase,
-  getBlockRadius
+  getBlockRadius,
 } from '@/lib/block-styles'
+import { cn } from '@/lib/utils'
 
 interface AppearancePreviewProps {
   user: {
@@ -23,10 +27,19 @@ interface AppearancePreviewProps {
     title?: string | null
     bio?: string | null
     image?: string | null
+    appearanceBannerEnabled?: boolean | null
     appearanceBgImageUrl?: string | null
+    appearanceBackgroundType?: AppearanceBackgroundType | null
+    appearanceBackgroundColor?: string | null
+    appearanceBackgroundGradientTop?: string | null
+    appearanceBackgroundGradientBottom?: string | null
+    appearanceBackgroundImageUrl?: string | null
     appearanceBlockStyle?: BlockStyle | null
     appearanceBlockRadius?: BlockRadius | null
-    publicTheme?: 'system' | 'light' | 'dark' | null
+    appearanceBlockColor?: string | null
+    appearanceBlockShadowColor?: string | null
+    appearanceTextColor?: string | null
+    appearanceTextFont?: AppearanceTextFont | null
   }
   blocks: Array<{
     id: string
@@ -39,39 +52,69 @@ interface AppearancePreviewProps {
 }
 
 export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
-  const resolvedTheme = useResolvedTheme('public', user.publicTheme)
-
   const blockStyle = (user.appearanceBlockStyle || 'basic')
   const blockRadius = (user.appearanceBlockRadius || 'rounded')
+  const blockInlineStyle = getAppearanceBlockStyle({
+    blockStyle,
+    blockColor: user.appearanceBlockColor,
+    blockShadowColor: user.appearanceBlockShadowColor,
+  })
+  const pageBackgroundStyle = getAppearancePageBackgroundStyle({
+    backgroundType: user.appearanceBackgroundType,
+    backgroundColor: user.appearanceBackgroundColor,
+    backgroundGradientTop: user.appearanceBackgroundGradientTop,
+    backgroundGradientBottom: user.appearanceBackgroundGradientBottom,
+    backgroundImageUrl: user.appearanceBackgroundImageUrl,
+  })
+  const textStyle = getAppearanceTextVars(user.appearanceTextColor)
+  const textFontClass = getAppearanceFontClass(user.appearanceTextFont)
+  const hasBanner = user.appearanceBannerEnabled !== false && !!user.appearanceBgImageUrl
 
   const cardBase = getBlockCardBase(blockStyle)
   const radiusClass = getBlockRadius(blockRadius)
 
   return (
     <div
-      className={cn(
-        'w-full h-full flex items-center justify-center p-2',
-        resolvedTheme === 'dark' && 'dark',
-      )}
-      data-theme={resolvedTheme}
+      className="w-full h-full flex items-center justify-center p-2"
     >
-      <div className="aspect-9/18 w-full max-w-[280px] overflow-hidden rounded-[32px] border-3 border-border bg-muted relative">
-        <div className="h-full w-full no-scrollbar overflow-y-auto overflow-x-hidden bg-background">
+      <div
+        className={cn(
+          'aspect-9/18 w-full max-w-[280px] overflow-hidden rounded-[32px] border-3 border-border bg-muted relative',
+          textFontClass,
+        )}
+      >
+        {user.appearanceBackgroundType === 'avatar-blur' && user.image ? (
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            <img
+              src={user.image}
+              alt=""
+              className="h-full w-full object-cover scale-125 blur-3xl"
+            />
+            <div className="absolute inset-0 bg-background/45" />
+          </div>
+        ) : null}
+        <div
+          className="h-full w-full no-scrollbar overflow-y-auto overflow-x-hidden bg-background relative z-10"
+          style={{
+            ...pageBackgroundStyle,
+            ...textStyle,
+          }}
+        >
           <div className="min-h-full pb-8">
-            <div
-              className="relative h-32 w-full"
-              style={
-                user.appearanceBgImageUrl
-                  ? {
-                      backgroundImage: `url('${user.appearanceBgImageUrl}')`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }
-                  : undefined
-              }
-            >
-              <div className="absolute inset-0 bg-black/5" />
-            </div>
+            {hasBanner ? (
+              <div
+                className="relative h-32 w-full"
+                style={{
+                  backgroundImage: `url('${user.appearanceBgImageUrl}')`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              >
+                <div className="absolute inset-0 bg-black/5" />
+              </div>
+            ) : (
+              <div className="h-32 w-full" />
+            )}
 
             <div className="px-4 -mt-10 mb-6 flex flex-col relative z-10">
                 <Avatar className="h-20 w-20 ring-4 ring-background shadow-md bg-background">
@@ -107,6 +150,7 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
                       radiusClass,
                       block.type === 'image' ? 'p-0 overflow-hidden' : 'p-3',
                     )}
+                    style={blockInlineStyle}
                   >
                     {block.type === 'image' ? (
                       <div className="aspect-video bg-muted flex items-center justify-center">
@@ -138,6 +182,7 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
                   cardBase,
                   radiusClass,
                 )}
+                style={blockInlineStyle}
                 type="button"
               >
                 <div className="flex items-center justify-between gap-2">

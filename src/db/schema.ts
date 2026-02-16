@@ -9,8 +9,11 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
-import type {ThemeOption} from '@/lib/theme';
 import type {BlockRadius, BlockStyle} from '@/lib/block-styles';
+import type {
+  AppearanceBackgroundType,
+  AppearanceTextFont,
+} from '@/lib/appearance'
 
 // ─── Status Enums ────────────────────────────────────────────────────────────
 
@@ -63,10 +66,21 @@ export const user = pgTable('user', {
     .$type<BlockRadius>()
     .default('rounded')
     .notNull(),
-  publicTheme: text('public_theme')
-    .$type<ThemeOption>()
-    .default('system')
+  appearanceBannerEnabled: boolean('appearance_banner_enabled')
+    .default(true)
     .notNull(),
+  appearanceBackgroundType: text('appearance_background_type')
+    .$type<AppearanceBackgroundType>()
+    .default('none')
+    .notNull(),
+  appearanceBackgroundColor: text('appearance_background_color'),
+  appearanceBackgroundGradientTop: text('appearance_background_gradient_top'),
+  appearanceBackgroundGradientBottom: text('appearance_background_gradient_bottom'),
+  appearanceBackgroundImageUrl: text('appearance_background_image_url'),
+  appearanceBlockColor: text('appearance_block_color'),
+  appearanceBlockShadowColor: text('appearance_block_shadow_color'),
+  appearanceTextColor: text('appearance_text_color'),
+  appearanceTextFont: text('appearance_text_font').$type<AppearanceTextFont>(),
   // Denormalized analytics (cached, derived from transactions & events)
   totalRevenue: integer('total_revenue').notNull().default(0), // in IDR (Rupiah) — cached from transactions
   totalSalesCount: integer('total_sales_count').notNull().default(0),

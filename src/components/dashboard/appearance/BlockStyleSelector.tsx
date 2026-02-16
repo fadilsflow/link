@@ -1,18 +1,12 @@
 import { Check } from 'lucide-react'
-import type {BlockRadius, BlockStyle} from '@/lib/block-styles';
+import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
 import { cn } from '@/lib/utils'
-import {
-  
-  
-  getBlockCardBase,
-  getBlockRadius
-} from '@/lib/block-styles'
+import { getBlockCardBase, getBlockRadius } from '@/lib/block-styles'
 
 interface BlockStyleSelectorProps {
   blockStyle: BlockStyle
   blockRadius: BlockRadius
-  onStyleChange: (style: BlockStyle) => void
-  onRadiusChange: (radius: BlockRadius) => void
+  onChange: (style: BlockStyle, radius: BlockRadius) => void
 }
 
 function OptionCard({
@@ -55,8 +49,7 @@ function OptionCard({
 export function BlockStyleSelector({
   blockStyle,
   blockRadius,
-  onStyleChange,
-  onRadiusChange,
+  onChange,
 }: BlockStyleSelectorProps) {
   const styles: Array<{ key: BlockStyle; label: string }> = [
     {
@@ -84,8 +77,7 @@ export function BlockStyleSelector({
                 type="button"
                 className="w-full text-left focus:outline-none"
                 onClick={() => {
-                  onStyleChange(styleItem.key)
-                  onRadiusChange('rounded')
+                  onChange(styleItem.key, 'rounded')
                 }}
               >
                 <OptionCard
@@ -102,8 +94,7 @@ export function BlockStyleSelector({
                 type="button"
                 className="w-full text-left focus:outline-none"
                 onClick={() => {
-                  onStyleChange(styleItem.key)
-                  onRadiusChange('square')
+                  onChange(styleItem.key, 'square')
                 }}
               >
                 <OptionCard

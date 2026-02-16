@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from 'react'
 import type {BlockRadius, BlockStyle} from '@/lib/block-styles';
-import type {ThemeOption} from '@/lib/theme';
+import type { AppearanceBackgroundType, AppearanceTextFont } from '@/lib/appearance'
 
 export interface PreviewUser {
   id: string
@@ -9,10 +9,19 @@ export interface PreviewUser {
   title?: string | null
   bio?: string | null
   image?: string | null
+  appearanceBannerEnabled?: boolean | null
   appearanceBgImageUrl?: string | null
+  appearanceBackgroundType?: AppearanceBackgroundType | null
+  appearanceBackgroundColor?: string | null
+  appearanceBackgroundGradientTop?: string | null
+  appearanceBackgroundGradientBottom?: string | null
+  appearanceBackgroundImageUrl?: string | null
   appearanceBlockStyle?: BlockStyle | null
   appearanceBlockRadius?: BlockRadius | null
-  publicTheme?: ThemeOption | null
+  appearanceBlockColor?: string | null
+  appearanceBlockShadowColor?: string | null
+  appearanceTextColor?: string | null
+  appearanceTextFont?: AppearanceTextFont | null
 }
 
 interface PreviewBlock {

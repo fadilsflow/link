@@ -50,6 +50,7 @@
     "nitro": "npm:nitro-nightly@latest",
     "pg": "^8.16.3",
     "react": "^19.2.0",
+    "react-colorful": "^5.6.1",
     "react-day-picker": "^9.13.1",
     "react-dom": "^19.2.0",
     "recharts": "2.15.4",

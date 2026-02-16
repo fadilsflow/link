@@ -24,12 +24,59 @@ import { BASE_URL } from '@/lib/constans'
 // ─── Hold period for funds (in days) ─────────────────────────────────────────
 const HOLD_PERIOD_DAYS = 7
 const PLATFORM_FEE_PERCENT = 5 // 5% fee
+const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
 function getAvailableAt(): Date {
   const d = new Date()
   d.setDate(d.getDate() + HOLD_PERIOD_DAYS)
   return d
 }
+
+function isSafeUrlValue(value: string): boolean {
+  if (value.startsWith('/')) return true
+  try {
+    const parsed = new URL(value)
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:'
+  } catch {
+    return false
+  }
+}
+
+const nullableTrimmedStringSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== 'string') return value
+    const trimmed = value.trim()
+    return trimmed.length === 0 ? null : trimmed
+  },
+  z.string().nullable(),
+)
+
+const nullableUrlSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== 'string') return value
+    const trimmed = value.trim()
+    return trimmed.length === 0 ? null : trimmed
+  },
+  z
+    .string()
+    .max(2048)
+    .refine((value) => isSafeUrlValue(value), {
+      message: 'Invalid URL format',
+    })
+    .nullable(),
+)
+
+const nullableHexColorSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== 'string') return value
+    const trimmed = value.trim()
+    return trimmed.length === 0 ? null : trimmed
+  },
+  z
+    .string()
+    .regex(HEX_COLOR_PATTERN, 'Invalid color format')
+    .nullable(),
+)
 
 function calculateFee(amount: number): {
   feeAmount: number
@@ -178,14 +225,29 @@ const userRouter = {
   updateProfile: protectedProcedure
     .input(
       z.object({
-        name: z.string().optional(),
-        title: z.string().optional(),
-        bio: z.string().optional(),
-        image: z.string().nullable().optional(),
-        publicTheme: z.enum(['system', 'light', 'dark']).optional(),
-        appearanceBgImageUrl: z.string().nullable().optional(),
+        name: z.string().trim().min(1).max(80).optional(),
+        title: nullableTrimmedStringSchema
+          .pipe(z.string().max(80).nullable())
+          .optional(),
+        bio: nullableTrimmedStringSchema
+          .pipe(z.string().max(300).nullable())
+          .optional(),
+        image: nullableUrlSchema.optional(),
+        appearanceBannerEnabled: z.boolean().optional(),
+        appearanceBgImageUrl: nullableUrlSchema.optional(),
+        appearanceBackgroundType: z
+          .enum(['none', 'flat', 'gradient', 'avatar-blur', 'image'])
+          .optional(),
+        appearanceBackgroundColor: nullableHexColorSchema.optional(),
+        appearanceBackgroundGradientTop: nullableHexColorSchema.optional(),
+        appearanceBackgroundGradientBottom: nullableHexColorSchema.optional(),
+        appearanceBackgroundImageUrl: nullableUrlSchema.optional(),
         appearanceBlockStyle: z.enum(['basic', 'flat', 'shadow']).optional(),
         appearanceBlockRadius: z.enum(['rounded', 'square']).optional(),
+        appearanceBlockColor: nullableHexColorSchema.optional(),
+        appearanceBlockShadowColor: nullableHexColorSchema.optional(),
+        appearanceTextColor: nullableHexColorSchema.optional(),
+        appearanceTextFont: z.enum(['sans', 'heading', 'mono']).optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -197,17 +259,50 @@ const userRouter = {
           ...(input.title !== undefined ? { title: input.title || null } : {}),
           ...(input.bio !== undefined ? { bio: input.bio || null } : {}),
           ...(input.image !== undefined ? { image: input.image } : {}),
-          ...(input.publicTheme !== undefined
-            ? { publicTheme: input.publicTheme }
+          ...(input.appearanceBannerEnabled !== undefined
+            ? { appearanceBannerEnabled: input.appearanceBannerEnabled }
             : {}),
           ...(input.appearanceBgImageUrl !== undefined
             ? { appearanceBgImageUrl: input.appearanceBgImageUrl }
+            : {}),
+          ...(input.appearanceBackgroundType !== undefined
+            ? { appearanceBackgroundType: input.appearanceBackgroundType }
+            : {}),
+          ...(input.appearanceBackgroundColor !== undefined
+            ? { appearanceBackgroundColor: input.appearanceBackgroundColor }
+            : {}),
+          ...(input.appearanceBackgroundGradientTop !== undefined
+            ? {
+                appearanceBackgroundGradientTop:
+                  input.appearanceBackgroundGradientTop,
+              }
+            : {}),
+          ...(input.appearanceBackgroundGradientBottom !== undefined
+            ? {
+                appearanceBackgroundGradientBottom:
+                  input.appearanceBackgroundGradientBottom,
+              }
+            : {}),
+          ...(input.appearanceBackgroundImageUrl !== undefined
+            ? { appearanceBackgroundImageUrl: input.appearanceBackgroundImageUrl }
             : {}),
           ...(input.appearanceBlockStyle !== undefined
             ? { appearanceBlockStyle: input.appearanceBlockStyle }
             : {}),
           ...(input.appearanceBlockRadius !== undefined
             ? { appearanceBlockRadius: input.appearanceBlockRadius }
+            : {}),
+          ...(input.appearanceBlockColor !== undefined
+            ? { appearanceBlockColor: input.appearanceBlockColor }
+            : {}),
+          ...(input.appearanceBlockShadowColor !== undefined
+            ? { appearanceBlockShadowColor: input.appearanceBlockShadowColor }
+            : {}),
+          ...(input.appearanceTextColor !== undefined
+            ? { appearanceTextColor: input.appearanceTextColor }
+            : {}),
+          ...(input.appearanceTextFont !== undefined
+            ? { appearanceTextFont: input.appearanceTextFont }
             : {}),
         })
         .where(eq(user.id, actorUserId))

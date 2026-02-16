@@ -71,25 +71,25 @@ export function ProfileBanner({
   bannerUrl?: string | null
   userName?: string | null
 }) {
-  if (!isBanner) return null
+  if (!isBanner || !bannerUrl) {
+    return <div className="h-[50px] md:h-[180px] w-full" />
+  }
 
   return (
     <div
       className="relative h-[50px] md:h-[180px] w-full overflow-hidden"
       style={backgroundStyles}
     >
-      {bannerUrl && (
-        <img
-          src={bannerUrl}
-          alt={`${userName} banner`}
-          width={1440}
-          height={180}
-          loading="eager"
-          fetchPriority="high"
-          decoding="async"
-          className="h-full w-full object-cover"
-        />
-      )}
+      <img
+        src={bannerUrl}
+        alt={`${userName} banner`}
+        width={1440}
+        height={180}
+        loading="eager"
+        fetchPriority="high"
+        decoding="async"
+        className="h-full w-full object-cover"
+      />
       <div className="absolute inset-0 " />
     </div>
   )
@@ -100,14 +100,20 @@ export function ProfileCard({
   isFullPageBg: _isFullPageBg,
   id,
   className,
+  style,
 }: {
   user: any
   isFullPageBg: boolean
   id?: string
   className?: string
+  style?: CSSProperties
 }) {
   return (
-    <Card id={id} className={cn('w-full overflow-visible', className)}>
+    <Card
+      id={id}
+      className={cn('w-full overflow-visible', className)}
+      style={style}
+    >
       <CardContent className="relative">
         {/* Avatar - Overlapping top */}
 
@@ -155,9 +161,11 @@ export function ProfileCard({
 export function SocialLinks({
   socialLinks,
   className,
+  style,
 }: {
   socialLinks: Array<any>
   className?: string
+  style?: CSSProperties
   isFullPageBg?: boolean
 }) {
   if (socialLinks.length === 0) return null
@@ -171,7 +179,12 @@ export function SocialLinks({
           target={link.platform === 'email' ? undefined : '_blank'}
           rel="noopener noreferrer"
         >
-          <Button variant="outline" size="icon" className={cn(className)}>
+          <Button
+            variant="outline"
+            size="icon"
+            className={cn(className)}
+            style={style}
+          >
             {getSocialIcon(link.platform)}
           </Button>
         </a>
@@ -198,7 +211,7 @@ export default function SiteUserProfileHeader({
         const rect = nameElement.getBoundingClientRect()
         // Determine threshold based on device (desktop usually has larger header area or user preference)
         const isDesktop = window.innerWidth >= 768
-        const threshold = isDesktop ? 120 : 100 // Adjusted for 50px banner
+        const threshold = isDesktop ? 120 : 100
 
         if (rect.top < threshold) {
           setShow(true)

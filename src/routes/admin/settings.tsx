@@ -1,87 +1,25 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AppHeader,
   AppHeaderContent,
 } from '@/components/app-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { getDashboardData } from '@/lib/profile-server'
-import { trpcClient } from '@/integrations/tanstack-query/root-provider'
-import {
-  useDashboardThemePreference,
-  useResolvedTheme,
-} from '@/lib/theme'
-import { ThemeOptionCards } from '@/components/dashboard/appearance/ThemeOptionCards'
-
-type ThemeOption = 'system' | 'light' | 'dark'
+import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/admin/settings')({
   component: SettingsPage,
 })
 
 function SettingsPage() {
-  const queryClient = useQueryClient()
-
-  const { data: dashboardData } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => getDashboardData(),
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  })
-
-  const user = dashboardData?.user
-  const [dashboardTheme, setDashboardTheme] = useDashboardThemePreference()
-  const resolvedDashboardTheme = useResolvedTheme('dashboard', undefined, dashboardTheme)
-
-  const updateTheme = useMutation({
-    mutationFn: (publicTheme: ThemeOption) =>
-      trpcClient.user.updateProfile.mutate({
-        publicTheme,
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
-  })
-
   return (
     <div className="px-6 py-20">
       <div className="space-y-6 max-w-2xl mx-auto">
         <AppHeader>
           <AppHeaderContent title="Settings"></AppHeaderContent>
         </AppHeader>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Theme</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label>Public theme</Label>
-              <ThemeOptionCards
-                value={(user?.publicTheme as ThemeOption | undefined) || 'system'}
-                onChange={(value) => {
-                  if (!user || updateTheme.isPending) return
-                  updateTheme.mutate(value)
-                }}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Dashboard theme</Label>
-              <ThemeOptionCards
-                value={dashboardTheme}
-                onChange={(value) => {
-                  setDashboardTheme(value)
-                }}
-              />
-              <p className="text-sm text-muted-foreground">
-                Dashboard resolved theme: {resolvedDashboardTheme}.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Account & Security */}
         <Card>

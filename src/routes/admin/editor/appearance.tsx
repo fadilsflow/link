@@ -1,23 +1,38 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type {BlockRadius, BlockStyle} from '@/lib/block-styles';
-import type {ThemeOption} from '@/lib/theme';
+import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
+import type { AppearanceBackgroundType, AppearanceTextFont } from '@/lib/appearance'
+import {
+  APPEARANCE_DEFAULTS,
+  APPEARANCE_FONT_OPTIONS,
+  isValidAppearanceHexColor,
+} from '@/lib/appearance'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { ColorPicker } from '@/components/ui/color-picker'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { BannerSelector } from '@/components/dashboard/appearance/BannerSelector'
 import { BlockStyleSelector } from '@/components/dashboard/appearance/BlockStyleSelector'
-import { ThemeOptionCards } from '@/components/dashboard/appearance/ThemeOptionCards'
 import { LOCAL_BANNER_IMAGES } from '@/components/dashboard/appearance/banner-presets'
+import { ImageUploader } from '@/components/dashboard/appearance/ImageUploader'
 import {
   AppHeader,
   AppHeaderContent,
   AppHeaderDescription,
 } from '@/components/app-header'
 import { usePreview } from '@/lib/preview-context'
-import { useDashboardThemePreference } from '@/lib/theme'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/admin/editor/appearance')({
   component: AppearanceRouteComponent,
@@ -37,6 +52,48 @@ function AppearanceRouteComponent() {
   return <AppearanceEditor user={user} />
 }
 
+function SectionOptionCard({
+  selected,
+  title,
+  description,
+  onClick,
+}: {
+  selected: boolean
+  title: string
+  description: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'rounded-xl border p-3 text-left transition-colors',
+        selected ? 'bg-input/80 border-foreground/20' : 'hover:bg-input/40',
+      )}
+    >
+      <p className="text-sm font-medium">{title}</p>
+      <p className="text-xs text-muted-foreground mt-1">{description}</p>
+    </button>
+  )
+}
+
+type AppearanceUpdateInput = {
+  appearanceBannerEnabled?: boolean
+  appearanceBgImageUrl?: string | null
+  appearanceBackgroundType?: AppearanceBackgroundType
+  appearanceBackgroundColor?: string | null
+  appearanceBackgroundGradientTop?: string | null
+  appearanceBackgroundGradientBottom?: string | null
+  appearanceBackgroundImageUrl?: string | null
+  appearanceBlockStyle?: BlockStyle
+  appearanceBlockRadius?: BlockRadius
+  appearanceBlockColor?: string | null
+  appearanceBlockShadowColor?: string | null
+  appearanceTextColor?: string | null
+  appearanceTextFont?: AppearanceTextFont
+}
+
 function AppearanceEditor({ user }: { user: any }) {
   const queryClient = useQueryClient()
   const { user: previewUser, setUser, updateUser, setStatus } = usePreview()
@@ -49,29 +106,34 @@ function AppearanceEditor({ user }: { user: any }) {
     }
 
     updateUser({
+      appearanceBannerEnabled: user.appearanceBannerEnabled,
       appearanceBgImageUrl: user.appearanceBgImageUrl,
+      appearanceBackgroundType: user.appearanceBackgroundType,
+      appearanceBackgroundColor: user.appearanceBackgroundColor,
+      appearanceBackgroundGradientTop: user.appearanceBackgroundGradientTop,
+      appearanceBackgroundGradientBottom: user.appearanceBackgroundGradientBottom,
+      appearanceBackgroundImageUrl: user.appearanceBackgroundImageUrl,
       appearanceBlockStyle: user.appearanceBlockStyle,
       appearanceBlockRadius: user.appearanceBlockRadius,
-      publicTheme: user.publicTheme,
+      appearanceBlockColor: user.appearanceBlockColor,
+      appearanceBlockShadowColor: user.appearanceBlockShadowColor,
+      appearanceTextColor: user.appearanceTextColor,
+      appearanceTextFont: user.appearanceTextFont,
     })
   }, [user, previewUser, setUser, updateUser])
 
   const updateAppearance = useMutation({
     mutationKey: ['updateProfile'],
-    mutationFn: (data: {
-      publicTheme?: ThemeOption
-      appearanceBgImageUrl?: string | null
-      appearanceBlockStyle?: BlockStyle
-      appearanceBlockRadius?: BlockRadius
-    }) => trpcClient.user.updateProfile.mutate(data),
-    onMutate: () => setStatus({ isSaving: true, isSaved: false }),
-    onSuccess: () => {
-      setStatus({ isSaving: false, isSaved: true })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-    },
-    onError: () => setStatus({ isSaving: false, isSaved: false }),
+    mutationFn: (data: AppearanceUpdateInput) =>
+      trpcClient.user.updateProfile.mutate(data),
   })
+  const pendingPatchRef = useRef<AppearanceUpdateInput>({})
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const requestQueueRef = useRef(Promise.resolve())
 
+  const [bannerEnabled, setBannerEnabled] = React.useState<boolean>(
+    user.appearanceBannerEnabled ?? APPEARANCE_DEFAULTS.bannerEnabled,
+  )
   const [currentBannerUrl, setCurrentBannerUrl] = React.useState<
     string | undefined
   >(user.appearanceBgImageUrl ?? undefined)
@@ -84,62 +146,175 @@ function AppearanceEditor({ user }: { user: any }) {
     return matchedPreset?.id
   })
 
+  const [backgroundType, setBackgroundType] = React.useState<AppearanceBackgroundType>(
+    user.appearanceBackgroundType ?? APPEARANCE_DEFAULTS.backgroundType,
+  )
+  const [backgroundColor, setBackgroundColor] = React.useState(
+    user.appearanceBackgroundColor ?? APPEARANCE_DEFAULTS.backgroundColor,
+  )
+  const [backgroundGradientTop, setBackgroundGradientTop] = React.useState(
+    user.appearanceBackgroundGradientTop ??
+      APPEARANCE_DEFAULTS.backgroundGradientTop,
+  )
+  const [backgroundGradientBottom, setBackgroundGradientBottom] = React.useState(
+    user.appearanceBackgroundGradientBottom ??
+      APPEARANCE_DEFAULTS.backgroundGradientBottom,
+  )
+  const [backgroundImageUrl, setBackgroundImageUrl] = React.useState(
+    user.appearanceBackgroundImageUrl ?? '',
+  )
+
   const [blockStyle, setBlockStyle] = React.useState<BlockStyle>(
     user.appearanceBlockStyle || 'basic',
   )
   const [blockRadius, setBlockRadius] = React.useState<BlockRadius>(
     user.appearanceBlockRadius || 'rounded',
   )
-  const [publicTheme, setPublicTheme] = React.useState<ThemeOption>(
-    user.publicTheme || 'system',
+  const [blockColor, setBlockColor] = React.useState(
+    user.appearanceBlockColor ?? APPEARANCE_DEFAULTS.blockColor,
   )
-  const [dashboardTheme, setDashboardTheme] = useDashboardThemePreference()
+  const [blockShadowColor, setBlockShadowColor] = React.useState(
+    user.appearanceBlockShadowColor ?? APPEARANCE_DEFAULTS.blockShadowColor,
+  )
+
+  const [textColor, setTextColor] = React.useState(
+    user.appearanceTextColor ?? APPEARANCE_DEFAULTS.textColor,
+  )
+  const [textFont, setTextFont] = React.useState<AppearanceTextFont>(
+    user.appearanceTextFont ?? APPEARANCE_DEFAULTS.textFont,
+  )
+
+  const flushPendingPatch = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = null
+    }
+
+    const payload = pendingPatchRef.current
+    if (Object.keys(payload).length === 0) return
+
+    pendingPatchRef.current = {}
+    requestQueueRef.current = requestQueueRef.current.then(async () => {
+      setStatus({ isSaving: true, isSaved: false })
+      try {
+        await updateAppearance.mutateAsync(payload)
+        setStatus({ isSaving: false, isSaved: true })
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      } catch {
+        setStatus({ isSaving: false, isSaved: false })
+      }
+    })
+  }, [queryClient, setStatus, updateAppearance])
+
+  useEffect(
+    () => () => {
+      flushPendingPatch()
+    },
+    [flushPendingPatch],
+  )
+
+  const save = useCallback(
+    (
+      data: AppearanceUpdateInput,
+      options: {
+        debounced?: boolean
+      } = {},
+    ) => {
+      updateUser(data)
+      pendingPatchRef.current = { ...pendingPatchRef.current, ...data }
+
+      if (options.debounced) {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = setTimeout(() => {
+          flushPendingPatch()
+        }, 220)
+        return
+      }
+
+      flushPendingPatch()
+    },
+    [flushPendingPatch, updateUser],
+  )
+
+  const saveColor = useCallback(
+    (
+      value: string,
+      field:
+        | 'appearanceBackgroundColor'
+        | 'appearanceBackgroundGradientTop'
+        | 'appearanceBackgroundGradientBottom'
+        | 'appearanceBlockColor'
+        | 'appearanceBlockShadowColor'
+        | 'appearanceTextColor',
+    ) => {
+      if (!isValidAppearanceHexColor(value)) return
+      save({ [field]: value } as AppearanceUpdateInput, { debounced: true })
+    },
+    [save],
+  )
 
   const handleBannerSelect = (imageUrl: string, bannerId?: string) => {
+    const nextUrl = imageUrl || ''
     setCurrentBannerId(bannerId)
-    setCurrentBannerUrl(imageUrl || undefined)
-    updateUser({ appearanceBgImageUrl: imageUrl || null })
-    updateAppearance.mutate({
-      appearanceBgImageUrl: imageUrl || null,
+    setCurrentBannerUrl(nextUrl || undefined)
+    save({ appearanceBgImageUrl: nextUrl || null }, { debounced: true })
+  }
+
+  const handleBlockStyleChange = (style: BlockStyle, radius: BlockRadius) => {
+    setBlockStyle(style)
+    setBlockRadius(radius)
+    save({
+      appearanceBlockStyle: style,
+      appearanceBlockRadius: radius,
     })
   }
 
-  const handleStyleChange = (style: BlockStyle) => {
-    setBlockStyle(style)
-    updateUser({ appearanceBlockStyle: style })
-    updateAppearance.mutate({ appearanceBlockStyle: style })
+  const resetBannerSection = () => {
+    setBannerEnabled(APPEARANCE_DEFAULTS.bannerEnabled)
+    setCurrentBannerUrl(undefined)
+    setCurrentBannerId(undefined)
+    save({
+      appearanceBannerEnabled: APPEARANCE_DEFAULTS.bannerEnabled,
+      appearanceBgImageUrl: null,
+    })
   }
 
-  const handleRadiusChange = (radius: BlockRadius) => {
-    setBlockRadius(radius)
-    updateUser({ appearanceBlockRadius: radius })
-    updateAppearance.mutate({ appearanceBlockRadius: radius })
+  const resetBackgroundSection = () => {
+    setBackgroundType(APPEARANCE_DEFAULTS.backgroundType)
+    setBackgroundColor(APPEARANCE_DEFAULTS.backgroundColor)
+    setBackgroundGradientTop(APPEARANCE_DEFAULTS.backgroundGradientTop)
+    setBackgroundGradientBottom(APPEARANCE_DEFAULTS.backgroundGradientBottom)
+    setBackgroundImageUrl('')
+    save({
+      appearanceBackgroundType: APPEARANCE_DEFAULTS.backgroundType,
+      appearanceBackgroundColor: APPEARANCE_DEFAULTS.backgroundColor,
+      appearanceBackgroundGradientTop: APPEARANCE_DEFAULTS.backgroundGradientTop,
+      appearanceBackgroundGradientBottom:
+        APPEARANCE_DEFAULTS.backgroundGradientBottom,
+      appearanceBackgroundImageUrl: null,
+    })
   }
 
-  const handleReset = () => {
+  const resetBlockSection = () => {
     setBlockStyle('basic')
     setBlockRadius('rounded')
-    updateUser({
+    setBlockColor(APPEARANCE_DEFAULTS.blockColor)
+    setBlockShadowColor(APPEARANCE_DEFAULTS.blockShadowColor)
+    save({
       appearanceBlockStyle: 'basic',
       appearanceBlockRadius: 'rounded',
-    })
-    updateAppearance.mutate({
-      appearanceBlockStyle: 'basic',
-      appearanceBlockRadius: 'rounded',
+      appearanceBlockColor: APPEARANCE_DEFAULTS.blockColor,
+      appearanceBlockShadowColor: APPEARANCE_DEFAULTS.blockShadowColor,
     })
   }
 
-  const handleResetTheme = () => {
-    setPublicTheme('system')
-    updateUser({ publicTheme: 'system' })
-    updateAppearance.mutate({ publicTheme: 'system' })
-    setDashboardTheme('system')
-  }
-
-  const handlePublicThemeChange = (theme: ThemeOption) => {
-    setPublicTheme(theme)
-    updateUser({ publicTheme: theme })
-    updateAppearance.mutate({ publicTheme: theme })
+  const resetTextSection = () => {
+    setTextColor(APPEARANCE_DEFAULTS.textColor)
+    setTextFont(APPEARANCE_DEFAULTS.textFont)
+    save({
+      appearanceTextColor: APPEARANCE_DEFAULTS.textColor,
+      appearanceTextFont: APPEARANCE_DEFAULTS.textFont,
+    })
   }
 
   return (
@@ -147,75 +322,260 @@ function AppearanceEditor({ user }: { user: any }) {
       <AppHeader>
         <AppHeaderContent title="Appearance">
           <AppHeaderDescription>
-            Choose your banner and block card style.
+            Customize banner, background, blocks, and text for your public page.
           </AppHeaderDescription>
         </AppHeaderContent>
       </AppHeader>
 
       <Card className="shadow-sm overflow-hidden">
-        <CardHeader className=" border-b flex flex-row items-center justify-between">
+        <CardHeader className="border-b flex flex-row items-center justify-between">
           <CardTitle>Banner</CardTitle>
-        </CardHeader>
-
-        <CardContent className="p-6">
-          <BannerSelector
-            currentBannerUrl={currentBannerUrl}
-            currentBannerId={currentBannerId}
-            onBannerSelect={handleBannerSelect}
-          />
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-sm mt-6">
-        <CardHeader className=" border-b flex flex-row items-center justify-between">
-          <CardTitle>Block</CardTitle>
           <Button
             type="button"
             variant="outline"
             className="gap-2"
-            onClick={handleReset}
+            onClick={resetBannerSection}
           >
             Reset
           </Button>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-center justify-between rounded-xl border p-3">
+            <div>
+              <Label htmlFor="banner-enabled">Show banner</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Turn off if you want a profile page without banner.
+              </p>
+            </div>
+            <Switch
+              id="banner-enabled"
+              checked={bannerEnabled}
+              onCheckedChange={(checked) => {
+                setBannerEnabled(checked)
+                save({ appearanceBannerEnabled: checked })
+              }}
+            />
+          </div>
+
+          {bannerEnabled ? (
+            <BannerSelector
+              currentBannerUrl={currentBannerUrl}
+              currentBannerId={currentBannerId}
+              onBannerSelect={handleBannerSelect}
+            />
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm mt-6">
+        <CardHeader className="border-b flex flex-row items-center justify-between">
+          <CardTitle>Background</CardTitle>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={resetBackgroundSection}
+          >
+            Reset
+          </Button>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <SectionOptionCard
+              selected={backgroundType === 'none'}
+              title="Default"
+              description="Use default page background."
+              onClick={() => {
+                setBackgroundType('none')
+                save({ appearanceBackgroundType: 'none' })
+              }}
+            />
+            <SectionOptionCard
+              selected={backgroundType === 'flat'}
+              title="Flat Color"
+              description="Single color background."
+              onClick={() => {
+                setBackgroundType('flat')
+                save({ appearanceBackgroundType: 'flat' })
+              }}
+            />
+            <SectionOptionCard
+              selected={backgroundType === 'gradient'}
+              title="Gradient"
+              description="Top and bottom color gradient."
+              onClick={() => {
+                setBackgroundType('gradient')
+                save({ appearanceBackgroundType: 'gradient' })
+              }}
+            />
+            <SectionOptionCard
+              selected={backgroundType === 'avatar-blur'}
+              title="Avatar Blur"
+              description="Use profile image as blurred background."
+              onClick={() => {
+                setBackgroundType('avatar-blur')
+                save({ appearanceBackgroundType: 'avatar-blur' })
+              }}
+            />
+            <SectionOptionCard
+              selected={backgroundType === 'image'}
+              title="Image Upload"
+              description="Upload a full-page background image."
+              onClick={() => {
+                setBackgroundType('image')
+                save({ appearanceBackgroundType: 'image' })
+              }}
+            />
+          </div>
+
+          {backgroundType === 'flat' ? (
+            <div className="space-y-2">
+              <Label>Background color</Label>
+              <ColorPicker
+                value={backgroundColor}
+                onChange={setBackgroundColor}
+                onCommit={(value) => {
+                  saveColor(value, 'appearanceBackgroundColor')
+                }}
+              />
+            </div>
+          ) : null}
+
+          {backgroundType === 'gradient' ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Top color</Label>
+                <ColorPicker
+                  value={backgroundGradientTop}
+                  onChange={setBackgroundGradientTop}
+                  onCommit={(value) => {
+                    saveColor(value, 'appearanceBackgroundGradientTop')
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Bottom color</Label>
+                <ColorPicker
+                  value={backgroundGradientBottom}
+                  onChange={setBackgroundGradientBottom}
+                  onCommit={(value) => {
+                    saveColor(value, 'appearanceBackgroundGradientBottom')
+                  }}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {backgroundType === 'image' ? (
+            <ImageUploader
+              value={backgroundImageUrl}
+              onChange={(url) => {
+                setBackgroundImageUrl(url)
+                save(
+                  { appearanceBackgroundImageUrl: url || null },
+                  { debounced: true },
+                )
+              }}
+              folder="backgrounds"
+              aspectRatio="video"
+              placeholder="Upload full-page background"
+            />
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm mt-6">
+        <CardHeader className="border-b flex flex-row items-center justify-between">
+          <CardTitle>Blocks</CardTitle>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={resetBlockSection}
+          >
+            Reset
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4 p-6">
           <BlockStyleSelector
             blockStyle={blockStyle}
             blockRadius={blockRadius}
-            onStyleChange={handleStyleChange}
-            onRadiusChange={handleRadiusChange}
+            onChange={handleBlockStyleChange}
           />
+
+          <div className="space-y-2">
+            <Label>Block color</Label>
+            <ColorPicker
+              value={blockColor}
+              onChange={setBlockColor}
+              onCommit={(value) => {
+                saveColor(value, 'appearanceBlockColor')
+              }}
+              disabled={blockStyle === 'basic'}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Shadow color</Label>
+            <ColorPicker
+              value={blockShadowColor}
+              onChange={setBlockShadowColor}
+              onCommit={(value) => {
+                saveColor(value, 'appearanceBlockShadowColor')
+              }}
+              disabled={blockStyle !== 'shadow'}
+            />
+          </div>
         </CardContent>
       </Card>
 
       <Card className="shadow-sm mt-6">
-        <CardHeader className=" border-b flex flex-row items-center justify-between">
-          <CardTitle>Theme</CardTitle>
+        <CardHeader className="border-b flex flex-row items-center justify-between">
+          <CardTitle>Text</CardTitle>
           <Button
             type="button"
             variant="outline"
             className="gap-2"
-            onClick={handleResetTheme}
+            onClick={resetTextSection}
           >
             Reset
           </Button>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <CardTitle className="text-xl font-semibold">Public Theme</CardTitle>
-          <ThemeOptionCards
-            value={publicTheme}
-            onChange={handlePublicThemeChange}
-          />
+        <CardContent className="space-y-4 p-6">
+          <div className="space-y-2">
+            <Label>Text color</Label>
+            <ColorPicker
+              value={textColor}
+              onChange={setTextColor}
+              onCommit={(value) => {
+                saveColor(value, 'appearanceTextColor')
+              }}
+            />
+          </div>
 
-          <CardTitle className="text-xl font-semibold">
-            Dashboard Theme
-          </CardTitle>
-          <ThemeOptionCards
-            value={dashboardTheme}
-            onChange={(theme) => {
-              setDashboardTheme(theme)
-            }}
-          />
+          <div className="space-y-2">
+            <Label>Font</Label>
+            <Select
+              value={textFont}
+              onValueChange={(value) => {
+                const next = value as AppearanceTextFont
+                setTextFont(next)
+                save({ appearanceTextFont: next })
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {APPEARANCE_FONT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label} ({option.family})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
     </>

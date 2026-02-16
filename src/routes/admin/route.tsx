@@ -5,7 +5,6 @@ import { MobileAdminNav } from '@/components/dashboard/mobile-admin-nav'
 import { Spinner } from '@/components/ui/spinner'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { authClient } from '@/lib/auth-client'
-import { useApplyRootTheme, useDashboardThemePreference } from '@/lib/theme'
 
 export const Route = createFileRoute('/admin')({
   component: AdminLayout,
@@ -14,8 +13,6 @@ export const Route = createFileRoute('/admin')({
 function AdminLayout() {
   const router = useRouter()
   const { data: session, isPending } = authClient.useSession()
-  const [dashboardTheme] = useDashboardThemePreference()
-  useApplyRootTheme('dashboard', undefined, dashboardTheme)
 
   React.useEffect(() => {
     if (!isPending && !session?.user) {

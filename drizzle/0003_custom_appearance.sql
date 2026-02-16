@@ -1,0 +1,11 @@
+ALTER TABLE "user" ADD COLUMN "appearance_banner_enabled" boolean DEFAULT true NOT NULL;
+ALTER TABLE "user" ADD COLUMN "appearance_background_type" text DEFAULT 'none' NOT NULL;
+ALTER TABLE "user" ADD COLUMN "appearance_background_color" text;
+ALTER TABLE "user" ADD COLUMN "appearance_background_gradient_top" text;
+ALTER TABLE "user" ADD COLUMN "appearance_background_gradient_bottom" text;
+ALTER TABLE "user" ADD COLUMN "appearance_background_image_url" text;
+ALTER TABLE "user" ADD COLUMN "appearance_block_color" text;
+ALTER TABLE "user" ADD COLUMN "appearance_block_shadow_color" text;
+ALTER TABLE "user" ADD COLUMN "appearance_text_color" text;
+ALTER TABLE "user" ADD COLUMN "appearance_text_font" text;
+ALTER TABLE "user" DROP COLUMN "public_theme";

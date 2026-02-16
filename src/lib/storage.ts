@@ -6,25 +6,57 @@ import {
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
-// Ensure these are set in your environment variables
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL // Optional: Custom domain for public access
+type R2Config = {
+  accountId: string
+  accessKeyId: string
+  secretAccessKey: string
+  bucketName: string
+  publicUrl: string | null
+}
 
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  forcePathStyle: true, // R2 requires path style for the account-level endpoint
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID || '',
-    secretAccessKey: R2_SECRET_ACCESS_KEY || '',
-  },
-  // Disable automatic checksum generation which causes signature mismatches in presigned URLs
-  requestChecksumCalculation: 'WHEN_REQUIRED',
-  responseChecksumValidation: 'WHEN_REQUIRED',
-})
+function getRequiredEnv(name: string): string {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(`[StorageService] Missing required environment variable: ${name}`)
+  }
+  return value
+}
+
+function getR2Config(): R2Config {
+  return {
+    accountId: getRequiredEnv('R2_ACCOUNT_ID'),
+    accessKeyId: getRequiredEnv('R2_ACCESS_KEY_ID'),
+    secretAccessKey: getRequiredEnv('R2_SECRET_ACCESS_KEY'),
+    bucketName: getRequiredEnv('R2_BUCKET_NAME'),
+    publicUrl: process.env.R2_PUBLIC_URL?.replace(/\/$/, '') || null,
+  }
+}
+
+let cachedS3Client: S3Client | null = null
+let cachedEndpoint: string | null = null
+
+function getS3Client(config: R2Config): S3Client {
+  const endpoint = `https://${config.accountId}.r2.cloudflarestorage.com`
+  if (cachedS3Client && cachedEndpoint === endpoint) {
+    return cachedS3Client
+  }
+
+  cachedEndpoint = endpoint
+  cachedS3Client = new S3Client({
+    region: 'auto',
+    endpoint,
+    forcePathStyle: true, // R2 account-level endpoint requires path style
+    credentials: {
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey,
+    },
+    // Reduce signature mismatch risk when generating presigned URLs
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
+  })
+
+  return cachedS3Client
+}
 
 export class StorageService {
   /**
@@ -38,16 +70,18 @@ export class StorageService {
     contentType: string,
     expiresIn = 300, // 5 minutes by default for upload start
   ): Promise<{ uploadUrl: string; key: string; publicUrl: string }> {
+    const config = getR2Config()
+    const s3Client = getS3Client(config)
     const command = new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: config.bucketName,
       Key: key,
       ContentType: contentType,
     })
 
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn })
-    const publicUrl = R2_PUBLIC_URL
-      ? `${R2_PUBLIC_URL.replace(/\/$/, '')}/${key}`
-      : `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${key}`
+    const publicUrl = config.publicUrl
+      ? `${config.publicUrl}/${key}`
+      : `https://${config.accountId}.r2.cloudflarestorage.com/${config.bucketName}/${key}`
 
     return { uploadUrl, key, publicUrl }
   }
@@ -57,8 +91,10 @@ export class StorageService {
    * @param key The key of the file to delete.
    */
   static async deleteFile(key: string): Promise<void> {
+    const config = getR2Config()
+    const s3Client = getS3Client(config)
     const command = new DeleteObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: config.bucketName,
       Key: key,
     })
     await s3Client.send(command)
@@ -66,17 +102,18 @@ export class StorageService {
 
   static getKeyFromUrl(url: string): string | null {
     try {
+      const { bucketName, publicUrl } = getR2Config()
       const urlObj = new URL(url)
       // If using custom domain
-      if (R2_PUBLIC_URL && url.startsWith(R2_PUBLIC_URL)) {
-        return url.slice(R2_PUBLIC_URL.length).replace(/^\//, '')
+      if (publicUrl && url.startsWith(publicUrl)) {
+        return url.slice(publicUrl.length).replace(/^\//, '')
       }
       // If using R2 domain
       if (url.includes('r2.cloudflarestorage.com')) {
         const pathParts = urlObj.pathname.split('/').filter(Boolean)
         // format: /bucketName/key
         // pathParts[0] is bucketName
-        if (pathParts[0] === R2_BUCKET_NAME) {
+        if (pathParts[0] === bucketName) {
           return pathParts.slice(1).join('/')
         }
       }
@@ -99,8 +136,10 @@ export class StorageService {
     fileName: string,
     expiresIn = 3600,
   ): Promise<string> {
+    const config = getR2Config()
+    const s3Client = getS3Client(config)
     const command = new GetObjectCommand({
-      Bucket: R2_BUCKET_NAME,
+      Bucket: config.bucketName,
       Key: key,
       ResponseContentDisposition: `attachment; filename="${fileName}"`,
     })

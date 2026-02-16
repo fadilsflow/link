@@ -10,12 +10,14 @@ export async function uploadFile(
   file: File,
   folder = 'uploads',
 ): Promise<string> {
+  const contentType = file.type || 'application/octet-stream'
+
   // 1. Get presigned URL
   const { uploadUrl, publicUrl } = await trpcClient.storage.getUploadUrl.mutate(
     {
       // Sanitize filename to avoid weird URL encoding issues with spaces/parens
       key: `${folder}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '-')}`,
-      contentType: file.type,
+      contentType,
     },
   )
 
@@ -24,14 +26,16 @@ export async function uploadFile(
     method: 'PUT',
     body: file,
     headers: {
-      'Content-Type': file.type,
+      'Content-Type': contentType,
     },
   })
 
   if (!res.ok) {
-    const text = await res.text()
-    console.error('Upload failed with status:', res.status, text)
-    throw new Error(`Upload failed: ${res.status} ${res.statusText}`)
+    const responseBody = (await res.text()).slice(0, 400)
+    console.error('Upload failed with status:', res.status, responseBody)
+    throw new Error(
+      `Upload failed: ${res.status} ${res.statusText}${responseBody ? ` - ${responseBody}` : ''}`,
+    )
   }
 
   return publicUrl

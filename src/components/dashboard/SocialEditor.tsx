@@ -11,7 +11,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   DndContext,
-  
+
   KeyboardSensor,
   PointerSensor,
   closestCenter,
@@ -69,8 +69,7 @@ import {
   InputGroupInput,
   InputGroupText,
 } from '../ui/input-group'
-import { toastManager } from '../ui/toast'
-import type {DragEndEvent} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { cn } from '@/lib/utils'
 
@@ -266,6 +265,11 @@ export default function SocialEditor({
   const [editingLink, setEditingLink] = useState<SocialLink | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
+  // Loading states
+  const [isAdding, setIsAdding] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   // Form states
   const [newPlatform, setNewPlatform] = useState<PlatformValue>('twitter')
   const [newUrl, setNewUrl] = useState('')
@@ -349,34 +353,27 @@ export default function SocialEditor({
     reorderMutation.mutate(updates)
   }
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const platformDef = PLATFORMS.find((p) => p.value === newPlatform)
     const extractedUsername = extractUsername(newUrl, newPlatform)
     const url = platformDef
       ? `${platformDef.baseUrl}${extractedUsername}`
       : extractedUsername
 
-    // Close dialog immediately
-    setAddDialogOpen(false)
-    const platformToAdd = newPlatform
-    const urlToAdd = url
-    setNewPlatform('twitter')
-    setNewUrl('')
-
-    toastManager.promise(
-      createMutation.mutateAsync({
-        platform: platformToAdd,
-        url: urlToAdd,
-      }),
-      {
-        loading: { title: 'Adding social link...' },
-        success: () => ({ title: 'Social link added!' }),
-        error: (err: unknown) => ({
-          title: 'Failed to add social link',
-          description: (err as Error).message || 'An error occurred',
-        }),
-      },
-    )
+    setIsAdding(true)
+    try {
+      await createMutation.mutateAsync({
+        platform: newPlatform,
+        url,
+      })
+      setNewPlatform('twitter')
+      setNewUrl('')
+      setAddDialogOpen(false)
+    } catch (error) {
+      console.error('Failed to add social link:', error)
+    } finally {
+      setIsAdding(false)
+    }
   }
 
   const handleEdit = (link: SocialLink) => {
@@ -388,7 +385,7 @@ export default function SocialEditor({
     setEditDialogOpen(true)
   }
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingLink) return
 
     const platformDef = PLATFORMS.find((p) => p.value === editPlatform)
@@ -408,48 +405,37 @@ export default function SocialEditor({
       return
     }
 
-    // Close dialog immediately
-    const linkId = editingLink.id
-    const platformToSave = editPlatform
-    const enabledToSave = editIsEnabled
-    setEditDialogOpen(false)
-    setEditingLink(null)
-
-    toastManager.promise(
-      updateMutation.mutateAsync({
-        id: linkId,
-        platform: platformToSave,
+    setIsSaving(true)
+    try {
+      await updateMutation.mutateAsync({
+        id: editingLink.id,
+        platform: editPlatform,
         url: urlToSave,
-        isEnabled: enabledToSave,
-      }),
-      {
-        loading: { title: 'Saving changes...' },
-        success: () => ({ title: 'Changes saved!' }),
-        error: (err: unknown) => ({
-          title: 'Failed to save changes',
-          description: (err as Error).message || 'An error occurred',
-        }),
-      },
-    )
+        isEnabled: editIsEnabled,
+      })
+      setEditDialogOpen(false)
+      setEditingLink(null)
+    } catch (error) {
+      console.error('Failed to save changes:', error)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!editingLink) return
 
-    // Close dialogs immediately
-    const linkId = editingLink.id
-    setEditDialogOpen(false)
-    setDeleteDialogOpen(false)
-    setEditingLink(null)
-
-    toastManager.promise(deleteMutation.mutateAsync(linkId), {
-      loading: { title: 'Deleting social link...' },
-      success: () => ({ title: 'Social link deleted!' }),
-      error: (err: unknown) => ({
-        title: 'Failed to delete social link',
-        description: (err as Error).message || 'An error occurred',
-      }),
-    })
+    setIsDeleting(true)
+    try {
+      await deleteMutation.mutateAsync(editingLink.id)
+      setEditDialogOpen(false)
+      setDeleteDialogOpen(false)
+      setEditingLink(null)
+    } catch (error) {
+      console.error('Failed to delete social link:', error)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -544,7 +530,7 @@ export default function SocialEditor({
             <DialogClose render={<Button variant="ghost" />}>
               Cancel
             </DialogClose>
-            <Button onClick={handleAdd} disabled={!newUrl}>
+            <Button onClick={handleAdd} disabled={!newUrl} loading={isAdding}>
               Add
             </Button>
           </DialogFooter>
@@ -653,7 +639,7 @@ export default function SocialEditor({
                   <AlertDialogClose render={<Button variant="ghost" />}>
                     Cancel
                   </AlertDialogClose>
-                  <Button onClick={handleDelete} variant={'destructive'}>
+                  <Button onClick={handleDelete} variant={'destructive'} loading={isDeleting}>
                     Delete
                   </Button>
                 </AlertDialogFooter>
@@ -663,7 +649,7 @@ export default function SocialEditor({
               <DialogClose render={<Button variant="ghost" />}>
                 Cancel
               </DialogClose>
-              <Button onClick={handleSaveEdit} disabled={!editUrl}>
+              <Button onClick={handleSaveEdit} disabled={!editUrl} loading={isSaving}>
                 Save
               </Button>
             </div>

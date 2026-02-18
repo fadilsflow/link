@@ -3,7 +3,11 @@ import {
     Layout,
     Package,
     PlaySquare,
+    TextIcon,
+    TextInitial,
+    TypeIcon,
     User as UserIcon,
+    YoutubeIcon,
     type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -24,6 +28,8 @@ export interface BlockTypeOption {
     icon: LucideIcon
     title: string
     description: string
+    iconColor: string
+    bgColor: string
 }
 
 /**
@@ -34,31 +40,42 @@ export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
     {
         type: 'link',
         icon: Layout,
-        title: 'Link Block',
-        description: 'Add a link to your website or profile',
+        title: 'Custom Link',
+        iconColor: 'bg-yellow-500',
+        bgColor: 'bg-yellow-100/20',
+        description: 'Add any links of your website, campaign or content.',
     },
     {
         type: 'text',
-        icon: UserIcon,
-        title: 'Text Block',
-        description: 'Write a simple message or bio segment',
+        icon: TypeIcon,
+        title: 'Title & Description',
+        iconColor: 'bg-sky-500',
+        bgColor: 'bg-sky-100/20',
+        description: 'Organize your links with a title and description',
     },
     {
         type: 'image',
         icon: ImageIcon,
-        title: 'Image Block',
-        description: 'Showcase an image with optional click link',
+        title: 'Image',
+        iconColor: 'bg-lime-500',
+        bgColor: 'bg-lime-100/20',
+
+        description: 'Upload and display custom image.',
     },
     {
         type: 'video',
-        icon: PlaySquare,
-        title: 'Video Block',
-        description: 'Embed videos from YouTube, TikTok, and more',
+        icon: YoutubeIcon,
+        iconColor: 'bg-rose-600',
+        bgColor: 'bg-rose-100/20',
+        title: 'Youtube',
+        description: 'Share your channel and showcase videos.',
     },
     {
         type: 'product',
         icon: Package,
-        title: 'Product Block',
+        iconColor: 'bg-indigo-500',
+        bgColor: 'bg-indigo-100/20',
+        title: 'Product',
         description: 'Feature one product from your existing catalog',
     },
 ]
@@ -91,24 +108,26 @@ export function BlockTypeSelector({
                 <Plus className="h-5 w-5" />
                 Add
             </DialogTrigger>
-            <DialogContent className="overflow-hidden border-none shadow-2xl">
+            <DialogContent className={"sm:max-w-131.25"}>
                 <DialogHeader>
                     <DialogTitle className="font-heading">Add a Block</DialogTitle>
                 </DialogHeader>
-                <DialogPanel className="grid grid-cols-2 gap-4">
+                <DialogPanel className="grid grid-cols-2 gap-4 ">
                     {BLOCK_TYPE_OPTIONS.map((option) => (
                         <div
                             key={option.type}
                             onClick={() => onSelect(option.type)}
-                            className="p-6 text-foreground border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:bg-input/80 cursor-pointer group"
+                            className={`p-3 ${option.bgColor}  text-foreground border border-input rounded-xl flex gap-4 items-center  cursor-pointer group`}
                         >
-                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
-                                <option.icon className="h-6 w-6" />
+                            <div className={`p-1 border-2 group-hover:opacity-80 ${option.iconColor} border-white ring-1 ring-border rounded-md flex items-center justify-center`}>
+                                <option.icon className="text-background h-6 w-6" />
                             </div>
-                            <span className="text-sm font-bold">{option.title}</span>
-                            <p className="text-[10px] text-center leading-tight">
-                                {option.description}
-                            </p>
+                            <div className="gap-0 flex group-hover:opacity-70 flex-col">
+                                <span className="text-sm font-semibold">{option.title}</span>
+                                <p className="text-[10px] leading-tight">
+                                    {option.description}
+                                </p>
+                            </div>
                         </div>
                     ))}
                 </DialogPanel>

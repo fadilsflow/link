@@ -8,24 +8,31 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 
-const config = defineConfig({
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+const config = defineConfig(({ mode }) => {
+  const isProd = mode === 'production'
+
+  return {
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+      },
     },
-  },
-  plugins: [
-    cloudflare({ viteEnvironment: { name: 'ssr' } }),
-    devtools(),
-    nitro(),
-    // this is the plugin that enables path aliases
-    viteTsConfigPaths({
-      projects: ['./tsconfig.json'],
-    }),
-    tailwindcss(),
-    tanstackStart(),
-    viteReact(),
-  ],
+    plugins: [
+      isProd &&
+        cloudflare({
+          viteEnvironment: { name: 'ssr' },
+        }),
+      devtools(),
+      nitro(),
+      // this is the plugin that enables path aliases
+      viteTsConfigPaths({
+        projects: ['./tsconfig.json'],
+      }),
+      tailwindcss(),
+      tanstackStart(),
+      viteReact(),
+    ],
+  }
 })
 
 export default config

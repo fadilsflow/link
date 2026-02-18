@@ -1,25 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  ImageIcon,
-  Layout,
-  Package,
-  PlaySquare,
-  Plus,
-  User as UserIcon,
-} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import type { PreviewUser } from '@/lib/preview-context'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogPanel,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { ProfileEditor } from '@/components/dashboard/ProfileEditor'
@@ -31,6 +14,10 @@ import {
 } from '@/components/app-header'
 import SocialEditor from '@/components/dashboard/SocialEditor'
 import { usePreview } from '@/lib/preview-context'
+import {
+  BlockTypeSelector,
+  type BlockType,
+} from '@/components/dashboard/BlockTypeSelector'
 
 export const Route = createFileRoute('/admin/editor/profiles')({
   component: AdminDashboard,
@@ -382,9 +369,7 @@ function AdminDashboard() {
     }
   }
 
-  const handleAddBlock = (
-    type: 'link' | 'text' | 'image' | 'video' | 'product',
-  ) => {
+  const handleAddBlock = (type: BlockType) => {
     const tempId = 'temp-' + Date.now()
     const newBlock = {
       id: tempId,
@@ -440,88 +425,11 @@ function AdminDashboard() {
 
       {/* Blocks Section */}
       <section className="space-y-6">
-        {/* Add Block Trigger in Dialog */}
-        <Dialog open={isAddBlockOpen} onOpenChange={setIsAddBlockOpen}>
-          <DialogTrigger
-            render={
-              <Button
-                size="lg"
-                className="w-full rounded-full flex active:scale-[0.98]"
-              />
-            }
-          >
-            <Plus className="h-5 w-5" />
-            Add
-          </DialogTrigger>
-          <DialogContent className="overflow-hidden  border-none shadow-2xl">
-            <DialogHeader>
-              <DialogTitle className="font-heading">Add a Block</DialogTitle>
-            </DialogHeader>
-            <DialogPanel className="grid grid-cols-2 gap-4">
-              <div
-                onClick={() => handleAddBlock('link')}
-                className="p-6 text-foreground  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:bg-input/80 cursor-pointer group"
-              >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
-                  <Layout className="h-6 w-6 " />
-                </div>
-                <span className="text-sm font-bold">Link Block</span>
-                <p className="text-[10px] text-center leading-tight">
-                  Add a link to your website or profile
-                </p>
-              </div>
-              <div
-                onClick={() => handleAddBlock('text')}
-                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:bg-input/80 cursor-pointer group"
-              >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
-                  <UserIcon className="h-6 w-6 " />
-                </div>
-                <span className="text-sm font-bold">Text Block</span>
-                <p className="text-[10px] text-center leading-tight">
-                  Write a simple message or bio segment
-                </p>
-              </div>
-
-              <div
-                onClick={() => handleAddBlock('image')}
-                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:bg-input/80 cursor-pointer group"
-              >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
-                  <ImageIcon className="h-6 w-6 " />
-                </div>
-                <span className="text-sm font-bold">Image Block</span>
-                <p className="text-[10px] text-center leading-tight">
-                  Showcase an image with optional click link
-                </p>
-              </div>
-              <div
-                onClick={() => handleAddBlock('video')}
-                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:bg-input/80 cursor-pointer group"
-              >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
-                  <PlaySquare className="h-6 w-6 " />
-                </div>
-                <span className="text-sm font-bold">Video Block</span>
-                <p className="text-[10px] text-center leading-tight">
-                  Embed videos from YouTube, TikTok, and more
-                </p>
-              </div>
-              <div
-                onClick={() => handleAddBlock('product')}
-                className="p-6  border border-border/50 rounded-xl flex flex-col items-center gap-3 hover:bg-input/80 cursor-pointer group"
-              >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center">
-                  <Package className="h-6 w-6 " />
-                </div>
-                <span className="text-sm font-bold">Product Block</span>
-                <p className="text-[10px] text-center leading-tight">
-                  Feature one product from your existing catalog
-                </p>
-              </div>
-            </DialogPanel>
-          </DialogContent>
-        </Dialog>
+        <BlockTypeSelector
+          open={isAddBlockOpen}
+          onOpenChange={setIsAddBlockOpen}
+          onSelect={handleAddBlock}
+        />
 
         <BlockList
           blocks={localBlocks}

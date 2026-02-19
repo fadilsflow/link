@@ -11,15 +11,12 @@ import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { getPublicProduct } from '@/lib/profile-server'
 import { cn, formatPrice, formatPriceInput, parsePriceInput } from '@/lib/utils'
@@ -46,12 +43,12 @@ export const Route = createFileRoute('/$username/products/$productId/checkout')(
       return {
         links: lcpImage
           ? [
-              {
-                rel: 'preload',
-                as: 'image',
-                href: lcpImage,
-              },
-            ]
+            {
+              rel: 'preload',
+              as: 'image',
+              href: lcpImage,
+            },
+          ]
           : [],
       }
     },
@@ -190,78 +187,38 @@ function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-background ">
+        <div className="relative max-w-6xl mx-auto px-4 py-3 flex items-center justify-center">
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs text-slate-600 -ml-2 hover:bg-slate-100"
+            className="absolute left-3 text-xs text-slate-600 -ml-2 hover:bg-slate-100"
             onClick={() => window.history.back()}
           >
             <ArrowLeft className="h-4 w-4 mr-1.5" />
-            Back
           </Button>
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <Lock className="h-3.5 w-3.5" />
-            <span className="text-xs font-medium">Secure Checkout</span>
-          </div>
+          <h2 className='text-2xl font-heading'>Checkout</h2>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid gap-6 lg:grid-cols-[1fr_370px] lg:items-start">
+        <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
           <div className="space-y-6">
-            <Card>
-              <CardHeader className="space-y-3">
-                <CardTitle className="text-xl">Checkout</CardTitle>
-                <CardDescription>
-                  Complete your order in three quick steps.
-                </CardDescription>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">1. Summary</Badge>
-                  <Badge variant="outline">2. Payment</Badge>
-                  <Badge variant="outline">3. Confirmation</Badge>
-                </div>
-              </CardHeader>
-            </Card>
+
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Payment details</CardTitle>
-                <CardDescription>
-                  Enter your information to receive your purchase immediately.
-                </CardDescription>
+                <CardTitle >Contact information</CardTitle>
               </CardHeader>
               <CardContent>
                 <form className="space-y-5" onSubmit={handleSubmit}>
                   <div className="space-y-4">
-                    <h2 className="text-sm font-semibold text-slate-900">
-                      Your Information
-                    </h2>
-
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="name"
-                        className="text-xs font-medium text-slate-600"
-                      >
-                        Name
-                      </Label>
-                      <Input
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name"
-                        required
-                        className="h-11"
-                      />
-                    </div>
-
                     <div className="space-y-2">
                       <Label
                         htmlFor="email"
                         className="text-xs font-medium text-slate-600"
                       >
-                        Email
+                        Email address
                       </Label>
                       <Input
                         id="email"
@@ -270,9 +227,25 @@ function CheckoutPage() {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@example.com"
                         required
-                        className="h-11"
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="name"
+                        className="text-xs font-medium text-slate-600"
+                      >
+                        Full name
+                      </Label>
+                      <Input
+                        id="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your name"
+                        required
+                      />
+                    </div>
+
+
                   </div>
 
                   {product.payWhatYouWant && (
@@ -372,11 +345,6 @@ function CheckoutPage() {
                       ? 'Processing...'
                       : `Pay ${formatPrice(unitPrice)}`}
                   </Button>
-
-                  <p className="text-center text-[11px] text-slate-400">
-                    This is a demo checkout. Payment processing will be
-                    integrated soon.
-                  </p>
                 </form>
               </CardContent>
             </Card>
@@ -384,9 +352,6 @@ function CheckoutPage() {
 
           <div className="space-y-6 lg:sticky lg:top-20">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Order summary</CardTitle>
-              </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-4">
                   {hasImage ? (
@@ -409,8 +374,7 @@ function CheckoutPage() {
                     </div>
                   )}
 
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <Badge variant="secondary">Digital Product</Badge>
+                  <div className="flex-1 min-w-0">
                     <h1 className="text-lg font-bold text-slate-900 leading-tight">
                       {product.title}
                     </h1>
@@ -418,17 +382,9 @@ function CheckoutPage() {
                       to="/$username"
                       params={{ username: user.username || '' }}
                       search={{ tab: 'profile' }}
-                      className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                      className='text-xs underline'
                     >
-                      <Avatar className="h-4 w-4">
-                        <AvatarImage
-                          src={user.image || '/avatar-placeholder.png'}
-                        />
-                        <AvatarFallback className="bg-slate-900 text-white text-[8px]">
-                          {user.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      by {user.name}
+                      {user.name}
                     </Link>
                   </div>
                 </div>
@@ -456,7 +412,7 @@ function CheckoutPage() {
             {productVideoId ? (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Product preview</CardTitle>
+                  <CardTitle >Product preview</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <LiteYouTube
@@ -470,17 +426,16 @@ function CheckoutPage() {
             ) : null}
 
             <Card>
-              <CardContent className="pt-4 space-y-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  <span>Secure encrypted payment flow.</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Confirmation and delivery are sent by email.</span>
-                </div>
+              <CardHeader>
+                <CardTitle >Pay With</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* TODO: ADD A DUMMY PAYMENT OPTION */}
+
               </CardContent>
             </Card>
+
+
           </div>
         </div>
       </div>

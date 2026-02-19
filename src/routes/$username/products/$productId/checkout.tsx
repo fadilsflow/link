@@ -1,6 +1,8 @@
 import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { ShoppingBag } from 'lucide-react'
+import type { CheckoutPaymentMethod } from '@/components/checkout/checkout-form'
+import { CheckoutForm } from '@/components/checkout/checkout-form'
 import {
   Card,
   CardContent,
@@ -16,8 +18,6 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
 import LiteYouTube from '@/components/LiteYouTube'
 import { extractYouTubeVideoIdFromText } from '@/lib/lite-youtube'
-import { CheckoutForm } from '@/components/checkout/checkout-form'
-import type { CheckoutPaymentMethod } from '@/components/checkout/checkout-form'
 
 export const Route = createFileRoute('/$username/products/$productId/checkout')(
   {

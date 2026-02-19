@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, CheckCircle, ShoppingBag } from 'lucide-react'
-import type { DummyPaymentMethod } from '@/components/checkout/dummy-payment-options'
+import type { CheckoutPaymentMethod } from '@/components/checkout/checkout-form'
 import { useCartStore } from '@/store/cart-store'
 import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -11,9 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
-import { CheckoutLayout } from '@/components/checkout/checkout-layout'
-import { ContactInformationCard } from '@/components/checkout/contact-information-card'
-import { DummyPaymentOptions } from '@/components/checkout/dummy-payment-options'
+import { CheckoutForm } from '@/components/checkout/checkout-form'
 
 type Question = { id: string; label: string; required: boolean }
 
@@ -32,7 +30,7 @@ function CheckoutPage() {
     buyerEmail: '',
     note: '',
   })
-  const [paymentMethod, setPaymentMethod] = useState<DummyPaymentMethod>('qris')
+  const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>('qris')
   const [answersByProduct, setAnswersByProduct] = useState<
     Partial<Record<string, Record<string, string>>>
   >({})
@@ -184,148 +182,129 @@ function CheckoutPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <CheckoutLayout
-        left={
-          <ContactInformationCard
-            email={formData.buyerEmail}
-            name={formData.buyerName}
-            note={formData.note}
-            onEmailChange={(value) =>
-              setFormData((prev) => ({ ...prev, buyerEmail: value }))
-            }
-            onNameChange={(value) =>
-              setFormData((prev) => ({ ...prev, buyerName: value }))
-            }
-            onNoteChange={(value) =>
-              setFormData((prev) => ({ ...prev, note: value }))
-            }
-            additionalFields={
-              items.some(
-                (item) => (questionsByProduct.get(item.productId) ?? []).length > 0,
-              ) ? (
-                <div className="space-y-4 pt-2">
-                  <h2 className="text-sm font-semibold text-slate-900">
-                    Additional Questions
-                  </h2>
-                  {items.map((item) =>
-                    (questionsByProduct.get(item.productId) ?? []).map((question) => (
-                      <div key={`${item.productId}-${question.id}`} className="space-y-2">
-                        <Label
-                          htmlFor={`q-${item.productId}-${question.id}`}
-                          className="text-xs font-medium text-slate-600"
-                        >
-                          {question.label} {question.required && <span className="text-rose-500">*</span>}
-                        </Label>
-                        <p className="text-xs text-slate-400">({item.title})</p>
-                        <Input
-                          id={`q-${item.productId}-${question.id}`}
-                          value={answersByProduct[item.productId]?.[question.id] ?? ''}
-                          onChange={(e) =>
-                            setAnswersByProduct((prev) => ({
-                              ...prev,
-                              [item.productId]: {
-                                ...(prev[item.productId] ?? {}),
-                                [question.id]: e.target.value,
-                              },
-                            }))
-                          }
-                          required={question.required}
-                          className="h-11"
-                        />
-                      </div>
-                    )),
-                  )}
+    <CheckoutForm
+      email={formData.buyerEmail}
+      name={formData.buyerName}
+      note={formData.note}
+      onEmailChange={(value) =>
+        setFormData((prev) => ({ ...prev, buyerEmail: value }))
+      }
+      onNameChange={(value) =>
+        setFormData((prev) => ({ ...prev, buyerName: value }))
+      }
+      onNoteChange={(value) =>
+        setFormData((prev) => ({ ...prev, note: value }))
+      }
+      additionalContactFields={
+        items.some(
+          (item) => (questionsByProduct.get(item.productId) ?? []).length > 0,
+        ) ? (
+          <div className="space-y-4 pt-2">
+            <h2 className="text-sm font-semibold text-slate-900">
+              Additional Questions
+            </h2>
+            {items.map((item) =>
+              (questionsByProduct.get(item.productId) ?? []).map((question) => (
+                <div key={`${item.productId}-${question.id}`} className="space-y-2">
+                  <Label
+                    htmlFor={`q-${item.productId}-${question.id}`}
+                    className="text-xs font-medium text-slate-600"
+                  >
+                    {question.label} {question.required && <span className="text-rose-500">*</span>}
+                  </Label>
+                  <p className="text-xs text-slate-400">({item.title})</p>
+                  <Input
+                    id={`q-${item.productId}-${question.id}`}
+                    value={answersByProduct[item.productId]?.[question.id] ?? ''}
+                    onChange={(e) =>
+                      setAnswersByProduct((prev) => ({
+                        ...prev,
+                        [item.productId]: {
+                          ...(prev[item.productId] ?? {}),
+                          [question.id]: e.target.value,
+                        },
+                      }))
+                    }
+                    required={question.required}
+                    className="h-11"
+                  />
                 </div>
-              ) : null
-            }
-          />
-        }
-        right={
-          <>
-            <Card>
-              <CardHeader>
-                <CardTitle>Orders information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  {items.map((item) => (
-                    <div key={item.productId} className="flex items-start gap-4">
-                      {item.image ? (
-                        <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            width={80}
-                            height={80}
-                            loading="eager"
-                            fetchPriority="high"
-                            decoding="async"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm">
-                          <ShoppingBag className="h-8 w-8 text-slate-300" />
-                        </div>
-                      )}
-
-                      <div className="flex-1 min-w-0">
-                        <h1 className="text-lg font-bold text-slate-900 leading-tight">
-                          {item.title}
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                          Qty: {item.quantity}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium text-slate-900">
-                          {formatPrice(item.price * item.quantity)}
-                        </p>
-                      </div>
+              )),
+            )}
+          </div>
+        ) : null
+      }
+      orderInformation={
+        <Card>
+          <CardHeader>
+            <CardTitle>Orders information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              {items.map((item) => (
+                <div key={item.productId} className="flex items-start gap-4">
+                  {item.image ? (
+                    <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        width={80}
+                        height={80}
+                        loading="eager"
+                        fetchPriority="high"
+                        decoding="async"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  ))}
+                  ) : (
+                    <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <ShoppingBag className="h-8 w-8 text-slate-300" />
+                    </div>
+                  )}
+
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-lg font-bold text-slate-900 leading-tight">
+                      {item.title}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                      Qty: {item.quantity}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-slate-900">
+                      {formatPrice(item.price * item.quantity)}
+                    </p>
+                  </div>
                 </div>
+              ))}
+            </div>
 
-                <Separator />
+            <Separator />
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>Subtotal</span>
-                    <span>{formatPrice(totalPrice)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>Fees</span>
-                    <span>{formatPrice(0)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between text-base font-semibold">
-                    <span>Total</span>
-                    <span>{formatPrice(totalPrice)}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Pay With</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DummyPaymentOptions
-                  value={paymentMethod}
-                  onValueChange={setPaymentMethod}
-                  name="cart-checkout-payment"
-                />
-              </CardContent>
-            </Card>
-
-            <Button type="submit" size="xl" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? 'Processing...' : `Pay ${formatPrice(totalPrice)}`}
-            </Button>
-          </>
-        }
-      />
-    </form>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Subtotal</span>
+                <span>{formatPrice(totalPrice)}</span>
+              </div>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Fees</span>
+                <span>{formatPrice(0)}</span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between text-base font-semibold">
+                <span>Total</span>
+                <span>{formatPrice(totalPrice)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      }
+      payLabel={`Pay ${formatPrice(totalPrice)}`}
+      isSubmitting={isSubmitting}
+      onSubmit={handleSubmit}
+      paymentMethod={paymentMethod}
+      onPaymentMethodChange={setPaymentMethod}
+      paymentOptionsName="cart-checkout-payment"
+    />
   )
 }

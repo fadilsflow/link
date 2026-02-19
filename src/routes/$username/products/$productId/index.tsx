@@ -108,11 +108,6 @@ function ProductDetailPage() {
   const [isCartOpen, setIsCartOpen] = React.useState(false)
   const { addItem, getTotalItems } = useCartStore()
 
-  // Scroll to top when navigating to this page
-  React.useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
-
   const checkoutHref = `/${username}/products/${productId}/checkout`
   const productHref = `${BASE_URL.replace(/\/$/, '')}/${username}/products/${productId}`
   const productImages = product.images || []

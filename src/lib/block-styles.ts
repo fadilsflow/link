@@ -16,9 +16,10 @@ export function getBlockCardBase(style: BlockStyle): string {
       return 'bg-card border border-border'
     case 'shadow':
       // Same behavior as button default variant
+      // Uses --block-shadow-color CSS variable for customizable shadow color
       return `
         bg-card border border-foreground
-        shadow-[4px_4px_0px_0px_var(--foreground)]
+        shadow-[4px_4px_0px_0px_var(--block-shadow-color,var(--foreground))]
         hover:translate-x-[4px]
         hover:translate-y-[4px]
         hover:shadow-none

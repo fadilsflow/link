@@ -64,8 +64,9 @@ export function getAppearanceBlockStyle(options: {
     return {
       backgroundColor: blockColor || APPEARANCE_DEFAULTS.blockColor,
       borderColor: shadowColor,
-      boxShadow: `4px 4px 0px 0px ${shadowColor}`,
-    }
+      // Use CSS variable so Tailwind hover classes can override it
+      '--block-shadow-color': shadowColor,
+    } as CSSProperties
   }
 
   return {}
@@ -96,7 +97,8 @@ export function getAppearancePageBackgroundStyle(options: {
         backgroundImage: `linear-gradient(180deg, ${
           backgroundGradientTop || APPEARANCE_DEFAULTS.backgroundGradientTop
         } 0%, ${
-          backgroundGradientBottom || APPEARANCE_DEFAULTS.backgroundGradientBottom
+          backgroundGradientBottom ||
+          APPEARANCE_DEFAULTS.backgroundGradientBottom
         } 100%)`,
       }
     case 'image':

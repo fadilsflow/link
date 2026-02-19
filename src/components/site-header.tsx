@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router'
 import UserButton from './user-button'
-import { LoginModal } from '@/components/login-modal'
 import { authClient } from '@/lib/auth-client'
 import { Button } from './ui/button'
 import { GitHub } from './icon/github'

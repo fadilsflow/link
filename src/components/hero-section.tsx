@@ -23,7 +23,7 @@ export default function HeroSection() {
           <Button
             size={'lg'}
             className="text-sm mt-8 rounded-full lg:text-base w-full sm:w-auto hover:shadow-lg"
-            render={<Link to="/" />}
+            render={<Link to="/login" />}
           >
             <span className="text-nowrap">Get Started</span>{' '}
             <span className="border-l-primary-foreground/50 ml-0.5 block size-0 border-y-4 border-l-4 border-y-transparent" />

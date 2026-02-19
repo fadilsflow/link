@@ -2,7 +2,6 @@ import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import {
   ArrowLeft,
-  CircleCheck,
   Share2,
   ShoppingBag,
   ShoppingCart,
@@ -108,6 +107,11 @@ function ProductDetailPage() {
   const { user, product } = Route.useLoaderData()
   const [isCartOpen, setIsCartOpen] = React.useState(false)
   const { addItem, getTotalItems } = useCartStore()
+
+  // Scroll to top when navigating to this page
+  React.useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const checkoutHref = `/${username}/products/${productId}/checkout`
   const productHref = `${BASE_URL.replace(/\/$/, '')}/${username}/products/${productId}`

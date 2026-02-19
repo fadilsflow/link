@@ -27,9 +27,6 @@ export default function HeroSection() {
           </Button>
         </div>
 
-        <div className="mx-auto max-w-2xl">
-        </div>
-
       </div>
     </section>
   )

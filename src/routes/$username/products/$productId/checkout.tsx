@@ -1,12 +1,7 @@
 import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import {
-  ArrowLeft,
-  CheckCircle2,
-  CreditCard,
-  Lock,
-  ShoppingBag,
-} from 'lucide-react'
+import { Lock, ShoppingBag } from 'lucide-react'
+import type { DummyPaymentMethod } from '@/components/checkout/dummy-payment-options'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -16,14 +11,16 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { getPublicProduct } from '@/lib/profile-server'
-import { cn, formatPrice, formatPriceInput, parsePriceInput } from '@/lib/utils'
+import { formatPrice, formatPriceInput, parsePriceInput } from '@/lib/utils'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
 import LiteYouTube from '@/components/LiteYouTube'
 import { extractYouTubeVideoIdFromText } from '@/lib/lite-youtube'
+import { CheckoutLayout } from '@/components/checkout/checkout-layout'
+import { ContactInformationCard } from '@/components/checkout/contact-information-card'
+import { DummyPaymentOptions } from '@/components/checkout/dummy-payment-options'
 
 export const Route = createFileRoute('/$username/products/$productId/checkout')(
   {
@@ -97,7 +94,6 @@ function effectiveUnitPrice(product: any, customAmount: number | null) {
   return product.price ?? 0
 }
 
-
 function CheckoutPage() {
   const { product, user } = Route.useLoaderData()
 
@@ -114,6 +110,7 @@ function CheckoutPage() {
   const [customAmount, setCustomAmount] = React.useState('')
   const [answers, setAnswers] = React.useState<Record<string, string>>({})
   const [note, setNote] = React.useState('')
+  const [paymentMethod, setPaymentMethod] = React.useState<DummyPaymentMethod>('qris')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isRedirecting, setIsRedirecting] = React.useState(false)
 
@@ -186,177 +183,94 @@ function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-10 bg-background ">
-        <div className="relative max-w-6xl mx-auto px-4 py-3 flex items-center justify-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute left-3 text-xs text-slate-600 -ml-2 hover:bg-slate-100"
-            onClick={() => window.history.back()}
-          >
-            <ArrowLeft className="h-4 w-4 mr-1.5" />
-          </Button>
-          <h2 className='text-2xl font-heading'>Checkout</h2>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-          <div className="space-y-6">
-
-
-            <Card>
-              <CardHeader>
-                <CardTitle >Contact information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-5" onSubmit={handleSubmit}>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="email"
-                        className="text-xs font-medium text-slate-600"
-                      >
-                        Email address
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="you@example.com"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="name"
-                        className="text-xs font-medium text-slate-600"
-                      >
-                        Full name
-                      </Label>
-                      <Input
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name"
-                        required
-                      />
-                    </div>
-
-
-                  </div>
-
-                  {product.payWhatYouWant && (
-                    <div className="space-y-2 pt-2">
-                      <Label
-                        htmlFor="amount"
-                        className="text-xs font-medium text-slate-600"
-                      >
-                        Your Price
-                      </Label>
-                      <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
-                          Rp
-                        </span>
-                        <Input
-                          id="amount"
-                          inputMode="numeric"
-                          placeholder={
-                            product.suggestedPrice
-                              ? formatPriceInput(product.suggestedPrice)
-                              : '0'
-                          }
-                          value={customAmount}
-                          onChange={(e) => setCustomAmount(e.target.value)}
-                          className="h-11 pl-8"
-                        />
-                      </div>
-                      <p className="text-xs text-slate-400">
-                        {product.minimumPrice
-                          ? `Minimum ${formatPrice(product.minimumPrice)}`
-                          : 'No minimum — pay what you feel is fair'}
-                      </p>
-                    </div>
-                  )}
-
-                  {questions.length > 0 && (
-                    <div className="space-y-4 pt-2">
-                      <h2 className="text-sm font-semibold text-slate-900">
-                        Additional Questions
-                      </h2>
-                      {questions.map((q) => (
-                        <div key={q.id} className="space-y-2">
-                          <Label
-                            htmlFor={`q-${q.id}`}
-                            className="text-xs font-medium text-slate-600"
-                          >
-                            {q.label}{' '}
-                            {q.required && (
-                              <span className="text-rose-500">*</span>
-                            )}
-                          </Label>
-                          <Input
-                            id={`q-${q.id}`}
-                            value={answers[q.id] ?? ''}
-                            onChange={(e) =>
-                              setAnswers((prev) => ({
-                                ...prev,
-                                [q.id]: e.target.value,
-                              }))
-                            }
-                            required={q.required}
-                            className="h-11"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
+    <form onSubmit={handleSubmit}>
+      <CheckoutLayout
+        left={
+          <ContactInformationCard
+            email={email}
+            name={name}
+            note={note}
+            onEmailChange={setEmail}
+            onNameChange={setName}
+            onNoteChange={setNote}
+            additionalFields={
+              <>
+                {product.payWhatYouWant && (
                   <div className="space-y-2 pt-2">
                     <Label
-                      htmlFor="note"
+                      htmlFor="amount"
                       className="text-xs font-medium text-slate-600"
                     >
-                      Note to seller{' '}
-                      <span className="text-slate-400">(optional)</span>
+                      Your Price
                     </Label>
-                    <Textarea
-                      id="note"
-                      rows={2}
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      placeholder="Any special requests..."
-                      className="resize-none"
-                    />
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+                        Rp
+                      </span>
+                      <Input
+                        id="amount"
+                        inputMode="numeric"
+                        placeholder={
+                          product.suggestedPrice
+                            ? formatPriceInput(product.suggestedPrice)
+                            : '0'
+                        }
+                        value={customAmount}
+                        onChange={(e) => setCustomAmount(e.target.value)}
+                        className="h-11 pl-8"
+                      />
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      {product.minimumPrice
+                        ? `Minimum ${formatPrice(product.minimumPrice)}`
+                        : 'No minimum — pay what you feel is fair'}
+                    </p>
                   </div>
+                )}
 
-                  <Separator />
-
-                  <Button
-                    type="submit"
-                    size="xl"
-                    className={cn('w-full')}
-                    disabled={isSubmitting}
-                  >
-                    <Lock className="h-4 w-4" />
-                    {isSubmitting
-                      ? 'Processing...'
-                      : `Pay ${formatPrice(unitPrice)}`}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6 lg:sticky lg:top-20">
+                {questions.length > 0 && (
+                  <div className="space-y-4 pt-2">
+                    <h2 className="text-sm font-semibold text-slate-900">
+                      Additional Questions
+                    </h2>
+                    {questions.map((q) => (
+                      <div key={q.id} className="space-y-2">
+                        <Label
+                          htmlFor={`q-${q.id}`}
+                          className="text-xs font-medium text-slate-600"
+                        >
+                          {q.label} {q.required && <span className="text-rose-500">*</span>}
+                        </Label>
+                        <Input
+                          id={`q-${q.id}`}
+                          value={answers[q.id] ?? ''}
+                          onChange={(e) =>
+                            setAnswers((prev) => ({
+                              ...prev,
+                              [q.id]: e.target.value,
+                            }))
+                          }
+                          required={q.required}
+                          className="h-11"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            }
+          />
+        }
+        right={
+          <>
             <Card>
+              <CardHeader>
+                <CardTitle>Orders information</CardTitle>
+              </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-4">
                   {hasImage ? (
                     <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
-                      {/* Keeps product image dimensions fixed to prevent CLS while prioritizing first contentful media paint. */}
                       <img
                         src={productImages[0]}
                         alt={product.title}
@@ -382,7 +296,7 @@ function CheckoutPage() {
                       to="/$username"
                       params={{ username: user.username || '' }}
                       search={{ tab: 'profile' }}
-                      className='text-xs underline'
+                      className="text-xs underline"
                     >
                       {user.name}
                     </Link>
@@ -412,7 +326,7 @@ function CheckoutPage() {
             {productVideoId ? (
               <Card>
                 <CardHeader>
-                  <CardTitle >Product preview</CardTitle>
+                  <CardTitle>Product preview</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <LiteYouTube
@@ -427,18 +341,24 @@ function CheckoutPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle >Pay With</CardTitle>
+                <CardTitle>Pay With</CardTitle>
               </CardHeader>
               <CardContent>
-                {/* TODO: ADD A DUMMY PAYMENT OPTION */}
-
+                <DummyPaymentOptions
+                  value={paymentMethod}
+                  onValueChange={setPaymentMethod}
+                  name="product-checkout-payment"
+                />
               </CardContent>
             </Card>
 
-
-          </div>
-        </div>
-      </div>
-    </div>
+            <Button type="submit" size="xl" className="w-full" disabled={isSubmitting}>
+              <Lock className="h-4 w-4" />
+              {isSubmitting ? 'Processing...' : `Pay ${formatPrice(unitPrice)}`}
+            </Button>
+          </>
+        }
+      />
+    </form>
   )
 }

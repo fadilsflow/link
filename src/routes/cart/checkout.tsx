@@ -1,15 +1,19 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, CheckCircle, ShoppingBag } from 'lucide-react'
+import type { DummyPaymentMethod } from '@/components/checkout/dummy-payment-options'
 import { useCartStore } from '@/store/cart-store'
 import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { Separator } from '@/components/ui/separator'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
+import { CheckoutLayout } from '@/components/checkout/checkout-layout'
+import { ContactInformationCard } from '@/components/checkout/contact-information-card'
+import { DummyPaymentOptions } from '@/components/checkout/dummy-payment-options'
 
 type Question = { id: string; label: string; required: boolean }
 
@@ -28,6 +32,7 @@ function CheckoutPage() {
     buyerEmail: '',
     note: '',
   })
+  const [paymentMethod, setPaymentMethod] = useState<DummyPaymentMethod>('qris')
   const [answersByProduct, setAnswersByProduct] = useState<
     Partial<Record<string, Record<string, string>>>
   >({})
@@ -179,44 +184,97 @@ function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <Button
-          variant="ghost"
-          className="mb-8"
-          onClick={() => window.history.back()}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Store
-        </Button>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Order Summary
-            </h2>
-            <Card className="border-0 shadow-sm ring-1 ring-slate-200">
-              <CardContent className="p-6 space-y-4">
-                {items.map((item) => (
-                  <div key={item.productId} className="space-y-3">
-                    <div className="flex gap-4">
-                      <div className="w-16 h-16 bg-slate-100 rounded-md shrink-0 overflow-hidden">
-                        {item.image ? (
+    <form onSubmit={handleSubmit}>
+      <CheckoutLayout
+        left={
+          <ContactInformationCard
+            email={formData.buyerEmail}
+            name={formData.buyerName}
+            note={formData.note}
+            onEmailChange={(value) =>
+              setFormData((prev) => ({ ...prev, buyerEmail: value }))
+            }
+            onNameChange={(value) =>
+              setFormData((prev) => ({ ...prev, buyerName: value }))
+            }
+            onNoteChange={(value) =>
+              setFormData((prev) => ({ ...prev, note: value }))
+            }
+            additionalFields={
+              items.some(
+                (item) => (questionsByProduct.get(item.productId) ?? []).length > 0,
+              ) ? (
+                <div className="space-y-4 pt-2">
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    Additional Questions
+                  </h2>
+                  {items.map((item) =>
+                    (questionsByProduct.get(item.productId) ?? []).map((question) => (
+                      <div key={`${item.productId}-${question.id}`} className="space-y-2">
+                        <Label
+                          htmlFor={`q-${item.productId}-${question.id}`}
+                          className="text-xs font-medium text-slate-600"
+                        >
+                          {question.label} {question.required && <span className="text-rose-500">*</span>}
+                        </Label>
+                        <p className="text-xs text-slate-400">({item.title})</p>
+                        <Input
+                          id={`q-${item.productId}-${question.id}`}
+                          value={answersByProduct[item.productId]?.[question.id] ?? ''}
+                          onChange={(e) =>
+                            setAnswersByProduct((prev) => ({
+                              ...prev,
+                              [item.productId]: {
+                                ...(prev[item.productId] ?? {}),
+                                [question.id]: e.target.value,
+                              },
+                            }))
+                          }
+                          required={question.required}
+                          className="h-11"
+                        />
+                      </div>
+                    )),
+                  )}
+                </div>
+              ) : null
+            }
+          />
+        }
+        right={
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle>Orders information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  {items.map((item) => (
+                    <div key={item.productId} className="flex items-start gap-4">
+                      {item.image ? (
+                        <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
                           <img
                             src={item.image}
                             alt={item.title}
+                            width={80}
+                            height={80}
+                            loading="eager"
+                            fetchPriority="high"
+                            decoding="async"
                             className="w-full h-full object-cover"
                           />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ShoppingBag className="w-6 h-6 text-slate-300" />
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                          <ShoppingBag className="h-8 w-8 text-slate-300" />
+                        </div>
+                      )}
+
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-slate-900 truncate">
+                        <h1 className="text-lg font-bold text-slate-900 leading-tight">
                           {item.title}
-                        </h4>
-                        <p className="text-sm text-slate-500">
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
                           Qty: {item.quantity}
                         </p>
                       </div>
@@ -226,103 +284,48 @@ function CheckoutPage() {
                         </p>
                       </div>
                     </div>
-                    {(questionsByProduct.get(item.productId) ?? []).map(
-                      (question) => (
-                        <div key={question.id} className="space-y-1">
-                          <Label className="text-xs">
-                            {question.label}
-                            {question.required ? ' *' : ''}
-                          </Label>
-                          <Input
-                            value={
-                              answersByProduct[item.productId]?.[question.id] ??
-                              ''
-                            }
-                            onChange={(e) =>
-                              setAnswersByProduct((prev) => ({
-                                ...prev,
-                                [item.productId]: {
-                                  ...(prev[item.productId] ?? {}),
-                                  [question.id]: e.target.value,
-                                },
-                              }))
-                            }
-                          />
-                        </div>
-                      ),
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
 
-                <div className="pt-4 border-t border-slate-100 mt-4">
-                  <div className="flex justify-between items-center text-lg font-bold text-slate-900">
+                <Separator />
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Subtotal</span>
+                    <span>{formatPrice(totalPrice)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Fees</span>
+                    <span>{formatPrice(0)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex items-center justify-between text-base font-semibold">
                     <span>Total</span>
                     <span>{formatPrice(totalPrice)}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Payment Details
-            </h2>
-            <Card className="border-0 shadow-sm ring-1 ring-slate-200">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-base">Contact Information</CardTitle>
+                <CardTitle>Pay With</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      required
-                      value={formData.buyerEmail}
-                      onChange={(e) =>
-                        setFormData({ ...formData, buyerEmail: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name (Optional)</Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      value={formData.buyerName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, buyerName: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="note">Note to Creator (Optional)</Label>
-                    <Textarea
-                      id="note"
-                      value={formData.note}
-                      onChange={(e) =>
-                        setFormData({ ...formData, note: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="pt-4">
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      size="lg"
-                      loading={isSubmitting}
-                    >
-                      Pay {formatPrice(totalPrice)}
-                    </Button>
-                  </div>
-                </form>
+                <DummyPaymentOptions
+                  value={paymentMethod}
+                  onValueChange={setPaymentMethod}
+                  name="cart-checkout-payment"
+                />
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </div>
-    </div>
+
+            <Button type="submit" size="xl" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Processing...' : `Pay ${formatPrice(totalPrice)}`}
+            </Button>
+          </>
+        }
+      />
+    </form>
   )
 }

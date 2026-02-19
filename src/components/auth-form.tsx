@@ -33,7 +33,7 @@ export function AuthForm({ type }: AuthFormProps) {
         <>
             <div className="min-h-screen">
                 <div className="container flex">
-                    <span className='text-2xl font-heading py-4'>Kreasi.top</span>
+                    <Link to='/' className='text-2xl font-heading py-4'>kreasi.top</Link>
                 </div>
                 <div className="pt-30 relative bg-background flex flex-col items-center justify-center  px-4 sm:px-10">
                     <div className=" max-w-md space-y-4">

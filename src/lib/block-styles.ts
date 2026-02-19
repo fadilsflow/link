@@ -8,15 +8,28 @@ export type BlockRadius = 'rounded' | 'square'
  * Uses CSS variables for colors to support dark/light mode.
  *
  * @param style - The block style: 'basic', 'flat', or 'shadow'
+ * @param options - Optional settings like disableHover to disable hover effects
  * @returns CSS classes for the card base
  */
-export function getBlockCardBase(style: BlockStyle): string {
+export function getBlockCardBase(
+  style: BlockStyle,
+  options?: { disableHover?: boolean },
+): string {
+  const { disableHover } = options || {}
+
   switch (style) {
     case 'flat':
       return 'bg-card border border-border'
     case 'shadow':
       // Same behavior as button default variant
       // Uses --block-shadow-color CSS variable for customizable shadow color
+      // Hover effects (translate + shadow removal) only for interactive blocks
+      if (disableHover) {
+        return `
+          bg-card border border-foreground
+          shadow-[4px_4px_0px_0px_var(--block-shadow-color,var(--foreground))]
+        `
+      }
       return `
         bg-card border border-foreground
         shadow-[4px_4px_0px_0px_var(--block-shadow-color,var(--foreground))]
@@ -27,6 +40,9 @@ export function getBlockCardBase(style: BlockStyle): string {
       `
     case 'basic':
     default:
+      if (disableHover) {
+        return 'bg-card border border-border shadow-sm'
+      }
       return 'bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200'
   }
 }

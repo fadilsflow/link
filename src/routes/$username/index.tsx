@@ -352,7 +352,10 @@ function UserProfile() {
   const blockStyle = user.appearanceBlockStyle
   const blockRadius = user.appearanceBlockRadius
 
-  const cardBase = getBlockCardBase(blockStyle)
+  // Card base without hover effects for ProfileCard, SocialLinks, ProductCard
+  const cardBase = getBlockCardBase(blockStyle, { disableHover: true })
+  // Card base with hover effects for interactive link blocks
+  const cardBaseWithHover = getBlockCardBase(blockStyle)
   const radiusClass = getBlockRadius(blockRadius)
   const blockInlineStyle = getAppearanceBlockStyle({
     blockStyle,
@@ -562,7 +565,7 @@ function UserProfile() {
                       key={block.id}
                       className={cn(
                         'group w-full cursor-pointer overflow-hidden transition-all min-h-20',
-                        cardBase,
+                        cardBaseWithHover,
                         radiusClass,
                       )}
                       style={blockInlineStyle}

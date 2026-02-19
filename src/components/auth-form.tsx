@@ -31,14 +31,14 @@ export function AuthForm({ type }: AuthFormProps) {
 
     return (
         <>
-            <div className="min-h-screen">
-                <div className="container flex">
+            <div className="min-h-screen container">
+                <div className="flex">
                     <Link to='/' className='text-2xl font-heading py-4'>kreasi.top</Link>
                 </div>
-                <div className="pt-30 relative bg-background flex flex-col items-center justify-center  px-4 sm:px-10">
-                    <div className=" max-w-md space-y-4">
+                <div className="pt-30 relative  bg-background flex flex-col sm:items-center justify-center">
+                    <div className=" space-y-4">
                         <div className=" text-left flex flex-col ">
-                            <h2 className="mt-6 text-left  text-3xl font-heading flex gap-2">
+                            <h2 className="mt-6 text-left  text-4xl font-heading flex gap-2">
                                 {isLogin ? "Login" : "Create"}
                                 {" "}kreasi.top account
                             </h2>

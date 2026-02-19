@@ -23,8 +23,8 @@ const LogoType = ({ className }: { className?: string }) => {
         height={24}
         className={cn(className)}
       /> */}
-      <span className="font-sans text-2xl font-bold text-foreground">
-        Link.
+      <span className="font-heading text-2xl font-bold text-foreground">
+        kreasi.top
       </span>
     </div>
   )

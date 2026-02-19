@@ -12,7 +12,6 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-40 w-full bg-background  before:absolute before:inset-x-0 before:bottom-0 before:h-px before:bg-border/64">
       <nav
-        // data-state={menuState && "active"}
         className={'container w-full transition-all duration-300'}
       >
         <div className="py-4">
@@ -22,7 +21,6 @@ export const Header = () => {
                 kreasi.top
               </Link>
             </div>
-
             {/* Right section — always mounted */}
             <div className="flex items-center gap-6 ">
               <div className="flex items-center gap-2">
@@ -34,8 +32,8 @@ export const Header = () => {
                 <UserButton />
               ) : (
                 <div className="flex items-center gap-2">
-                  <LoginModal />
-                  <Button variant='default' size='sm'>Sign Up</Button>
+                  <Button variant='outline' size='sm' render={<Link to='/login' />}>Log in</Button>
+                  <Button variant='default' size='sm' render={<Link to='/register' />}>Sign Up</Button>
                 </div>
               )}
             </div>

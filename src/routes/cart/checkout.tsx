@@ -38,7 +38,7 @@ function CheckoutPage() {
   const totalPrice = getTotalPrice()
   const productIds = useMemo(() => items.map((item) => item.productId), [items])
   const [productsMeta, setProductsMeta] = useState<
-    Array<{ id: string; questions: Array<Question> }>
+    Array<{ id: string; questions: Array<Question>; storeName: string }>
   >([])
 
   useEffect(() => {
@@ -47,7 +47,11 @@ function CheckoutPage() {
       .query({ productIds })
       .then((res) => {
         setProductsMeta(
-          res.map((r: any) => ({ id: r.id, questions: r.questions || [] })),
+          res.map((r: any) => ({
+            id: r.id,
+            questions: r.questions || [],
+            storeName: r.storeName || 'Store',
+          })),
         )
       })
       .catch(() => {
@@ -57,6 +61,10 @@ function CheckoutPage() {
 
   const questionsByProduct = useMemo(
     () => new Map(productsMeta.map((p) => [p.id, p.questions])),
+    [productsMeta],
+  )
+  const storeNameByProduct = useMemo(
+    () => new Map(productsMeta.map((p) => [p.id, p.storeName])),
     [productsMeta],
   )
 
@@ -234,10 +242,10 @@ function CheckoutPage() {
           </div>
         ) : null
       }
-      orderInformation={
+      purchasedProducts={
         <Card>
           <CardHeader>
-            <CardTitle>Orders information</CardTitle>
+            <CardTitle>Purchased products</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
@@ -267,7 +275,13 @@ function CheckoutPage() {
                       {item.title}
                     </h1>
                     <p className="text-sm text-muted-foreground">
+                      Price: {formatPrice(item.price)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
                       Qty: {item.quantity}
+                    </p>
+                    <p className="text-xs underline">
+                      {(storeNameByProduct.get(item.productId) ?? 'Store')} (Store)
                     </p>
                   </div>
                   <div className="text-right">
@@ -278,9 +292,15 @@ function CheckoutPage() {
                 </div>
               ))}
             </div>
-
-            <Separator />
-
+          </CardContent>
+        </Card>
+      }
+      paymentDetail={
+        <Card>
+          <CardHeader>
+            <CardTitle>PAYMENT DETAIL</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span>Subtotal</span>
@@ -296,10 +316,11 @@ function CheckoutPage() {
                 <span>{formatPrice(totalPrice)}</span>
               </div>
             </div>
+
           </CardContent>
         </Card>
       }
-      payLabel={`Pay ${formatPrice(totalPrice)}`}
+      payLabel={'Pay'}
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
       paymentMethod={paymentMethod}

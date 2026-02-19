@@ -952,10 +952,18 @@ const orderRouter = {
           minimumPrice: true,
           suggestedPrice: true,
         },
+        with: {
+          user: {
+            columns: {
+              name: true,
+            },
+          },
+        },
       })
 
       return rows.map((product) => ({
         ...product,
+        storeName: product.user?.name ?? 'Store',
         questions: parseCustomerQuestions(product.customerQuestions),
       }))
     }),

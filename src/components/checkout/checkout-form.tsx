@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ArrowLeft, Lock } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -16,7 +16,8 @@ type CheckoutFormProps = {
   onNameChange: (value: string) => void
   onNoteChange: (value: string) => void
   additionalContactFields?: React.ReactNode
-  orderInformation: React.ReactNode
+  purchasedProducts: React.ReactNode
+  paymentDetail: React.ReactNode
   rightTopSection?: React.ReactNode
   payLabel: string
   isSubmitting: boolean
@@ -31,22 +32,22 @@ const paymentOptions: Array<{
   title: string
   subtitle: string
 }> = [
-  {
-    value: 'qris',
-    title: 'QRIS',
-    subtitle: 'Scan QR code untuk bayar',
-  },
-  {
-    value: 'bank_transfer',
-    title: 'Bank Transfer',
-    subtitle: 'Transfer manual (dummy)',
-  },
-  {
-    value: 'virtual_account',
-    title: 'Virtual Account',
-    subtitle: 'VA otomatis (dummy)',
-  },
-]
+    {
+      value: 'qris',
+      title: 'QRIS',
+      subtitle: 'Scan QR code untuk bayar',
+    },
+    {
+      value: 'bank_transfer',
+      title: 'Bank Transfer',
+      subtitle: 'Transfer manual (dummy)',
+    },
+    {
+      value: 'virtual_account',
+      title: 'Virtual Account',
+      subtitle: 'VA otomatis (dummy)',
+    },
+  ]
 
 export function CheckoutForm({
   email,
@@ -56,7 +57,8 @@ export function CheckoutForm({
   onNameChange,
   onNoteChange,
   additionalContactFields,
-  orderInformation,
+  purchasedProducts,
+  paymentDetail,
   rightTopSection,
   payLabel,
   isSubmitting,
@@ -85,6 +87,8 @@ export function CheckoutForm({
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
             <div className="space-y-6">
+              {purchasedProducts}
+
               <Card>
                 <CardHeader>
                   <CardTitle>Contact information</CardTitle>
@@ -138,7 +142,7 @@ export function CheckoutForm({
             </div>
 
             <div className="space-y-6 lg:sticky lg:top-20">
-              {orderInformation}
+              {paymentDetail}
 
               {rightTopSection}
 
@@ -178,13 +182,11 @@ export function CheckoutForm({
                         </label>
                       )
                     })}
-                    <p className="text-xs text-slate-400">Payment option ini masih dummy untuk UI.</p>
                   </div>
                 </CardContent>
               </Card>
 
               <Button type="submit" size="xl" className="w-full" disabled={isSubmitting}>
-                <Lock className="h-4 w-4" />
                 {isSubmitting ? 'Processing...' : payLabel}
               </Button>
             </div>

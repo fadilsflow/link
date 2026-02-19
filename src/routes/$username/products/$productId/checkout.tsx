@@ -253,10 +253,10 @@ function CheckoutPage() {
           )}
         </>
       }
-      orderInformation={
+      purchasedProducts={
         <Card>
           <CardHeader>
-            <CardTitle>Orders information</CardTitle>
+            <CardTitle>Purchased product</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-4">
@@ -283,19 +283,29 @@ function CheckoutPage() {
                 <h1 className="text-lg font-bold text-slate-900 leading-tight">
                   {product.title}
                 </h1>
+                <p className="text-sm text-muted-foreground">
+                  Price: {formatPrice(unitPrice)}
+                </p>
+                <p className="text-sm text-muted-foreground">Qty: 1</p>
                 <Link
                   to="/$username"
                   params={{ username: user.username || '' }}
                   search={{ tab: 'profile' }}
                   className="text-xs underline"
                 >
-                  {user.name}
+                  {user.name} (Store)
                 </Link>
               </div>
             </div>
-
-            <Separator />
-
+          </CardContent>
+        </Card>
+      }
+      paymentDetail={
+        <Card>
+          <CardHeader>
+            <CardTitle>PAYMENT DETAIL</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span>Subtotal</span>
@@ -311,6 +321,7 @@ function CheckoutPage() {
                 <span>{formatPrice(unitPrice)}</span>
               </div>
             </div>
+
           </CardContent>
         </Card>
       }
@@ -331,7 +342,7 @@ function CheckoutPage() {
           </Card>
         ) : null
       }
-      payLabel={`Pay ${formatPrice(unitPrice)}`}
+      payLabel={'Pay'}
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
       paymentMethod={paymentMethod}

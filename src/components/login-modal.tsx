@@ -34,11 +34,11 @@ export function LoginModal() {
   return (
     <Dialog>
       <DialogTrigger
-        className={buttonVariants({ variant: 'default', size: 'sm' })}
+        className={buttonVariants({ variant: 'outline', size: 'sm' })}
       >
-        Sign in
+        Log In
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[325px]">
+      <DialogContent className="sm:max-w-81.25">
         <DialogHeader>
           <DialogTitle className="font-heading">Link.com</DialogTitle>
           <DialogDescription>

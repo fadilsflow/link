@@ -19,7 +19,7 @@ export default function HeroSection() {
 
         </div>
 
-        <div className="mx-auto max-w-2xl text-muted-foreground [&_a:not([data-slot='button'])]:text-foreground [&_strong]:text-foreground">
+        <div className="mx-auto max-w-2xl">
           <Button
             size={'lg'}
             className="text-sm  mt-8 rounded-full lg:text-base  sm:w-fit hover:shadow-lg"
@@ -29,6 +29,7 @@ export default function HeroSection() {
             <span className="border-l-primary-foreground/50 ml-0.5 block size-0 border-y-4 border-l-4 border-y-transparent" />
           </Button>
         </div>
+
       </div>
     </section>
   )

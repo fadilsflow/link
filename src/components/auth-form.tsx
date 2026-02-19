@@ -1,8 +1,9 @@
 import { Link } from '@tanstack/react-router'
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Spinner } from '@/components/ui/spinner';
+import { useRouter } from '@tanstack/react-router';
 
 type AuthType = "login" | "register"
 
@@ -11,9 +12,13 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ type }: AuthFormProps) {
+    const [loading, setLoading] = useState(false)
     const isLogin = type === "login"
 
-    const [loading, setLoading] = useState(false)
+    const router = useRouter()
+    const { data: session, isPending } = authClient.useSession()
+
+
 
     const handleGoogleLogin = async () => {
         setLoading(true)
@@ -28,6 +33,24 @@ export function AuthForm({ type }: AuthFormProps) {
         }
     }
 
+
+    if (isPending) {
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <Spinner className="h-5 w-5 text-muted-foreground" />
+            </div>
+        )
+    }
+
+    // If user is already logged in, redirect to admin dashboard
+    if (session?.user) {
+        router.navigate({ to: '/admin' })
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <Spinner className="h-5 w-5 text-muted-foreground" />
+            </div>
+        )
+    }
 
     return (
         <>

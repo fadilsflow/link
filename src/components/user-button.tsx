@@ -121,7 +121,7 @@ export default function UserButton() {
                 onSuccess: () => {
                   queryClient.removeQueries({ queryKey: adminAuthQueryKey() })
                   router.invalidate()
-                  router.navigate({ to: '/' })
+                  router.navigate({ to: '/login' })
                 },
               },
             })

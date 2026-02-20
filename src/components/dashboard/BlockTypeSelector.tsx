@@ -1,11 +1,9 @@
+import type { SVGProps } from 'react'
 import {
-  Disc3,
   ImageIcon,
-  Layout,
-  Package,
-  Send,
+  Link2Icon,
+  Package2,
   TypeIcon,
-  YoutubeIcon,
   type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -18,6 +16,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Plus } from 'lucide-react'
+import { Discord } from '@/components/icon/discord'
+import { Telegram } from '@/components/icon/telegram'
+import { YouTube } from '../icon/youtube'
 
 export type BlockType =
   | 'link'
@@ -28,13 +29,15 @@ export type BlockType =
   | 'discord'
   | 'telegram'
 
+type IconComponent = (props: SVGProps<SVGSVGElement>) => React.ReactNode
+
 export interface BlockTypeOption {
   type: BlockType
-  icon: LucideIcon
+  icon: LucideIcon | IconComponent
   title: string
   description: string
-  iconColor: string
-  bgColor: string
+  iconColor?: string
+  bgColor?: string
 }
 
 /**
@@ -44,17 +47,25 @@ export interface BlockTypeOption {
 export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
   {
     type: 'link',
-    icon: Layout,
+    icon: Link2Icon,
     title: 'Custom Link',
-    iconColor: 'bg-yellow-500',
+    iconColor: 'text-yellow-500 -rotate-45',
     bgColor: 'bg-yellow-100/20',
     description: 'Add any links of your website, campaign or content.',
+  },
+  {
+    type: 'product',
+    icon: Package2,
+    iconColor: 'text-indigo-500',
+    bgColor: 'bg-indigo-100/20',
+    title: 'Product',
+    description: 'Feature one product from your existing catalog',
   },
   {
     type: 'text',
     icon: TypeIcon,
     title: 'Title & Description',
-    iconColor: 'bg-sky-500',
+    iconColor: 'text-sky-500',
     bgColor: 'bg-sky-100/20',
     description: 'Organize your links with a title and description',
   },
@@ -62,39 +73,30 @@ export const BLOCK_TYPE_OPTIONS: BlockTypeOption[] = [
     type: 'image',
     icon: ImageIcon,
     title: 'Image',
-    iconColor: 'bg-lime-500',
+    iconColor: 'text-lime-500',
     bgColor: 'bg-lime-100/20',
 
     description: 'Upload and display custom image.',
   },
   {
     type: 'video',
-    icon: YoutubeIcon,
-    iconColor: 'bg-rose-600',
+    icon: YouTube,
     bgColor: 'bg-rose-100/20',
     title: 'Youtube',
     description: 'Share your channel and showcase videos.',
   },
-  {
-    type: 'product',
-    icon: Package,
-    iconColor: 'bg-indigo-500',
-    bgColor: 'bg-indigo-100/20',
-    title: 'Product',
-    description: 'Feature one product from your existing catalog',
-  },
+
   {
     type: 'discord',
-    icon: Disc3,
-    iconColor: 'bg-violet-600',
+    icon: Discord,
+    iconColor: '',
     bgColor: 'bg-violet-100/20',
     title: 'Discord',
     description: 'Share your Discord community invite.',
   },
   {
     type: 'telegram',
-    icon: Send,
-    iconColor: 'bg-sky-500',
+    icon: Telegram,
     bgColor: 'bg-sky-100/20',
     title: 'Telegram',
     description: 'Share your Telegram username.',
@@ -141,9 +143,9 @@ export function BlockTypeSelector({
               className={`p-3 ${option.bgColor}  text-foreground border border-input rounded-xl flex gap-4 items-center  cursor-pointer group`}
             >
               <div
-                className={`p-1 border-2 group-hover:opacity-80 ${option.iconColor} border-white ring-1 ring-border rounded-md flex items-center justify-center`}
+                className={`p-1 border-2 group-hover:opacity-80 bg-muted-50 border-white ring-1 ring-border rounded-md flex items-center justify-center`}
               >
-                <option.icon className="text-background h-6 w-6" />
+                <option.icon className={` ${option.iconColor} h-6 w-6`} />
               </div>
               <div className="gap-0 flex group-hover:opacity-70 flex-col">
                 <span className="text-sm font-semibold">{option.title}</span>

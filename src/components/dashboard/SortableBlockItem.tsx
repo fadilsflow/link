@@ -1,12 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import {
-  GripVertical,
-  Image,
-  Link2Icon,
-  Package,
-  Text,
-} from 'lucide-react'
+import { GripVertical } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { LinkBlock } from './blocks/LinkBlock'
 import { TextBlock } from './blocks/TextBlock'
@@ -15,11 +9,8 @@ import { VideoBlock } from './blocks/VideoBlock'
 import { ProductBlock } from './blocks/ProductBlock'
 import { DiscordBlock } from './blocks/DiscordBlock'
 import { TelegramBlock } from './blocks/TelegramBlock'
-// import { StatusBadge } from './StatusBadge'
 import { cn } from '@/lib/utils'
-import { Telegram } from '../icon/telegram'
-import { Discord } from '../icon/discord'
-import { YouTube } from '../icon/youtube'
+import { getBlockTypeConfigOrDefault } from '@/lib/block-type-config'
 
 interface ProductOption {
   id: string
@@ -64,22 +55,9 @@ export function SortableBlockItem({
     // opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 50 : undefined,
   }
-  const icon =
-    block.type === 'text' ? (
-      <Text className="text-blue-500" />
-    ) : block.type === 'image' ? (
-      <Image className="text-green-500" />
-    ) : block.type === 'video' ? (
-      <YouTube />
-    ) : block.type === 'product' ? (
-      <Package className="bg-yellow-500" />
-    ) : block.type === 'discord' ? (
-      <Discord />
-    ) : block.type === 'telegram' ? (
-      <Telegram />
-    ) : block.type === 'link' ? (
-      <Link2Icon className="-rotate-45" />
-    ) : null
+
+  const blockConfig = getBlockTypeConfigOrDefault(block.type)
+  const IconComponent = blockConfig.icon
 
   return (
     <div
@@ -91,19 +69,7 @@ export function SortableBlockItem({
         className={cn(
           'w-full shadow-none',
           block.syncStatus === 'error' ? 'border-red-500' : 'border-border',
-          block.type == 'text'
-            ? 'bg-blue-50/80 dark:bg-blue-500/20'
-            : block.type == 'image'
-              ? 'bg-green-50 dark:bg-green-500/20'
-              : block.type == 'video'
-                ? 'bg-red-50 dark:bg-red-500/20'
-                : block.type == 'product'
-                  ? 'bg-yellow-50 dark:bg-yellow-500/20'
-                  : block.type == 'discord'
-                    ? 'bg-indigo-50 dark:bg-indigo-500/20'
-                    : block.type == 'telegram'
-                      ? 'bg-sky-50 dark:bg-sky-500/20'
-                      : 'bg-gray-50 dark:bg-gray-500/20',
+          blockConfig.bgColor,
         )}
       >
         <CardContent className="flex items-center gap-4 sm:p-6">
@@ -116,24 +82,9 @@ export function SortableBlockItem({
           </div>
 
           <div
-            className={cn(
-              'rounded-sm h-5 w-5 flex items-center justify-center border border-background ring ring-primary/20',
-              block.type == 'text'
-                ? 'bg-blue-50 dark:bg-blue-500/20'
-                : block.type == 'image'
-                  ? 'bg-green-50 dark:bg-green-500/20'
-                  : block.type == 'video'
-                    ? 'bg-red-50 dark:bg-red-500/20'
-                    : block.type == 'product'
-                      ? 'bg-yellow-50 dark:bg-yellow-500/20'
-                      : block.type == 'discord'
-                        ? 'bg-indigo-50 dark:bg-indigo-500/20'
-                        : block.type == 'telegram'
-                          ? 'bg-sky-50 dark:bg-sky-500/20'
-                          : 'bg-gray-50 dark:bg-gray-500/20',
-            )}
+            className={`p-1 border-2  ${blockConfig.iconBgColor || 'bg-muted'} border-white ring-1 ring-border rounded-md flex items-center justify-center`}
           >
-            {icon}
+            <IconComponent className={cn(blockConfig.iconColor, "h-4 w-4")} />
           </div>
 
           <div className="flex-1 flex flex-col gap-6 min-w-0">

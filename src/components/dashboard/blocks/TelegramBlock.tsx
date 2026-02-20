@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import {
   InputGroup,
+  InputGroupAddon,
   InputGroupInput,
   InputGroupText,
 } from '@/components/ui/input-group'
@@ -125,9 +126,10 @@ export function TelegramBlock({
       <Field>
         <FieldLabel className="sr-only">Telegram username</FieldLabel>
         <InputGroup>
-          <InputGroupText>https://t.me/</InputGroupText>
           <InputGroupInput
             value={username}
+            aria-label="Set your URL"
+            className="*:[input]:ps-1!"
             placeholder="username"
             onChange={(e) => {
               const next = normalizeTelegramUsername(e.target.value)
@@ -135,6 +137,7 @@ export function TelegramBlock({
               handleUpdate(block.id, 'content', next)
             }}
           />
+          <InputGroupAddon>https://t.me/</InputGroupAddon>
         </InputGroup>
         {errors.content && (
           <FieldError>

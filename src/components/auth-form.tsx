@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Spinner } from '@/components/ui/spinner';
 import { useRouter } from '@tanstack/react-router';
 

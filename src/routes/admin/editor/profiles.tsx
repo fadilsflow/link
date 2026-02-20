@@ -68,6 +68,8 @@ function AdminDashboard() {
 
   const isManipulatingRef = useRef(false)
   const blockDebounceRefs = useRef<Map<string, NodeJS.Timeout>>(new Map())
+  const localBlocksRef = useRef<Array<any>>([])
+  const creatingTempIdsRef = useRef<Set<string>>(new Set())
 
   const queryKey = ['dashboard']
 
@@ -100,6 +102,10 @@ function AdminDashboard() {
   useEffect(() => {
     setBlocks(localBlocks)
   }, [localBlocks, setBlocks])
+
+  useEffect(() => {
+    localBlocksRef.current = localBlocks
+  }, [localBlocks])
 
   // One-time hydration from cache on mount.
   // hasHydratedRef prevents server data from overwriting local state (DnD fix per DRAG_AND_DROP_FIX.md).
@@ -148,23 +154,65 @@ function AdminDashboard() {
   const createBlock = useMutation({
     mutationKey: ['createBlock'],
     mutationFn: (data: {
+      tempId: string
       title: string
       url: string
       type?: string
       content?: string
-    }) => trpcClient.block.create.mutate(data),
-    onSuccess: (newBlock) => {
+    }) => {
+      const { tempId: _tempId, ...payload } = data
+      return trpcClient.block.create.mutate(payload)
+    },
+    onSuccess: (newBlock, variables) => {
+      creatingTempIdsRef.current.delete(variables.tempId)
+      const latestTempBlock = localBlocksRef.current.find(
+        (b) => b.id === variables.tempId,
+      )
+      if (!latestTempBlock) return
+
       setLocalBlocks((prev) =>
         prev.map((b) =>
-          b.id.startsWith('temp-') &&
-          b.title === newBlock.title &&
-          b.url === newBlock.url &&
-          b.type === newBlock.type
-            ? { ...newBlock, syncStatus: 'saved', errors: {} }
+          b.id === variables.tempId
+            ? {
+                ...b,
+                id: newBlock.id,
+                userId: newBlock.userId,
+                order: newBlock.order,
+                clicks: newBlock.clicks,
+                createdAt: newBlock.createdAt,
+                updatedAt: newBlock.updatedAt,
+                syncStatus: 'saved',
+                errors: {},
+              }
             : b,
         ),
       )
+
+      if (
+        latestTempBlock.title !== newBlock.title ||
+        (latestTempBlock.url || '') !== (newBlock.url || '') ||
+        latestTempBlock.type !== newBlock.type ||
+        (latestTempBlock.content || '') !== (newBlock.content || '') ||
+        latestTempBlock.isEnabled !== newBlock.isEnabled
+      ) {
+        updateBlockMutation.mutate({
+          id: newBlock.id,
+          title: latestTempBlock.title,
+          url: latestTempBlock.url || '',
+          type: latestTempBlock.type,
+          content: latestTempBlock.content,
+          isEnabled: latestTempBlock.isEnabled,
+        })
+      }
       isManipulatingRef.current = false
+    },
+    onError: (_error, variables) => {
+      creatingTempIdsRef.current.delete(variables.tempId)
+      setLocalBlocks((prev) =>
+        prev.map((b) =>
+          b.id === variables.tempId ? { ...b, syncStatus: 'error' } : b,
+        ),
+      )
     },
   })
 
@@ -235,7 +283,7 @@ function AdminDashboard() {
   }
 
   const handleBlockUpdate = (id: string, field: string, value: any) => {
-    const targetBlock = localBlocks.find((l) => l.id === id)
+    const targetBlock = localBlocksRef.current.find((l) => l.id === id)
     if (!targetBlock) return
     if (targetBlock[field] === value) return
 
@@ -318,7 +366,7 @@ function AdminDashboard() {
     }
 
     const timer = setTimeout(() => {
-      const currentBlock = localBlocks.find((l) => l.id === id)
+      const currentBlock = localBlocksRef.current.find((l) => l.id === id)
       if (!currentBlock) return
 
       const updatedVal = { ...currentBlock, [field]: value }
@@ -362,7 +410,12 @@ function AdminDashboard() {
           prev.map((b) => (b.id === id ? { ...b, syncStatus: 'saving' } : b)),
         )
         if (id.startsWith('temp-')) {
+          if (creatingTempIdsRef.current.has(id)) {
+            return
+          }
+          creatingTempIdsRef.current.add(id)
           createBlock.mutate({
+            tempId: id,
             title: updatedVal.title,
             url: updatedVal.url || '',
             type: updatedVal.type,

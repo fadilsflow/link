@@ -1,13 +1,10 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
-  Disc3,
   GripVertical,
   Image,
   LinkIcon,
   Package,
-  PlaySquare,
-  Send,
   Text,
 } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
@@ -20,6 +17,9 @@ import { DiscordBlock } from './blocks/DiscordBlock'
 import { TelegramBlock } from './blocks/TelegramBlock'
 // import { StatusBadge } from './StatusBadge'
 import { cn } from '@/lib/utils'
+import { Telegram } from '../icon/telegram'
+import { Discord } from '../icon/discord'
+import { YouTube } from '../icon/youtube'
 
 interface ProductOption {
   id: string
@@ -70,13 +70,13 @@ export function SortableBlockItem({
     ) : block.type === 'image' ? (
       <Image className="text-green-500" />
     ) : block.type === 'video' ? (
-      <PlaySquare className="text-red-500" />
+      <YouTube />
     ) : block.type === 'product' ? (
       <Package className="bg-yellow-500" />
     ) : block.type === 'discord' ? (
-      <Disc3 className="text-indigo-500" />
+      <Discord />
     ) : block.type === 'telegram' ? (
-      <Send className="text-sky-500" />
+      <Telegram />
     ) : block.type === 'link' ? (
       <LinkIcon />
     ) : null

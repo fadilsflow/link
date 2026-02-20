@@ -4,7 +4,8 @@ import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { Spinner } from '@/components/ui/spinner';
 import { useRouter } from '@tanstack/react-router';
-import { LogoMark } from '@/components/logo';
+import { LogoMark } from './logo';
+
 
 type AuthType = "login" | "register"
 

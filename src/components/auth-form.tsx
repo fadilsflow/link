@@ -4,6 +4,7 @@ import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { Spinner } from '@/components/ui/spinner';
 import { useRouter } from '@tanstack/react-router';
+import { LogoMark } from './logo';
 
 type AuthType = "login" | "register"
 
@@ -52,18 +53,22 @@ export function AuthForm({ type }: AuthFormProps) {
     return (
         <div className="min-h-screen flex flex-col">
             {/* Header */}
-            <header className="px-4 py-4 sm:px-6 lg:px-8">
+            {/* <header className="px-4 py-4 sm:px-6 lg:px-8">
                 <Link to='/' className='text-2xl font-heading'>kreasi.top</Link>
-            </header>
+            </header> */}
 
             {/* Main Content - Centered */}
-            <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-                <div className="w-full max-w-md space-y-8">
+            <main className="flex-1 text-center flex items-center justify-center px-4 sm:px-6 lg:px-8">
+                <div className="w-full max-w-xs space-y-8">
+
+
+                    {/* Logo */}
+                    <div className="flex justify-center"><LogoMark className="h-12 w-12" /></div>
                     {/* Title */}
                     <div>
-                        <h1 className="text-3xl sm:text-4xl font-heading">
-                            {isLogin ? "Login" : "Create"}
-                            {" "}kreasi.top account
+                        <h1 className="text-xl sm:text-2xl font-sans">
+                            {isLogin ? "Login" : "Sign Up"} to
+                            {" "} kreasi.top
                         </h1>
                     </div>
 
@@ -73,7 +78,7 @@ export function AuthForm({ type }: AuthFormProps) {
                             variant={"default"}
                             disabled={loading}
                             onClick={() => handleGoogleLogin()}
-                            className="w-full"
+                            className="w-full py-6"
                         >
                             <div className="flex items-center gap-2">
                                 {loading ? (
@@ -109,20 +114,45 @@ export function AuthForm({ type }: AuthFormProps) {
                                 Continue with Google
                             </div>
                         </Button>
+                        <Button
+                            variant={"secondary"}
+                            disabled={loading}
+                            onClick={() => handleGoogleLogin()}
+                            className="w-full py-6 mb-8"
+                        >Continue With Email</Button>
 
+                        {!isLogin && (
+                            <p className='text-sm text-muted-foreground text-center'>
+                                By signing up, you agree to our{" "}  <Link to="/" className="text-foreground hover:underline">
+                                    Terms of service
+                                </Link>
+                                {" "}and{" "}
+                                <Link to="/" className="text-foreground hover:underline">
+                                    Privacy policy
+                                </Link>
+                            </p>
+                        )}
                         <p className='text-sm text-muted-foreground text-center'>
                             {isLogin ? "Don't" : "Already"}
                             {" "}have an account?{" "}
                             <Link to={isLogin ? "/register" : "/login"} className='text-foreground hover:underline' >
                                 {isLogin ? "Sign Up" : "Log In"}
                             </Link>
+                            {" "} {isLogin && (
+                                <>
+                                    or{" "}
+                                    <Link to="/" className="text-foreground hover:underline">
+                                        learn more
+                                    </Link>
+                                </>
+                            )}
                         </p>
                     </div>
-                </div>
-            </main>
+                </div >
+            </main >
 
             {/* Footer */}
-            <footer className="py-6 px-4 sm:px-6 lg:px-8">
+            {/* <footer className="py-6 px-4 sm:px-6 lg:px-8" >
                 <p className='text-sm text-center text-muted-foreground'>
                     <Link to="/" className="text-foreground hover:underline">
                         Terms of service
@@ -132,7 +162,7 @@ export function AuthForm({ type }: AuthFormProps) {
                         Privacy policy
                     </Link>
                 </p>
-            </footer>
-        </div>
+            </footer > */}
+        </div >
     );
 }

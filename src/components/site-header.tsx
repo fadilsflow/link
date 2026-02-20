@@ -17,7 +17,7 @@ export const Header = () => {
           <div className="flex flex-wrap items-center justify-between gap-6  lg:gap-0">
             <div className="flex items-center gap-6">
               <Link className="-mt-0.5 flex shrink-0 items-center gap-1.5 font-heading font-semibold  text-2xl " aria-label="Home" to="/">
-                kreasi.top
+                kreasi
               </Link>
             </div>
             {/* Right section — always mounted */}

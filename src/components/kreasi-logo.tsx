@@ -1,10 +1,7 @@
 import { cn } from "@/lib/utils";
-// import Image from "next/image";
 
 const LogoMark = ({ className }: { className?: string }) => {
   return (
-    // <Image src="/logo-black.svg" alt="Logo" width={24} height={24} className={cn(className)} />
-
     <img
       src="/logo-black.svg"
       alt=""

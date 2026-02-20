@@ -52,12 +52,9 @@ export function AuthForm({ type }: AuthFormProps) {
 
     return (
         <div className="min-h-screen flex flex-col">
-            {/* Header */}
-            {/* <header className="px-4 py-4 sm:px-6 lg:px-8">
-                <Link to='/' className='text-2xl font-heading'>kreasi.top</Link>
-            </header> */}
 
-            {/* Main Content - Centered */}
+
+            {/* Main Content  */}
             <main className="flex-1 text-center flex items-center justify-center px-4 sm:px-6 lg:px-8">
                 <div className="w-full max-w-xs space-y-8">
 
@@ -114,55 +111,36 @@ export function AuthForm({ type }: AuthFormProps) {
                                 Continue with Google
                             </div>
                         </Button>
-                        <Button
-                            variant={"secondary"}
-                            disabled={loading}
-                            onClick={() => handleGoogleLogin()}
-                            className="w-full py-6 mb-8"
-                        >Continue With Email</Button>
 
-                        {!isLogin && (
-                            <p className='text-sm text-muted-foreground text-center'>
-                                By signing up, you agree to our{" "}  <Link to="/" className="text-foreground hover:underline">
-                                    Terms of service
-                                </Link>
-                                {" "}and{" "}
-                                <Link to="/" className="text-foreground hover:underline">
-                                    Privacy policy
-                                </Link>
-                            </p>
-                        )}
-                        <p className='text-sm text-muted-foreground text-center'>
-                            {isLogin ? "Don't" : "Already"}
-                            {" "}have an account?{" "}
-                            <Link to={isLogin ? "/register" : "/login"} className='text-foreground hover:underline' >
-                                {isLogin ? "Sign Up" : "Log In"}
-                            </Link>
-                            {" "} {isLogin && (
-                                <>
-                                    or{" "}
-                                    <Link to="/" className="text-foreground hover:underline">
-                                        learn more
-                                    </Link>
-                                </>
-                            )}
-                        </p>
                     </div>
+                    {!isLogin && (
+                        <p className='  text-sm text-muted-foreground text-center'>
+                            By signing up, you agree to our <Link to="/" className="text-foreground hover:underline">
+                                Terms of service
+                            </Link>
+                            {" "}and{" "}
+                            <Link to="/" className="text-foreground hover:underline">
+                                Privacy policy
+                            </Link>
+                        </p>
+                    )}
+                    <p className='text-sm text-muted-foreground text-center'>
+                        {isLogin ? "Don't" : "Already"}
+                        {" "}have an account?{" "}
+                        <Link to={isLogin ? "/register" : "/login"} className='text-foreground hover:underline' >
+                            {isLogin ? "Sign Up" : "Log In"}
+                        </Link>
+                        {" "} {isLogin && (
+                            <>
+                                or{" "}
+                                <Link to="/" className="text-foreground hover:underline">
+                                    learn more
+                                </Link>
+                            </>
+                        )}
+                    </p>
                 </div >
             </main >
-
-            {/* Footer */}
-            {/* <footer className="py-6 px-4 sm:px-6 lg:px-8" >
-                <p className='text-sm text-center text-muted-foreground'>
-                    <Link to="/" className="text-foreground hover:underline">
-                        Terms of service
-                    </Link>
-                    {" "}and{" "}
-                    <Link to="/" className="text-foreground hover:underline">
-                        Privacy policy
-                    </Link>
-                </p>
-            </footer > */}
         </div >
     );
 }

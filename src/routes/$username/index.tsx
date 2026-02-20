@@ -126,6 +126,12 @@ function getVideoMeta(rawUrl?: string | null): {
   }
 }
 
+function getTelegramUrl(username?: string | null): string | null {
+  const trimmed = username?.trim() || ''
+  if (!trimmed) return null
+  return `https://t.me/${trimmed.replace(/^@+/, '')}`
+}
+
 function getProductPriceLabel(product: PublicProduct) {
   if (product.payWhatYouWant) {
     return product.minimumPrice
@@ -320,12 +326,12 @@ export const Route = createFileRoute('/$username/')({
     return {
       links: lcpHref
         ? [
-          {
-            rel: 'preload',
-            as: 'image',
-            href: lcpHref,
-          },
-        ]
+            {
+              rel: 'preload',
+              as: 'image',
+              href: lcpHref,
+            },
+          ]
         : [],
     }
   },
@@ -448,7 +454,10 @@ function UserProfile() {
             value={tab}
             onValueChange={(val) =>
               navigate({
-                search: (prev: Record<string, unknown>) => ({ ...prev, tab: val }),
+                search: (prev: Record<string, unknown>) => ({
+                  ...prev,
+                  tab: val,
+                }),
                 replace: true,
               })
             }
@@ -461,130 +470,192 @@ function UserProfile() {
             <TabsPanel value="profile" className="mt-4 space-y-3 outline-none">
               {!areBlocksReady
                 ? (blocks as Array<PublicBlock>).map((block) => (
-                  <BlockSkeleton key={block.id} block={block} />
-                ))
+                    <BlockSkeleton key={block.id} block={block} />
+                  ))
                 : (blocks as Array<PublicBlock>).map((block) => {
-                  if (block.type === 'text') {
-                    return (
-                      <div
-                        key={block.id}
-                        className="w-full space-y-1 py-2 text-center min-h-16"
-                      >
-                        <h2
-                          className={cn(
-                            'text-2xl font-bold',
-                            'text-foreground',
-                          )}
+                    if (block.type === 'text') {
+                      return (
+                        <div
+                          key={block.id}
+                          className="w-full space-y-1 py-2 text-center min-h-16"
                         >
-                          {block.title}
-                        </h2>
-                        {block.content && (
-                          <p className={cn('text-sm', 'text-foreground')}>
-                            {block.content}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  }
+                          <h2
+                            className={cn(
+                              'text-2xl font-bold',
+                              'text-foreground',
+                            )}
+                          >
+                            {block.title}
+                          </h2>
+                          {block.content && (
+                            <p className={cn('text-sm', 'text-foreground')}>
+                              {block.content}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    }
 
-                  if (block.type === 'image') {
+                    if (block.type === 'image') {
+                      return (
+                        <Card
+                          key={block.id}
+                          className={cn(
+                            'w-full overflow-hidden',
+                            cardBase,
+                            radiusClass,
+                          )}
+                          style={blockInlineStyle}
+                        >
+                          {block.content && (
+                            <div className="relative w-full overflow-hidden bg-muted aspect-4/3">
+                              <img
+                                loading="lazy"
+                                decoding="async"
+                                width={1200}
+                                height={900}
+                                src={block.content}
+                                alt="Image block"
+                                className="absolute inset-0 h-full w-full object-cover"
+                              />
+                            </div>
+                          )}
+                          {block.url && (
+                            <div className="px-3 pb-3">
+                              <Button
+                                className="w-full"
+                                onClick={() => openBlockUrl(block)}
+                              >
+                                Open link
+                              </Button>
+                            </div>
+                          )}
+                        </Card>
+                      )
+                    }
+
+                    if (block.type === 'video') {
+                      return (
+                        <DeferredVideoEmbed
+                          key={block.id}
+                          block={block}
+                          cardClass={cardBase}
+                          radiusClass={radiusClass}
+                          cardStyle={blockInlineStyle}
+                        />
+                      )
+                    }
+
+                    if (block.type === 'product') {
+                      const selectedProduct = block.content
+                        ? productMap.get(block.content)
+                        : null
+                      if (!selectedProduct) return null
+
+                      return (
+                        <ProductCard
+                          key={block.id}
+                          product={selectedProduct}
+                          username={user.username || ''}
+                          cardBase={cardBase}
+                          radiusClass={radiusClass}
+                          cardStyle={blockInlineStyle}
+                        />
+                      )
+                    }
+
+                    if (block.type === 'telegram') {
+                      const telegramUrl = getTelegramUrl(block.content)
+                      if (!telegramUrl) return null
+
+                      return (
+                        <Card
+                          key={block.id}
+                          className={cn(
+                            'group w-full cursor-pointer overflow-hidden transition-all min-h-20',
+                            cardBaseWithHover,
+                            radiusClass,
+                          )}
+                          style={blockInlineStyle}
+                          onClick={() => {
+                            void trpcClient.block.trackClick.mutate({
+                              id: block.id,
+                            })
+                            window.open(
+                              telegramUrl,
+                              '_blank',
+                              'noopener,noreferrer',
+                            )
+                          }}
+                        >
+                          <div className="flex items-center justify-between p-4">
+                            <div className="flex items-center gap-4">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
+                                <LinkIcon className="h-5 w-5" />
+                              </div>
+                              <span className="text-sm font-semibold">
+                                {block.title || 'Telegram'}
+                              </span>
+                            </div>
+                            <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                          </div>
+                        </Card>
+                      )
+                    }
+
+                    if (block.type === 'discord') {
+                      if (!block.url) return null
+                      return (
+                        <Card
+                          key={block.id}
+                          className={cn(
+                            'group w-full cursor-pointer overflow-hidden transition-all min-h-20',
+                            cardBaseWithHover,
+                            radiusClass,
+                          )}
+                          style={blockInlineStyle}
+                          onClick={() => openBlockUrl(block)}
+                        >
+                          <div className="flex items-center justify-between p-4">
+                            <div className="flex items-center gap-4">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
+                                <LinkIcon className="h-5 w-5" />
+                              </div>
+                              <span className="text-sm font-semibold">
+                                {block.title || 'Discord'}
+                              </span>
+                            </div>
+                            <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                          </div>
+                        </Card>
+                      )
+                    }
+
                     return (
                       <Card
                         key={block.id}
                         className={cn(
-                          'w-full overflow-hidden',
-                          cardBase,
+                          'group w-full cursor-pointer overflow-hidden transition-all min-h-20',
+                          cardBaseWithHover,
                           radiusClass,
                         )}
                         style={blockInlineStyle}
+                        onClick={() => openBlockUrl(block)}
                       >
-                        {block.content && (
-                          <div className="relative w-full overflow-hidden bg-muted aspect-4/3">
-                            <img
-                              loading="lazy"
-                              decoding="async"
-                              width={1200}
-                              height={900}
-                              src={block.content}
-                              alt={block.title || 'Image block'}
-                              className="absolute inset-0 h-full w-full object-cover"
-                            />
+                        <div className="flex items-center justify-between p-4">
+                          <div className="flex items-center gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
+                              <LinkIcon className="h-5 w-5" />
+                            </div>
+                            <span className="text-sm font-semibold">
+                              {block.title}
+                            </span>
                           </div>
-                        )}
-                        {block.title && (
-                          <p className="p-3 text-sm font-semibold">
-                            {block.title}
-                          </p>
-                        )}
-                        {block.url && (
-                          <div className="px-3 pb-3">
-                            <Button
-                              className="w-full"
-                              onClick={() => openBlockUrl(block)}
-                            >
-                              Open link
-                            </Button>
-                          </div>
-                        )}
+                          <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                        </div>
                       </Card>
                     )
-                  }
-
-                  if (block.type === 'video') {
-                    return (
-                      <DeferredVideoEmbed
-                        key={block.id}
-                        block={block}
-                        cardClass={cardBase}
-                        radiusClass={radiusClass}
-                        cardStyle={blockInlineStyle}
-                      />
-                    )
-                  }
-
-                  if (block.type === 'product') {
-                    const selectedProduct = block.content
-                      ? productMap.get(block.content)
-                      : null
-                    if (!selectedProduct) return null
-
-                    return (
-                      <ProductCard
-                        key={block.id}
-                        product={selectedProduct}
-                        username={user.username || ''}
-                        cardBase={cardBase}
-                        radiusClass={radiusClass}
-                        cardStyle={blockInlineStyle}
-                      />
-                    )
-                  }
-
-                  return (
-                    <Card
-                      key={block.id}
-                      className={cn(
-                        'group w-full cursor-pointer overflow-hidden transition-all min-h-20',
-                        cardBaseWithHover,
-                        radiusClass,
-                      )}
-                      style={blockInlineStyle}
-                      onClick={() => openBlockUrl(block)}
-                    >
-                      <div className="flex items-center justify-between p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
-                            <LinkIcon className="h-5 w-5" />
-                          </div>
-                          <span className="text-sm font-semibold">
-                            {block.title}
-                          </span>
-                        </div>
-                        <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                      </div>
-                    </Card>
-                  )
-                })}
+                  })}
             </TabsPanel>
 
             <TabsPanel value="products" className="mt-4 space-y-3 outline-none">

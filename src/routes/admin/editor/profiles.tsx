@@ -32,7 +32,6 @@ const linkSchema = z.object({
 })
 
 const imageSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
   content: z.string().url('Invalid image URL'),
   url: z.union([z.literal(''), z.string().url('Invalid URL')]).optional(),
 })
@@ -40,6 +39,18 @@ const imageSchema = z.object({
 const videoSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   content: z.string().url('Invalid video URL'),
+})
+
+const discordSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  url: z.string().url('Invalid URL'),
+})
+
+const telegramSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  content: z
+    .string()
+    .regex(/^[a-zA-Z0-9_]{5,32}$/, 'Invalid Telegram username'),
 })
 
 const productSchema = z.object({
@@ -146,9 +157,9 @@ function AdminDashboard() {
       setLocalBlocks((prev) =>
         prev.map((b) =>
           b.id.startsWith('temp-') &&
-            b.title === newBlock.title &&
-            b.url === newBlock.url &&
-            b.type === newBlock.type
+          b.title === newBlock.title &&
+          b.url === newBlock.url &&
+          b.type === newBlock.type
             ? { ...newBlock, syncStatus: 'saved', errors: {} }
             : b,
         ),
@@ -262,6 +273,24 @@ function AdminDashboard() {
           else delete errors.url
         }
 
+        if (field === 'url' && block.type === 'discord') {
+          const result = z
+            .string()
+            .url()
+            .safeParse(value || '')
+          if (!result.success) errors.url = 'Invalid URL'
+          else delete errors.url
+        }
+
+        if (field === 'content' && block.type === 'telegram') {
+          const result = z
+            .string()
+            .regex(/^[a-zA-Z0-9_]{5,32}$/)
+            .safeParse(value || '')
+          if (!result.success) errors.content = 'Invalid Telegram username'
+          else delete errors.content
+        }
+
         if (field === 'content' && block.type === 'video') {
           const result = z
             .string()
@@ -304,9 +333,18 @@ function AdminDashboard() {
         isValid = !!updatedVal.title
       } else if (updatedVal.type === 'image') {
         isValid = imageSchema.safeParse({
-          title: updatedVal.title,
           content: updatedVal.content || '',
           url: updatedVal.url || '',
+        }).success
+      } else if (updatedVal.type === 'discord') {
+        isValid = discordSchema.safeParse({
+          title: updatedVal.title,
+          url: updatedVal.url || '',
+        }).success
+      } else if (updatedVal.type === 'telegram') {
+        isValid = telegramSchema.safeParse({
+          title: updatedVal.title,
+          content: updatedVal.content || '',
         }).success
       } else if (updatedVal.type === 'video') {
         isValid = videoSchema.safeParse({
@@ -371,16 +409,19 @@ function AdminDashboard() {
 
   const handleAddBlock = (type: BlockType) => {
     const tempId = 'temp-' + Date.now()
+    const defaultTitle =
+      type === 'discord' ? 'Discord' : type === 'telegram' ? 'Telegram' : ''
     const newBlock = {
       id: tempId,
-      title: '',
+      title: defaultTitle,
       url: '',
       type,
       content:
         type === 'text' ||
-          type === 'image' ||
-          type === 'video' ||
-          type === 'product'
+        type === 'image' ||
+        type === 'telegram' ||
+        type === 'video' ||
+        type === 'product'
           ? ''
           : undefined,
       isEnabled: true,
@@ -392,10 +433,17 @@ function AdminDashboard() {
           : type === 'text'
             ? { title: 'Title is required' }
             : type === 'image'
-              ? { title: 'Title is required', content: 'Invalid image URL' }
-              : type === 'video'
-                ? { title: 'Title is required', content: 'Invalid video URL' }
-                : { content: 'Please select a product' },
+              ? { content: 'Invalid image URL' }
+              : type === 'discord'
+                ? { url: 'Invalid URL' }
+                : type === 'telegram'
+                  ? { content: 'Invalid Telegram username' }
+                  : type === 'video'
+                    ? {
+                        title: 'Title is required',
+                        content: 'Invalid video URL',
+                      }
+                    : { content: 'Please select a product' },
     }
     setLocalBlocks((prev) => [...prev, newBlock])
     setIsAddBlockOpen(false)

@@ -5,7 +5,10 @@ import {
   PlayCircle,
   X as XIcon,
 } from 'lucide-react'
-import type { AppearanceBackgroundType, AppearanceTextFont } from '@/lib/appearance'
+import type {
+  AppearanceBackgroundType,
+  AppearanceTextFont,
+} from '@/lib/appearance'
 import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -14,10 +17,7 @@ import {
   getAppearancePageBackgroundStyle,
   getAppearanceTextVars,
 } from '@/lib/appearance'
-import {
-  getBlockCardBase,
-  getBlockRadius,
-} from '@/lib/block-styles'
+import { getBlockCardBase, getBlockRadius } from '@/lib/block-styles'
 import { cn } from '@/lib/utils'
 
 interface AppearancePreviewProps {
@@ -52,8 +52,8 @@ interface AppearancePreviewProps {
 }
 
 export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
-  const blockStyle = (user.appearanceBlockStyle || 'basic')
-  const blockRadius = (user.appearanceBlockRadius || 'rounded')
+  const blockStyle = user.appearanceBlockStyle || 'basic'
+  const blockRadius = user.appearanceBlockRadius || 'rounded'
   const blockInlineStyle = getAppearanceBlockStyle({
     blockStyle,
     blockColor: user.appearanceBlockColor,
@@ -68,15 +68,14 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
   })
   const textStyle = getAppearanceTextVars(user.appearanceTextColor)
   const textFontClass = getAppearanceFontClass(user.appearanceTextFont)
-  const hasBanner = user.appearanceBannerEnabled !== false && !!user.appearanceBgImageUrl
+  const hasBanner =
+    user.appearanceBannerEnabled !== false && !!user.appearanceBgImageUrl
 
   const cardBase = getBlockCardBase(blockStyle)
   const radiusClass = getBlockRadius(blockRadius)
 
   return (
-    <div
-      className="w-full h-full flex items-center justify-center p-2"
-    >
+    <div className="w-full h-full flex items-center justify-center p-2">
       <div
         className={cn(
           'aspect-9/18 w-full max-w-[280px] overflow-hidden rounded-[32px] border-3 border-border bg-muted relative',
@@ -93,7 +92,8 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
             <div className="absolute inset-0 bg-background/45" />
           </div>
         ) : null}
-        {user.appearanceBackgroundType === 'image' && user.appearanceBackgroundImageUrl ? (
+        {user.appearanceBackgroundType === 'image' &&
+        user.appearanceBackgroundImageUrl ? (
           <div
             className="absolute inset-0 z-0"
             style={{
@@ -111,7 +111,8 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
           )}
           style={{
             ...textStyle,
-            ...(user.appearanceBackgroundType === 'flat' || user.appearanceBackgroundType === 'gradient'
+            ...(user.appearanceBackgroundType === 'flat' ||
+            user.appearanceBackgroundType === 'gradient'
               ? pageBackgroundStyle
               : {}),
           }}
@@ -184,7 +185,13 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
                           <LinkIcon className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <p className="text-xs text-foreground font-medium truncate">
-                          {block.title}
+                          {block.type === 'image'
+                            ? 'Image'
+                            : block.type === 'discord'
+                              ? block.title || 'Discord'
+                              : block.type === 'telegram'
+                                ? block.title || 'Telegram'
+                                : block.title}
                         </p>
                       </div>
                       <ArrowUpRight className="h-4 w-4 text-muted-foreground" />

@@ -1,10 +1,14 @@
-'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupText,
+} from '@/components/ui/input-group'
 import { Switch } from '@/components/ui/switch'
 import {
   AlertDialog,
@@ -17,48 +21,63 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { uploadFile } from '@/lib/upload-client'
-import { Spinner } from '@/components/ui/spinner'
 
-interface ImageBlockProps {
+interface TelegramBlockProps {
   block: {
     id: string
+    title: string
     content?: string
-    url?: string
     isEnabled: boolean
     errors?: {
+      title?: string
       content?: string
-      url?: string
     }
   }
   handleUpdate: (id: string, field: string, value: any) => void
   handleDelete: (id: string) => void
 }
 
-export function ImageBlock({
+function normalizeTelegramUsername(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+
+  if (trimmed.startsWith('https://t.me/')) {
+    return trimmed.replace('https://t.me/', '').split('/')[0]
+  }
+
+  if (trimmed.startsWith('t.me/')) {
+    return trimmed.replace('t.me/', '').split('/')[0]
+  }
+
+  return trimmed.replace(/^@+/, '').split('/')[0]
+}
+
+export function TelegramBlock({
   block,
   handleUpdate,
   handleDelete,
-}: ImageBlockProps) {
+}: TelegramBlockProps) {
   const errors = block.errors || {}
-  const [isUploading, setIsUploading] = useState(false)
+  const [username, setUsername] = useState(block.content || '')
 
-  const handleImageUpload = async (file?: File) => {
-    if (!file) return
-    try {
-      setIsUploading(true)
-      const uploadedUrl = await uploadFile(file, 'blocks/images')
-      handleUpdate(block.id, 'content', uploadedUrl)
-    } catch {
-      handleUpdate(block.id, 'content', '')
-    } finally {
-      setIsUploading(false)
-    }
-  }
+  useEffect(() => {
+    setUsername(block.content || '')
+  }, [block.content])
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
+        <Field className="flex-1">
+          <FieldLabel className="sr-only">Title</FieldLabel>
+          <Input
+            defaultValue={block.title}
+            placeholder="Telegram"
+            type="text"
+            onChange={(e) => handleUpdate(block.id, 'title', e.target.value)}
+          />
+          {errors.title && <FieldError>Title is required</FieldError>}
+        </Field>
+
         <div className="flex items-center gap-4 w-[84px] justify-end shrink-0">
           <Switch
             checked={block.isEnabled}
@@ -80,7 +99,7 @@ export function ImageBlock({
                 <AlertDialogTitle>Delete this block?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This action cannot be undone. This will permanently delete
-                  this image block.
+                  this Telegram block.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -104,45 +123,24 @@ export function ImageBlock({
       </div>
 
       <Field>
-        <FieldLabel>Image</FieldLabel>
-        <div className="space-y-3">
-          {block.content ? (
-            <div className="relative w-full max-w-sm overflow-hidden rounded-lg border bg-muted aspect-video">
-              <img
-                src={block.content}
-                alt="Uploaded image"
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            </div>
-          ) : (
-            <div className="w-full max-w-sm rounded-lg border border-dashed p-4 text-xs text-muted-foreground">
-              No image uploaded.
-            </div>
-          )}
-
-          <div className="flex items-center gap-2">
-            <Input
-              type="file"
-              accept="image/*"
-              disabled={isUploading}
-              onChange={(e) => handleImageUpload(e.target.files?.[0])}
-              className="max-w-sm"
-            />
-            {isUploading ? <Spinner className="h-4 w-4" /> : null}
-          </div>
-        </div>
-        {errors.content && <FieldError>Image is required</FieldError>}
-      </Field>
-
-      <Field>
-        <FieldLabel className="sr-only">Optional link</FieldLabel>
-        <Input
-          defaultValue={block.url || ''}
-          placeholder="Optional click link"
-          type="url"
-          onChange={(e) => handleUpdate(block.id, 'url', e.target.value)}
-        />
-        {errors.url && <FieldError>Link must be a valid URL</FieldError>}
+        <FieldLabel className="sr-only">Telegram username</FieldLabel>
+        <InputGroup>
+          <InputGroupText>https://t.me/</InputGroupText>
+          <InputGroupInput
+            value={username}
+            placeholder="username"
+            onChange={(e) => {
+              const next = normalizeTelegramUsername(e.target.value)
+              setUsername(next)
+              handleUpdate(block.id, 'content', next)
+            }}
+          />
+        </InputGroup>
+        {errors.content && (
+          <FieldError>
+            Username must use letters, numbers, and underscore
+          </FieldError>
+        )}
       </Field>
     </div>
   )

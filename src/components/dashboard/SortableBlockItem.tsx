@@ -1,11 +1,13 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
+  Disc3,
   GripVertical,
   Image,
   LinkIcon,
   Package,
   PlaySquare,
+  Send,
   Text,
 } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
@@ -14,6 +16,8 @@ import { TextBlock } from './blocks/TextBlock'
 import { ImageBlock } from './blocks/ImageBlock'
 import { VideoBlock } from './blocks/VideoBlock'
 import { ProductBlock } from './blocks/ProductBlock'
+import { DiscordBlock } from './blocks/DiscordBlock'
+import { TelegramBlock } from './blocks/TelegramBlock'
 // import { StatusBadge } from './StatusBadge'
 import { cn } from '@/lib/utils'
 
@@ -69,6 +73,10 @@ export function SortableBlockItem({
       <PlaySquare className="text-red-500" />
     ) : block.type === 'product' ? (
       <Package className="bg-yellow-500" />
+    ) : block.type === 'discord' ? (
+      <Disc3 className="text-indigo-500" />
+    ) : block.type === 'telegram' ? (
+      <Send className="text-sky-500" />
     ) : block.type === 'link' ? (
       <LinkIcon />
     ) : null
@@ -87,11 +95,15 @@ export function SortableBlockItem({
             ? 'bg-blue-50/80 dark:bg-blue-500/20'
             : block.type == 'image'
               ? 'bg-green-50 dark:bg-green-500/20'
-            : block.type == 'video'
+              : block.type == 'video'
                 ? 'bg-red-50 dark:bg-red-500/20'
                 : block.type == 'product'
                   ? 'bg-yellow-50 dark:bg-yellow-500/20'
-                  : 'bg-gray-50 dark:bg-gray-500/20',
+                  : block.type == 'discord'
+                    ? 'bg-indigo-50 dark:bg-indigo-500/20'
+                    : block.type == 'telegram'
+                      ? 'bg-sky-50 dark:bg-sky-500/20'
+                      : 'bg-gray-50 dark:bg-gray-500/20',
         )}
       >
         <CardContent className="flex items-center gap-4 sm:p-6">
@@ -114,7 +126,11 @@ export function SortableBlockItem({
                     ? 'bg-red-50 dark:bg-red-500/20'
                     : block.type == 'product'
                       ? 'bg-yellow-50 dark:bg-yellow-500/20'
-                      : 'bg-gray-50 dark:bg-gray-500/20',
+                      : block.type == 'discord'
+                        ? 'bg-indigo-50 dark:bg-indigo-500/20'
+                        : block.type == 'telegram'
+                          ? 'bg-sky-50 dark:bg-sky-500/20'
+                          : 'bg-gray-50 dark:bg-gray-500/20',
             )}
           >
             {icon}
@@ -143,6 +159,18 @@ export function SortableBlockItem({
               <ProductBlock
                 block={block as any}
                 products={products || []}
+                handleUpdate={handleBlockUpdate as any}
+                handleDelete={handleDeleteBlock as any}
+              />
+            ) : block.type === 'discord' ? (
+              <DiscordBlock
+                block={block as any}
+                handleUpdate={handleBlockUpdate as any}
+                handleDelete={handleDeleteBlock as any}
+              />
+            ) : block.type === 'telegram' ? (
+              <TelegramBlock
+                block={block as any}
                 handleUpdate={handleBlockUpdate as any}
                 handleDelete={handleDeleteBlock as any}
               />

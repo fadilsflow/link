@@ -1,12 +1,10 @@
 import {
   BarChart3,
   ChevronDown,
-  CircleHelp,
   Copy,
   ExternalLink,
   Grid,
   Home,
-  LogOut,
   Package,
   Search,
   Settings,
@@ -140,16 +138,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <ChevronDown className="h-3 w-3 text-zinc-400" />
               </MenuTrigger>
               <MenuPopup className={'w-40'}>
-                <MenuItem render={<Link to={'/'} rel="noopener noreferrer" />}>
-                  <UserIcon className="h-3 w-3" />
-                  Account
+                <MenuItem render={<Link to={'/admin/settings'} rel="noopener noreferrer" />}>
+                  Settings
                 </MenuItem>
                 <MenuItem
                   render={
                     <Link to={'/'} target="_blank" rel="noopener noreferrer" />
                   }
                 >
-                  <CircleHelp className="h-3 w-3" />
                   Help
                 </MenuItem>
                 <MenuSeparator />
@@ -167,9 +163,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       },
                     })
                   }}
-                  className="text-destructive"
                 >
-                  <LogOut className="h-4 w-4" />
                   Sign Out
                 </MenuItem>
               </MenuPopup>

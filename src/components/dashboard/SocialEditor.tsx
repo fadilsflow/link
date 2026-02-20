@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react'
 import {
-  Github,
   GripVertical,
-  Instagram,
   Mail,
   PlusIcon,
   Trash2,
-  Youtube,
 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -72,6 +69,9 @@ import {
 import type { DragEndEvent } from '@dnd-kit/core';
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { cn } from '@/lib/utils'
+import { GitHub } from '../icon/github'
+import { YouTube } from '../icon/youtube'
+import { Instagram } from '../icon/instagram'
 
 // Platform definitions with icons and URL handling
 const PLATFORMS = [
@@ -111,7 +111,8 @@ const PLATFORMS = [
   {
     value: 'github',
     label: 'GitHub',
-    icon: Github,
+    iconClass: 'invert dark:invert-0',
+    icon: GitHub,
     prefix: 'github.com/',
     baseUrl: 'https://github.com/',
     placeholder: 'username',
@@ -119,7 +120,7 @@ const PLATFORMS = [
   {
     value: 'youtube',
     label: 'YouTube',
-    icon: Youtube,
+    icon: YouTube,
     prefix: '@',
     baseUrl: 'https://youtube.com/@',
     placeholder: 'username',

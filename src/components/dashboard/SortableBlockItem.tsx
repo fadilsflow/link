@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import {
   GripVertical,
   Image,
-  LinkIcon,
+  Link2Icon,
   Package,
   Text,
 } from 'lucide-react'
@@ -78,7 +78,7 @@ export function SortableBlockItem({
     ) : block.type === 'telegram' ? (
       <Telegram />
     ) : block.type === 'link' ? (
-      <LinkIcon />
+      <Link2Icon className="-rotate-45" />
     ) : null
 
   return (

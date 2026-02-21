@@ -1,16 +1,12 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical } from 'lucide-react'
+import { GripVertical, MoreVertical } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { Card, CardContent } from '../ui/card'
-import { LinkBlock } from './blocks/LinkBlock'
-import { TextBlock } from './blocks/TextBlock'
-import { ImageBlock } from './blocks/ImageBlock'
-import { VideoBlock } from './blocks/VideoBlock'
-import { ProductBlock } from './blocks/ProductBlock'
-import { DiscordBlock } from './blocks/DiscordBlock'
-import { TelegramBlock } from './blocks/TelegramBlock'
 import { cn } from '@/lib/utils'
 import { getBlockTypeConfigOrDefault } from '@/lib/block-type-config'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 
 interface ProductOption {
   id: string
@@ -29,17 +25,19 @@ interface BlockItemProps {
     errors?: { title?: string; url?: string; content?: string }
   }
   products?: Array<ProductOption>
-  handleBlockUpdate?: (id: string, field: string, value: any) => void
-  handleDeleteBlock?: (id: string) => void
+  handleEditBlock?: (id: string) => void
+  handleToggleEnabled?: (id: string, isEnabled: boolean) => void
   isOverlay?: boolean
 }
 
 export function SortableBlockItem({
   block,
   products,
-  handleBlockUpdate,
-  handleDeleteBlock,
+  handleEditBlock,
+  handleToggleEnabled,
 }: BlockItemProps) {
+  const [enabled, setEnabled] = useState(block.isEnabled)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
   const {
     attributes,
     listeners,
@@ -58,6 +56,56 @@ export function SortableBlockItem({
 
   const blockConfig = getBlockTypeConfigOrDefault(block.type)
   const IconComponent = blockConfig.icon
+  const productTitle =
+    block.type === 'product'
+      ? products?.find((p) => p.id === block.content)?.title
+      : undefined
+
+  const contentSummary: string =
+    block.type === 'link'
+      ? block.url || 'No URL'
+      : block.type === 'text'
+        ? block.content || 'No description'
+        : block.type === 'image'
+          ? block.content
+            ? 'Image selected'
+            : 'No image selected'
+          : block.type === 'video'
+            ? block.content || 'No video URL'
+            : block.type === 'product'
+              ? productTitle || 'No product selected'
+              : block.type === 'discord'
+                ? block.url || 'No invite URL'
+                : block.type === 'telegram'
+                  ? block.content
+                    ? `@${block.content}`
+                    : 'No username'
+                  : ''
+
+  useEffect(() => {
+    setEnabled(block.isEnabled)
+  }, [block.isEnabled])
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+    }
+  }, [])
+
+  const handleSwitchChange = (nextEnabled: boolean) => {
+    setEnabled(nextEnabled)
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
+    }
+
+    debounceRef.current = setTimeout(() => {
+      handleToggleEnabled?.(block.id, nextEnabled)
+      debounceRef.current = null
+    }, 300)
+  }
 
   return (
     <div
@@ -72,7 +120,7 @@ export function SortableBlockItem({
           blockConfig.bgColor,
         )}
       >
-        <CardContent className="flex items-center gap-4 sm:p-6">
+        <CardContent className="flex items-center gap-4 p-4 sm:p-5">
           <div
             {...attributes}
             {...listeners}
@@ -82,57 +130,31 @@ export function SortableBlockItem({
           </div>
 
           <div
-            className={`p-1 border-2  ${blockConfig.iconBgColor || 'bg-muted'} border-white ring-1 ring-border rounded-md flex items-center justify-center`}
+            className={`p-1 border-2 ${blockConfig.iconBgColor || 'bg-muted'} border-white ring-1 ring-border rounded-md flex items-center justify-center`}
           >
-            <IconComponent className={cn(blockConfig.iconColor, "h-4 w-4")} />
+            <IconComponent className={cn(blockConfig.iconColor, 'h-4 w-4')} />
           </div>
 
-          <div className="flex-1 flex flex-col gap-6 min-w-0">
-            {block.type === 'text' ? (
-              <TextBlock
-                block={block as any}
-                handleUpdate={handleBlockUpdate as any}
-                handleDelete={handleDeleteBlock as any}
-              />
-            ) : block.type === 'image' ? (
-              <ImageBlock
-                block={block as any}
-                handleUpdate={handleBlockUpdate as any}
-                handleDelete={handleDeleteBlock as any}
-              />
-            ) : block.type === 'video' ? (
-              <VideoBlock
-                block={block as any}
-                handleUpdate={handleBlockUpdate as any}
-                handleDelete={handleDeleteBlock as any}
-              />
-            ) : block.type === 'product' ? (
-              <ProductBlock
-                block={block as any}
-                products={products || []}
-                handleUpdate={handleBlockUpdate as any}
-                handleDelete={handleDeleteBlock as any}
-              />
-            ) : block.type === 'discord' ? (
-              <DiscordBlock
-                block={block as any}
-                handleUpdate={handleBlockUpdate as any}
-                handleDelete={handleDeleteBlock as any}
-              />
-            ) : block.type === 'telegram' ? (
-              <TelegramBlock
-                block={block as any}
-                handleUpdate={handleBlockUpdate as any}
-                handleDelete={handleDeleteBlock as any}
-              />
-            ) : (
-              <LinkBlock
-                block={block as any}
-                handleUpdate={handleBlockUpdate as any}
-                handleDelete={handleDeleteBlock as any}
-              />
-            )}
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="truncate text-sm font-semibold">
+              {block.title || blockConfig.title}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">{contentSummary}</p>
           </div>
+
+          <Switch
+            checked={enabled}
+            onCheckedChange={handleSwitchChange}
+          />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => handleEditBlock?.(block.id)}
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
         </CardContent>
       </Card>
     </div>

@@ -25,4 +25,18 @@ const LogoType = ({ className }: { className?: string }) => {
   );
 };
 
-export { LogoMark, LogoType };
+const LogoStudioSidebar = ({ className }: { className?: string }) => {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-center gap-1 text-xl font-medium ",
+        className,
+      )}
+    >
+      <img src="/logo-black.svg" alt="Logo" width={30} height={30} />
+      <span className="relative top-0.5 text-3xl font-heading">Studio</span>
+    </div>
+  );
+};
+
+export { LogoMark, LogoType, LogoStudioSidebar };

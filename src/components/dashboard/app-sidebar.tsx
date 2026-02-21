@@ -38,6 +38,7 @@ import {
 import { authClient } from '@/lib/auth-client'
 import { adminAuthQueryKey, useAdminAuthContext } from '@/lib/admin-auth'
 import { BASE_URL } from '@/lib/constans'
+import { LogoStudioSidebar } from '../kreasi-logo'
 
 const data = {
   navBottom: [
@@ -52,6 +53,11 @@ const data = {
       title: 'Home',
       url: '/admin',
       icon: Home,
+    },
+    {
+      title: 'Balance',
+      url: '/admin/balance',
+      icon: Wallet,
     },
     {
       title: 'Profile',
@@ -73,11 +79,7 @@ const data = {
       url: '/admin/orders',
       icon: ShoppingBag,
     },
-    {
-      title: 'Balance',
-      url: '/admin/balance',
-      icon: Wallet,
-    },
+
     {
       title: 'Analytics',
       url: '/admin/analytics',
@@ -119,7 +121,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     >
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem className="flex gap-3 items-center mt-3">
+          <SidebarMenuItem className="flex gap-3 justify-center items-center my-5">
+            <LogoStudioSidebar />
+          </SidebarMenuItem>
+          <SidebarMenuItem className="flex gap-3 items-center">
             <Menu>
               <MenuTrigger render={<SidebarMenuButton size="default" />}>
                 <Avatar className="h-6 w-6 border">

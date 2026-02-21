@@ -20,6 +20,7 @@ import {
 import { StorageService } from '@/lib/storage'
 import { sendConsolidatedCheckoutEmail, sendOrderEmail } from '@/lib/email'
 import { BASE_URL } from '@/lib/constans'
+import { blockCreateInputSchema, blockUpdateInputSchema } from '@/lib/block-form'
 
 // ─── Hold period for funds (in days) ─────────────────────────────────────────
 const HOLD_PERIOD_DAYS = 7
@@ -341,14 +342,7 @@ const blockRouter = {
       return { success: true }
     }),
   create: protectedProcedure
-    .input(
-      z.object({
-        title: z.string().default(''),
-        url: z.string().default('').optional(), // Optional URL
-        type: z.string().default('link'),
-        content: z.string().optional(),
-      }),
-    )
+    .input(blockCreateInputSchema)
     .mutation(async ({ input, ctx }) => {
       const actorUserId = ctx.session.user.id
       // Get max order
@@ -363,35 +357,26 @@ const blockRouter = {
         .values({
           id: crypto.randomUUID(),
           userId: actorUserId,
-          title: input.title,
-          url: input.url ?? null,
+          title: input.title.trim(),
+          url: input.url.trim() || null,
           type: input.type,
-          content: input.content ?? null,
+          content: input.content?.trim() || null,
           order: maxOrder + 1,
-          isEnabled: true,
+          isEnabled: input.isEnabled ?? true,
         })
         .returning()
       return newBlock
     }),
   update: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        title: z.string().optional(),
-        url: z.string().optional(),
-        type: z.string().optional(),
-        content: z.string().optional(),
-        isEnabled: z.boolean().optional(),
-      }),
-    )
+    .input(blockUpdateInputSchema)
     .mutation(async ({ input, ctx }) => {
       const [updatedBlock] = await db
         .update(blocks)
         .set({
-          ...(input.title !== undefined ? { title: input.title } : {}),
-          ...(input.url !== undefined ? { url: input.url } : {}),
-          ...(input.type !== undefined ? { type: input.type } : {}),
-          ...(input.content !== undefined ? { content: input.content } : {}),
+          title: input.title.trim(),
+          url: input.url.trim() || null,
+          type: input.type,
+          content: input.content?.trim() || null,
           ...(input.isEnabled !== undefined
             ? { isEnabled: input.isEnabled }
             : {}),
@@ -963,7 +948,7 @@ const orderRouter = {
 
       return rows.map((product) => ({
         ...product,
-        storeName: product.user?.name ?? 'Store',
+        storeName: product.user.name,
         questions: parseCustomerQuestions(product.customerQuestions),
       }))
     }),

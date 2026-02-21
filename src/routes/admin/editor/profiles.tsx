@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { z } from 'zod'
 import type { PreviewUser } from '@/lib/preview-context'
+import type { BlockType } from '@/components/dashboard/BlockTypeSelector'
+import type { BlockFormValues } from '@/lib/block-form'
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { ProfileEditor } from '@/components/dashboard/ProfileEditor'
@@ -14,10 +15,9 @@ import {
 } from '@/components/app-header'
 import SocialEditor from '@/components/dashboard/SocialEditor'
 import { usePreview } from '@/lib/preview-context'
-import {
-  BlockTypeSelector,
-  type BlockType,
-} from '@/components/dashboard/BlockTypeSelector'
+import { BlockTypeSelector } from '@/components/dashboard/BlockTypeSelector'
+import { BlockFormDialog } from '@/components/dashboard/BlockFormDialog'
+import { blockCreateInputSchema, getDefaultBlockValues } from '@/lib/block-form'
 
 export const Route = createFileRoute('/admin/editor/profiles')({
   component: AdminDashboard,
@@ -26,50 +26,44 @@ export const Route = createFileRoute('/admin/editor/profiles')({
   },
 })
 
-const linkSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  url: z.union([z.literal(''), z.string().url('Invalid URL')]),
-})
+type BlockRecord = {
+  id: string
+  title: string
+  url: string
+  type?: string
+  content?: string
+  isEnabled: boolean
+  order: number
+  syncStatus?: 'saved' | 'saving' | 'unsaved' | 'error'
+  errors?: { title?: string; url?: string; content?: string }
+}
 
-const imageSchema = z.object({
-  content: z.string().url('Invalid image URL'),
-  url: z.union([z.literal(''), z.string().url('Invalid URL')]).optional(),
-})
+type BlockFormState = {
+  mode: 'create' | 'edit'
+  blockId?: string
+  values: BlockFormValues
+}
 
-const videoSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  content: z.string().url('Invalid video URL'),
-})
-
-const discordSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  url: z.string().url('Invalid URL'),
-})
-
-const telegramSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  content: z
-    .string()
-    .regex(/^[a-zA-Z0-9_]{5,32}$/, 'Invalid Telegram username'),
-})
-
-const productSchema = z.object({
-  content: z.string().min(1, 'Please select a product'),
-})
+function mapBlockToFormValues(block: BlockRecord): BlockFormValues {
+  return {
+    type: (block.type || 'link') as BlockFormValues['type'],
+    title: block.title || '',
+    url: block.url || '',
+    content: block.content || '',
+    isEnabled: block.isEnabled,
+  }
+}
 
 function AdminDashboard() {
   const queryClient = useQueryClient()
   const hasHydratedRef = useRef(false)
   const { user: previewUser, setUser, setBlocks, updateUser } = usePreview()
 
-  // Local-first state — stable object references, no DnD flicker
-  const [localBlocks, setLocalBlocks] = useState<Array<any>>([])
+  const [localBlocks, setLocalBlocks] = useState<Array<BlockRecord>>([])
   const [isAddBlockOpen, setIsAddBlockOpen] = useState(false)
-
-  const isManipulatingRef = useRef(false)
-  const blockDebounceRefs = useRef<Map<string, NodeJS.Timeout>>(new Map())
-  const localBlocksRef = useRef<Array<any>>([])
-  const creatingTempIdsRef = useRef<Set<string>>(new Set())
+  const [blockFormState, setBlockFormState] = useState<BlockFormState | null>(
+    null,
+  )
 
   const queryKey = ['dashboard']
 
@@ -80,10 +74,6 @@ function AdminDashboard() {
     staleTime: Infinity,
   })
 
-  // Sync user data to preview context.
-  // Only do a full setUser() on first load (preview is null).
-  // After that, use updateUser() to merge profile-specific fields only —
-  // this preserves appearance fields that may have been set by the appearance page.
   useEffect(() => {
     if (!dashboardData?.user) return
     if (!previewUser) {
@@ -98,19 +88,10 @@ function AdminDashboard() {
     }
   }, [dashboardData?.user])
 
-  // Sync blocks to preview context
   useEffect(() => {
     setBlocks(localBlocks)
   }, [localBlocks, setBlocks])
 
-  useEffect(() => {
-    localBlocksRef.current = localBlocks
-  }, [localBlocks])
-
-  // One-time hydration from cache on mount.
-  // hasHydratedRef prevents server data from overwriting local state (DnD fix per DRAG_AND_DROP_FIX.md).
-  // On remount, hasHydratedRef resets to false, but the cache already has our latest
-  // local changes (synced below), so hydrating from it is correct.
   useEffect(() => {
     if (hasHydratedRef.current || !dashboardData?.blocks) return
 
@@ -125,11 +106,8 @@ function AdminDashboard() {
     hasHydratedRef.current = true
   }, [dashboardData?.blocks])
 
-  // Sync local blocks back to query cache so navigating away and back preserves changes.
-  // This is the fix for the "state reset on navigation" bug — the cache always has the
-  // latest local state, so the one-time hydration above reads correct data on remount.
   useEffect(() => {
-    if (!hasHydratedRef.current) return // Don't sync before initial hydration
+    if (!hasHydratedRef.current) return
     queryClient.setQueryData(queryKey, (old: any) => {
       if (!old) return old
       return { ...old, blocks: localBlocks }
@@ -153,67 +131,13 @@ function AdminDashboard() {
 
   const createBlock = useMutation({
     mutationKey: ['createBlock'],
-    mutationFn: (data: {
-      tempId: string
-      title: string
-      url: string
-      type?: string
-      content?: string
-    }) => {
-      const { tempId: _tempId, ...payload } = data
-      return trpcClient.block.create.mutate(payload)
-    },
-    onSuccess: (newBlock, variables) => {
-      creatingTempIdsRef.current.delete(variables.tempId)
-      const latestTempBlock = localBlocksRef.current.find(
-        (b) => b.id === variables.tempId,
-      )
-      if (!latestTempBlock) return
+    mutationFn: (data: BlockFormValues) => trpcClient.block.create.mutate(data),
+  })
 
-      setLocalBlocks((prev) =>
-        prev.map((b) =>
-          b.id === variables.tempId
-            ? {
-                ...b,
-                id: newBlock.id,
-                userId: newBlock.userId,
-                order: newBlock.order,
-                clicks: newBlock.clicks,
-                createdAt: newBlock.createdAt,
-                updatedAt: newBlock.updatedAt,
-                syncStatus: 'saved',
-                errors: {},
-              }
-            : b,
-        ),
-      )
-
-      if (
-        latestTempBlock.title !== newBlock.title ||
-        (latestTempBlock.url || '') !== (newBlock.url || '') ||
-        latestTempBlock.type !== newBlock.type ||
-        (latestTempBlock.content || '') !== (newBlock.content || '') ||
-        latestTempBlock.isEnabled !== newBlock.isEnabled
-      ) {
-        updateBlockMutation.mutate({
-          id: newBlock.id,
-          title: latestTempBlock.title,
-          url: latestTempBlock.url || '',
-          type: latestTempBlock.type,
-          content: latestTempBlock.content,
-          isEnabled: latestTempBlock.isEnabled,
-        })
-      }
-      isManipulatingRef.current = false
-    },
-    onError: (_error, variables) => {
-      creatingTempIdsRef.current.delete(variables.tempId)
-      setLocalBlocks((prev) =>
-        prev.map((b) =>
-          b.id === variables.tempId ? { ...b, syncStatus: 'error' } : b,
-        ),
-      )
-    },
+  const updateBlockMutation = useMutation({
+    mutationKey: ['updateBlock'],
+    mutationFn: (data: BlockFormValues & { id: string }) =>
+      trpcClient.block.update.mutate(data),
   })
 
   const reorderBlocks = useMutation({
@@ -226,28 +150,6 @@ function AdminDashboard() {
           ...l,
           syncStatus: l.syncStatus === 'saving' ? 'saved' : l.syncStatus,
         })),
-      )
-      isManipulatingRef.current = false
-    },
-  })
-
-  const updateBlockMutation = useMutation({
-    mutationKey: ['updateBlock'],
-    mutationFn: (data: {
-      id: string
-      title?: string
-      url?: string
-      type?: string
-      content?: string
-      isEnabled?: boolean
-    }) => trpcClient.block.update.mutate(data),
-    onSuccess: (updatedBlock) => {
-      setLocalBlocks((prev) =>
-        prev.map((l) =>
-          l.id === updatedBlock.id
-            ? { ...l, ...updatedBlock, syncStatus: 'saved' }
-            : l,
-        ),
       )
     },
   })
@@ -266,7 +168,6 @@ function AdminDashboard() {
     bio?: string | null
     image?: string | null
   }) => {
-    // Update preview context immediately for instant visual feedback
     updateUser({
       name: data.name,
       title: data.title,
@@ -282,171 +183,110 @@ function AdminDashboard() {
     })
   }
 
-  const handleBlockUpdate = (id: string, field: string, value: any) => {
-    const targetBlock = localBlocksRef.current.find((l) => l.id === id)
-    if (!targetBlock) return
-    if (targetBlock[field] === value) return
+  const productOptions = (dashboardData?.products || []).map((product: any) => ({
+    id: product.id,
+    title: product.title,
+  }))
+
+  const withProductTitle = (values: BlockFormValues): BlockFormValues => {
+    if (values.type !== 'product') return values
+    const selectedProduct = productOptions.find((p) => p.id === values.content)
+    return {
+      ...values,
+      title: selectedProduct?.title || values.title,
+    }
+  }
+
+  const handleBlockFormSubmit = async (values: BlockFormValues) => {
+    const parsed = blockCreateInputSchema.safeParse(withProductTitle(values))
+    if (!parsed.success) return
+
+    if (blockFormState?.mode === 'create') {
+      const newBlock = await createBlock.mutateAsync(parsed.data)
+      setLocalBlocks((prev) => [
+        ...prev,
+        {
+          ...newBlock,
+          url: newBlock.url || '',
+          content: newBlock.content || '',
+          errors: {},
+          syncStatus: 'saved',
+        },
+      ])
+      setIsAddBlockOpen(false)
+    }
+
+    if (blockFormState?.mode === 'edit' && blockFormState.blockId) {
+      const updated = await updateBlockMutation.mutateAsync({
+        id: blockFormState.blockId,
+        ...parsed.data,
+      })
+
+      setLocalBlocks((prev) =>
+        prev.map((block) =>
+          block.id === updated.id
+            ? {
+                ...block,
+                ...updated,
+                url: updated.url || '',
+                content: updated.content || '',
+                syncStatus: 'saved',
+                errors: {},
+              }
+            : block,
+        ),
+      )
+    }
+
+    setBlockFormState(null)
+  }
+
+  const handleToggleBlockEnabled = async (id: string, isEnabled: boolean) => {
+    const target = localBlocks.find((block) => block.id === id)
+    if (!target) return
 
     setLocalBlocks((prev) =>
-      prev.map((block) => {
-        if (block.id !== id) return block
-        const updatedBlock = { ...block, [field]: value }
-
-        const errors = { ...block.errors }
-        if (field === 'title') {
-          if (!value) errors.title = 'Title is required'
-          else delete errors.title
-        }
-
-        if (field === 'url' && block.type === 'link') {
-          const result = linkSchema.safeParse({ title: 'ignore', url: value })
-          if (!result.success) errors.url = 'Invalid URL'
-          else delete errors.url
-        }
-
-        if (field === 'content' && block.type === 'image') {
-          const result = z
-            .string()
-            .url()
-            .safeParse(value || '')
-          if (!result.success) errors.content = 'Invalid image URL'
-          else delete errors.content
-        }
-
-        if (field === 'url' && block.type === 'image') {
-          const result = z
-            .union([z.literal(''), z.string().url()])
-            .safeParse(value || '')
-          if (!result.success) errors.url = 'Invalid URL'
-          else delete errors.url
-        }
-
-        if (field === 'url' && block.type === 'discord') {
-          const result = z
-            .string()
-            .url()
-            .safeParse(value || '')
-          if (!result.success) errors.url = 'Invalid URL'
-          else delete errors.url
-        }
-
-        if (field === 'content' && block.type === 'telegram') {
-          const result = z
-            .string()
-            .regex(/^[a-zA-Z0-9_]{5,32}$/)
-            .safeParse(value || '')
-          if (!result.success) errors.content = 'Invalid Telegram username'
-          else delete errors.content
-        }
-
-        if (field === 'content' && block.type === 'video') {
-          const result = z
-            .string()
-            .url()
-            .safeParse(value || '')
-          if (!result.success) errors.content = 'Invalid video URL'
-          else delete errors.content
-        }
-
-        if (field === 'content' && block.type === 'product') {
-          if (!value) errors.content = 'Please select a product'
-          else delete errors.content
-        }
-
-        const hasNoErrors = Object.keys(errors).length === 0
-        const newStatus = hasNoErrors ? undefined : 'unsaved'
-
-        return { ...updatedBlock, errors, syncStatus: newStatus }
-      }),
+      prev.map((block) =>
+        block.id === id ? { ...block, isEnabled, syncStatus: 'saving' } : block,
+      ),
     )
 
-    const existingTimer = blockDebounceRefs.current.get(id)
-    if (existingTimer) {
-      clearTimeout(existingTimer)
+    const payload = {
+      id,
+      ...mapBlockToFormValues({ ...target, isEnabled }),
     }
 
-    const timer = setTimeout(() => {
-      const currentBlock = localBlocksRef.current.find((l) => l.id === id)
-      if (!currentBlock) return
-
-      const updatedVal = { ...currentBlock, [field]: value }
-
-      let isValid = true
-      if (updatedVal.type === 'link') {
-        isValid = linkSchema.safeParse({
-          title: updatedVal.title,
-          url: updatedVal.url,
-        }).success
-      } else if (updatedVal.type === 'text') {
-        isValid = !!updatedVal.title
-      } else if (updatedVal.type === 'image') {
-        isValid = imageSchema.safeParse({
-          content: updatedVal.content || '',
-          url: updatedVal.url || '',
-        }).success
-      } else if (updatedVal.type === 'discord') {
-        isValid = discordSchema.safeParse({
-          title: updatedVal.title,
-          url: updatedVal.url || '',
-        }).success
-      } else if (updatedVal.type === 'telegram') {
-        isValid = telegramSchema.safeParse({
-          title: updatedVal.title,
-          content: updatedVal.content || '',
-        }).success
-      } else if (updatedVal.type === 'video') {
-        isValid = videoSchema.safeParse({
-          title: updatedVal.title,
-          content: updatedVal.content || '',
-        }).success
-      } else if (updatedVal.type === 'product') {
-        isValid = productSchema.safeParse({
-          content: updatedVal.content || '',
-        }).success
-      }
-
-      if (isValid) {
-        setLocalBlocks((prev) =>
-          prev.map((b) => (b.id === id ? { ...b, syncStatus: 'saving' } : b)),
-        )
-        if (id.startsWith('temp-')) {
-          if (creatingTempIdsRef.current.has(id)) {
-            return
-          }
-          creatingTempIdsRef.current.add(id)
-          createBlock.mutate({
-            tempId: id,
-            title: updatedVal.title,
-            url: updatedVal.url || '',
-            type: updatedVal.type,
-            content: updatedVal.content,
-          })
-        } else {
-          updateBlockMutation.mutate({ id, [field]: value })
-        }
-      }
-      blockDebounceRefs.current.delete(id)
-    }, 1000)
-
-    blockDebounceRefs.current.set(id, timer)
-  }
-
-  const handleDeleteBlock = (id: string) => {
-    setLocalBlocks((prev) => prev.filter((block) => block.id !== id))
-    if (!id.startsWith('temp-')) {
-      deleteBlockMutation.mutate({ id })
+    try {
+      const updated = await updateBlockMutation.mutateAsync(payload)
+      setLocalBlocks((prev) =>
+        prev.map((block) =>
+          block.id === updated.id
+            ? {
+                ...block,
+                ...updated,
+                url: updated.url || '',
+                content: updated.content || '',
+                syncStatus: 'saved',
+                errors: {},
+              }
+            : block,
+        ),
+      )
+    } catch {
+      setLocalBlocks((prev) =>
+        prev.map((block) =>
+          block.id === id ? { ...block, isEnabled: target.isEnabled, syncStatus: 'error' } : block,
+        ),
+      )
     }
   }
 
-  const handleReorder = (newBlocks: Array<any>) => {
-    isManipulatingRef.current = true
+  const handleReorder = (newBlocks: Array<BlockRecord>) => {
     const updates: Array<{ id: string; order: number }> = []
     const updatedLocalBlocks = newBlocks.map((block, index) => {
       const newOrder = index + 1
       if (block.order !== newOrder) {
-        if (!block.id.startsWith('temp-')) {
-          updates.push({ id: block.id, order: newOrder })
-        }
+        updates.push({ id: block.id, order: newOrder })
         return { ...block, order: newOrder }
       }
       return block
@@ -455,51 +295,26 @@ function AdminDashboard() {
     setLocalBlocks(updatedLocalBlocks)
     if (updates.length > 0) {
       reorderBlocks.mutate({ items: updates })
-    } else {
-      isManipulatingRef.current = false
     }
   }
 
-  const handleAddBlock = (type: BlockType) => {
-    const tempId = 'temp-' + Date.now()
-    const defaultTitle =
-      type === 'discord' ? 'Discord' : type === 'telegram' ? 'Telegram' : ''
-    const newBlock = {
-      id: tempId,
-      title: defaultTitle,
-      url: '',
-      type,
-      content:
-        type === 'text' ||
-        type === 'image' ||
-        type === 'telegram' ||
-        type === 'video' ||
-        type === 'product'
-          ? ''
-          : undefined,
-      isEnabled: true,
-      order: (localBlocks[localBlocks.length - 1]?.order || 0) + 1,
-      syncStatus: 'unsaved' as const,
-      errors:
-        type === 'link'
-          ? { title: 'Title is required', url: 'Invalid URL' }
-          : type === 'text'
-            ? { title: 'Title is required' }
-            : type === 'image'
-              ? { content: 'Invalid image URL' }
-              : type === 'discord'
-                ? { url: 'Invalid URL' }
-                : type === 'telegram'
-                  ? { content: 'Invalid Telegram username' }
-                  : type === 'video'
-                    ? {
-                        title: 'Title is required',
-                        content: 'Invalid video URL',
-                      }
-                    : { content: 'Please select a product' },
-    }
-    setLocalBlocks((prev) => [...prev, newBlock])
+  const handleAddBlockTypeSelect = (type: BlockType) => {
+    setBlockFormState({
+      mode: 'create',
+      values: getDefaultBlockValues(type),
+    })
+  }
+
+  const handleEditBlock = (id: string) => {
     setIsAddBlockOpen(false)
+    const target = localBlocks.find((block) => block.id === id)
+    if (!target) return
+
+    setBlockFormState({
+      mode: 'edit',
+      blockId: id,
+      values: mapBlockToFormValues(target),
+    })
   }
 
   if (!user) return null
@@ -524,31 +339,46 @@ function AdminDashboard() {
         />
       </section>
 
-      {/* Blocks Section */}
       <section className="space-y-6">
         <BlockTypeSelector
           open={isAddBlockOpen}
-          onOpenChange={setIsAddBlockOpen}
-          onSelect={handleAddBlock}
+          onOpenChange={(open) => {
+            setIsAddBlockOpen(open)
+            if (!open && blockFormState?.mode === 'create') {
+              setBlockFormState(null)
+            }
+          }}
+          onSelect={handleAddBlockTypeSelect}
         />
 
         <BlockList
           blocks={localBlocks}
-          products={dashboardData.products.map((product: any) => ({
-            id: product.id,
-            title: product.title,
-          }))}
-          onUpdate={handleBlockUpdate}
-          onDelete={handleDeleteBlock}
+          products={productOptions}
+          onEdit={handleEditBlock}
+          onToggleEnabled={handleToggleBlockEnabled}
           onReorder={handleReorder}
-          onDragStart={() => {
-            isManipulatingRef.current = true
-          }}
-          onDragCancel={() => {
-            isManipulatingRef.current = false
-          }}
         />
       </section>
+
+      <BlockFormDialog
+        open={!!blockFormState}
+        onOpenChange={(open) => {
+          if (!open) setBlockFormState(null)
+        }}
+        mode={blockFormState?.mode || 'create'}
+        values={
+          blockFormState?.values || getDefaultBlockValues('link')
+        }
+        products={productOptions}
+        submitting={createBlock.isPending || updateBlockMutation.isPending}
+        deleting={deleteBlockMutation.isPending}
+        onDelete={async () => {
+          if (blockFormState?.mode !== 'edit' || !blockFormState.blockId) return
+          await deleteBlockMutation.mutateAsync({ id: blockFormState.blockId })
+          setBlockFormState(null)
+        }}
+        onSubmit={handleBlockFormSubmit}
+      />
     </div>
   )
 }

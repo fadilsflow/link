@@ -21,6 +21,7 @@ interface Block {
   url: string
   type?: string
   content?: string
+  order: number
   isEnabled: boolean
   syncStatus?: 'saved' | 'saving' | 'unsaved' | 'error'
   errors?: { title?: string; url?: string; content?: string }
@@ -33,8 +34,8 @@ interface ProductOption {
 
 interface BlockListProps {
   blocks: Array<Block>
-  onUpdate: (id: string, field: string, value: any) => void
-  onDelete: (id: string) => void
+  onEdit: (id: string) => void
+  onToggleEnabled: (id: string, isEnabled: boolean) => void
   onReorder: (newBlocks: Array<Block>) => void
   products?: Array<ProductOption>
   onDragStart?: () => void
@@ -43,8 +44,8 @@ interface BlockListProps {
 
 export function BlockList({
   blocks,
-  onUpdate,
-  onDelete,
+  onEdit,
+  onToggleEnabled,
   onReorder,
   products,
   onDragStart,
@@ -95,8 +96,8 @@ export function BlockList({
               key={block.id}
               block={block}
               products={products}
-              handleBlockUpdate={onUpdate}
-              handleDeleteBlock={onDelete}
+              handleEditBlock={onEdit}
+              handleToggleEnabled={onToggleEnabled}
             />
           ))}
         </div>

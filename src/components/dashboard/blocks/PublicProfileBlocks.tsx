@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ArrowUpRight } from 'lucide-react'
+import { ArrowUpRight, Link2Icon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -125,13 +125,13 @@ export function PublicProfileBlocks({
             window.open(telegramUrl, '_blank', 'noopener,noreferrer')
           }}
         >
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
-                <IconComponent className="h-5 w-5" />
-              </div>
-              <span className="text-sm font-semibold">{block.title || 'Telegram'}</span>
+          <div className="grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
+              <IconComponent className="h-5 w-5" />
             </div>
+            <span className="text-center text-sm font-semibold">
+              {block.title || 'Telegram'}
+            </span>
             <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </div>
         </Card>
@@ -156,15 +156,17 @@ export function PublicProfileBlocks({
         style={cardStyle}
         onClick={() => onOpenBlockUrl(block)}
       >
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
+        <div className="grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
+            {block.type === 'discord' ? (
               <IconComponent className="h-5 w-5" />
-            </div>
-            <span className="text-sm font-semibold">
-              {block.title || (block.type === 'discord' ? 'Discord' : 'Link')}
-            </span>
+            ) : (
+              <Link2Icon className="h-5 w-5 -rotate-45" />
+            )}
           </div>
+          <span className="text-center text-sm font-semibold">
+            {block.title || (block.type === 'discord' ? 'Discord' : 'Link')}
+          </span>
           <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </div>
       </Card>

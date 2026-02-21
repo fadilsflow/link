@@ -1,17 +1,13 @@
 import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import {
-  Globe,
-  Instagram,
-  Mail,
-  MessageCircle,
-  PlayCircle,
-  Youtube,
-} from 'lucide-react'
+import { PlayCircle } from 'lucide-react'
 import type { PublicProfileBlock } from '@/components/dashboard/blocks/PublicProfileBlocks'
 import { PublicProfileBlocks } from '@/components/dashboard/blocks/PublicProfileBlocks'
+import {
+  SocialProfileBlocks,
+  type PublicSocialLink,
+} from '@/components/SocialProfileBlocks'
 import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getPublicProfile } from '@/lib/profile-server'
 import NotFound from '@/components/not-found'
@@ -47,12 +43,6 @@ interface PublicProduct {
   price?: number | null
   totalQuantity?: number | null
   limitPerCheckout?: number | null
-}
-
-type PublicSocialLink = {
-  id: string
-  platform?: string | null
-  url: string
 }
 
 function runWhenBrowserIdle(callback: () => void, timeout = 1200) {
@@ -136,28 +126,6 @@ function getProductPriceLabel(product: PublicProduct) {
   }
 
   return product.price ? formatPrice(product.price) : 'Free'
-}
-
-function getPublicSocialUrl(link: PublicSocialLink) {
-  if (link.platform === 'email') {
-    return link.url.startsWith('mailto:') ? link.url : `mailto:${link.url}`
-  }
-  return link.url
-}
-
-function getPublicSocialIcon(platform?: string | null) {
-  switch (platform) {
-    case 'instagram':
-      return <Instagram className="h-4 w-4" />
-    case 'youtube':
-      return <Youtube className="h-4 w-4" />
-    case 'email':
-      return <Mail className="h-4 w-4" />
-    case 'whatsapp':
-      return <MessageCircle className="h-4 w-4" />
-    default:
-      return <Globe className="h-4 w-4" />
-  }
 }
 
 function ProductCard({
@@ -516,20 +484,13 @@ function UserProfile() {
             ) : null}
 
             {socialItems.length > 0 ? (
-              <div className="mt-5 flex w-full flex-wrap gap-3">
-                {socialItems.map((link) => (
-                  <a
-                    key={link.id}
-                    href={getPublicSocialUrl(link)}
-                    target={link.platform === 'email' ? undefined : '_blank'}
-                    rel={link.platform === 'email' ? undefined : 'noopener noreferrer'}
-                  >
-                    <Button variant="outline" size="icon" className="h-10 w-10 rounded-full">
-                      {getPublicSocialIcon(link.platform)}
-                    </Button>
-                  </a>
-                ))}
-              </div>
+              <SocialProfileBlocks
+                links={socialItems}
+                blockStyle={blockStyle}
+                blockRadius={blockRadius}
+                cardStyle={blockInlineStyle}
+                className="mt-5"
+              />
             ) : null}
 
             <div className="mt-6 md:hidden">
@@ -546,7 +507,7 @@ function UserProfile() {
                   {profileBlocksSection}
                 </TabsPanel>
                 <TabsPanel value="products" className="mt-4 space-y-3 outline-none">
-                  {productsSection}e
+                  {productsSection}
                 </TabsPanel>
               </Tabs>
             </div>

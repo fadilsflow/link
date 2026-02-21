@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Camera, X } from 'lucide-react'
+import { Camera, Paintbrush, X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { uploadFile } from '@/lib/upload-client'
 import { useFileUpload } from '@/hooks/use-file-upload'
@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dialog'
 
 import { Field, FieldLabel } from '@/components/ui/field'
+import { Link } from '@tanstack/react-router'
 
 interface ProfileData {
   name: string
@@ -152,8 +153,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
     <div className="relative flex flex-col gap-2">
       <div className="flex gap-4">
         <Avatar
-          onClick={() => setDialogOpen(true)}
-          className="h-16 w-16 border cursor-pointer hover:border-primary"
+          className="h-16 w-16 border"
         >
           <AvatarImage src={user.image || ''} />
           <AvatarFallback className="text-2xl font-bold">
@@ -163,16 +163,14 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
 
         <div className="flex flex-col">
           <span
-            onClick={() => setDialogOpen(true)}
-            className="font-heading text-foreground text-xl cursor-pointer hover:underline"
+            className="font-heading text-foreground text-xl"
           >
             {user.name}
           </span>
 
           {user.title && (
             <span
-              onClick={() => setDialogOpen(true)}
-              className="text-sm text-muted-foreground cursor-pointer hover:underline"
+              className="text-sm text-muted-foreground"
             >
               {user.title}
             </span>
@@ -180,13 +178,19 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
 
           {user.bio && (
             <p
-              onClick={() => setDialogOpen(true)}
-              className="text-sm text-muted-foreground cursor-pointer hover:underline line-clamp-1"
+              className="text-sm text-foreground line-clamp-2"
             >
               {user.bio}
             </p>
           )}
         </div>
+        <Button variant="secondary" size="sm" onClick={() => setDialogOpen(true)}>
+          Edit Profile
+        </Button>
+        <Button variant="secondary" size="icon-sm" render={<Link to='/admin/editor/appearance' />}>
+          <Paintbrush />
+        </Button>
+
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

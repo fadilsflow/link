@@ -226,13 +226,13 @@ function AdminDashboard() {
         prev.map((block) =>
           block.id === updated.id
             ? {
-                ...block,
-                ...updated,
-                url: updated.url || '',
-                content: updated.content || '',
-                syncStatus: 'saved',
-                errors: {},
-              }
+              ...block,
+              ...updated,
+              url: updated.url || '',
+              content: updated.content || '',
+              syncStatus: 'saved',
+              errors: {},
+            }
             : block,
         ),
       )
@@ -262,13 +262,13 @@ function AdminDashboard() {
         prev.map((block) =>
           block.id === updated.id
             ? {
-                ...block,
-                ...updated,
-                url: updated.url || '',
-                content: updated.content || '',
-                syncStatus: 'saved',
-                errors: {},
-              }
+              ...block,
+              ...updated,
+              url: updated.url || '',
+              content: updated.content || '',
+              syncStatus: 'saved',
+              errors: {},
+            }
             : block,
         ),
       )
@@ -322,7 +322,7 @@ function AdminDashboard() {
   return (
     <div className="space-y-4 pb-20">
       <AppHeader>
-        <AppHeaderContent title="Profile">
+        <AppHeaderContent title="My Page">
           <AppHeaderDescription>
             Manage the products that appear on your public profile.
           </AppHeaderDescription>

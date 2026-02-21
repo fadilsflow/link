@@ -156,11 +156,11 @@ function AppearanceEditor({ user, blocks }: { user: any; blocks: any[] }) {
   )
   const [backgroundGradientTop, setBackgroundGradientTop] = React.useState(
     user.appearanceBackgroundGradientTop ??
-      APPEARANCE_DEFAULTS.backgroundGradientTop,
+    APPEARANCE_DEFAULTS.backgroundGradientTop,
   )
   const [backgroundGradientBottom, setBackgroundGradientBottom] = React.useState(
     user.appearanceBackgroundGradientBottom ??
-      APPEARANCE_DEFAULTS.backgroundGradientBottom,
+    APPEARANCE_DEFAULTS.backgroundGradientBottom,
   )
   const [backgroundImageUrl, setBackgroundImageUrl] = React.useState(
     user.appearanceBackgroundImageUrl ?? '',

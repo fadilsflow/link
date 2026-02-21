@@ -170,7 +170,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Link
                     to={'/$username'}
                     params={{ username }}
-                    search={{ tab: 'profile' }}
                   />
                 }
                 className="text-foreground"

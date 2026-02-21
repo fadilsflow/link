@@ -290,7 +290,6 @@ function CheckoutPage() {
                 <Link
                   to="/$username"
                   params={{ username: user.username || '' }}
-                  search={{ tab: 'profile' }}
                   className="text-xs underline"
                 >
                   {user.name} (Store)

@@ -24,7 +24,6 @@ export default function UserButton() {
 
   const username =
     (session.user as { username?: string | null }).username ?? ''
-  const profileSearch = { tab: 'profile' as const }
   const publicUrl = `${window.location.origin}/${username}`
 
   const copyProfileLink = () => {
@@ -102,7 +101,6 @@ export default function UserButton() {
               <Link
                 to={`/$username`}
                 params={{ username }}
-                search={profileSearch}
                 target="_blank"
               />
             }

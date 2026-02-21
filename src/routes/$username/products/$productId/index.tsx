@@ -196,7 +196,6 @@ function ProductDetailPage() {
             <Link
               to="/$username"
               params={{ username }}
-              search={{ tab: 'profile' }}
               className="font-semibold text-foreground hover:underline"
             >
               @{user.username}

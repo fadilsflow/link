@@ -281,7 +281,6 @@ function OrderDeliveryPage() {
                     <Link
                       to="/$username"
                       params={{ username: creator.username }}
-                      search={{ tab: 'profile' }}
                     />
                   }
                 >

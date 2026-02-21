@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type {
   BlockFieldErrors,
   BlockFormValues,
@@ -94,15 +94,23 @@ export function BlockFormDialog({
   const [isUploading, setIsUploading] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
+  // Lock mode and type when dialog opens to prevent title flash during close
+  const lockedRef = useRef<{ mode: 'create' | 'edit'; type: BlockType } | null>(null)
+
   useEffect(() => {
     if (!open) return
     setFormValues(values)
     setErrors({})
     setIsUploading(false)
     setDeleteDialogOpen(false)
-  }, [values, open])
+    lockedRef.current = { mode, type: values.type }
+  }, [values, open, mode])
 
   const type = formValues.type
+
+  // Use locked values for title to prevent flash during close animation
+  const titleMode = lockedRef.current?.mode ?? mode
+  const titleType = lockedRef.current?.type ?? type
 
   const setField = (field: keyof BlockFormValues, value: string | boolean) => {
     setFormValues((prev) => ({ ...prev, [field]: value }))
@@ -139,7 +147,7 @@ export function BlockFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{getDialogTitle(mode, type)}</DialogTitle>
+          <DialogTitle>{getDialogTitle(titleMode, titleType)}</DialogTitle>
         </DialogHeader>
         <DialogPanel className="space-y-4">
           {(type === 'link' || type === 'text' || type === 'video' || type === 'discord' || type === 'telegram') && (

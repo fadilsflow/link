@@ -1,11 +1,8 @@
 import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import {
-  ArrowUpRight,
-  Link as LinkIcon,
-  PlayCircle,
-  ShoppingCart,
-} from 'lucide-react'
+import { PlayCircle, ShoppingCart } from 'lucide-react'
+import type { PublicProfileBlock } from '@/components/dashboard/blocks/PublicProfileBlocks'
+import { PublicProfileBlocks } from '@/components/dashboard/blocks/PublicProfileBlocks'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getPublicProfile } from '@/lib/profile-server'
@@ -20,7 +17,6 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs'
 import {
   getBlockCardBase,
   getBlockRadius,
-  getBlockSkeletonClasses,
   getProductSkeletonClass,
 } from '@/lib/block-styles'
 import {
@@ -37,13 +33,7 @@ import SiteUserProfileHeader, {
 } from '@/components/site-user-profile-header'
 import PublicMark from '@/components/public-mark'
 
-interface PublicBlock {
-  id: string
-  title: string
-  url?: string | null
-  type?: string | null
-  content?: string | null
-}
+type PublicBlock = PublicProfileBlock
 
 interface PublicProduct {
   id: string
@@ -124,12 +114,6 @@ function getVideoMeta(rawUrl?: string | null): {
       youtubeVideoId: null,
     }
   }
-}
-
-function getTelegramUrl(username?: string | null): string | null {
-  const trimmed = username?.trim() || ''
-  if (!trimmed) return null
-  return `https://t.me/${trimmed.replace(/^@+/, '')}`
 }
 
 function getProductPriceLabel(product: PublicProduct) {
@@ -228,11 +212,6 @@ function ProductCard({
       </CardContent>
     </Card>
   )
-}
-
-function BlockSkeleton({ block }: { block: PublicBlock }) {
-  // Image/video blocks previously shifted desktop CLS due to unknown media height; fixed aspect placeholders stabilize first layout.
-  return <div className={getBlockSkeletonClasses(block.type)} />
 }
 
 function DeferredVideoEmbed({
@@ -468,194 +447,44 @@ function UserProfile() {
               <TabsTab value="products">Products</TabsTab>
             </TabsList>
             <TabsPanel value="profile" className="mt-4 space-y-3 outline-none">
-              {!areBlocksReady
-                ? (blocks as Array<PublicBlock>).map((block) => (
-                    <BlockSkeleton key={block.id} block={block} />
-                  ))
-                : (blocks as Array<PublicBlock>).map((block) => {
-                    if (block.type === 'text') {
-                      return (
-                        <div
-                          key={block.id}
-                          className="w-full space-y-1 py-2 text-center min-h-16"
-                        >
-                          <h2
-                            className={cn(
-                              'text-2xl font-bold',
-                              'text-foreground',
-                            )}
-                          >
-                            {block.title}
-                          </h2>
-                          {block.content && (
-                            <p className={cn('text-sm', 'text-foreground')}>
-                              {block.content}
-                            </p>
-                          )}
-                        </div>
-                      )
-                    }
+              <PublicProfileBlocks
+                areBlocksReady={areBlocksReady}
+                blocks={blocks as Array<PublicBlock>}
+                cardBase={cardBase}
+                cardBaseWithHover={cardBaseWithHover}
+                radiusClass={radiusClass}
+                cardStyle={blockInlineStyle}
+                onOpenBlockUrl={openBlockUrl}
+                onTrackClick={(blockId) => {
+                  void trpcClient.block.trackClick.mutate({ id: blockId })
+                }}
+                renderVideoBlock={(block) => (
+                  <DeferredVideoEmbed
+                    key={block.id}
+                    block={block}
+                    cardClass={cardBase}
+                    radiusClass={radiusClass}
+                    cardStyle={blockInlineStyle}
+                  />
+                )}
+                renderProductBlock={(block) => {
+                  const selectedProduct = block.content
+                    ? productMap.get(block.content)
+                    : null
+                  if (!selectedProduct) return null
 
-                    if (block.type === 'image') {
-                      return (
-                        <Card
-                          key={block.id}
-                          className={cn(
-                            'w-full overflow-hidden',
-                            cardBase,
-                            radiusClass,
-                          )}
-                          style={blockInlineStyle}
-                        >
-                          {block.content && (
-                            <div className="relative w-full overflow-hidden bg-muted aspect-4/3">
-                              <img
-                                loading="lazy"
-                                decoding="async"
-                                width={1200}
-                                height={900}
-                                src={block.content}
-                                alt="Image block"
-                                className="absolute inset-0 h-full w-full object-cover"
-                              />
-                            </div>
-                          )}
-                          {block.url && (
-                            <div className="px-3 pb-3">
-                              <Button
-                                className="w-full"
-                                onClick={() => openBlockUrl(block)}
-                              >
-                                Open link
-                              </Button>
-                            </div>
-                          )}
-                        </Card>
-                      )
-                    }
-
-                    if (block.type === 'video') {
-                      return (
-                        <DeferredVideoEmbed
-                          key={block.id}
-                          block={block}
-                          cardClass={cardBase}
-                          radiusClass={radiusClass}
-                          cardStyle={blockInlineStyle}
-                        />
-                      )
-                    }
-
-                    if (block.type === 'product') {
-                      const selectedProduct = block.content
-                        ? productMap.get(block.content)
-                        : null
-                      if (!selectedProduct) return null
-
-                      return (
-                        <ProductCard
-                          key={block.id}
-                          product={selectedProduct}
-                          username={user.username || ''}
-                          cardBase={cardBase}
-                          radiusClass={radiusClass}
-                          cardStyle={blockInlineStyle}
-                        />
-                      )
-                    }
-
-                    if (block.type === 'telegram') {
-                      const telegramUrl = getTelegramUrl(block.content)
-                      if (!telegramUrl) return null
-
-                      return (
-                        <Card
-                          key={block.id}
-                          className={cn(
-                            'group w-full cursor-pointer overflow-hidden transition-all min-h-20',
-                            cardBaseWithHover,
-                            radiusClass,
-                          )}
-                          style={blockInlineStyle}
-                          onClick={() => {
-                            void trpcClient.block.trackClick.mutate({
-                              id: block.id,
-                            })
-                            window.open(
-                              telegramUrl,
-                              '_blank',
-                              'noopener,noreferrer',
-                            )
-                          }}
-                        >
-                          <div className="flex items-center justify-between p-4">
-                            <div className="flex items-center gap-4">
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
-                                <LinkIcon className="h-5 w-5" />
-                              </div>
-                              <span className="text-sm font-semibold">
-                                {block.title || 'Telegram'}
-                              </span>
-                            </div>
-                            <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                          </div>
-                        </Card>
-                      )
-                    }
-
-                    if (block.type === 'discord') {
-                      if (!block.url) return null
-                      return (
-                        <Card
-                          key={block.id}
-                          className={cn(
-                            'group w-full cursor-pointer overflow-hidden transition-all min-h-20',
-                            cardBaseWithHover,
-                            radiusClass,
-                          )}
-                          style={blockInlineStyle}
-                          onClick={() => openBlockUrl(block)}
-                        >
-                          <div className="flex items-center justify-between p-4">
-                            <div className="flex items-center gap-4">
-                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
-                                <LinkIcon className="h-5 w-5" />
-                              </div>
-                              <span className="text-sm font-semibold">
-                                {block.title || 'Discord'}
-                              </span>
-                            </div>
-                            <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                          </div>
-                        </Card>
-                      )
-                    }
-
-                    return (
-                      <Card
-                        key={block.id}
-                        className={cn(
-                          'group w-full cursor-pointer overflow-hidden transition-all min-h-20',
-                          cardBaseWithHover,
-                          radiusClass,
-                        )}
-                        style={blockInlineStyle}
-                        onClick={() => openBlockUrl(block)}
-                      >
-                        <div className="flex items-center justify-between p-4">
-                          <div className="flex items-center gap-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
-                              <LinkIcon className="h-5 w-5" />
-                            </div>
-                            <span className="text-sm font-semibold">
-                              {block.title}
-                            </span>
-                          </div>
-                          <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                        </div>
-                      </Card>
-                    )
-                  })}
+                  return (
+                    <ProductCard
+                      key={block.id}
+                      product={selectedProduct}
+                      username={user.username || ''}
+                      cardBase={cardBase}
+                      radiusClass={radiusClass}
+                      cardStyle={blockInlineStyle}
+                    />
+                  )
+                }}
+              />
             </TabsPanel>
 
             <TabsPanel value="products" className="mt-4 space-y-3 outline-none">

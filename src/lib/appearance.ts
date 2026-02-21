@@ -55,7 +55,6 @@ export function getAppearanceBlockStyle(options: {
   if (blockStyle === 'flat') {
     return {
       backgroundColor: blockColor || APPEARANCE_DEFAULTS.blockColor,
-      borderColor: blockColor || APPEARANCE_DEFAULTS.blockColor,
     }
   }
 

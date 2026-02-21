@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import { PlayCircle } from 'lucide-react'
+import { Package2, PlayCircle } from 'lucide-react'
 import type { PublicProfileBlock } from '@/components/dashboard/blocks/PublicProfileBlocks'
 import { PublicProfileBlocks } from '@/components/dashboard/blocks/PublicProfileBlocks'
 import {
@@ -168,7 +168,7 @@ function ProductCard({
       }
     >
       <CardContent className="p-2">
-        <div className="aspect-square w-full overflow-hidden bg-muted">
+        <div className="aspect-square w-full overflow-hidden bg-muted rounded-xl">
           {hasImage ? (
             <img
               loading="lazy"
@@ -177,7 +177,7 @@ function ProductCard({
               height={640}
               src={productImages[0]}
               alt={product.title}
-              className="rounded-xl h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
             <div className="h-full w-full bg-muted" />
@@ -409,7 +409,7 @@ function UserProfile() {
       />
     ))
   ) : (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
       {(products as Array<PublicProduct>).map((product) => {
         return (
           <ProductCard
@@ -460,8 +460,8 @@ function UserProfile() {
           <div className="h-[160px] w-full bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500 md:h-[200px]" />
         )}
 
-        <div className=" sm:max-w-7xl mx-auto grid grid-cols-1 gap-8 px-5 pb-10 md:grid-cols-2 md:gap-10 md:px-10 md:pb-10">
-          <section className="relative pt-14 md:pt-[70px]">
+        <div className="md:divide-x   sm:max-w-7xl mx-auto grid grid-cols-1  px-5  md:grid-cols-2  md:px-10 ">
+          <section className="relative pt-14 md:pt-[70px] md:pr-6">
             <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  md:-top-[60px] md:h-[120px] md:w-[120px]">
               <AvatarImage src={user.image || '/avatar-placeholder.png'} />
               <AvatarFallback className="text-lg font-bold">
@@ -515,17 +515,17 @@ function UserProfile() {
             <div className="mt-6 hidden space-y-4 md:block">{profileBlocksSection}</div>
           </section>
 
-          <aside className="pt-0 md:pt-10">
-            <div className="mb-5 border-b border-border pb-4">
-              <div className=" text-xl font-semibold">
-                Products
+          <aside className="py-5 border-r hidden md:block ">
+            <div className="mb-5  md:px-6 border-b  border-border pb-4">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <Package2 className='fill-foreground text-background size-4' /> Products
               </div>
             </div>
-            <div className="hidden space-y-5 md:block">{productsSection}</div>
+            <div className="hidden space-y-5 md:block  md:px-6">{productsSection}</div>
           </aside>
         </div>
 
-        <div className="mb-4 mt-10 flex justify-center md:mt-16">
+        <div className="border-t mb-4 pt-10 flex justify-center ">
           <div className="flex items-center">
             <PublicMark />
           </div>

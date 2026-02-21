@@ -1,15 +1,23 @@
 import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import { PlayCircle, ShoppingCart } from 'lucide-react'
+import {
+  Globe,
+  Instagram,
+  Mail,
+  MessageCircle,
+  Package,
+  PlayCircle,
+  ShoppingCart,
+  Youtube,
+} from 'lucide-react'
 import type { PublicProfileBlock } from '@/components/dashboard/blocks/PublicProfileBlocks'
 import { PublicProfileBlocks } from '@/components/dashboard/blocks/PublicProfileBlocks'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getPublicProfile } from '@/lib/profile-server'
 import NotFound from '@/components/not-found'
 import { cn, formatPrice } from '@/lib/utils'
-import { useCartStore } from '@/store/cart-store'
-import { toastManager } from '@/components/ui/toast'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import LiteYouTube from '@/components/LiteYouTube'
 import { extractYouTubeVideoId } from '@/lib/lite-youtube'
@@ -26,11 +34,7 @@ import {
   getAppearanceTextVars,
 } from '@/lib/appearance'
 
-import SiteUserProfileHeader, {
-  ProfileBanner,
-  ProfileCard,
-  SocialLinks,
-} from '@/components/site-user-profile-header'
+import SiteUserProfileHeader from '@/components/site-user-profile-header'
 import PublicMark from '@/components/public-mark'
 
 type PublicBlock = PublicProfileBlock
@@ -45,6 +49,12 @@ interface PublicProduct {
   price?: number | null
   totalQuantity?: number | null
   limitPerCheckout?: number | null
+}
+
+type PublicSocialLink = {
+  id: string
+  platform?: string | null
+  url: string
 }
 
 function runWhenBrowserIdle(callback: () => void, timeout = 1200) {
@@ -130,29 +140,53 @@ function getProductPriceLabel(product: PublicProduct) {
   return product.price ? formatPrice(product.price) : 'Free'
 }
 
+function getPublicSocialUrl(link: PublicSocialLink) {
+  if (link.platform === 'email') {
+    return link.url.startsWith('mailto:') ? link.url : `mailto:${link.url}`
+  }
+  return link.url
+}
+
+function getPublicSocialIcon(platform?: string | null) {
+  switch (platform) {
+    case 'instagram':
+      return <Instagram className="h-4 w-4" />
+    case 'youtube':
+      return <Youtube className="h-4 w-4" />
+    case 'email':
+      return <Mail className="h-4 w-4" />
+    case 'whatsapp':
+      return <MessageCircle className="h-4 w-4" />
+    default:
+      return <Globe className="h-4 w-4" />
+  }
+}
+
 function ProductCard({
   product,
   username,
   cardBase,
   radiusClass,
   cardStyle,
-  onAddToCart,
 }: {
   product: PublicProduct
   username: string
   cardBase: string
   radiusClass: string
   cardStyle?: React.CSSProperties
-  onAddToCart?: (e: React.MouseEvent) => void
 }) {
-  const price = getProductPriceLabel(product)
+  const hasDiscount = !!(product.salePrice && product.price)
+  const price = hasDiscount
+    ? formatPrice(product.salePrice as number)
+    : getProductPriceLabel(product)
+  const originalPrice = hasDiscount ? formatPrice(product.price as number) : null
   const productImages = product.images
   const hasImage = !!productImages?.length
 
   return (
     <Card
       className={cn(
-        'group w-full overflow-hidden transition-all hover:-translate-y-0.5',
+        'group w-full overflow-hidden border border-border bg-background shadow-sm transition-all hover:-translate-y-0.5',
         cardBase,
         radiusClass,
       )}
@@ -167,47 +201,33 @@ function ProductCard({
         />
       }
     >
-      <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
+      <div className="aspect-square w-full overflow-hidden bg-muted">
         {hasImage ? (
           <img
             loading="lazy"
             decoding="async"
             width={640}
-            height={360}
+            height={640}
             src={productImages[0]}
             alt={product.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <ShoppingCart className="h-8 w-8 opacity-50" />
-          </div>
+          <div className="h-full w-full bg-muted" />
         )}
       </div>
 
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="p-4">
         <div className="space-y-1">
           <h3 className="line-clamp-2 text-sm font-semibold">
             {product.title}
           </h3>
-          <p className="text-sm font-medium text-muted-foreground">{price}</p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="flex-1">
-            View
-          </Button>
-          {onAddToCart ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="flex-1"
-              onClick={onAddToCart}
-            >
-              <ShoppingCart className="h-4 w-4" />
-              Add to cart
-            </Button>
-          ) : null}
+          <div className="flex items-center gap-2 text-sm">
+            <p className="font-semibold text-primary">{price}</p>
+            {originalPrice ? (
+              <p className="text-muted-foreground line-through">{originalPrice}</p>
+            ) : null}
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -293,11 +313,6 @@ export const Route = createFileRoute('/$username/')({
     }
     return data
   },
-  validateSearch: (search: Record<string, unknown>) => {
-    return {
-      tab: (search.tab as string) || 'profile',
-    }
-  },
   head: ({ loaderData }) => {
     const showBanner = loaderData?.user.appearanceBannerEnabled !== false
     const lcpHref = showBanner ? loaderData?.user.appearanceBgImageUrl : null
@@ -305,12 +320,12 @@ export const Route = createFileRoute('/$username/')({
     return {
       links: lcpHref
         ? [
-            {
-              rel: 'preload',
-              as: 'image',
-              href: lcpHref,
-            },
-          ]
+          {
+            rel: 'preload',
+            as: 'image',
+            href: lcpHref,
+          },
+        ]
         : [],
     }
   },
@@ -319,13 +334,10 @@ export const Route = createFileRoute('/$username/')({
 
 function UserProfile() {
   const { user, blocks, products, socialLinks } = Route.useLoaderData()
-
-  const { tab } = Route.useSearch()
-  const navigate = Route.useNavigate()
+  const [tab, setTab] = React.useState<'profile' | 'products'>('profile')
 
   const isBanner =
     user.appearanceBannerEnabled !== false && !!user.appearanceBgImageUrl
-  const isFullPageBg = false
 
   const [areBlocksReady, setAreBlocksReady] = React.useState(false)
 
@@ -360,8 +372,11 @@ function UserProfile() {
   const productMap = new Map(
     (products as Array<PublicProduct>).map((product) => [product.id, product]),
   )
-
-  const { addItem } = useCartStore()
+  const socialItems = socialLinks as Array<PublicSocialLink>
+  const nonProductBlocks = React.useMemo(
+    () => (blocks as Array<PublicBlock>).filter((block) => block.type !== 'product'),
+    [blocks],
+  )
 
   React.useEffect(() => {
     const username = user.username
@@ -380,6 +395,68 @@ function UserProfile() {
   }
 
   const lcpBannerSrc = user.appearanceBgImageUrl
+  const profileBlocksSection = (
+    <PublicProfileBlocks
+      areBlocksReady={areBlocksReady}
+      blocks={nonProductBlocks}
+      cardBase={cardBase}
+      cardBaseWithHover={cardBaseWithHover}
+      radiusClass={radiusClass}
+      cardStyle={blockInlineStyle}
+      onOpenBlockUrl={openBlockUrl}
+      onTrackClick={(blockId) => {
+        void trpcClient.block.trackClick.mutate({ id: blockId })
+      }}
+      renderVideoBlock={(block) => (
+        <DeferredVideoEmbed
+          key={block.id}
+          block={block}
+          cardClass={cardBase}
+          radiusClass={radiusClass}
+          cardStyle={blockInlineStyle}
+        />
+      )}
+      renderProductBlock={(block) => {
+        const selectedProduct = block.content ? productMap.get(block.content) : null
+        if (!selectedProduct) return null
+
+        return (
+          <ProductCard
+            key={block.id}
+            product={selectedProduct}
+            username={user.username || ''}
+            cardBase={cardBase}
+            radiusClass={radiusClass}
+            cardStyle={blockInlineStyle}
+          />
+        )
+      }}
+    />
+  )
+
+  const productsSection = !areBlocksReady ? (
+    (products as Array<PublicProduct>).map((product) => (
+      <div
+        key={`product-skeleton-${product.id}`}
+        className={getProductSkeletonClass()}
+      />
+    ))
+  ) : (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {(products as Array<PublicProduct>).map((product) => {
+        return (
+          <ProductCard
+            key={product.id}
+            product={product}
+            username={user.username || ''}
+            cardBase={cardBase}
+            radiusClass={radiusClass}
+            cardStyle={blockInlineStyle}
+          />
+        )
+      })}
+    </div>
+  )
 
   return (
     <div
@@ -396,150 +473,99 @@ function UserProfile() {
           <div className="absolute inset-0 bg-background/45" />
         </div>
       ) : null}
-      <SiteUserProfileHeader
-        avatarUrl={user.image || '/avatar-placeholder.png'}
-        username={user.name}
-      />
+      <SiteUserProfileHeader />
 
-      <ProfileBanner
-        isBanner={isBanner}
-        backgroundStyles={backgroundStyles}
-        bannerUrl={lcpBannerSrc}
-        userName={user.name}
-      />
-
-      <div
-        className={cn(
-          'relative z-20 mx-auto flex max-w-190 flex-col items-center gap-6 px-4 pb-16',
-          '-mt-8 md:-mt-24',
+      <div className="relative z-10 mx-auto min-h-screen w-full border-border/70 bg-background">
+        {isBanner && lcpBannerSrc ? (
+          <div className="h-[160px] w-full overflow-hidden md:h-[200px]">
+            <img
+              src={lcpBannerSrc}
+              alt={`${user.name} banner`}
+              width={1440}
+              height={200}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="h-[160px] w-full bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500 md:h-[200px]" />
         )}
-      >
-        <ProfileCard
-          className={cn(cardBase, radiusClass)}
-          style={blockInlineStyle}
-          user={user}
-          isFullPageBg={isFullPageBg}
-          id="profile-card-section"
-        />
 
-        <SocialLinks
-          className={cn(cardBase, radiusClass)}
-          style={blockInlineStyle}
-          socialLinks={socialLinks}
-          isFullPageBg={isFullPageBg}
-        />
-        <div className="flex-1 justify-start w-full mt-4">
-          <Tabs
-            value={tab}
-            onValueChange={(val) =>
-              navigate({
-                search: (prev: Record<string, unknown>) => ({
-                  ...prev,
-                  tab: val,
-                }),
-                replace: true,
-              })
-            }
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTab value="profile">Profile</TabsTab>
-              <TabsTab value="products">Products</TabsTab>
-            </TabsList>
-            <TabsPanel value="profile" className="mt-4 space-y-3 outline-none">
-              <PublicProfileBlocks
-                areBlocksReady={areBlocksReady}
-                blocks={blocks as Array<PublicBlock>}
-                cardBase={cardBase}
-                cardBaseWithHover={cardBaseWithHover}
-                radiusClass={radiusClass}
-                cardStyle={blockInlineStyle}
-                onOpenBlockUrl={openBlockUrl}
-                onTrackClick={(blockId) => {
-                  void trpcClient.block.trackClick.mutate({ id: blockId })
-                }}
-                renderVideoBlock={(block) => (
-                  <DeferredVideoEmbed
-                    key={block.id}
-                    block={block}
-                    cardClass={cardBase}
-                    radiusClass={radiusClass}
-                    cardStyle={blockInlineStyle}
-                  />
-                )}
-                renderProductBlock={(block) => {
-                  const selectedProduct = block.content
-                    ? productMap.get(block.content)
-                    : null
-                  if (!selectedProduct) return null
+        <div className=" sm:max-w-7xl mx-auto grid grid-cols-1 gap-8 px-5 pb-10 md:grid-cols-2 md:gap-10 md:px-10 md:pb-10">
+          <section className="relative pt-14 md:pt-[70px]">
+            <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full border-4 border-background shadow-lg md:-top-[60px] md:h-[120px] md:w-[120px]">
+              <AvatarImage src={user.image || '/avatar-placeholder.png'} />
+              <AvatarFallback className="text-lg font-bold">
+                {user.name.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
 
-                  return (
-                    <ProductCard
-                      key={block.id}
-                      product={selectedProduct}
-                      username={user.username || ''}
-                      cardBase={cardBase}
-                      radiusClass={radiusClass}
-                      cardStyle={blockInlineStyle}
-                    />
-                  )
-                }}
-              />
-            </TabsPanel>
+            <h1 id="profile-name" className="text-3xl font-bold md:text-4xl">
+              {user.name}
+            </h1>
+            {user.title ? (
+              <p className="mt-1 text-sm text-muted-foreground md:text-base">
+                {user.title}
+              </p>
+            ) : null}
+            {user.bio ? (
+              <p className="mt-4 max-w-[560px] text-sm leading-relaxed text-foreground/90 md:text-base">
+                {user.bio}
+              </p>
+            ) : null}
 
-            <TabsPanel value="products" className="mt-4 space-y-3 outline-none">
-              {!areBlocksReady ? (
-                (products as Array<PublicProduct>).map((product) => (
-                  <div
-                    key={`product-skeleton-${product.id}`}
-                    className={getProductSkeletonClass()}
-                  />
-                ))
-              ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {(products as Array<PublicProduct>).map((product) => {
-                    const handleAddToCart = (e: React.MouseEvent) => {
-                      e.preventDefault()
-                      e.stopPropagation()
+            {socialItems.length > 0 ? (
+              <div className="mt-5 flex w-full flex-wrap gap-3">
+                {socialItems.map((link) => (
+                  <a
+                    key={link.id}
+                    href={getPublicSocialUrl(link)}
+                    target={link.platform === 'email' ? undefined : '_blank'}
+                    rel={link.platform === 'email' ? undefined : 'noopener noreferrer'}
+                  >
+                    <Button variant="outline" size="icon" className="h-10 w-10 rounded-full">
+                      {getPublicSocialIcon(link.platform)}
+                    </Button>
+                  </a>
+                ))}
+              </div>
+            ) : null}
 
-                      const cartPrice = product.payWhatYouWant
-                        ? product.minimumPrice || 0
-                        : product.salePrice || product.price || 0
+            <div className="mt-6 md:hidden">
+              <Tabs
+                value={tab}
+                onValueChange={(val) => setTab(val as 'profile' | 'products')}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTab value="profile">Profile</TabsTab>
+                  <TabsTab value="products">Products</TabsTab>
+                </TabsList>
+                <TabsPanel value="profile" className="mt-4 space-y-3 outline-none">
+                  {profileBlocksSection}
+                </TabsPanel>
+                <TabsPanel value="products" className="mt-4 space-y-3 outline-none">
+                  {productsSection}e
+                </TabsPanel>
+              </Tabs>
+            </div>
 
-                      addItem({
-                        productId: product.id,
-                        title: product.title,
-                        price: cartPrice,
-                        image: product.images?.[0] || null,
-                        maxQuantity: product.totalQuantity,
-                        limitPerCheckout: product.limitPerCheckout,
-                      })
+            <div className="mt-6 hidden space-y-4 md:block">{profileBlocksSection}</div>
+          </section>
 
-                      toastManager.add({
-                        title: 'Added to cart',
-                        description: `${product.title} added to your cart`,
-                      })
-                    }
-
-                    return (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        username={user.username || ''}
-                        cardBase={cardBase}
-                        radiusClass={radiusClass}
-                        cardStyle={blockInlineStyle}
-                        onAddToCart={handleAddToCart}
-                      />
-                    )
-                  })}
-                </div>
-              )}
-            </TabsPanel>
-          </Tabs>
+          <aside className="pt-0 md:pt-10">
+            <div className="mb-5 border-b border-border pb-4">
+              <div className=" text-xl font-semibold">
+                Products
+              </div>
+            </div>
+            <div className="hidden space-y-5 md:block">{productsSection}</div>
+          </aside>
         </div>
 
-        <div className="mb-4 mt-16">
+        <div className="mb-4 mt-10 flex justify-center md:mt-16">
           <div className="flex items-center">
             <PublicMark />
           </div>

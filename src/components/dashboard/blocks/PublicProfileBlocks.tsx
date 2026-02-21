@@ -163,7 +163,7 @@ export function PublicProfileBlocks({
               <Link2Icon className="h-5 w-5 -rotate-45" />
             )}
           </div>
-          <span className="text-center text-sm font-semibold">
+          <span className="text-center text-md font-semibold">
             {block.title || (block.type === 'discord' ? 'Discord' : 'Link')}
           </span>
           <ArrowUpRight className="h-5 w-5 text-muted-foreground" />

@@ -20,7 +20,7 @@ export default function SiteUserProfileHeader() {
             <Link
               to="/"
             >
-              <LogoType className='invert' />
+              <LogoType />
             </Link>
 
             <div className="ml-auto flex items-center gap-3">

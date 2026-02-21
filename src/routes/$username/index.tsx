@@ -457,10 +457,10 @@ function UserProfile() {
             />
           </div>
         ) : (
-          <div className="h-[160px] w-full bg-gradient-to-br from-slate-900 via-slate-700 to-slate-500 md:h-[200px]" />
+          <div className="h-[160px] w-full md:h-[150px]" />
         )}
 
-        <div className="md:divide-x   sm:max-w-7xl mx-auto grid grid-cols-1  px-5  md:grid-cols-2  md:px-10 ">
+        <div className="md:divide-x  sm:max-w-7xl mx-auto grid grid-cols-1  px-5  md:grid-cols-2  md:px-10 ">
           <section className="relative pt-14 md:pt-[70px] md:pr-6">
             <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  md:-top-[60px] md:h-[120px] md:w-[120px]">
               <AvatarImage src={user.image || '/avatar-placeholder.png'} />
@@ -515,9 +515,9 @@ function UserProfile() {
             <div className="mt-6 hidden space-y-4 md:block">{profileBlocksSection}</div>
           </section>
 
-          <aside className="py-5 border-r hidden md:block ">
-            <div className="mb-5  md:px-6 border-b  border-border pb-4">
-              <div className="flex items-center gap-2 text-sm font-semibold">
+          <aside className="pb-6 md:border-y border-r hidden md:block">
+            <div className="mb-5 md:px-6 border-b  border-border py-4">
+              <div className="flex  items-center gap-2 text-sm font-semibold">
                 <Package2 className='fill-foreground text-background size-4' /> Products
               </div>
             </div>
@@ -525,7 +525,7 @@ function UserProfile() {
           </aside>
         </div>
 
-        <div className="border-t mb-4 pt-10 flex justify-center ">
+        <div className=" mb-4 pt-10 flex justify-center ">
           <div className="flex items-center">
             <PublicMark />
           </div>

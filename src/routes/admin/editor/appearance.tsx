@@ -96,7 +96,7 @@ type AppearanceUpdateInput = {
   appearanceTextFont?: AppearanceTextFont
 }
 
-function AppearanceEditor({ user, blocks }: { user: any; blocks: any[] }) {
+function AppearanceEditor({ user, blocks }: { user: any; blocks: Array<any> }) {
   const queryClient = useQueryClient()
   const { user: previewUser, blocks: previewBlocks, setUser, setBlocks, updateUser, setStatus } = usePreview()
 
@@ -180,9 +180,6 @@ function AppearanceEditor({ user, blocks }: { user: any; blocks: any[] }) {
     user.appearanceBlockShadowColor ?? APPEARANCE_DEFAULTS.blockShadowColor,
   )
 
-  const [textColor, setTextColor] = React.useState(
-    user.appearanceTextColor ?? APPEARANCE_DEFAULTS.textColor,
-  )
   const [textFont, setTextFont] = React.useState<AppearanceTextFont>(
     user.appearanceTextFont ?? APPEARANCE_DEFAULTS.textFont,
   )
@@ -247,8 +244,7 @@ function AppearanceEditor({ user, blocks }: { user: any; blocks: any[] }) {
         | 'appearanceBackgroundGradientTop'
         | 'appearanceBackgroundGradientBottom'
         | 'appearanceBlockColor'
-        | 'appearanceBlockShadowColor'
-        | 'appearanceTextColor',
+        | 'appearanceBlockShadowColor',
     ) => {
       if (!isValidAppearanceHexColor(value)) return
       save({ [field]: value } as AppearanceUpdateInput, { debounced: true })
@@ -312,10 +308,8 @@ function AppearanceEditor({ user, blocks }: { user: any; blocks: any[] }) {
   }
 
   const resetTextSection = () => {
-    setTextColor(APPEARANCE_DEFAULTS.textColor)
     setTextFont(APPEARANCE_DEFAULTS.textFont)
     save({
-      appearanceTextColor: APPEARANCE_DEFAULTS.textColor,
       appearanceTextFont: APPEARANCE_DEFAULTS.textFont,
     })
   }
@@ -547,17 +541,6 @@ function AppearanceEditor({ user, blocks }: { user: any; blocks: any[] }) {
             </Button>
           </CardHeader>
           <CardContent className="space-y-4 p-6">
-            <div className="space-y-2">
-              <Label>Text color</Label>
-              <ColorPicker
-                value={textColor}
-                onChange={setTextColor}
-                onCommit={(value) => {
-                  saveColor(value, 'appearanceTextColor')
-                }}
-              />
-            </div>
-
             <div className="space-y-2">
               <Label>Font</Label>
               <Select

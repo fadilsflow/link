@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ArrowUpRight, Link2Icon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { getReadableTextTokensForBackground } from '@/lib/appearance'
 import { getBlockTypeConfigOrDefault } from '@/lib/block-type-config'
 import { getBlockSkeletonClasses } from '@/lib/block-styles'
 import { cn } from '@/lib/utils'
@@ -21,6 +22,7 @@ interface PublicProfileBlocksProps {
   cardBaseWithHover: string
   radiusClass: string
   cardStyle?: React.CSSProperties
+  iconBackgroundColor?: string
   onOpenBlockUrl: (block: PublicProfileBlock) => void
   onTrackClick: (blockId: string) => void
   renderVideoBlock: (block: PublicProfileBlock) => React.ReactNode
@@ -40,11 +42,54 @@ export function PublicProfileBlocks({
   cardBaseWithHover,
   radiusClass,
   cardStyle,
+  iconBackgroundColor,
   onOpenBlockUrl,
   onTrackClick,
   renderVideoBlock,
   renderProductBlock,
 }: PublicProfileBlocksProps) {
+  const iconTokens = getReadableTextTokensForBackground(iconBackgroundColor)
+  const iconWrapperStyle = iconBackgroundColor
+    ? ({
+        backgroundColor: iconBackgroundColor,
+        '--foreground': iconTokens.foreground,
+        '--muted-foreground': iconTokens.mutedForeground,
+      } as React.CSSProperties)
+    : undefined
+  const sharedIconWrapClass =
+    'flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/80 '
+  const sharedRowClass =
+    'grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4'
+
+  const renderActionBlock = (params: {
+    key: string
+    title: string
+    icon: React.ReactNode
+    onClick: () => void
+    arrowClassName?: string
+  }) => (
+    <div
+      key={params.key}
+      className={cn(
+        'group w-full cursor-pointer overflow-hidden transition-all',
+        cardBaseWithHover,
+        radiusClass,
+      )}
+      style={cardStyle}
+      onClick={params.onClick}
+    >
+      <div className={sharedRowClass}>
+        <div className={sharedIconWrapClass} style={iconWrapperStyle}>
+          {params.icon}
+        </div>
+        <span className="text-center text-sm font-semibold text-foreground" >{params.title}</span>
+        <ArrowUpRight
+          className={cn('h-5 w-5 text-muted-foreground', params.arrowClassName)}
+        />
+      </div>
+    </div>
+  )
+
   if (!areBlocksReady) {
     return blocks.map((block) => (
       <div key={block.id} className={getBlockSkeletonClasses(block.type)} />
@@ -54,12 +99,16 @@ export function PublicProfileBlocks({
   return blocks.map((block) => {
     if (block.type === 'text') {
       return (
-        <div key={block.id} className="w-full space-y-1 py-2 text-center min-h-16">
-          <h2 className={cn('text-2xl font-bold', 'text-foreground')}>
+        <div
+          key={block.id}
+          className={cn('w-full min-h-16 space-y-1 p-4 text-center', cardBase, radiusClass)}
+          style={cardStyle}
+        >
+          <h2 className="text-2xl font-bold text-foreground">
             {block.title}
           </h2>
           {block.content && (
-            <p className={cn('text-sm', 'text-foreground')}>{block.content}</p>
+            <p className="text-sm text-foreground">{block.content}</p>
           )}
         </div>
       )
@@ -110,31 +159,17 @@ export function PublicProfileBlocks({
 
       const IconComponent = getBlockTypeConfigOrDefault('telegram').icon
 
-      return (
-        <div
-          key={block.id}
-          className={cn(
-            'group w-full cursor-pointer overflow-hidden transition-all',
-            cardBaseWithHover,
-            radiusClass,
-          )}
-          style={cardStyle}
-          onClick={() => {
-            onTrackClick(block.id)
-            window.open(telegramUrl, '_blank', 'noopener,noreferrer')
-          }}
-        >
-          <div className="grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border-2 border-background ring-1 ring-primary/10 bg-muted/80">
-              <IconComponent className="h-5 w-5" />
-            </div>
-            <span className="text-center text-sm font-semibold">
-              {block.title || 'Telegram'}
-            </span>
-            <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </div>
-        </div>
-      )
+      return renderActionBlock({
+        key: block.id,
+        title: block.title || 'Telegram',
+        icon: <IconComponent className="h-5 w-5 text-foreground" />,
+        onClick: () => {
+          onTrackClick(block.id)
+          window.open(telegramUrl, '_blank', 'noopener,noreferrer')
+        },
+        arrowClassName:
+          'transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5',
+      })
     }
 
     if (block.type === 'discord' && !block.url) {
@@ -144,31 +179,16 @@ export function PublicProfileBlocks({
     const iconType = block.type === 'discord' ? 'discord' : 'link'
     const IconComponent = getBlockTypeConfigOrDefault(iconType).icon
 
-    return (
-      <div
-        key={block.id}
-        className={cn(
-          'group w-full cursor-pointer overflow-hidden transition-all',
-          cardBaseWithHover,
-          radiusClass,
-        )}
-        style={cardStyle}
-        onClick={() => onOpenBlockUrl(block)}
-      >
-        <div className="grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border-2 border-background ring-1 ring-primary/10 bg-muted/80">
-            {block.type === 'discord' ? (
-              <IconComponent className="h-5 w-5" />
-            ) : (
-              <Link2Icon className="h-5 w-5 -rotate-45" />
-            )}
-          </div>
-          <span className="text-center text-md font-semibold">
-            {block.title || (block.type === 'discord' ? 'Discord' : 'Link')}
-          </span>
-          <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
-        </div>
-      </div>
-    )
+    return renderActionBlock({
+      key: block.id,
+      title: block.title || (block.type === 'discord' ? 'Discord' : 'Link'),
+      icon:
+        block.type === 'discord' ? (
+          <IconComponent className="h-5 w-5 text-foreground" />
+        ) : (
+          <Link2Icon className="h-5 w-5 -rotate-45 text-foreground" />
+        ),
+      onClick: () => onOpenBlockUrl(block),
+    })
   })
 }

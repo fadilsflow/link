@@ -33,6 +33,91 @@ export const APPEARANCE_FONT_OPTIONS: Array<{
   { value: 'mono', label: 'Mono', family: 'Paper Mono' },
 ]
 
+const DARK_SURFACE_FOREGROUND = '#f8fafc'
+const DARK_SURFACE_MUTED_FOREGROUND = '#e2e8f0'
+const LIGHT_SURFACE_FOREGROUND = '#111827'
+const LIGHT_SURFACE_MUTED_FOREGROUND = '#475569'
+
+function normalizeHexColor(value: string): string | null {
+  const trimmed = value.trim()
+  if (!HEX_COLOR_PATTERN.test(trimmed)) return null
+
+  if (trimmed.length === 4) {
+    const r = trimmed[1]
+    const g = trimmed[2]
+    const b = trimmed[3]
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase()
+  }
+
+  return trimmed.toLowerCase()
+}
+
+function hexToRgb(value: string): [number, number, number] | null {
+  const normalized = normalizeHexColor(value)
+  if (!normalized) return null
+
+  const r = Number.parseInt(normalized.slice(1, 3), 16)
+  const g = Number.parseInt(normalized.slice(3, 5), 16)
+  const b = Number.parseInt(normalized.slice(5, 7), 16)
+  return [r, g, b]
+}
+
+function getRelativeLuminance([r, g, b]: [number, number, number]): number {
+  const toLinear = (channel: number) => {
+    const srgb = channel / 255
+    return srgb <= 0.04045
+      ? srgb / 12.92
+      : ((srgb + 0.055) / 1.055) ** 2.4
+  }
+
+  const lr = toLinear(r)
+  const lg = toLinear(g)
+  const lb = toLinear(b)
+  return 0.2126 * lr + 0.7152 * lg + 0.0722 * lb
+}
+
+function getReadableTextTokens(backgroundColor: string): {
+  foreground: string
+  mutedForeground: string
+} {
+  const rgb = hexToRgb(backgroundColor)
+  if (!rgb) {
+    return {
+      foreground: LIGHT_SURFACE_FOREGROUND,
+      mutedForeground: LIGHT_SURFACE_MUTED_FOREGROUND,
+    }
+  }
+
+  const luminance = getRelativeLuminance(rgb)
+  const isDarkSurface = luminance < 0.4
+
+  return isDarkSurface
+    ? {
+        foreground: DARK_SURFACE_FOREGROUND,
+        mutedForeground: DARK_SURFACE_MUTED_FOREGROUND,
+      }
+    : {
+        foreground: LIGHT_SURFACE_FOREGROUND,
+        mutedForeground: LIGHT_SURFACE_MUTED_FOREGROUND,
+      }
+}
+
+export function getReadableTextTokensForBackground(
+  backgroundColor?: string | null,
+): {
+  foreground: string
+  mutedForeground: string
+} {
+  if (!backgroundColor) {
+    return {
+      foreground: LIGHT_SURFACE_FOREGROUND,
+      mutedForeground: LIGHT_SURFACE_MUTED_FOREGROUND,
+    }
+  }
+
+  return getReadableTextTokens(backgroundColor)
+}
+
 export function getAppearanceFontClass(font?: AppearanceTextFont | null) {
   switch (font) {
     case 'heading':
@@ -51,20 +136,30 @@ export function getAppearanceBlockStyle(options: {
   blockShadowColor?: string | null
 }): CSSProperties {
   const { blockStyle, blockColor, blockShadowColor } = options
+  const resolvedBlockColor = blockColor || APPEARANCE_DEFAULTS.blockColor
+  const textTokens = getReadableTextTokens(resolvedBlockColor)
 
   if (blockStyle === 'flat') {
     return {
-      backgroundColor: blockColor || APPEARANCE_DEFAULTS.blockColor,
-    }
+      backgroundColor: resolvedBlockColor,
+      '--foreground': textTokens.foreground,
+      '--card-foreground': textTokens.foreground,
+      '--popover-foreground': textTokens.foreground,
+      '--muted-foreground': textTokens.mutedForeground,
+    } as CSSProperties
   }
 
   if (blockStyle === 'shadow') {
     const shadowColor = blockShadowColor || APPEARANCE_DEFAULTS.blockShadowColor
     return {
-      backgroundColor: blockColor || APPEARANCE_DEFAULTS.blockColor,
+      backgroundColor: resolvedBlockColor,
       borderColor: shadowColor,
       // Use CSS variable so Tailwind hover classes can override it
       '--block-shadow-color': shadowColor,
+      '--foreground': textTokens.foreground,
+      '--card-foreground': textTokens.foreground,
+      '--popover-foreground': textTokens.foreground,
+      '--muted-foreground': textTokens.mutedForeground,
     } as CSSProperties
   }
 

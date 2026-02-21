@@ -1,5 +1,6 @@
-import type { CSSProperties } from 'react'
 import { Globe } from 'lucide-react'
+import type { CSSProperties } from 'react'
+import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
 
 import { Facebook } from '@/components/icon/facebook'
 import { GitHub } from '@/components/icon/github'
@@ -9,7 +10,6 @@ import { LinkedIn } from '@/components/icon/linkedin'
 import { WhatsApp } from '@/components/icon/whatsapp'
 import { XformerlyTwitter } from '@/components/icon/x'
 import { YouTube } from '@/components/icon/youtube'
-import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
 import {
   getSocialBlockButtonClasses,
   getSocialBlockIconClasses,
@@ -30,32 +30,45 @@ function getSocialUrl(link: PublicSocialLink): string {
   return link.url
 }
 
-function getSocialIcon(platform?: string | null) {
+function getSocialIcon(
+  platform?: string | null,
+  iconStyle?: CSSProperties,
+) {
   switch (platform) {
     case 'instagram':
-      return <Instagram className={getSocialBlockIconClasses()} />
+      return <Instagram className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'youtube':
-      return <YouTube className={getSocialBlockIconClasses()} />
+      return <YouTube className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'email':
-      return <Gmail className={getSocialBlockIconClasses()} />
+      return <Gmail className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'whatsapp':
-      return <WhatsApp className={getSocialBlockIconClasses()} />
+      return <WhatsApp className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'twitter':
       return (
         <XformerlyTwitter
-          className={cn(getSocialBlockIconClasses(), 'invert dark:invert-0')}
+          className={cn(
+            getSocialBlockIconClasses(),
+            iconStyle ? '' : 'invert dark:invert-0',
+          )}
+          style={iconStyle}
         />
       )
     case 'linkedin':
-      return <LinkedIn className={getSocialBlockIconClasses()} />
+      return <LinkedIn className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'github':
       return (
-        <GitHub className={cn(getSocialBlockIconClasses(), 'invert dark:invert-0')} />
+        <GitHub
+          className={cn(
+            getSocialBlockIconClasses(),
+            iconStyle ? '' : 'invert dark:invert-0',
+          )}
+          style={iconStyle}
+        />
       )
     case 'facebook':
-      return <Facebook className={getSocialBlockIconClasses()} />
+      return <Facebook className={getSocialBlockIconClasses()} style={iconStyle} />
     default:
-      return <Globe className={getSocialBlockIconClasses()} />
+      return <Globe className={getSocialBlockIconClasses()} style={iconStyle} />
   }
 }
 
@@ -64,6 +77,7 @@ interface SocialProfileBlocksProps {
   blockStyle: BlockStyle
   blockRadius: BlockRadius
   cardStyle?: CSSProperties
+  iconColor?: string
   className?: string
 }
 
@@ -72,8 +86,11 @@ export function SocialProfileBlocks({
   blockStyle,
   blockRadius,
   cardStyle,
+  iconColor,
   className,
 }: SocialProfileBlocksProps) {
+  const iconStyle = iconColor ? ({ color: iconColor } as CSSProperties) : undefined
+
   return (
     <div className={cn(getSocialBlocksWrapperClasses(), className)}>
       {links.map((link) => (
@@ -86,7 +103,7 @@ export function SocialProfileBlocks({
           style={cardStyle}
           aria-label={link.platform || 'website'}
         >
-          {getSocialIcon(link.platform)}
+          {getSocialIcon(link.platform, iconStyle)}
         </a>
       ))}
     </div>

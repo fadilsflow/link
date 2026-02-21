@@ -1,12 +1,10 @@
 import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { Package2, PlayCircle } from 'lucide-react'
+import type { PublicSocialLink } from '@/components/SocialProfileBlocks'
 import type { PublicProfileBlock } from '@/components/dashboard/blocks/PublicProfileBlocks'
 import { PublicProfileBlocks } from '@/components/dashboard/blocks/PublicProfileBlocks'
-import {
-  SocialProfileBlocks,
-  type PublicSocialLink,
-} from '@/components/SocialProfileBlocks'
+import { SocialProfileBlocks } from '@/components/SocialProfileBlocks'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getPublicProfile } from '@/lib/profile-server'
@@ -190,9 +188,9 @@ function ProductCard({
             {product.title}
           </h3>
           <div className="flex flex-col gap-2 text-sm">
-            <p className="font-semibold text-primary">{price}</p>
+            <p className="font-semibold text-foreground">{price}</p>
             {originalPrice ? (
-              <p className="text-muted-foreground text-xs line-through">{originalPrice}</p>
+              <p className="text-foreground/80 text-xs line-through">{originalPrice}</p>
             ) : null}
           </div>
         </div>
@@ -206,11 +204,13 @@ function DeferredVideoEmbed({
   cardClass,
   radiusClass,
   cardStyle,
+  iconColor,
 }: {
   block: PublicBlock
   cardClass: string
   radiusClass: string
   cardStyle?: React.CSSProperties
+  iconColor?: string
 }) {
   const { embedUrl, posterUrl, provider, youtubeVideoId } = React.useMemo(
     () => getVideoMeta(block.content),
@@ -227,7 +227,7 @@ function DeferredVideoEmbed({
       style={cardStyle}
     >
       <div className="flex items-center gap-2 text-sm font-semibold">
-        <PlayCircle className="h-4 w-4" />
+        <PlayCircle className="h-4 w-4" style={iconColor ? { color: iconColor } : undefined} />
         {block.title || 'Video'}
       </div>
 
@@ -326,6 +326,7 @@ function UserProfile() {
     blockColor: user.appearanceBlockColor,
     blockShadowColor: user.appearanceBlockShadowColor,
   })
+  const blockColor = user.appearanceBlockColor || undefined
   const backgroundStyles = getAppearancePageBackgroundStyle({
     backgroundType: user.appearanceBackgroundType,
     backgroundColor: user.appearanceBackgroundColor,
@@ -370,6 +371,7 @@ function UserProfile() {
       cardBaseWithHover={cardBaseWithHover}
       radiusClass={radiusClass}
       cardStyle={blockInlineStyle}
+      iconBackgroundColor={user.appearanceBackgroundColor || undefined}
       onOpenBlockUrl={openBlockUrl}
       onTrackClick={(blockId) => {
         void trpcClient.block.trackClick.mutate({ id: blockId })
@@ -381,6 +383,7 @@ function UserProfile() {
           cardClass={cardBase}
           radiusClass={radiusClass}
           cardStyle={blockInlineStyle}
+          iconColor={blockColor}
         />
       )}
       renderProductBlock={(block) => {
@@ -442,7 +445,7 @@ function UserProfile() {
       ) : null}
       <SiteUserProfileHeader />
 
-      <div className="relative z-10 mx-auto min-h-screen w-full border-border/70 bg-background">
+      <div className="relative z-10 mx-auto min-h-screen w-full border-border/70">
         {isBanner && lcpBannerSrc ? (
           <div className="h-[160px] w-full overflow-hidden md:h-[200px]">
             <img
@@ -489,6 +492,7 @@ function UserProfile() {
                 blockStyle={blockStyle}
                 blockRadius={blockRadius}
                 cardStyle={blockInlineStyle}
+                iconColor={blockColor}
                 className="mt-5"
               />
             ) : null}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Camera, Paintbrush, X } from 'lucide-react'
+import { Camera, X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { uploadFile } from '@/lib/upload-client'
 import { useFileUpload } from '@/hooks/use-file-upload'
@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/dialog'
 
 import { Field, FieldLabel } from '@/components/ui/field'
-import { Link } from '@tanstack/react-router'
 
 interface ProfileData {
   name: string
@@ -186,9 +185,6 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
         </div>
         <Button variant="secondary" size="sm" onClick={() => setDialogOpen(true)}>
           Edit Profile
-        </Button>
-        <Button variant="secondary" size="icon-sm" render={<Link to='/admin/editor/appearance' />}>
-          <Paintbrush />
         </Button>
 
       </div>

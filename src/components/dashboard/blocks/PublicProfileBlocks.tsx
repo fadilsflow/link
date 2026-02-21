@@ -2,7 +2,6 @@ import * as React from 'react'
 import { ArrowUpRight, Link2Icon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { getBlockTypeConfigOrDefault } from '@/lib/block-type-config'
 import { getBlockSkeletonClasses } from '@/lib/block-styles'
 import { cn } from '@/lib/utils'
@@ -68,7 +67,7 @@ export function PublicProfileBlocks({
 
     if (block.type === 'image') {
       return (
-        <Card
+        <div
           key={block.id}
           className={cn('w-full overflow-hidden', cardBase, radiusClass)}
           style={cardStyle}
@@ -93,7 +92,7 @@ export function PublicProfileBlocks({
               </Button>
             </div>
           )}
-        </Card>
+        </div>
       )
     }
 
@@ -112,10 +111,10 @@ export function PublicProfileBlocks({
       const IconComponent = getBlockTypeConfigOrDefault('telegram').icon
 
       return (
-        <Card
+        <div
           key={block.id}
           className={cn(
-            'group w-full cursor-pointer overflow-hidden transition-all min-h-20',
+            'group w-full cursor-pointer overflow-hidden transition-all',
             cardBaseWithHover,
             radiusClass,
           )}
@@ -126,7 +125,7 @@ export function PublicProfileBlocks({
           }}
         >
           <div className="grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border-2 border-background ring-1 ring-primary/10 bg-muted/80">
               <IconComponent className="h-5 w-5" />
             </div>
             <span className="text-center text-sm font-semibold">
@@ -134,7 +133,7 @@ export function PublicProfileBlocks({
             </span>
             <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </div>
-        </Card>
+        </div>
       )
     }
 
@@ -146,10 +145,10 @@ export function PublicProfileBlocks({
     const IconComponent = getBlockTypeConfigOrDefault(iconType).icon
 
     return (
-      <Card
+      <div
         key={block.id}
         className={cn(
-          'group w-full cursor-pointer overflow-hidden transition-all min-h-20',
+          'group w-full cursor-pointer overflow-hidden transition-all',
           cardBaseWithHover,
           radiusClass,
         )}
@@ -157,7 +156,7 @@ export function PublicProfileBlocks({
         onClick={() => onOpenBlockUrl(block)}
       >
         <div className="grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-muted/80">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border-2 border-background ring-1 ring-primary/10 bg-muted/80">
             {block.type === 'discord' ? (
               <IconComponent className="h-5 w-5" />
             ) : (
@@ -167,9 +166,9 @@ export function PublicProfileBlocks({
           <span className="text-center text-sm font-semibold">
             {block.title || (block.type === 'discord' ? 'Discord' : 'Link')}
           </span>
-          <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
         </div>
-      </Card>
+      </div>
     )
   })
 }

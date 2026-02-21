@@ -462,7 +462,7 @@ function UserProfile() {
 
         <div className=" sm:max-w-7xl mx-auto grid grid-cols-1 gap-8 px-5 pb-10 md:grid-cols-2 md:gap-10 md:px-10 md:pb-10">
           <section className="relative pt-14 md:pt-[70px]">
-            <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full border-4 border-background shadow-lg md:-top-[60px] md:h-[120px] md:w-[120px]">
+            <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  md:-top-[60px] md:h-[120px] md:w-[120px]">
               <AvatarImage src={user.image || '/avatar-placeholder.png'} />
               <AvatarFallback className="text-lg font-bold">
                 {user.name.slice(0, 2).toUpperCase()}

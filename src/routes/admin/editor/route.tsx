@@ -39,7 +39,7 @@ function EditorLayout() {
     <main className="grid grid-cols-1 lg:grid-cols-[2.2fr_1.4fr] min-h-screen lg:h-screen lg:overflow-hidden text-zinc-900">
       {/* Content Area - Outlet renders child routes */}
       <div className="lg:h-full lg:overflow-y-auto no-scrollbar scroll-smooth">
-        <div className="p-6">
+        <div className="">
           <Outlet />
         </div>
       </div>

@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
 import type { AppearanceBackgroundType, AppearanceTextFont } from '@/lib/appearance'
+import { Separator } from "@/components/ui/separator";
 import {
   APPEARANCE_DEFAULTS,
   APPEARANCE_FONT_OPTIONS,
@@ -321,265 +322,267 @@ function AppearanceEditor({ user, blocks }: { user: any; blocks: any[] }) {
 
   return (
     <>
-      <AppHeader>
+      <AppHeader className='px-6 pt-6'>
         <AppHeaderContent title="Appearance">
-          <AppHeaderDescription>
+          {/* <AppHeaderDescription>
             Customize banner, background, blocks, and text for your public page.
-          </AppHeaderDescription>
+          </AppHeaderDescription> */}
         </AppHeaderContent>
       </AppHeader>
+      <Separator />
+      <div className="p-6">
+        <Card className="shadow-sm overflow-hidden">
+          <CardHeader className="border-b flex flex-row items-center justify-between">
+            <CardTitle>Banner</CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={resetBannerSection}
+            >
+              Reset
+            </Button>
+          </CardHeader>
 
-      <Card className="shadow-sm overflow-hidden">
-        <CardHeader className="border-b flex flex-row items-center justify-between">
-          <CardTitle>Banner</CardTitle>
-          <Button
-            type="button"
-            variant="outline"
-            className="gap-2"
-            onClick={resetBannerSection}
-          >
-            Reset
-          </Button>
-        </CardHeader>
-
-        <CardContent className="p-6 space-y-4">
-          <div className="flex items-center justify-between rounded-xl border p-3">
-            <div>
-              <Label htmlFor="banner-enabled">Show banner</Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Turn off if you want a profile page without banner.
-              </p>
-            </div>
-            <Switch
-              id="banner-enabled"
-              checked={bannerEnabled}
-              onCheckedChange={(checked) => {
-                setBannerEnabled(checked)
-                save({ appearanceBannerEnabled: checked })
-              }}
-            />
-          </div>
-
-          {bannerEnabled ? (
-            <BannerSelector
-              currentBannerUrl={currentBannerUrl}
-              currentBannerId={currentBannerId}
-              onBannerSelect={handleBannerSelect}
-            />
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-sm mt-6">
-        <CardHeader className="border-b flex flex-row items-center justify-between">
-          <CardTitle>Background</CardTitle>
-          <Button
-            type="button"
-            variant="outline"
-            className="gap-2"
-            onClick={resetBackgroundSection}
-          >
-            Reset
-          </Button>
-        </CardHeader>
-        <CardContent className="p-6 space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <SectionOptionCard
-              selected={backgroundType === 'none'}
-              title="Default"
-              description="Use default page background."
-              onClick={() => {
-                setBackgroundType('none')
-                save({ appearanceBackgroundType: 'none' })
-              }}
-            />
-            <SectionOptionCard
-              selected={backgroundType === 'flat'}
-              title="Flat Color"
-              description="Single color background."
-              onClick={() => {
-                setBackgroundType('flat')
-                save({ appearanceBackgroundType: 'flat' })
-              }}
-            />
-            <SectionOptionCard
-              selected={backgroundType === 'gradient'}
-              title="Gradient"
-              description="Top and bottom color gradient."
-              onClick={() => {
-                setBackgroundType('gradient')
-                save({ appearanceBackgroundType: 'gradient' })
-              }}
-            />
-            <SectionOptionCard
-              selected={backgroundType === 'avatar-blur'}
-              title="Avatar Blur"
-              description="Use profile image as blurred background."
-              onClick={() => {
-                setBackgroundType('avatar-blur')
-                save({ appearanceBackgroundType: 'avatar-blur' })
-              }}
-            />
-            <SectionOptionCard
-              selected={backgroundType === 'image'}
-              title="Image Upload"
-              description="Upload a full-page background image."
-              onClick={() => {
-                setBackgroundType('image')
-                save({ appearanceBackgroundType: 'image' })
-              }}
-            />
-          </div>
-
-          {backgroundType === 'flat' ? (
-            <div className="space-y-2">
-              <Label>Background color</Label>
-              <ColorPicker
-                value={backgroundColor}
-                onChange={setBackgroundColor}
-                onCommit={(value) => {
-                  saveColor(value, 'appearanceBackgroundColor')
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center justify-between rounded-xl border p-3">
+              <div>
+                <Label htmlFor="banner-enabled">Show banner</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Turn off if you want a profile page without banner.
+                </p>
+              </div>
+              <Switch
+                id="banner-enabled"
+                checked={bannerEnabled}
+                onCheckedChange={(checked) => {
+                  setBannerEnabled(checked)
+                  save({ appearanceBannerEnabled: checked })
                 }}
               />
             </div>
-          ) : null}
 
-          {backgroundType === 'gradient' ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Top color</Label>
-                <ColorPicker
-                  value={backgroundGradientTop}
-                  onChange={setBackgroundGradientTop}
-                  onCommit={(value) => {
-                    saveColor(value, 'appearanceBackgroundGradientTop')
-                  }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Bottom color</Label>
-                <ColorPicker
-                  value={backgroundGradientBottom}
-                  onChange={setBackgroundGradientBottom}
-                  onCommit={(value) => {
-                    saveColor(value, 'appearanceBackgroundGradientBottom')
-                  }}
-                />
-              </div>
-            </div>
-          ) : null}
+            {bannerEnabled ? (
+              <BannerSelector
+                currentBannerUrl={currentBannerUrl}
+                currentBannerId={currentBannerId}
+                onBannerSelect={handleBannerSelect}
+              />
+            ) : null}
+          </CardContent>
+        </Card>
 
-          {backgroundType === 'image' ? (
-            <ImageUploader
-              value={backgroundImageUrl}
-              onChange={(url) => {
-                setBackgroundImageUrl(url)
-                save(
-                  { appearanceBackgroundImageUrl: url || null },
-                  { debounced: true },
-                )
-              }}
-              folder="backgrounds"
-              aspectRatio="video"
-              placeholder="Upload full-page background"
-            />
-          ) : null}
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-sm mt-6">
-        <CardHeader className="border-b flex flex-row items-center justify-between">
-          <CardTitle>Blocks</CardTitle>
-          <Button
-            type="button"
-            variant="outline"
-            className="gap-2"
-            onClick={resetBlockSection}
-          >
-            Reset
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4 p-6">
-          <BlockStyleSelector
-            blockStyle={blockStyle}
-            blockRadius={blockRadius}
-            onChange={handleBlockStyleChange}
-          />
-
-          <div className="space-y-2">
-            <Label>Block color</Label>
-            <ColorPicker
-              value={blockColor}
-              onChange={setBlockColor}
-              onCommit={(value) => {
-                saveColor(value, 'appearanceBlockColor')
-              }}
-              disabled={blockStyle === 'basic'}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Shadow color</Label>
-            <ColorPicker
-              value={blockShadowColor}
-              onChange={setBlockShadowColor}
-              onCommit={(value) => {
-                saveColor(value, 'appearanceBlockShadowColor')
-              }}
-              disabled={blockStyle !== 'shadow'}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-sm mt-6">
-        <CardHeader className="border-b flex flex-row items-center justify-between">
-          <CardTitle>Text</CardTitle>
-          <Button
-            type="button"
-            variant="outline"
-            className="gap-2"
-            onClick={resetTextSection}
-          >
-            Reset
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4 p-6">
-          <div className="space-y-2">
-            <Label>Text color</Label>
-            <ColorPicker
-              value={textColor}
-              onChange={setTextColor}
-              onCommit={(value) => {
-                saveColor(value, 'appearanceTextColor')
-              }}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Font</Label>
-            <Select
-              value={textFont}
-              onValueChange={(value) => {
-                const next = value as AppearanceTextFont
-                setTextFont(next)
-                save({ appearanceTextFont: next })
-              }}
+        <Card className="shadow-sm mt-6">
+          <CardHeader className="border-b flex flex-row items-center justify-between">
+            <CardTitle>Background</CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={resetBackgroundSection}
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {APPEARANCE_FONT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label} ({option.family})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+              Reset
+            </Button>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <SectionOptionCard
+                selected={backgroundType === 'none'}
+                title="Default"
+                description="Use default page background."
+                onClick={() => {
+                  setBackgroundType('none')
+                  save({ appearanceBackgroundType: 'none' })
+                }}
+              />
+              <SectionOptionCard
+                selected={backgroundType === 'flat'}
+                title="Flat Color"
+                description="Single color background."
+                onClick={() => {
+                  setBackgroundType('flat')
+                  save({ appearanceBackgroundType: 'flat' })
+                }}
+              />
+              <SectionOptionCard
+                selected={backgroundType === 'gradient'}
+                title="Gradient"
+                description="Top and bottom color gradient."
+                onClick={() => {
+                  setBackgroundType('gradient')
+                  save({ appearanceBackgroundType: 'gradient' })
+                }}
+              />
+              <SectionOptionCard
+                selected={backgroundType === 'avatar-blur'}
+                title="Avatar Blur"
+                description="Use profile image as blurred background."
+                onClick={() => {
+                  setBackgroundType('avatar-blur')
+                  save({ appearanceBackgroundType: 'avatar-blur' })
+                }}
+              />
+              <SectionOptionCard
+                selected={backgroundType === 'image'}
+                title="Image Upload"
+                description="Upload a full-page background image."
+                onClick={() => {
+                  setBackgroundType('image')
+                  save({ appearanceBackgroundType: 'image' })
+                }}
+              />
+            </div>
+
+            {backgroundType === 'flat' ? (
+              <div className="space-y-2">
+                <Label>Background color</Label>
+                <ColorPicker
+                  value={backgroundColor}
+                  onChange={setBackgroundColor}
+                  onCommit={(value) => {
+                    saveColor(value, 'appearanceBackgroundColor')
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {backgroundType === 'gradient' ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Top color</Label>
+                  <ColorPicker
+                    value={backgroundGradientTop}
+                    onChange={setBackgroundGradientTop}
+                    onCommit={(value) => {
+                      saveColor(value, 'appearanceBackgroundGradientTop')
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Bottom color</Label>
+                  <ColorPicker
+                    value={backgroundGradientBottom}
+                    onChange={setBackgroundGradientBottom}
+                    onCommit={(value) => {
+                      saveColor(value, 'appearanceBackgroundGradientBottom')
+                    }}
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {backgroundType === 'image' ? (
+              <ImageUploader
+                value={backgroundImageUrl}
+                onChange={(url) => {
+                  setBackgroundImageUrl(url)
+                  save(
+                    { appearanceBackgroundImageUrl: url || null },
+                    { debounced: true },
+                  )
+                }}
+                folder="backgrounds"
+                aspectRatio="video"
+                placeholder="Upload full-page background"
+              />
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm mt-6">
+          <CardHeader className="border-b flex flex-row items-center justify-between">
+            <CardTitle>Blocks</CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={resetBlockSection}
+            >
+              Reset
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4 p-6">
+            <BlockStyleSelector
+              blockStyle={blockStyle}
+              blockRadius={blockRadius}
+              onChange={handleBlockStyleChange}
+            />
+
+            <div className="space-y-2">
+              <Label>Block color</Label>
+              <ColorPicker
+                value={blockColor}
+                onChange={setBlockColor}
+                onCommit={(value) => {
+                  saveColor(value, 'appearanceBlockColor')
+                }}
+                disabled={blockStyle === 'basic'}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Shadow color</Label>
+              <ColorPicker
+                value={blockShadowColor}
+                onChange={setBlockShadowColor}
+                onCommit={(value) => {
+                  saveColor(value, 'appearanceBlockShadowColor')
+                }}
+                disabled={blockStyle !== 'shadow'}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm mt-6">
+          <CardHeader className="border-b flex flex-row items-center justify-between">
+            <CardTitle>Text</CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              onClick={resetTextSection}
+            >
+              Reset
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4 p-6">
+            <div className="space-y-2">
+              <Label>Text color</Label>
+              <ColorPicker
+                value={textColor}
+                onChange={setTextColor}
+                onCommit={(value) => {
+                  saveColor(value, 'appearanceTextColor')
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Font</Label>
+              <Select
+                value={textFont}
+                onValueChange={(value) => {
+                  const next = value as AppearanceTextFont
+                  setTextFont(next)
+                  save({ appearanceTextFont: next })
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {APPEARANCE_FONT_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label} ({option.family})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </>
   )
 }

@@ -18,6 +18,7 @@ import { usePreview } from '@/lib/preview-context'
 import { BlockTypeSelector } from '@/components/dashboard/BlockTypeSelector'
 import { BlockFormDialog } from '@/components/dashboard/BlockFormDialog'
 import { blockCreateInputSchema, getDefaultBlockValues } from '@/lib/block-form'
+import { Separator } from '@/components/ui/separator'
 
 export const Route = createFileRoute('/admin/editor/profiles')({
   component: AdminDashboard,
@@ -320,65 +321,69 @@ function AdminDashboard() {
   if (!user) return null
 
   return (
-    <div className="space-y-4 pb-20">
-      <AppHeader>
+    <div className="pb-20">
+      <AppHeader className='px-6 pt-6'>
         <AppHeaderContent title="My Page">
-          <AppHeaderDescription>
+          {/* <AppHeaderDescription>
             Manage the products that appear on your public profile.
-          </AppHeaderDescription>
+          </AppHeaderDescription> */}
         </AppHeaderContent>
       </AppHeader>
-      <section>
-        <ProfileEditor user={user} onSave={handleProfileSave} />
-      </section>
+      <Separator />
 
-      <section>
-        <SocialEditor
-          username={user.username ?? ''}
-          socialLinks={dashboardData.socialLinks}
-        />
-      </section>
+      <div className="space-y-4 p-6">
+        <section>
+          <ProfileEditor user={user} onSave={handleProfileSave} />
+        </section>
 
-      <section className="space-y-6">
-        <BlockTypeSelector
-          open={isAddBlockOpen}
+        <section>
+          <SocialEditor
+            username={user.username ?? ''}
+            socialLinks={dashboardData.socialLinks}
+          />
+        </section>
+
+        <section className="space-y-6">
+          <BlockTypeSelector
+            open={isAddBlockOpen}
+            onOpenChange={(open) => {
+              setIsAddBlockOpen(open)
+              if (!open && blockFormState?.mode === 'create') {
+                setBlockFormState(null)
+              }
+            }}
+            onSelect={handleAddBlockTypeSelect}
+          />
+
+          <BlockList
+            blocks={localBlocks}
+            products={productOptions}
+            onEdit={handleEditBlock}
+            onToggleEnabled={handleToggleBlockEnabled}
+            onReorder={handleReorder}
+          />
+        </section>
+
+        <BlockFormDialog
+          open={!!blockFormState}
           onOpenChange={(open) => {
-            setIsAddBlockOpen(open)
-            if (!open && blockFormState?.mode === 'create') {
-              setBlockFormState(null)
-            }
+            if (!open) setBlockFormState(null)
           }}
-          onSelect={handleAddBlockTypeSelect}
-        />
-
-        <BlockList
-          blocks={localBlocks}
+          mode={blockFormState?.mode || 'create'}
+          values={
+            blockFormState?.values || getDefaultBlockValues('link')
+          }
           products={productOptions}
-          onEdit={handleEditBlock}
-          onToggleEnabled={handleToggleBlockEnabled}
-          onReorder={handleReorder}
+          submitting={createBlock.isPending || updateBlockMutation.isPending}
+          deleting={deleteBlockMutation.isPending}
+          onDelete={async () => {
+            if (blockFormState?.mode !== 'edit' || !blockFormState.blockId) return
+            await deleteBlockMutation.mutateAsync({ id: blockFormState.blockId })
+            setBlockFormState(null)
+          }}
+          onSubmit={handleBlockFormSubmit}
         />
-      </section>
-
-      <BlockFormDialog
-        open={!!blockFormState}
-        onOpenChange={(open) => {
-          if (!open) setBlockFormState(null)
-        }}
-        mode={blockFormState?.mode || 'create'}
-        values={
-          blockFormState?.values || getDefaultBlockValues('link')
-        }
-        products={productOptions}
-        submitting={createBlock.isPending || updateBlockMutation.isPending}
-        deleting={deleteBlockMutation.isPending}
-        onDelete={async () => {
-          if (blockFormState?.mode !== 'edit' || !blockFormState.blockId) return
-          await deleteBlockMutation.mutateAsync({ id: blockFormState.blockId })
-          setBlockFormState(null)
-        }}
-        onSubmit={handleBlockFormSubmit}
-      />
+      </div>
     </div>
   )
 }

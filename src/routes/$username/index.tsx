@@ -5,9 +5,7 @@ import {
   Instagram,
   Mail,
   MessageCircle,
-  Package,
   PlayCircle,
-  ShoppingCart,
   Youtube,
 } from 'lucide-react'
 import type { PublicProfileBlock } from '@/components/dashboard/blocks/PublicProfileBlocks'
@@ -201,31 +199,32 @@ function ProductCard({
         />
       }
     >
-      <div className="aspect-square w-full overflow-hidden bg-muted">
-        {hasImage ? (
-          <img
-            loading="lazy"
-            decoding="async"
-            width={640}
-            height={640}
-            src={productImages[0]}
-            alt={product.title}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        ) : (
-          <div className="h-full w-full bg-muted" />
-        )}
-      </div>
+      <CardContent className="p-2">
+        <div className="aspect-square w-full overflow-hidden bg-muted">
+          {hasImage ? (
+            <img
+              loading="lazy"
+              decoding="async"
+              width={640}
+              height={640}
+              src={productImages[0]}
+              alt={product.title}
+              className="rounded-xl h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="h-full w-full bg-muted" />
+          )}
+        </div>
 
-      <CardContent className="p-4">
-        <div className="space-y-1">
+
+        <div className="space-y-1 mt-2">
           <h3 className="line-clamp-2 text-sm font-semibold">
             {product.title}
           </h3>
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex flex-col gap-2 text-sm">
             <p className="font-semibold text-primary">{price}</p>
             {originalPrice ? (
-              <p className="text-muted-foreground line-through">{originalPrice}</p>
+              <p className="text-muted-foreground text-xs line-through">{originalPrice}</p>
             ) : null}
           </div>
         </div>

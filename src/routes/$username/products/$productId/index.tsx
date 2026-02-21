@@ -142,7 +142,7 @@ function ProductDetailPage() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => window.history.back()}
+            render={<Link to="/$username" params={{ username }} />}
             aria-label="Back"
           >
             <ArrowLeft />

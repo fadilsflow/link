@@ -469,16 +469,16 @@ function UserProfile() {
               </AvatarFallback>
             </Avatar>
 
-            <h1 id="profile-name" className="text-3xl font-bold md:text-4xl">
+            <h1 id="profile-name" className="text-xl pt-4 font-heading md:text-2xl">
               {user.name}
             </h1>
             {user.title ? (
-              <p className="mt-1 text-sm text-muted-foreground md:text-base">
+              <p className="mt-1 text-sm text-foreground/80 md:text-base">
                 {user.title}
               </p>
             ) : null}
             {user.bio ? (
-              <p className="mt-4 max-w-[560px] text-sm leading-relaxed text-foreground/90 md:text-base">
+              <p className="mt-1 max-w-[560px] text-sm leading-relaxed text-foreground/90 md:text-base">
                 {user.bio}
               </p>
             ) : null}

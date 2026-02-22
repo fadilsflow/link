@@ -1,7 +1,7 @@
 import {
   ArrowUpRight,
   Globe,
-  Link as LinkIcon,
+  Link2 as LinkIcon,
   PlayCircle,
   X as XIcon,
 } from 'lucide-react'
@@ -16,6 +16,7 @@ import {
   getAppearanceFontClass,
   getAppearancePageBackgroundStyle,
   getAppearanceTextVars,
+  getReadableTextTokensForBackground,
 } from '@/lib/appearance'
 import { getBlockCardBase, getBlockRadius } from '@/lib/block-styles'
 import { cn } from '@/lib/utils'
@@ -73,6 +74,16 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
 
   const cardBase = getBlockCardBase(blockStyle)
   const radiusClass = getBlockRadius(blockRadius)
+  const iconTokens = getReadableTextTokensForBackground(
+    user.appearanceBackgroundColor,
+  )
+  const iconWrapperStyle = user.appearanceBackgroundColor
+    ? ({
+      backgroundColor: user.appearanceBackgroundColor,
+      '--foreground': iconTokens.foreground,
+      '--muted-foreground': iconTokens.mutedForeground,
+    } as React.CSSProperties)
+    : undefined
 
   return (
     <div className="w-full h-full flex items-center justify-center p-2">
@@ -92,29 +103,11 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
             <div className="absolute inset-0 bg-background/45" />
           </div>
         ) : null}
-        {user.appearanceBackgroundType === 'image' &&
-        user.appearanceBackgroundImageUrl ? (
-          <div
-            className="absolute inset-0 z-0"
-            style={{
-              backgroundImage: `url('${user.appearanceBackgroundImageUrl}')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-            }}
-          />
-        ) : null}
         <div
-          className={cn(
-            'h-full w-full no-scrollbar overflow-y-auto overflow-x-hidden relative z-10',
-            user.appearanceBackgroundType === 'image' ? '' : 'bg-background',
-          )}
+          className="h-full w-full no-scrollbar overflow-y-auto overflow-x-hidden relative z-10"
           style={{
             ...textStyle,
-            ...(user.appearanceBackgroundType === 'flat' ||
-            user.appearanceBackgroundType === 'gradient'
-              ? pageBackgroundStyle
-              : {}),
+            ...pageBackgroundStyle,
           }}
         >
           <div className="min-h-full pb-8">
@@ -181,8 +174,11 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
 
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                          <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                        <div
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/80"
+                          style={iconWrapperStyle}
+                        >
+                          <LinkIcon className="-rotate-45 h-4 w-4 text-foreground" />
                         </div>
                         <p className="text-xs text-foreground font-medium truncate">
                           {block.type === 'image'

@@ -150,9 +150,10 @@ function ProductCard({
   return (
     <Card
       className={cn(
-        'group w-full overflow-hidden border border-border bg-background shadow-sm transition-all hover:-translate-y-0.5',
+        'group w-full overflow-hidden border border-border bg-background shadow-sm transition-all hover:scale-102',
         cardBase,
         radiusClass,
+
       )}
       style={cardStyle}
       render={
@@ -175,7 +176,7 @@ function ProductCard({
               height={640}
               src={productImages[0]}
               alt={product.title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-full object-cover"
             />
           ) : (
             <div className="h-full w-full bg-muted" />
@@ -521,7 +522,7 @@ function UserProfile() {
           <aside className="pb-6 md:border-y border-r hidden md:block">
             <div className="mb-5 md:px-6 border-b  border-border py-4">
               <div className="flex  items-center gap-2 text-sm font-semibold">
-                <Package2 className='fill-foreground text-background size-4' /> Products
+                <Package2 className='text-foreground size-4' /> Products
               </div>
             </div>
             <div className="hidden space-y-5 md:block  md:px-6">{productsSection}</div>

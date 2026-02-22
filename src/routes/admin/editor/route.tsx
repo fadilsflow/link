@@ -23,7 +23,7 @@ function RouteComponent() {
 }
 
 function EditorLayout() {
-  const { user, blocks, status } = usePreview()
+  const { user, blocks, socialLinks, status } = usePreview()
   const [showCheck, setShowCheck] = useState(false)
 
   useEffect(() => {
@@ -80,7 +80,7 @@ function EditorLayout() {
                     </div>
                   )}
                 </div>
-                <AppearancePreview user={user} blocks={blocks} />
+                <AppearancePreview user={user} blocks={blocks} socialLinks={socialLinks} />
               </>
             ) : (
               <div className="w-full h-full flex items-center justify-center p-2">

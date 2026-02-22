@@ -25,8 +25,8 @@ import {
   getAppearanceFontClass,
   getAppearanceIconBackgroundColor,
   getAppearancePageBackgroundStyle,
-  getAppearanceTextVars,
   getAppearanceTextColor,
+  getAppearanceTextVars,
   isDarkBackground,
 } from '@/lib/appearance'
 
@@ -361,7 +361,7 @@ function UserProfile() {
     backgroundColor: user.appearanceBackgroundColor,
   })
   const iconBackgroundType =
-    user.appearanceBackgroundType === 'none' || !user.appearanceBackgroundType
+    user.appearanceBackgroundType === 'none'
       ? 'flat'
       : user.appearanceBackgroundType
 
@@ -496,7 +496,8 @@ function UserProfile() {
 
         <div className={cn('md:divide-x', divideClass, 'sm:max-w-7xl mx-auto grid grid-cols-1  px-5  md:grid-cols-2  md:px-10 ')}>
           <section className="relative pt-14 md:pt-[70px] md:pr-6">
-            <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  md:-top-[60px] md:h-[120px] md:w-[120px]">
+            <Avatar className="absolute -top-14 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full ring-2 ring-primary/10 md:-top-[60px] md:left-0 md:h-[120px] md:w-[120px] md:translate-x-0">
+              {/* <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  md:-top-[60px] md:h-[120px] md:w-[120px]"> */}
               <AvatarImage src={user.image || '/avatar-placeholder.png'} />
               <AvatarFallback className="text-lg font-bold">
                 {user.name.slice(0, 2).toUpperCase()}
@@ -505,14 +506,14 @@ function UserProfile() {
 
             <h1
               id="profile-name"
-              className="text-xl pt-4 font-heading md:text-2xl"
+              className="pt-4 text-center text-xl font-heading md:text-left md:text-2xl"
               style={{ color: profileTextColor.foreground }}
             >
               {user.name}
             </h1>
             {user.title ? (
               <p
-                className="mt-1 text-sm md:text-base"
+                className="mt-1 text-center text-sm md:text-left md:text-base"
                 style={{ color: profileTextColor.mutedForeground }}
               >
                 {user.title}
@@ -520,7 +521,7 @@ function UserProfile() {
             ) : null}
             {user.bio ? (
               <p
-                className="mt-1 max-w-[560px] text-sm leading-relaxed md:text-base"
+                className="mt-1 max-w-[560px] text-center text-sm leading-relaxed md:text-left md:text-base"
                 style={{ color: profileTextColor.mutedForeground }}
               >
                 {user.bio}

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from 'react'
-import type {BlockRadius, BlockStyle} from '@/lib/block-styles';
+import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
 import type { AppearanceBackgroundType, AppearanceTextFont } from '@/lib/appearance'
 
 export interface PreviewUser {
@@ -33,6 +33,12 @@ interface PreviewBlock {
   isEnabled: boolean
 }
 
+export interface PreviewSocialLink {
+  id: string
+  platform?: string | null
+  url: string
+}
+
 interface PreviewStatus {
   isSaving?: boolean
   isSaved?: boolean
@@ -41,9 +47,11 @@ interface PreviewStatus {
 interface PreviewContextValue {
   user: PreviewUser | null
   blocks: Array<PreviewBlock>
+  socialLinks: Array<PreviewSocialLink>
   status: PreviewStatus
   setUser: (user: PreviewUser | null) => void
   setBlocks: (blocks: Array<PreviewBlock>) => void
+  setSocialLinks: (socialLinks: Array<PreviewSocialLink>) => void
   updateUser: (updates: Partial<PreviewUser>) => void
   setStatus: (status: PreviewStatus) => void
 }
@@ -53,6 +61,7 @@ const PreviewContext = createContext<PreviewContextValue | null>(null)
 export function PreviewProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<PreviewUser | null>(null)
   const [blocks, setBlocks] = useState<Array<PreviewBlock>>([])
+  const [socialLinks, setSocialLinks] = useState<Array<PreviewSocialLink>>([])
   const [status, setStatus] = useState<PreviewStatus>({})
 
   const updateUser = (updates: Partial<PreviewUser>) => {
@@ -63,13 +72,15 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user,
       blocks,
+      socialLinks,
       status,
       setUser,
       setBlocks,
+      setSocialLinks,
       updateUser,
       setStatus,
     }),
-    [user, blocks, status],
+    [user, blocks, socialLinks, status],
   )
 
   return (

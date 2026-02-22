@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { ArrowUpRight, Link2Icon } from 'lucide-react'
 
+import type { AppearanceBackgroundType } from '@/lib/appearance'
 import { Button } from '@/components/ui/button'
 import { getReadableTextTokensForBackground } from '@/lib/appearance'
 import { getBlockTypeConfigOrDefault } from '@/lib/block-type-config'
 import { getBlockSkeletonClasses } from '@/lib/block-styles'
 import { cn } from '@/lib/utils'
-import type { AppearanceBackgroundType } from '@/lib/appearance'
 
 export interface PublicProfileBlock {
   id: string
@@ -23,6 +23,7 @@ interface PublicProfileBlocksProps {
   cardBaseWithHover: string
   radiusClass: string
   actionRadiusClass: string
+  isInteractive?: boolean
   cardStyle?: React.CSSProperties
   iconBackgroundColor?: string
   backgroundType?: AppearanceBackgroundType | null
@@ -47,6 +48,7 @@ export function PublicProfileBlocks({
   cardBaseWithHover,
   radiusClass,
   actionRadiusClass,
+  isInteractive = true,
   cardStyle,
   iconBackgroundColor,
   backgroundType,
@@ -94,7 +96,7 @@ export function PublicProfileBlocks({
 
   const sharedIconWrapClass = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full  ${actionRadiusClass}`
   const sharedRowClass =
-    'grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4'
+    'grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-2'
 
   const renderActionBlock = (params: {
     key: string
@@ -106,20 +108,24 @@ export function PublicProfileBlocks({
     <div
       key={params.key}
       className={cn(
-        'group w-full cursor-pointer overflow-hidden transition-all',
-        cardBaseWithHover,
+        'w-full overflow-hidden',
+        isInteractive ? 'group cursor-pointer transition-all' : 'cursor-default',
+        isInteractive ? cardBaseWithHover : cardBase,
         actionRadiusClass,
       )}
       style={cardStyle}
-      onClick={params.onClick}
+      onClick={isInteractive ? params.onClick : undefined}
     >
       <div className={sharedRowClass}>
         <div className={sharedIconWrapClass} style={iconWrapperStyle}>
           {params.icon}
         </div>
-        <span className="text-center text-sm font-semibold text-foreground" >{params.title}</span>
+        <span className="text-center text-sm font-semibold text-foreground">{params.title}</span>
         <ArrowUpRight
-          className={cn('h-5 w-5 text-muted-foreground', params.arrowClassName)}
+          className={cn(
+            'h-5 w-5 text-muted-foreground',
+            isInteractive && params.arrowClassName,
+          )}
         />
       </div>
     </div>
@@ -169,7 +175,7 @@ export function PublicProfileBlocks({
               />
             </div>
           )}
-          {block.url && (
+          {block.url && isInteractive && (
             <div className="px-3 pb-3">
               <Button className="w-full" onClick={() => onOpenBlockUrl(block)}>
                 Open link

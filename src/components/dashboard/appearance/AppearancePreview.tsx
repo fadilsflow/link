@@ -1,22 +1,23 @@
-import {
-  ArrowUpRight,
-  Globe,
-  Link2 as LinkIcon,
-  PlayCircle,
-  X as XIcon,
-} from 'lucide-react'
+import * as React from 'react'
+import { Package2, PlayCircle } from 'lucide-react'
+import type { PreviewSocialLink } from '@/lib/preview-context'
 import type {
   AppearanceBackgroundType,
   AppearanceTextFont,
 } from '@/lib/appearance'
 import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
+import { SocialProfileBlocks } from '@/components/SocialProfileBlocks'
+import { PublicProfileBlocks } from '@/components/dashboard/blocks/PublicProfileBlocks'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs'
 import {
   getAppearanceBlockStyle,
   getAppearanceFontClass,
+  getAppearanceIconBackgroundColor,
   getAppearancePageBackgroundStyle,
+  getAppearanceTextColor,
   getAppearanceTextVars,
-  getReadableTextTokensForBackground,
+  isDarkBackground,
 } from '@/lib/appearance'
 import {
   getActionBlockRadius,
@@ -54,11 +55,18 @@ interface AppearancePreviewProps {
     content?: string
     isEnabled: boolean
   }>
+  socialLinks?: Array<PreviewSocialLink>
 }
 
-export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
+export function AppearancePreview({ user, blocks, socialLinks = [] }: AppearancePreviewProps) {
+  const [tab, setTab] = React.useState<'profile' | 'products'>('profile')
+
   const blockStyle = user.appearanceBlockStyle || 'basic'
   const blockRadius = user.appearanceBlockRadius || 'rounded'
+  const cardBase = getBlockCardBase(blockStyle, { disableHover: true })
+  const cardBaseWithHover = getBlockCardBase(blockStyle)
+  const radiusClass = getBlockRadius(blockRadius)
+  const actionRadiusClass = getActionBlockRadius(blockRadius)
   const blockInlineStyle = getAppearanceBlockStyle({
     blockStyle,
     blockColor: user.appearanceBlockColor,
@@ -73,25 +81,45 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
   })
   const textStyle = getAppearanceTextVars(user.appearanceTextColor)
   const textFontClass = getAppearanceFontClass(user.appearanceTextFont)
+  const profileTextColor = getAppearanceTextColor({
+    backgroundType: user.appearanceBackgroundType,
+    backgroundColor: user.appearanceBackgroundColor,
+    backgroundGradientTop: user.appearanceBackgroundGradientTop,
+    backgroundGradientBottom: user.appearanceBackgroundGradientBottom,
+    backgroundImageUrl: user.appearanceBackgroundImageUrl,
+    userImage: user.image,
+  })
+  const isDarkBg = isDarkBackground({
+    backgroundType: user.appearanceBackgroundType,
+    backgroundColor: user.appearanceBackgroundColor,
+    backgroundGradientTop: user.appearanceBackgroundGradientTop,
+    backgroundGradientBottom: user.appearanceBackgroundGradientBottom,
+    backgroundImageUrl: user.appearanceBackgroundImageUrl,
+    userImage: user.image,
+  })
+  const iconBackgroundColor = getAppearanceIconBackgroundColor({
+    backgroundType: user.appearanceBackgroundType,
+    backgroundColor: user.appearanceBackgroundColor,
+  })
+  const iconBackgroundType =
+    user.appearanceBackgroundType === 'none' || !user.appearanceBackgroundType
+      ? 'flat'
+      : user.appearanceBackgroundType
   const hasBanner =
     user.appearanceBannerEnabled !== false && !!user.appearanceBgImageUrl
 
-  const cardBase = getBlockCardBase(blockStyle)
-  const radiusClass = getBlockRadius(blockRadius)
-  const actionRadiusClass = getActionBlockRadius(blockRadius)
-  const iconTokens = getReadableTextTokensForBackground(
-    user.appearanceBackgroundColor,
+  const enabledBlocks = React.useMemo(
+    () => blocks.filter((block) => block.isEnabled),
+    [blocks],
   )
-  const iconWrapperStyle = user.appearanceBackgroundColor
-    ? ({
-      backgroundColor: user.appearanceBackgroundColor,
-      '--foreground': iconTokens.foreground,
-      '--muted-foreground': iconTokens.mutedForeground,
-    } as React.CSSProperties)
-    : undefined
-
-  const isActionBlockType = (type?: string) =>
-    !type || type === 'link' || type === 'telegram' || type === 'discord'
+  const nonProductBlocks = React.useMemo(
+    () => enabledBlocks.filter((block) => block.type !== 'product'),
+    [enabledBlocks],
+  )
+  const productBlocks = React.useMemo(
+    () => enabledBlocks.filter((block) => block.type === 'product'),
+    [enabledBlocks],
+  )
 
   return (
     <div className="w-full h-full flex items-center justify-center p-2">
@@ -111,115 +139,173 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
             <div className="absolute inset-0 bg-background/45" />
           </div>
         ) : null}
-        <div
-          className="h-full w-full no-scrollbar overflow-y-auto overflow-x-hidden relative z-10"
-          style={{
-            ...textStyle,
-            ...pageBackgroundStyle,
-          }}
-        >
-          <div className="min-h-full pb-8">
+        <div className="h-full w-full no-scrollbar overflow-y-auto overflow-x-hidden relative z-10">
+          <div
+            className={cn('relative min-h-full text-foreground', textFontClass)}
+            style={{ ...pageBackgroundStyle, ...textStyle }}
+          >
             {hasBanner ? (
-              <div
-                className="relative h-32 w-full"
-                style={{
-                  backgroundImage: `url('${user.appearanceBgImageUrl}')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              >
-                <div className="absolute inset-0 bg-black/5" />
+              <div className="h-[160px] w-full overflow-hidden">
+                <img
+                  src={user.appearanceBgImageUrl || ''}
+                  alt={`${user.name} banner`}
+                  width={800}
+                  height={160}
+                  loading="eager"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
               </div>
             ) : (
-              <div className="h-32 w-full" />
+              <div className="h-[160px] w-full" />
             )}
 
-            <div className="px-4 -mt-10 mb-6 flex flex-col relative z-10">
-              <Avatar className="h-20 w-20 ring-4 ring-background shadow-md bg-background">
-                <AvatarImage src={user.image || ''} />
-                <AvatarFallback className="bg-muted text-foreground">
-                  {user.name.charAt(0).toUpperCase() || '?'}
+            <section className="relative px-2 pt-14 pb-6">
+              <Avatar className="absolute -top-14 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full ring-2 ring-primary/10">
+                <AvatarImage src={user.image || '/avatar-placeholder.png'} />
+                <AvatarFallback className="text-lg font-bold">
+                  {user.name.slice(0, 2).toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
-              <h3 className="text-sm text-foreground font-semibold mt-3">
+
+              <h1
+                className="pt-4 text-center text-xl font-heading"
+                style={{ color: profileTextColor.foreground }}
+              >
                 {user.name}
-              </h3>
+              </h1>
               {user.title ? (
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p
+                  className="mt-1 text-center text-sm"
+                  style={{ color: profileTextColor.mutedForeground }}
+                >
                   {user.title}
                 </p>
               ) : null}
               {user.bio ? (
-                <p className="text-xs text-foreground mt-2  line-clamp-3">
+                <p
+                  className="mt-1 text-center text-sm leading-relaxed line-clamp-3"
+                  style={{ color: profileTextColor.mutedForeground }}
+                >
                   {user.bio}
                 </p>
               ) : null}
-            </div>
 
-            <div className="px-3 space-y-3">
-              {blocks
-                .filter((b) => b.isEnabled)
-                .map((block) => (
-                  <div
-                    key={block.id}
-                    className={cn(
-                      'w-full bg-card',
-                      cardBase,
-                      isActionBlockType(block.type) ? actionRadiusClass : radiusClass,
-                      block.type === 'image' ? 'p-0 overflow-hidden' : 'p-3',
-                    )}
-                    style={blockInlineStyle}
+              {socialLinks.length > 0 ? (
+                <SocialProfileBlocks
+                  links={socialLinks}
+                  iconColor={profileTextColor.foreground}
+                  className="mt-5 justify-center"
+                />
+              ) : null}
+
+              <div className="mt-6">
+                <Tabs
+                  value={tab}
+                  onValueChange={(val) => setTab(val as 'profile' | 'products')}
+                  className="w-full"
+                >
+                  <TabsList
+                    className="grid w-full grid-cols-2"
+                    style={{ color: profileTextColor.foreground }}
                   >
-                    {block.type === 'image' ? (
-                      <div className="aspect-video bg-muted flex items-center justify-center">
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    ) : block.type === 'video' ? (
-                      <div className="aspect-video rounded-xl bg-muted flex items-center justify-center mb-2">
-                        <PlayCircle className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    ) : null}
+                    <TabsTab
+                      value="profile"
+                      style={{ color: profileTextColor.foreground }}
+                    >
+                      Profile
+                    </TabsTab>
+                    <TabsTab
+                      value="products"
+                      style={{ color: profileTextColor.foreground }}
+                    >
+                      Products
+                    </TabsTab>
+                  </TabsList>
 
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
+                  <TabsPanel value="profile" className="mt-4 space-y-3 outline-none">
+                    <PublicProfileBlocks
+                      areBlocksReady
+                      blocks={nonProductBlocks}
+                      cardBase={cardBase}
+                      cardBaseWithHover={cardBaseWithHover}
+                      radiusClass={radiusClass}
+                      actionRadiusClass={actionRadiusClass}
+                      isInteractive={false}
+                      cardStyle={blockInlineStyle}
+                      iconBackgroundColor={iconBackgroundColor}
+                      backgroundType={iconBackgroundType}
+                      backgroundGradientTop={
+                        user.appearanceBackgroundGradientTop || undefined
+                      }
+                      backgroundGradientBottom={
+                        user.appearanceBackgroundGradientBottom || undefined
+                      }
+                      onOpenBlockUrl={() => { }}
+                      onTrackClick={() => { }}
+                      renderVideoBlock={(block) => (
                         <div
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/80"
-                          style={iconWrapperStyle}
+                          key={block.id}
+                          className={cn(
+                            'w-full overflow-hidden p-3 space-y-3',
+                            cardBase,
+                            radiusClass,
+                          )}
+                          style={blockInlineStyle}
                         >
-                          <LinkIcon className="-rotate-45 h-4 w-4 text-foreground" />
+                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                            <PlayCircle className="h-4 w-4 text-foreground" />
+                            {block.title || 'Video'}
+                          </div>
+                          <div className={cn('w-full rounded-lg border aspect-video', isDarkBg ? 'bg-white/10 border-white/20' : 'bg-muted border-border')} />
                         </div>
-                        <p className="text-xs text-foreground font-medium truncate">
-                          {block.type === 'image'
-                            ? 'Image'
-                            : block.type === 'discord'
-                              ? block.title || 'Discord'
-                              : block.type === 'telegram'
-                                ? block.title || 'Telegram'
-                                : block.title}
-                        </p>
-                      </div>
-                      <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-                ))}
+                      )}
+                      renderProductBlock={() => null}
+                    />
+                  </TabsPanel>
 
-              <button
-                className={cn(
-                  'w-full bg-card px-3 py-3 text-left',
-                  cardBase,
-                  actionRadiusClass,
-                )}
-                style={blockInlineStyle}
-                type="button"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-foreground *:font-medium truncate">
-                    Sample Button
-                  </span>
-                  <XIcon className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </button>
-            </div>
+                  <TabsPanel value="products" className="mt-4 space-y-3 outline-none">
+                    {productBlocks.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-4">
+                        {productBlocks.map((productBlock) => (
+                          <div
+                            key={productBlock.id}
+                            className={cn(
+                              'w-full overflow-hidden border border-border bg-background shadow-sm',
+                              cardBase,
+                              radiusClass,
+                            )}
+                            style={blockInlineStyle}
+                          >
+                            <div className="p-2">
+                              <div className="aspect-square w-full overflow-hidden rounded-xl bg-muted" />
+                              <div className="space-y-1 mt-2">
+                                <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
+                                  {productBlock.title || 'Product'}
+                                </h3>
+                                <p className="text-sm font-semibold text-foreground">$0.00</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div
+                        className={cn(
+                          'w-full p-4 text-sm flex items-center gap-2 justify-center',
+                          cardBase,
+                          actionRadiusClass,
+                        )}
+                        style={blockInlineStyle}
+                      >
+                        <Package2 className="size-4" />
+                        <span>No products yet</span>
+                      </div>
+                    )}
+                  </TabsPanel>
+                </Tabs>
+              </div>
+            </section>
           </div>
         </div>
       </div>

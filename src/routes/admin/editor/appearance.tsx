@@ -49,9 +49,16 @@ function AppearanceRouteComponent() {
 
   const user = dashboardData?.user
   const blocks = dashboardData?.blocks
+  const socialLinks = dashboardData?.socialLinks
   if (!user) return null
 
-  return <AppearanceEditor user={user} blocks={blocks || []} />
+  return (
+    <AppearanceEditor
+      user={user}
+      blocks={blocks || []}
+      socialLinks={socialLinks || []}
+    />
+  )
 }
 
 function SectionOptionCard({
@@ -96,15 +103,32 @@ type AppearanceUpdateInput = {
   appearanceTextFont?: AppearanceTextFont
 }
 
-function AppearanceEditor({ user, blocks }: { user: any; blocks: Array<any> }) {
+function AppearanceEditor({
+  user,
+  blocks,
+  socialLinks,
+}: {
+  user: any
+  blocks: Array<any>
+  socialLinks: Array<any>
+}) {
   const queryClient = useQueryClient()
-  const { user: previewUser, blocks: previewBlocks, setUser, setBlocks, updateUser, setStatus } = usePreview()
+  const {
+    user: previewUser,
+    blocks: previewBlocks,
+    setUser,
+    setBlocks,
+    setSocialLinks,
+    updateUser,
+    setStatus,
+  } = usePreview()
 
   useEffect(() => {
     if (!user) return
     if (!previewUser) {
       setUser(user)
       setBlocks(blocks)
+      setSocialLinks(socialLinks)
       return
     }
 
@@ -123,7 +147,8 @@ function AppearanceEditor({ user, blocks }: { user: any; blocks: Array<any> }) {
       appearanceTextColor: user.appearanceTextColor,
       appearanceTextFont: user.appearanceTextFont,
     })
-  }, [user, blocks, previewUser, previewBlocks, setUser, setBlocks, updateUser])
+    setSocialLinks(socialLinks)
+  }, [user, blocks, socialLinks, previewUser, previewBlocks, setUser, setBlocks, setSocialLinks, updateUser])
 
   const updateAppearance = useMutation({
     mutationKey: ['updateProfile'],

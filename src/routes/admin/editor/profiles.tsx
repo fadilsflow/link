@@ -58,7 +58,7 @@ function mapBlockToFormValues(block: BlockRecord): BlockFormValues {
 function AdminDashboard() {
   const queryClient = useQueryClient()
   const hasHydratedRef = useRef(false)
-  const { user: previewUser, setUser, setBlocks, updateUser } = usePreview()
+  const { user: previewUser, setUser, setBlocks, setSocialLinks, updateUser } = usePreview()
 
   const [localBlocks, setLocalBlocks] = useState<Array<BlockRecord>>([])
   const [isAddBlockOpen, setIsAddBlockOpen] = useState(false)
@@ -92,6 +92,10 @@ function AdminDashboard() {
   useEffect(() => {
     setBlocks(localBlocks)
   }, [localBlocks, setBlocks])
+
+  useEffect(() => {
+    setSocialLinks(dashboardData?.socialLinks || [])
+  }, [dashboardData?.socialLinks, setSocialLinks])
 
   useEffect(() => {
     if (hasHydratedRef.current || !dashboardData?.blocks) return

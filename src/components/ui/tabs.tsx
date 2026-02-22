@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from 'react'
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
 
 import { cn } from '@/lib/utils'
@@ -34,10 +35,11 @@ function TabsList({
         'data-[orientation=vertical]:flex-col',
         variant === 'default'
           ? 'rounded-lg bg-muted p-0.5 text-muted-foreground/72'
-          : 'data-[orientation=vertical]:px-1 data-[orientation=horizontal]:py-1 *:data-[slot=tabs-tab]:hover:bg-accent',
+          : 'data-[orientation=vertical]:px-1 data-[orientation=horizontal]:py-1 *:data-[slot=tabs-tab]:hover:bg-accent/20',
         className,
       )}
       data-slot="tabs-list"
+      style={{ '--tabs-indicator-color': 'var(--foreground, oklch(var(--primary)))' } as React.CSSProperties}
       {...props}
     >
       {children}
@@ -45,7 +47,7 @@ function TabsList({
         className={cn(
           '-translate-y-(--active-tab-bottom) absolute bottom-0 left-0 h-(--active-tab-height) w-(--active-tab-width) translate-x-(--active-tab-left) transition-[width,translate] duration-200 ease-in-out',
           variant === 'underline'
-            ? 'data-[orientation=vertical]:-translate-x-px z-10 bg-primary data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:w-0.5 data-[orientation=horizontal]:translate-y-px'
+            ? 'data-[orientation=vertical]:-translate-x-px z-10 bg-[var(--tabs-indicator-color)] data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:w-0.5 data-[orientation=horizontal]:translate-y-px'
             : '-z-1 rounded-md bg-background shadow-sm/5 dark:bg-input',
         )}
         data-slot="tab-indicator"

@@ -473,10 +473,15 @@ function UserProfile() {
     (products as Array<PublicProduct>).map((product) => [product.id, product]),
   )
   const socialItems = socialLinks as Array<PublicSocialLink>
-  const nonProductBlocks = React.useMemo(
-    () => (blocks as Array<PublicBlock>).filter((block) => block.type !== 'product'),
-    [blocks],
-  )
+
+  // Render non-product blocks type
+  // const nonProductBlocks = React.useMemo(
+  //   () => (blocks as Array<PublicBlock>).filter((block) => block.type !== 'product'),
+  //   [blocks],
+  // )
+
+  // Render all blocks type
+  const allBlocks = blocks as Array<PublicBlock>
 
   React.useEffect(() => {
     setHeaderLogoColor(defaultHeaderLogoColor)
@@ -517,7 +522,7 @@ function UserProfile() {
   const profileBlocksSection = (
     <PublicProfileBlocks
       areBlocksReady={areBlocksReady}
-      blocks={nonProductBlocks}
+      blocks={allBlocks}
       cardBase={cardBase}
       cardBaseWithHover={cardBaseWithHover}
       radiusClass={radiusClass}

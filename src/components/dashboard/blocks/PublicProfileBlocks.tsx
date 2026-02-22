@@ -95,7 +95,7 @@ export function PublicProfileBlocks({
 
   const sharedIconWrapClass = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full  ${actionRadiusClass}`
   const sharedRowClass =
-    'grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-2'
+    'grid grid-cols-[2.5rem_1fr_2rem] items-center gap-3 p-2'
 
   const renderActionBlock = (params: {
     key: string
@@ -119,7 +119,7 @@ export function PublicProfileBlocks({
         <div className={sharedIconWrapClass} style={iconWrapperStyle}>
           {params.icon}
         </div>
-        <span className="text-center text-sm font-semibold text-foreground">{params.title}</span>
+        <span className="text-center text-md font-semibold text-foreground">{params.title}</span>
         <ArrowUpRight
           className={cn(
             'h-5 w-5 text-muted-foreground',
@@ -233,3 +233,4 @@ export function PublicProfileBlocks({
     })
   })
 }
+

@@ -1,16 +1,21 @@
 import { Link } from '@tanstack/react-router'
 import { ShoppingCart } from 'lucide-react'
 import { useState } from 'react'
-import { useCartStore } from '@/store/cart-store'
 import { LogoType } from './kreasi-logo'
 import UserButton from './user-button'
 import { Button } from './ui/button'
 import { CartDrawer } from './cart-drawer'
+import { useCartStore } from '@/store/cart-store'
 
-export default function SiteUserProfileHeader() {
+type SiteUserProfileHeaderProps = {
+  logoColor?: string
+}
+
+export default function SiteUserProfileHeader({
+  logoColor,
+}: SiteUserProfileHeaderProps) {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const totalItems = useCartStore((state) => state.getTotalItems())
-
 
   return (
     <>
@@ -20,7 +25,7 @@ export default function SiteUserProfileHeader() {
             <Link
               to="/"
             >
-              <LogoType />
+              <LogoType style={{ color: logoColor }} />
             </Link>
 
             <div className="ml-auto flex items-center gap-3">

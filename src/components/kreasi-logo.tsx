@@ -1,3 +1,5 @@
+import KreasiLogo from "./icon/kreasi";
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 
 const LogoMark = ({ className }: { className?: string }) => {
@@ -11,15 +13,22 @@ const LogoMark = ({ className }: { className?: string }) => {
     />
   );
 };
-const LogoType = ({ className }: { className?: string }) => {
+const LogoType = ({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: CSSProperties;
+}) => {
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-2 text-xl font-medium ",
+        "flex items-center justify-center gap-2 text-xl font-medium text-black",
         className,
       )}
+      style={style}
     >
-      <img src="/logo-black.svg" alt="Logo" width={24} height={24} />
+      <KreasiLogo width={24} height={24} />
       <span className="relative top-0.5 text-2xl font-heading">kreeasi</span>
     </div>
   );

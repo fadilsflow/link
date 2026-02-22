@@ -143,7 +143,7 @@ export function PublicProfileBlocks({
         <div
           key={block.id}
           className={cn('w-full min-h-16 space-y-1 p-4 text-center', cardBase, radiusClass)}
-          style={cardStyle}
+        // style={cardStyle}
         >
           <h2 className="text-2xl font-bold text-foreground">
             {block.title}

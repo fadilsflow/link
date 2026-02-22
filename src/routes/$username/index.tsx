@@ -130,6 +130,99 @@ function getProductPriceLabel(product: PublicProduct) {
   return product.price ? formatPrice(product.price) : 'Free'
 }
 
+const LOGO_DARK = '#111827'
+const LOGO_LIGHT = '#f8fafc'
+
+function getRelativeLuminanceFromRgb(r: number, g: number, b: number): number {
+  const toLinear = (channel: number) => {
+    const srgb = channel / 255
+    return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4
+  }
+
+  const lr = toLinear(r)
+  const lg = toLinear(g)
+  const lb = toLinear(b)
+  return 0.2126 * lr + 0.7152 * lg + 0.0722 * lb
+}
+
+async function getReadableLogoColorFromBanner(
+  imageUrl: string,
+): Promise<string | null> {
+  if (typeof window === 'undefined') return null
+
+  return new Promise((resolve) => {
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.decoding = 'async'
+
+    image.onload = () => {
+      try {
+        const sourceWidth = image.naturalWidth
+        const sourceHeight = image.naturalHeight
+        if (!sourceWidth || !sourceHeight) {
+          resolve(null)
+          return
+        }
+
+        const sampleSourceWidth = Math.max(1, Math.floor(sourceWidth * 0.45))
+        const sampleSourceHeight = Math.max(1, Math.floor(sourceHeight * 0.35))
+        const canvas = document.createElement('canvas')
+        canvas.width = 72
+        canvas.height = 36
+        const context = canvas.getContext('2d', {
+          willReadFrequently: true,
+        })
+        if (!context) {
+          resolve(null)
+          return
+        }
+
+        context.drawImage(
+          image,
+          0,
+          0,
+          sampleSourceWidth,
+          sampleSourceHeight,
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        )
+
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+        let luminanceTotal = 0
+        let pixelCount = 0
+
+        for (let index = 0; index < pixels.length; index += 4) {
+          const alpha = pixels[index + 3]
+          if (alpha < 16) continue
+          const r = pixels[index]
+          const g = pixels[index + 1]
+          const b = pixels[index + 2]
+          luminanceTotal += getRelativeLuminanceFromRgb(r, g, b)
+          pixelCount += 1
+        }
+
+        if (!pixelCount) {
+          resolve(null)
+          return
+        }
+
+        const averageLuminance = luminanceTotal / pixelCount
+        const contrastWithDark = (averageLuminance + 0.05) / 0.05
+        const contrastWithLight = 1.05 / (averageLuminance + 0.05)
+
+        resolve(contrastWithDark >= contrastWithLight ? LOGO_DARK : LOGO_LIGHT)
+      } catch {
+        resolve(null)
+      }
+    }
+
+    image.onerror = () => resolve(null)
+    image.src = imageUrl
+  })
+}
+
 function ProductCard({
   product,
   username,
@@ -349,6 +442,15 @@ function UserProfile() {
     backgroundImageUrl: user.appearanceBackgroundImageUrl,
     userImage: user.image,
   })
+  const defaultHeaderLogoColor = isBanner
+    ? getAppearanceTextColor({
+        backgroundType: 'image',
+        backgroundImageUrl: user.appearanceBgImageUrl,
+      }).foreground
+    : profileTextColor.foreground
+  const [headerLogoColor, setHeaderLogoColor] = React.useState(
+    defaultHeaderLogoColor,
+  )
   const isDarkBg = isDarkBackground({
     backgroundType: user.appearanceBackgroundType,
     backgroundColor: user.appearanceBackgroundColor,
@@ -375,6 +477,25 @@ function UserProfile() {
     () => (blocks as Array<PublicBlock>).filter((block) => block.type !== 'product'),
     [blocks],
   )
+
+  React.useEffect(() => {
+    setHeaderLogoColor(defaultHeaderLogoColor)
+  }, [defaultHeaderLogoColor])
+
+  React.useEffect(() => {
+    if (!isBanner || !user.appearanceBgImageUrl) return
+
+    let isCancelled = false
+
+    void getReadableLogoColorFromBanner(user.appearanceBgImageUrl).then((color) => {
+      if (isCancelled || !color) return
+      setHeaderLogoColor(color)
+    })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [isBanner, user.appearanceBgImageUrl])
 
   React.useEffect(() => {
     const username = user.username
@@ -478,7 +599,7 @@ function UserProfile() {
           <div className="absolute inset-0 bg-background/45" />
         </div>
       ) : null}
-      <SiteUserProfileHeader />
+      <SiteUserProfileHeader logoColor={headerLogoColor} />
 
       <div className={cn('relative z-10 mx-auto min-h-screen w-full', isDarkBg ? 'border-white/10' : 'border-border/70')}>
         {isBanner && lcpBannerSrc ? (

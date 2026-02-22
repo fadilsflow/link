@@ -624,7 +624,7 @@ function UserProfile() {
           <div className="h-[160px] w-full lg:h-[150px]" />
         )}
 
-        <div className={cn('lg:divide-x', divideClass, 'sm:max-w-2xl md:max-w-3xl lg:max-w-7xl mx-auto grid grid-cols-1  px-5  lg:grid-cols-2  lg:px-10 ')}>
+        <div className={cn('lg:divide-x', divideClass, 'sm:max-w-2xl md:max-w-3xl lg:max-w-7xl mx-auto grid grid-cols-1  px-5  lg:grid-cols-2 lg:auto-rows-max  lg:px-10 ')}>
           <section className="relative pt-10 lg:pt-[70px] lg:pr-6">
             <Avatar className="absolute -top-14 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full ring-2 ring-primary/10 lg:-top-[60px] lg:left-0 lg:h-[120px] lg:w-[120px] lg:translate-x-0">
               {/* <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  lg:-top-[60px] lg:h-[120px] lg:w-[120px]"> */}
@@ -705,7 +705,7 @@ function UserProfile() {
             <div className="mt-6 hidden space-y-4 lg:block">{profileBlocksSection}</div>
           </section>
 
-          <aside className={cn('pb-6 lg:border-y border-r hidden lg:block', isDarkBg ? 'border-white/10' : 'border-border')}>
+          <aside className={cn('pb-6 lg:border-y border-r hidden lg:block h-fit lg:sticky lg:top-0', isDarkBg ? 'border-white/10' : 'border-border')}>
             <div className={cn('mb-5 lg:px-6 border-b py-4', isDarkBg ? 'border-white/10' : 'border-border')}>
               <div className="flex  items-center gap-2 text-sm font-semibold">
                 <Package2 className='size-4' style={{ color: profileTextColor.foreground }} />

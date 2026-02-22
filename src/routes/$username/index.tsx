@@ -705,8 +705,8 @@ function UserProfile() {
             <div className="mt-6 hidden space-y-4 lg:block">{profileBlocksSection}</div>
           </section>
 
-          <aside className={cn('pb-6 lg:border-y border-r hidden lg:block h-fit lg:sticky lg:top-0', isDarkBg ? 'border-white/10' : 'border-border')}>
-            <div className={cn('mb-5 lg:px-6 border-b py-4', isDarkBg ? 'border-white/10' : 'border-border')}>
+          <aside className={cn('pb-6 lg:border-y border-r hidden lg:block h-full', isDarkBg ? 'border-white/10' : 'border-border')}>
+            <div className={cn('mb-5 lg:px-6 border-b py-4 sticky top-0 bg-background z-10', isDarkBg ? 'border-white/10' : 'border-border')}>
               <div className="flex  items-center gap-2 text-sm font-semibold">
                 <Package2 className='size-4' style={{ color: profileTextColor.foreground }} />
                 <span style={{ color: profileTextColor.foreground }}>Products</span>

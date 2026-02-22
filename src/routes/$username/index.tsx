@@ -620,7 +620,7 @@ function UserProfile() {
         )}
 
         <div className={cn('md:divide-x', divideClass, 'sm:max-w-7xl mx-auto grid grid-cols-1  px-5  md:grid-cols-2  md:px-10 ')}>
-          <section className="relative pt-14 md:pt-[70px] md:pr-6">
+          <section className="relative pt-10 md:pt-[70px] md:pr-6">
             <Avatar className="absolute -top-14 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full ring-2 ring-primary/10 md:-top-[60px] md:left-0 md:h-[120px] md:w-[120px] md:translate-x-0">
               {/* <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  md:-top-[60px] md:h-[120px] md:w-[120px]"> */}
               <AvatarImage src={user.image || '/avatar-placeholder.png'} />

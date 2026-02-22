@@ -15,6 +15,7 @@ import LiteYouTube from '@/components/LiteYouTube'
 import { extractYouTubeVideoId } from '@/lib/lite-youtube'
 import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs'
 import {
+  getActionBlockRadius,
   getBlockCardBase,
   getBlockRadius,
   getProductSkeletonClass,
@@ -324,6 +325,7 @@ function UserProfile() {
   // Card base with hover effects for interactive link blocks
   const cardBaseWithHover = getBlockCardBase(blockStyle)
   const radiusClass = getBlockRadius(blockRadius)
+  const actionRadiusClass = getActionBlockRadius(blockRadius)
   const blockInlineStyle = getAppearanceBlockStyle({
     blockStyle,
     blockColor: user.appearanceBlockColor,
@@ -355,7 +357,6 @@ function UserProfile() {
     backgroundImageUrl: user.appearanceBackgroundImageUrl,
     userImage: user.image,
   })
-  const borderClass = isDarkBg ? 'border-white/10' : 'border-border'
   const divideClass = isDarkBg ? 'divide-white/10' : 'divide-border'
 
   const productMap = new Map(
@@ -391,6 +392,7 @@ function UserProfile() {
       cardBase={cardBase}
       cardBaseWithHover={cardBaseWithHover}
       radiusClass={radiusClass}
+      actionRadiusClass={actionRadiusClass}
       cardStyle={blockInlineStyle}
       iconBackgroundColor={user.appearanceBackgroundColor || undefined}
       backgroundType={user.appearanceBackgroundType || undefined}

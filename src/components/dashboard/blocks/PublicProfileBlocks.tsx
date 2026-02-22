@@ -22,6 +22,7 @@ interface PublicProfileBlocksProps {
   cardBase: string
   cardBaseWithHover: string
   radiusClass: string
+  actionRadiusClass: string
   cardStyle?: React.CSSProperties
   iconBackgroundColor?: string
   backgroundType?: AppearanceBackgroundType | null
@@ -45,6 +46,7 @@ export function PublicProfileBlocks({
   cardBase,
   cardBaseWithHover,
   radiusClass,
+  actionRadiusClass,
   cardStyle,
   iconBackgroundColor,
   backgroundType,
@@ -58,7 +60,11 @@ export function PublicProfileBlocks({
   // Calculate icon wrapper style based on background type
   let iconWrapperStyle: React.CSSProperties | undefined
 
-  if (backgroundType === 'gradient' && backgroundGradientTop && backgroundGradientBottom) {
+  if (
+    backgroundType === 'gradient' &&
+    backgroundGradientTop &&
+    backgroundGradientBottom
+  ) {
     // Use gradient background
     iconWrapperStyle = {
       background: `linear-gradient(to bottom, ${backgroundGradientTop}, ${backgroundGradientBottom})`,
@@ -77,13 +83,10 @@ export function PublicProfileBlocks({
       backgroundColor: 'rgba(0, 0, 0, 0)',
     }
   }
-  // For 'none' background type, iconWrapperStyle remains undefined (will use default bg-muted/80)
 
-  const sharedIconWrapClass = iconWrapperStyle
-    ? 'flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/60'
-    : 'flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/60'
+  const sharedIconWrapClass = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${actionRadiusClass}`
   const sharedRowClass =
-    'grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4'
+    'grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-3'
 
   const renderActionBlock = (params: {
     key: string
@@ -97,7 +100,7 @@ export function PublicProfileBlocks({
       className={cn(
         'group w-full cursor-pointer overflow-hidden transition-all',
         cardBaseWithHover,
-        radiusClass,
+        actionRadiusClass,
       )}
       style={cardStyle}
       onClick={params.onClick}

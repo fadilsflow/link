@@ -18,7 +18,11 @@ import {
   getAppearanceTextVars,
   getReadableTextTokensForBackground,
 } from '@/lib/appearance'
-import { getBlockCardBase, getBlockRadius } from '@/lib/block-styles'
+import {
+  getActionBlockRadius,
+  getBlockCardBase,
+  getBlockRadius,
+} from '@/lib/block-styles'
 import { cn } from '@/lib/utils'
 
 interface AppearancePreviewProps {
@@ -74,6 +78,7 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
 
   const cardBase = getBlockCardBase(blockStyle)
   const radiusClass = getBlockRadius(blockRadius)
+  const actionRadiusClass = getActionBlockRadius(blockRadius)
   const iconTokens = getReadableTextTokensForBackground(
     user.appearanceBackgroundColor,
   )
@@ -84,6 +89,9 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
       '--muted-foreground': iconTokens.mutedForeground,
     } as React.CSSProperties)
     : undefined
+
+  const isActionBlockType = (type?: string) =>
+    !type || type === 'link' || type === 'telegram' || type === 'discord'
 
   return (
     <div className="w-full h-full flex items-center justify-center p-2">
@@ -157,7 +165,7 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
                     className={cn(
                       'w-full bg-card',
                       cardBase,
-                      radiusClass,
+                      isActionBlockType(block.type) ? actionRadiusClass : radiusClass,
                       block.type === 'image' ? 'p-0 overflow-hidden' : 'p-3',
                     )}
                     style={blockInlineStyle}
@@ -199,7 +207,7 @@ export function AppearancePreview({ user, blocks }: AppearancePreviewProps) {
                 className={cn(
                   'w-full bg-card px-3 py-3 text-left',
                   cardBase,
-                  radiusClass,
+                  actionRadiusClass,
                 )}
                 style={blockInlineStyle}
                 type="button"

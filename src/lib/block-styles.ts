@@ -58,6 +58,16 @@ export function getBlockRadius(radius: BlockRadius): string {
 }
 
 /**
+ * Get radius class for compact action blocks (icon + text + link).
+ *
+ * @param radius - The radius setting: 'rounded' or 'square'
+ * @returns CSS classes for border radius
+ */
+export function getActionBlockRadius(radius: BlockRadius): string {
+  return radius === 'rounded' ? 'rounded-full' : 'rounded-none'
+}
+
+/**
  * Get skeleton background color using CSS variables.
  * Used for loading states.
  *
@@ -132,7 +142,7 @@ export function getLinkBlockClasses(
   blockRadius: BlockRadius,
 ): string {
   const base = getBlockCardBase(blockStyle)
-  const radius = getBlockRadius(blockRadius)
+  const radius = getActionBlockRadius(blockRadius)
 
   return cn(
     'group w-full cursor-pointer overflow-hidden min-h-20',

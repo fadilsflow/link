@@ -25,6 +25,7 @@ import {
   getAppearancePageBackgroundStyle,
   getAppearanceTextVars,
   getAppearanceTextColor,
+  isDarkBackground,
 } from '@/lib/appearance'
 
 import SiteUserProfileHeader from '@/components/site-user-profile-header'
@@ -346,6 +347,16 @@ function UserProfile() {
     backgroundImageUrl: user.appearanceBackgroundImageUrl,
     userImage: user.image,
   })
+  const isDarkBg = isDarkBackground({
+    backgroundType: user.appearanceBackgroundType,
+    backgroundColor: user.appearanceBackgroundColor,
+    backgroundGradientTop: user.appearanceBackgroundGradientTop,
+    backgroundGradientBottom: user.appearanceBackgroundGradientBottom,
+    backgroundImageUrl: user.appearanceBackgroundImageUrl,
+    userImage: user.image,
+  })
+  const borderClass = isDarkBg ? 'border-white/10' : 'border-border'
+  const divideClass = isDarkBg ? 'divide-white/10' : 'divide-border'
 
   const productMap = new Map(
     (products as Array<PublicProduct>).map((product) => [product.id, product]),
@@ -458,7 +469,7 @@ function UserProfile() {
       ) : null}
       <SiteUserProfileHeader />
 
-      <div className="relative z-10 mx-auto min-h-screen w-full border-border/70">
+      <div className={cn('relative z-10 mx-auto min-h-screen w-full', isDarkBg ? 'border-white/10' : 'border-border/70')}>
         {isBanner && lcpBannerSrc ? (
           <div className="h-[160px] w-full overflow-hidden md:h-[200px]">
             <img
@@ -476,7 +487,7 @@ function UserProfile() {
           <div className="h-[160px] w-full md:h-[150px]" />
         )}
 
-        <div className="md:divide-x  sm:max-w-7xl mx-auto grid grid-cols-1  px-5  md:grid-cols-2  md:px-10 ">
+        <div className={cn('md:divide-x', divideClass, 'sm:max-w-7xl mx-auto grid grid-cols-1  px-5  md:grid-cols-2  md:px-10 ')}>
           <section className="relative pt-14 md:pt-[70px] md:pr-6">
             <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  md:-top-[60px] md:h-[120px] md:w-[120px]">
               <AvatarImage src={user.image || '/avatar-placeholder.png'} />
@@ -552,8 +563,8 @@ function UserProfile() {
             <div className="mt-6 hidden space-y-4 md:block">{profileBlocksSection}</div>
           </section>
 
-          <aside className="pb-6 md:border-y border-r hidden md:block">
-            <div className="mb-5 md:px-6 border-b  py-4">
+          <aside className={cn('pb-6 md:border-y border-r hidden md:block', isDarkBg ? 'border-white/10' : 'border-border')}>
+            <div className={cn('mb-5 md:px-6 border-b py-4', isDarkBg ? 'border-white/10' : 'border-border')}>
               <div className="flex  items-center gap-2 text-sm font-semibold">
                 <Package2 className='size-4' style={{ color: profileTextColor.foreground }} />
                 <span style={{ color: profileTextColor.foreground }}>Products</span>

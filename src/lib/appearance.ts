@@ -284,3 +284,45 @@ export function getAppearanceTextColor(options: {
 export function isValidAppearanceHexColor(value: string) {
   return HEX_COLOR_PATTERN.test(value.trim())
 }
+
+export function isDarkBackground(options: {
+  backgroundType?: AppearanceBackgroundType | null
+  backgroundColor?: string | null
+  backgroundGradientTop?: string | null
+  backgroundGradientBottom?: string | null
+  backgroundImageUrl?: string | null
+  userImage?: string | null
+}): boolean {
+  const {
+    backgroundType,
+    backgroundColor,
+    backgroundGradientTop,
+    backgroundGradientBottom,
+    backgroundImageUrl,
+    userImage,
+  } = options
+
+  // For avatar-blur, assume dark
+  if (backgroundType === 'avatar-blur' && userImage) {
+    return true
+  }
+
+  // For image background, assume dark
+  if (backgroundType === 'image' && backgroundImageUrl) {
+    return true
+  }
+
+  // For gradient, check the top color
+  if (backgroundType === 'gradient' && backgroundGradientTop) {
+    const tokens = getReadableTextTokens(backgroundGradientTop)
+    return tokens.foreground === DARK_SURFACE_FOREGROUND
+  }
+
+  // For flat background, check the color
+  if (backgroundType === 'flat' && backgroundColor) {
+    const tokens = getReadableTextTokens(backgroundColor)
+    return tokens.foreground === DARK_SURFACE_FOREGROUND
+  }
+
+  return false
+}

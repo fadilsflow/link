@@ -1,5 +1,4 @@
 import { Globe } from 'lucide-react'
-import type { CSSProperties } from 'react'
 
 import { Facebook } from '@/components/icon/facebook'
 import { GitHub } from '@/components/icon/github'
@@ -9,7 +8,6 @@ import { LinkedIn } from '@/components/icon/linkedin'
 import { WhatsApp } from '@/components/icon/whatsapp'
 import { XformerlyTwitter } from '@/components/icon/x'
 import { YouTube } from '@/components/icon/youtube'
-import { getReadableTextTokensForBackground } from '@/lib/appearance'
 import {
   getSocialBlockButtonClasses,
   getSocialBlockIconClasses,
@@ -57,24 +55,13 @@ function getSocialIcon(
 
 interface SocialProfileBlocksProps {
   links: Array<PublicSocialLink>
-  iconBackgroundColor?: string
   className?: string
 }
 
 export function SocialProfileBlocks({
   links,
-  iconBackgroundColor,
   className,
 }: SocialProfileBlocksProps) {
-  const iconTokens = getReadableTextTokensForBackground(iconBackgroundColor)
-  const iconWrapperStyle = iconBackgroundColor
-    ? ({
-      backgroundColor: iconBackgroundColor,
-      '--foreground': iconTokens.foreground,
-      '--muted-foreground': iconTokens.mutedForeground,
-    } as CSSProperties)
-    : undefined
-
   return (
     <div className={cn(getSocialBlocksWrapperClasses(), className)}>
       {links.map((link) => (
@@ -84,7 +71,6 @@ export function SocialProfileBlocks({
           target={link.platform === 'email' ? undefined : '_blank'}
           rel={link.platform === 'email' ? undefined : 'noopener noreferrer'}
           className={getSocialBlockButtonClasses()}
-          style={iconWrapperStyle}
           aria-label={link.platform || 'website'}
         >
           {getSocialIcon(link.platform)}

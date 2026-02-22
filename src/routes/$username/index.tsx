@@ -372,6 +372,9 @@ function UserProfile() {
       radiusClass={radiusClass}
       cardStyle={blockInlineStyle}
       iconBackgroundColor={user.appearanceBackgroundColor || undefined}
+      backgroundType={user.appearanceBackgroundType || undefined}
+      backgroundGradientTop={user.appearanceBackgroundGradientTop || undefined}
+      backgroundGradientBottom={user.appearanceBackgroundGradientBottom || undefined}
       onOpenBlockUrl={openBlockUrl}
       onTrackClick={(blockId) => {
         void trpcClient.block.trackClick.mutate({ id: blockId })
@@ -489,7 +492,6 @@ function UserProfile() {
             {socialItems.length > 0 ? (
               <SocialProfileBlocks
                 links={socialItems}
-                // iconBackgroundColor={user.appearanceBackgroundColor || undefined}
                 className="mt-5"
               />
             ) : null}

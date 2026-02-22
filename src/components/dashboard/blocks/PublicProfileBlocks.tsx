@@ -6,6 +6,7 @@ import { getReadableTextTokensForBackground } from '@/lib/appearance'
 import { getBlockTypeConfigOrDefault } from '@/lib/block-type-config'
 import { getBlockSkeletonClasses } from '@/lib/block-styles'
 import { cn } from '@/lib/utils'
+import type { AppearanceBackgroundType } from '@/lib/appearance'
 
 export interface PublicProfileBlock {
   id: string
@@ -23,6 +24,9 @@ interface PublicProfileBlocksProps {
   radiusClass: string
   cardStyle?: React.CSSProperties
   iconBackgroundColor?: string
+  backgroundType?: AppearanceBackgroundType | null
+  backgroundGradientTop?: string | null
+  backgroundGradientBottom?: string | null
   onOpenBlockUrl: (block: PublicProfileBlock) => void
   onTrackClick: (blockId: string) => void
   renderVideoBlock: (block: PublicProfileBlock) => React.ReactNode
@@ -43,21 +47,41 @@ export function PublicProfileBlocks({
   radiusClass,
   cardStyle,
   iconBackgroundColor,
+  backgroundType,
+  backgroundGradientTop,
+  backgroundGradientBottom,
   onOpenBlockUrl,
   onTrackClick,
   renderVideoBlock,
   renderProductBlock,
 }: PublicProfileBlocksProps) {
-  const iconTokens = getReadableTextTokensForBackground(iconBackgroundColor)
-  const iconWrapperStyle = iconBackgroundColor
-    ? ({
+  // Calculate icon wrapper style based on background type
+  let iconWrapperStyle: React.CSSProperties | undefined
+
+  if (backgroundType === 'gradient' && backgroundGradientTop && backgroundGradientBottom) {
+    // Use gradient background
+    iconWrapperStyle = {
+      background: `linear-gradient(to bottom, ${backgroundGradientTop}, ${backgroundGradientBottom})`,
+    }
+  } else if (backgroundType === 'flat' && iconBackgroundColor) {
+    // Use flat color
+    const iconTokens = getReadableTextTokensForBackground(iconBackgroundColor)
+    iconWrapperStyle = {
       backgroundColor: iconBackgroundColor,
       '--foreground': iconTokens.foreground,
       '--muted-foreground': iconTokens.mutedForeground,
-    } as React.CSSProperties)
-    : undefined
-  const sharedIconWrapClass =
-    'flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/80 '
+    } as React.CSSProperties
+  } else if (backgroundType === 'avatar-blur' || backgroundType === 'image') {
+    // For avatar-blur or image, use a subtle semi-transparent background
+    iconWrapperStyle = {
+      backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    }
+  }
+  // For 'none' background type, iconWrapperStyle remains undefined (will use default bg-muted/80)
+
+  const sharedIconWrapClass = iconWrapperStyle
+    ? 'flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/60'
+    : 'flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/80'
   const sharedRowClass =
     'grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4'
 

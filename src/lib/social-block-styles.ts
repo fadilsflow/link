@@ -1,5 +1,5 @@
 export function getSocialBlocksWrapperClasses(): string {
-  return 'flex w-full flex-wrap gap-3'
+  return 'flex w-full flex-wrap gap-2'
 }
 
 export function getSocialBlockButtonClasses(): string {
@@ -7,5 +7,5 @@ export function getSocialBlockButtonClasses(): string {
 }
 
 export function getSocialBlockIconClasses(): string {
-  return 'size-4 text-foreground transition-transform group-hover:scale-105'
+  return 'size-4 text-foreground transition-transform group-hover:scale-110'
 }

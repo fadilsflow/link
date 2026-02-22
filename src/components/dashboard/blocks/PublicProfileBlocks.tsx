@@ -74,14 +74,14 @@ export function PublicProfileBlocks({
   } else if (backgroundType === 'avatar-blur' || backgroundType === 'image') {
     // For avatar-blur or image, use a subtle semi-transparent background
     iconWrapperStyle = {
-      backgroundColor: 'rgba(0, 0, 0, 0.15)',
+      backgroundColor: 'rgba(0, 0, 0, 0)',
     }
   }
   // For 'none' background type, iconWrapperStyle remains undefined (will use default bg-muted/80)
 
   const sharedIconWrapClass = iconWrapperStyle
     ? 'flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/60'
-    : 'flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/80'
+    : 'flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/60'
   const sharedRowClass =
     'grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4'
 

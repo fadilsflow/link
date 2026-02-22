@@ -34,9 +34,7 @@ export const APPEARANCE_FONT_OPTIONS: Array<{
 ]
 
 const DARK_SURFACE_FOREGROUND = '#f8fafc'
-const DARK_SURFACE_MUTED_FOREGROUND = '#e2e8f0'
 const LIGHT_SURFACE_FOREGROUND = '#111827'
-const LIGHT_SURFACE_MUTED_FOREGROUND = '#475569'
 
 function normalizeHexColor(value: string): string | null {
   const trimmed = value.trim()
@@ -82,7 +80,7 @@ function getReadableTextTokens(backgroundColor: string): {
   if (!rgb) {
     return {
       foreground: LIGHT_SURFACE_FOREGROUND,
-      mutedForeground: LIGHT_SURFACE_MUTED_FOREGROUND,
+      mutedForeground: LIGHT_SURFACE_FOREGROUND,
     }
   }
 
@@ -92,11 +90,11 @@ function getReadableTextTokens(backgroundColor: string): {
   return isDarkSurface
     ? {
         foreground: DARK_SURFACE_FOREGROUND,
-        mutedForeground: DARK_SURFACE_MUTED_FOREGROUND,
+        mutedForeground: DARK_SURFACE_FOREGROUND,
       }
     : {
         foreground: LIGHT_SURFACE_FOREGROUND,
-        mutedForeground: LIGHT_SURFACE_MUTED_FOREGROUND,
+        mutedForeground: LIGHT_SURFACE_FOREGROUND,
       }
 }
 
@@ -109,7 +107,7 @@ export function getReadableTextTokensForBackground(
   if (!backgroundColor) {
     return {
       foreground: LIGHT_SURFACE_FOREGROUND,
-      mutedForeground: LIGHT_SURFACE_MUTED_FOREGROUND,
+      mutedForeground: LIGHT_SURFACE_FOREGROUND,
     }
   }
 
@@ -244,7 +242,7 @@ export function getAppearanceTextColor(options: {
     // For avatar blur, assume dark background (blurred image)
     return {
       foreground: DARK_SURFACE_FOREGROUND,
-      mutedForeground: DARK_SURFACE_MUTED_FOREGROUND,
+      mutedForeground: DARK_SURFACE_FOREGROUND,
     }
   }
 
@@ -252,7 +250,7 @@ export function getAppearanceTextColor(options: {
   if (backgroundType === 'image' && backgroundImageUrl) {
     return {
       foreground: DARK_SURFACE_FOREGROUND,
-      mutedForeground: DARK_SURFACE_MUTED_FOREGROUND,
+      mutedForeground: DARK_SURFACE_FOREGROUND,
     }
   }
 
@@ -277,7 +275,7 @@ export function getAppearanceTextColor(options: {
   // Default to light text
   return {
     foreground: LIGHT_SURFACE_FOREGROUND,
-    mutedForeground: LIGHT_SURFACE_MUTED_FOREGROUND,
+    mutedForeground: LIGHT_SURFACE_FOREGROUND,
   }
 }
 

@@ -24,7 +24,7 @@ export const Header = () => {
             <div className="flex items-center gap-6 ">
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size='sm' render={<a href={REPO_URL} target='_blank' />} className="rounded-full hidden md:flex justify-center ">
-                  <GitHub className='invert' />5.3K
+                  <GitHub className='text-black' />5.3K
                 </Button>
               </div>
               {isPending ? null : session?.user ? (

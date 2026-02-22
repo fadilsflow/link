@@ -2,7 +2,6 @@ import * as React from 'react'
 import { ArrowUpRight, Link2Icon } from 'lucide-react'
 
 import type { AppearanceBackgroundType } from '@/lib/appearance'
-import { Button } from '@/components/ui/button'
 import { getReadableTextTokensForBackground } from '@/lib/appearance'
 import { getBlockTypeConfigOrDefault } from '@/lib/block-type-config'
 import { getBlockSkeletonClasses } from '@/lib/block-styles'
@@ -142,14 +141,13 @@ export function PublicProfileBlocks({
       return (
         <div
           key={block.id}
-          className={cn('w-full min-h-16 space-y-1 p-4 text-center', cardBase, radiusClass)}
-        // style={cardStyle}
+          className={cn('text-left w-full',)}
         >
-          <h2 className="text-2xl font-bold text-foreground">
+          <h2 className="text-md font-bold text-foreground">
             {block.title}
           </h2>
           {block.content && (
-            <p className="text-sm text-foreground">{block.content}</p>
+            <p className="text-sm  text-foreground">{block.content}</p>
           )}
         </div>
       )
@@ -159,11 +157,17 @@ export function PublicProfileBlocks({
       return (
         <div
           key={block.id}
-          className={cn('w-full overflow-hidden', cardBase, radiusClass)}
+          className={cn(
+            'w-full overflow-hidden',
+            cardBaseWithHover,
+            radiusClass,
+            block.url && isInteractive && 'cursor-pointer',
+          )}
           style={cardStyle}
+          onClick={block.url && isInteractive ? () => onOpenBlockUrl(block) : undefined}
         >
           {block.content && (
-            <div className="relative w-full overflow-hidden bg-muted aspect-4/3">
+            <div className="relative w-full overflow-hidden bg-muted">
               <img
                 loading="lazy"
                 decoding="async"
@@ -171,15 +175,11 @@ export function PublicProfileBlocks({
                 height={900}
                 src={block.content}
                 alt="Image block"
-                className="absolute inset-0 h-full w-full object-cover"
+                className={cn(
+                  'h-auto w-full',
+                  block.url && isInteractive && 'cursor-pointer',
+                )}
               />
-            </div>
-          )}
-          {block.url && isInteractive && (
-            <div className="px-3 pb-3">
-              <Button className="w-full" onClick={() => onOpenBlockUrl(block)}>
-                Open link
-              </Button>
             </div>
           )}
         </div>

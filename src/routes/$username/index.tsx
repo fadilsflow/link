@@ -526,7 +526,7 @@ function UserProfile() {
           </aside>
         </div>
 
-        <div className=" pb-4 pt-10 flex justify-center ">
+        <div className="pb-4 pt-10 flex justify-center ">
           <div className="flex items-center">
             <PublicMark />
           </div>

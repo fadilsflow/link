@@ -444,9 +444,9 @@ function UserProfile() {
   })
   const defaultHeaderLogoColor = isBanner
     ? getAppearanceTextColor({
-        backgroundType: 'image',
-        backgroundImageUrl: user.appearanceBgImageUrl,
-      }).foreground
+      backgroundType: 'image',
+      backgroundImageUrl: user.appearanceBgImageUrl,
+    }).foreground
     : profileTextColor.foreground
   const [headerLogoColor, setHeaderLogoColor] = React.useState(
     defaultHeaderLogoColor,
@@ -599,11 +599,11 @@ function UserProfile() {
           <div className="absolute inset-0 bg-background/45" />
         </div>
       ) : null}
-      <SiteUserProfileHeader logoColor={headerLogoColor} />
+      <SiteUserProfileHeader logoColor={headerLogoColor} backgroundLogoColor={profileTextColor.foreground} />
 
       <div className={cn('relative z-10 mx-auto min-h-screen w-full', isDarkBg ? 'border-white/10' : 'border-border/70')}>
         {isBanner && lcpBannerSrc ? (
-          <div className="h-[160px] w-full overflow-hidden md:h-[200px]">
+          <div className="h-[120px] overflow-hidden lg:h-[200px] sm:max-w-2xl md:max-w-3xl lg:max-w-7xl mx-auto lg:overflow-hidden px-3 lg:px-0">
             <img
               src={lcpBannerSrc}
               alt={`${user.name} banner`}
@@ -612,17 +612,17 @@ function UserProfile() {
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover rounded-lg lg:rounded-none"
             />
           </div>
         ) : (
-          <div className="h-[160px] w-full md:h-[150px]" />
+          <div className="h-[160px] w-full lg:h-[150px]" />
         )}
 
-        <div className={cn('md:divide-x', divideClass, 'sm:max-w-7xl mx-auto grid grid-cols-1  px-5  md:grid-cols-2  md:px-10 ')}>
-          <section className="relative pt-10 md:pt-[70px] md:pr-6">
-            <Avatar className="absolute -top-14 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full ring-2 ring-primary/10 md:-top-[60px] md:left-0 md:h-[120px] md:w-[120px] md:translate-x-0">
-              {/* <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  md:-top-[60px] md:h-[120px] md:w-[120px]"> */}
+        <div className={cn('lg:divide-x', divideClass, 'sm:max-w-2xl md:max-w-3xl lg:max-w-7xl mx-auto grid grid-cols-1  px-5  lg:grid-cols-2  lg:px-10 ')}>
+          <section className="relative pt-10 lg:pt-[70px] lg:pr-6">
+            <Avatar className="absolute -top-14 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full ring-2 ring-primary/10 lg:-top-[60px] lg:left-0 lg:h-[120px] lg:w-[120px] lg:translate-x-0">
+              {/* <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  lg:-top-[60px] lg:h-[120px] lg:w-[120px]"> */}
               <AvatarImage src={user.image || '/avatar-placeholder.png'} />
               <AvatarFallback className="text-lg font-bold">
                 {user.name.slice(0, 2).toUpperCase()}
@@ -631,14 +631,14 @@ function UserProfile() {
 
             <h1
               id="profile-name"
-              className="pt-4 text-center text-xl font-heading md:text-left md:text-2xl"
+              className="pt-4 text-center text-xl font-heading lg:text-left lg:text-2xl"
               style={{ color: profileTextColor.foreground }}
             >
               {user.name}
             </h1>
             {user.title ? (
               <p
-                className="mt-1 text-center text-sm md:text-left md:text-base"
+                className="mt-1 text-center text-sm lg:text-left lg:text-base"
                 style={{ color: profileTextColor.mutedForeground }}
               >
                 {user.title}
@@ -646,7 +646,7 @@ function UserProfile() {
             ) : null}
             {user.bio ? (
               <p
-                className="mt-1 max-w-[560px] text-center text-sm leading-relaxed md:text-left md:text-base"
+                className="mt-1 max-w-[560px] mx-auto text-center text-sm leading-relaxed lg:text-left lg:text-base"
                 style={{ color: profileTextColor.mutedForeground }}
               >
                 {user.bio}
@@ -657,11 +657,11 @@ function UserProfile() {
               <SocialProfileBlocks
                 links={socialItems}
                 iconColor={profileTextColor.foreground}
-                className="mt-5 flex md:block justify-center sm:justify-start"
+                className="mt-5 flex lg:block justify-center lg:justify-start"
               />
             ) : null}
 
-            <div className="mt-6 md:hidden">
+            <div className="mt-6 lg:hidden">
               <Tabs
                 value={tab}
                 onValueChange={(val) => setTab(val as 'profile' | 'products')}
@@ -697,17 +697,17 @@ function UserProfile() {
               </Tabs>
             </div>
 
-            <div className="mt-6 hidden space-y-4 md:block">{profileBlocksSection}</div>
+            <div className="mt-6 hidden space-y-4 lg:block">{profileBlocksSection}</div>
           </section>
 
-          <aside className={cn('pb-6 md:border-y border-r hidden md:block', isDarkBg ? 'border-white/10' : 'border-border')}>
-            <div className={cn('mb-5 md:px-6 border-b py-4', isDarkBg ? 'border-white/10' : 'border-border')}>
+          <aside className={cn('pb-6 lg:border-y border-r hidden lg:block', isDarkBg ? 'border-white/10' : 'border-border')}>
+            <div className={cn('mb-5 lg:px-6 border-b py-4', isDarkBg ? 'border-white/10' : 'border-border')}>
               <div className="flex  items-center gap-2 text-sm font-semibold">
                 <Package2 className='size-4' style={{ color: profileTextColor.foreground }} />
                 <span style={{ color: profileTextColor.foreground }}>Products</span>
               </div>
             </div>
-            <div className="hidden space-y-5 md:block  md:px-6">{productsSection}</div>
+            <div className="hidden space-y-5 lg:block  lg:px-6">{productsSection}</div>
           </aside>
         </div>
 

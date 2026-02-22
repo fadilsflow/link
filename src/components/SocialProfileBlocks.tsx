@@ -30,36 +30,40 @@ function getSocialUrl(link: PublicSocialLink): string {
 
 function getSocialIcon(
   platform?: string | null,
+  iconColor?: string,
 ) {
+  const iconStyle = iconColor ? { color: iconColor } : undefined
   switch (platform) {
     case 'instagram':
-      return <Instagram className={getSocialBlockIconClasses()} />
+      return <Instagram className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'youtube':
-      return <YouTube className={getSocialBlockIconClasses()} />
+      return <YouTube className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'email':
-      return <Gmail className={getSocialBlockIconClasses()} />
+      return <Gmail className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'whatsapp':
-      return <WhatsApp className={getSocialBlockIconClasses()} />
+      return <WhatsApp className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'twitter':
-      return <XformerlyTwitter className={getSocialBlockIconClasses()} />
+      return <XformerlyTwitter className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'linkedin':
-      return <LinkedIn className={getSocialBlockIconClasses()} />
+      return <LinkedIn className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'github':
-      return <GitHub className={getSocialBlockIconClasses()} />
+      return <GitHub className={getSocialBlockIconClasses()} style={iconStyle} />
     case 'facebook':
-      return <Facebook className={getSocialBlockIconClasses()} />
+      return <Facebook className={getSocialBlockIconClasses()} style={iconStyle} />
     default:
-      return <Globe className={getSocialBlockIconClasses()} />
+      return <Globe className={getSocialBlockIconClasses()} style={iconStyle} />
   }
 }
 
 interface SocialProfileBlocksProps {
   links: Array<PublicSocialLink>
+  iconColor?: string
   className?: string
 }
 
 export function SocialProfileBlocks({
   links,
+  iconColor,
   className,
 }: SocialProfileBlocksProps) {
   return (
@@ -73,7 +77,7 @@ export function SocialProfileBlocks({
           className={getSocialBlockButtonClasses()}
           aria-label={link.platform || 'website'}
         >
-          {getSocialIcon(link.platform)}
+          {getSocialIcon(link.platform, iconColor)}
         </a>
       ))}
     </div>

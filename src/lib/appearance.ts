@@ -65,9 +65,7 @@ function hexToRgb(value: string): [number, number, number] | null {
 function getRelativeLuminance([r, g, b]: [number, number, number]): number {
   const toLinear = (channel: number) => {
     const srgb = channel / 255
-    return srgb <= 0.04045
-      ? srgb / 12.92
-      : ((srgb + 0.055) / 1.055) ** 2.4
+    return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4
   }
 
   const lr = toLinear(r)
@@ -222,6 +220,65 @@ export function getAppearanceTextVars(
     '--popover-foreground': textColor,
     '--muted-foreground': textColor,
   } as CSSProperties
+}
+
+export function getAppearanceTextColor(options: {
+  backgroundType?: AppearanceBackgroundType | null
+  backgroundColor?: string | null
+  backgroundGradientTop?: string | null
+  backgroundGradientBottom?: string | null
+  backgroundImageUrl?: string | null
+  userImage?: string | null
+}): { foreground: string; mutedForeground: string } {
+  const {
+    backgroundType,
+    backgroundColor,
+    backgroundGradientTop,
+    backgroundGradientBottom,
+    backgroundImageUrl,
+    userImage,
+  } = options
+
+  // For avatar-blur, use the user image to determine text color
+  if (backgroundType === 'avatar-blur' && userImage) {
+    // For avatar blur, assume dark background (blurred image)
+    return {
+      foreground: DARK_SURFACE_FOREGROUND,
+      mutedForeground: DARK_SURFACE_MUTED_FOREGROUND,
+    }
+  }
+
+  // For image background, assume dark
+  if (backgroundType === 'image' && backgroundImageUrl) {
+    return {
+      foreground: DARK_SURFACE_FOREGROUND,
+      mutedForeground: DARK_SURFACE_MUTED_FOREGROUND,
+    }
+  }
+
+  // For gradient, check the top color
+  if (backgroundType === 'gradient' && backgroundGradientTop) {
+    const tokens = getReadableTextTokens(backgroundGradientTop)
+    return {
+      foreground: tokens.foreground,
+      mutedForeground: tokens.mutedForeground,
+    }
+  }
+
+  // For flat background, check the color
+  if (backgroundType === 'flat' && backgroundColor) {
+    const tokens = getReadableTextTokens(backgroundColor)
+    return {
+      foreground: tokens.foreground,
+      mutedForeground: tokens.mutedForeground,
+    }
+  }
+
+  // Default to light text
+  return {
+    foreground: LIGHT_SURFACE_FOREGROUND,
+    mutedForeground: LIGHT_SURFACE_MUTED_FOREGROUND,
+  }
 }
 
 export function isValidAppearanceHexColor(value: string) {

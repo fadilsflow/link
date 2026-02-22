@@ -24,6 +24,7 @@ import {
   getAppearanceFontClass,
   getAppearancePageBackgroundStyle,
   getAppearanceTextVars,
+  getAppearanceTextColor,
 } from '@/lib/appearance'
 
 import SiteUserProfileHeader from '@/components/site-user-profile-header'
@@ -337,6 +338,14 @@ function UserProfile() {
   })
   const textStyle = getAppearanceTextVars(user.appearanceTextColor)
   const textFontClass = getAppearanceFontClass(user.appearanceTextFont)
+  const profileTextColor = getAppearanceTextColor({
+    backgroundType: user.appearanceBackgroundType,
+    backgroundColor: user.appearanceBackgroundColor,
+    backgroundGradientTop: user.appearanceBackgroundGradientTop,
+    backgroundGradientBottom: user.appearanceBackgroundGradientBottom,
+    backgroundImageUrl: user.appearanceBackgroundImageUrl,
+    userImage: user.image,
+  })
 
   const productMap = new Map(
     (products as Array<PublicProduct>).map((product) => [product.id, product]),
@@ -476,16 +485,26 @@ function UserProfile() {
               </AvatarFallback>
             </Avatar>
 
-            <h1 id="profile-name" className="text-xl pt-4 font-heading md:text-2xl">
+            <h1
+              id="profile-name"
+              className="text-xl pt-4 font-heading md:text-2xl"
+              style={{ color: profileTextColor.foreground }}
+            >
               {user.name}
             </h1>
             {user.title ? (
-              <p className="mt-1 text-sm text-foreground/80 md:text-base">
+              <p
+                className="mt-1 text-sm md:text-base"
+                style={{ color: profileTextColor.mutedForeground }}
+              >
                 {user.title}
               </p>
             ) : null}
             {user.bio ? (
-              <p className="mt-1 max-w-[560px] text-sm leading-relaxed text-foreground/90 md:text-base">
+              <p
+                className="mt-1 max-w-[560px] text-sm leading-relaxed md:text-base"
+                style={{ color: profileTextColor.mutedForeground }}
+              >
                 {user.bio}
               </p>
             ) : null}
@@ -493,6 +512,7 @@ function UserProfile() {
             {socialItems.length > 0 ? (
               <SocialProfileBlocks
                 links={socialItems}
+                iconColor={profileTextColor.foreground}
                 className="mt-5"
               />
             ) : null}
@@ -503,9 +523,22 @@ function UserProfile() {
                 onValueChange={(val) => setTab(val as 'profile' | 'products')}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTab value="profile">Profile</TabsTab>
-                  <TabsTab value="products">Products</TabsTab>
+                <TabsList
+                  className="grid w-full grid-cols-2"
+                  style={{ color: profileTextColor.foreground }}
+                >
+                  <TabsTab
+                    value="profile"
+                    style={{ color: profileTextColor.foreground }}
+                  >
+                    Profile
+                  </TabsTab>
+                  <TabsTab
+                    value="products"
+                    style={{ color: profileTextColor.foreground }}
+                  >
+                    Products
+                  </TabsTab>
                 </TabsList>
                 <TabsPanel value="profile" className="mt-4 space-y-3 outline-none">
                   {profileBlocksSection}
@@ -520,9 +553,10 @@ function UserProfile() {
           </section>
 
           <aside className="pb-6 md:border-y border-r hidden md:block">
-            <div className="mb-5 md:px-6 border-b  border-border py-4">
+            <div className="mb-5 md:px-6 border-b  py-4">
               <div className="flex  items-center gap-2 text-sm font-semibold">
-                <Package2 className='text-foreground size-4' /> Products
+                <Package2 className='size-4' style={{ color: profileTextColor.foreground }} />
+                <span style={{ color: profileTextColor.foreground }}>Products</span>
               </div>
             </div>
             <div className="hidden space-y-5 md:block  md:px-6">{productsSection}</div>
@@ -531,7 +565,7 @@ function UserProfile() {
 
         <div className="pb-4 pt-10 flex justify-center ">
           <div className="flex items-center">
-            <PublicMark />
+            <PublicMark textColor={profileTextColor.foreground} />
           </div>
         </div>
       </div>

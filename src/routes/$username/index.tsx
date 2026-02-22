@@ -135,12 +135,14 @@ function ProductCard({
   username,
   cardBase,
   radiusClass,
+  imageRadiusClass,
   cardStyle,
 }: {
   product: PublicProduct
   username: string
   cardBase: string
   radiusClass: string
+  imageRadiusClass?: string
   cardStyle?: React.CSSProperties
 }) {
   const hasDiscount = !!(product.salePrice && product.price)
@@ -171,7 +173,7 @@ function ProductCard({
       }
     >
       <CardContent className="p-2">
-        <div className="aspect-square w-full overflow-hidden bg-muted rounded-xl">
+        <div className={cn("aspect-square w-full overflow-hidden bg-muted", imageRadiusClass || 'rounded-xl')}>
           {hasImage ? (
             <img
               loading="lazy"
@@ -428,6 +430,7 @@ function UserProfile() {
             username={user.username || ''}
             cardBase={cardBase}
             radiusClass={radiusClass}
+            imageRadiusClass={radiusClass}
             cardStyle={blockInlineStyle}
           />
         )
@@ -452,6 +455,7 @@ function UserProfile() {
             username={user.username || ''}
             cardBase={cardBase}
             radiusClass={radiusClass}
+            imageRadiusClass={radiusClass}
             cardStyle={blockInlineStyle}
           />
         )
@@ -532,7 +536,7 @@ function UserProfile() {
               <SocialProfileBlocks
                 links={socialItems}
                 iconColor={profileTextColor.foreground}
-                className="mt-5"
+                className="mt-5 flex md:block justify-center sm:justify-start"
               />
             ) : null}
 
@@ -543,8 +547,12 @@ function UserProfile() {
                 className="w-full"
               >
                 <TabsList
-                  className="grid w-full grid-cols-2"
-                  style={{ color: profileTextColor.foreground }}
+                  variant='underline'
+                  className="grid w-full grid-cols-2 border-b-0"
+                  style={{
+                    color: profileTextColor.foreground,
+                    '--tabs-indicator-color': profileTextColor.foreground,
+                  } as React.CSSProperties}
                 >
                   <TabsTab
                     value="profile"

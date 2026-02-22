@@ -206,8 +206,12 @@ export function AppearancePreview({ user, blocks, socialLinks = [] }: Appearance
                   className="w-full"
                 >
                   <TabsList
-                    className="grid w-full grid-cols-2"
-                    style={{ color: profileTextColor.foreground }}
+                    variant='underline'
+                    className="grid w-full grid-cols-2 border-b-0"
+                    style={{
+                      color: profileTextColor.foreground,
+                      '--tabs-indicator-color': profileTextColor.foreground,
+                    } as React.CSSProperties}
                   >
                     <TabsTab
                       value="profile"
@@ -278,7 +282,7 @@ export function AppearancePreview({ user, blocks, socialLinks = [] }: Appearance
                             style={blockInlineStyle}
                           >
                             <div className="p-2">
-                              <div className="aspect-square w-full overflow-hidden rounded-xl bg-muted" />
+                              <div className={cn('aspect-square w-full overflow-hidden bg-muted', radiusClass)} />
                               <div className="space-y-1 mt-2">
                                 <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
                                   {productBlock.title || 'Product'}

@@ -79,7 +79,6 @@ const PLATFORMS = [
     value: 'twitter',
     label: 'X (Twitter)',
     icon: XformerlyTwitter,
-    iconClass: 'invert dark:invert-0',
     prefix: 'x.com/',
     baseUrl: 'https://x.com/',
     placeholder: 'username',
@@ -111,7 +110,6 @@ const PLATFORMS = [
   {
     value: 'github',
     label: 'GitHub',
-    iconClass: 'invert dark:invert-0',
     icon: GitHub,
     prefix: 'github.com/',
     baseUrl: 'https://github.com/',

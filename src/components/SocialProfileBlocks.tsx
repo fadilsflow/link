@@ -1,6 +1,5 @@
 import { Globe } from 'lucide-react'
 import type { CSSProperties } from 'react'
-import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
 
 import { Facebook } from '@/components/icon/facebook'
 import { GitHub } from '@/components/icon/github'
@@ -10,6 +9,7 @@ import { LinkedIn } from '@/components/icon/linkedin'
 import { WhatsApp } from '@/components/icon/whatsapp'
 import { XformerlyTwitter } from '@/components/icon/x'
 import { YouTube } from '@/components/icon/youtube'
+import { getReadableTextTokensForBackground } from '@/lib/appearance'
 import {
   getSocialBlockButtonClasses,
   getSocialBlockIconClasses,
@@ -32,64 +32,48 @@ function getSocialUrl(link: PublicSocialLink): string {
 
 function getSocialIcon(
   platform?: string | null,
-  iconStyle?: CSSProperties,
 ) {
   switch (platform) {
     case 'instagram':
-      return <Instagram className={getSocialBlockIconClasses()} style={iconStyle} />
+      return <Instagram className={getSocialBlockIconClasses()} />
     case 'youtube':
-      return <YouTube className={getSocialBlockIconClasses()} style={iconStyle} />
+      return <YouTube className={getSocialBlockIconClasses()} />
     case 'email':
-      return <Gmail className={getSocialBlockIconClasses()} style={iconStyle} />
+      return <Gmail className={getSocialBlockIconClasses()} />
     case 'whatsapp':
-      return <WhatsApp className={getSocialBlockIconClasses()} style={iconStyle} />
+      return <WhatsApp className={getSocialBlockIconClasses()} />
     case 'twitter':
-      return (
-        <XformerlyTwitter
-          className={cn(
-            getSocialBlockIconClasses(),
-            iconStyle ? '' : 'invert dark:invert-0',
-          )}
-          style={iconStyle}
-        />
-      )
+      return <XformerlyTwitter className={getSocialBlockIconClasses()} />
     case 'linkedin':
-      return <LinkedIn className={getSocialBlockIconClasses()} style={iconStyle} />
+      return <LinkedIn className={getSocialBlockIconClasses()} />
     case 'github':
-      return (
-        <GitHub
-          className={cn(
-            getSocialBlockIconClasses(),
-            iconStyle ? '' : 'invert dark:invert-0',
-          )}
-          style={iconStyle}
-        />
-      )
+      return <GitHub className={getSocialBlockIconClasses()} />
     case 'facebook':
-      return <Facebook className={getSocialBlockIconClasses()} style={iconStyle} />
+      return <Facebook className={getSocialBlockIconClasses()} />
     default:
-      return <Globe className={getSocialBlockIconClasses()} style={iconStyle} />
+      return <Globe className={getSocialBlockIconClasses()} />
   }
 }
 
 interface SocialProfileBlocksProps {
   links: Array<PublicSocialLink>
-  blockStyle: BlockStyle
-  blockRadius: BlockRadius
-  cardStyle?: CSSProperties
-  iconColor?: string
+  iconBackgroundColor?: string
   className?: string
 }
 
 export function SocialProfileBlocks({
   links,
-  blockStyle,
-  blockRadius,
-  cardStyle,
-  iconColor,
+  iconBackgroundColor,
   className,
 }: SocialProfileBlocksProps) {
-  const iconStyle = iconColor ? ({ color: iconColor } as CSSProperties) : undefined
+  const iconTokens = getReadableTextTokensForBackground(iconBackgroundColor)
+  const iconWrapperStyle = iconBackgroundColor
+    ? ({
+        backgroundColor: iconBackgroundColor,
+        '--foreground': iconTokens.foreground,
+        '--muted-foreground': iconTokens.mutedForeground,
+      } as CSSProperties)
+    : undefined
 
   return (
     <div className={cn(getSocialBlocksWrapperClasses(), className)}>
@@ -99,11 +83,11 @@ export function SocialProfileBlocks({
           href={getSocialUrl(link)}
           target={link.platform === 'email' ? undefined : '_blank'}
           rel={link.platform === 'email' ? undefined : 'noopener noreferrer'}
-          className={getSocialBlockButtonClasses(blockStyle, blockRadius)}
-          style={cardStyle}
+          className={getSocialBlockButtonClasses()}
+          style={iconWrapperStyle}
           aria-label={link.platform || 'website'}
         >
-          {getSocialIcon(link.platform, iconStyle)}
+          {getSocialIcon(link.platform)}
         </a>
       ))}
     </div>

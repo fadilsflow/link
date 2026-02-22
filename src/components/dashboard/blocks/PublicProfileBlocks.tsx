@@ -82,11 +82,19 @@ export function PublicProfileBlocks({
     iconWrapperStyle = {
       backgroundColor: 'rgba(0, 0, 0, 0)',
     }
+  } else if (iconBackgroundColor) {
+    // Default: use flat color with readable text tokens
+    const iconTokens = getReadableTextTokensForBackground(iconBackgroundColor)
+    iconWrapperStyle = {
+      backgroundColor: iconBackgroundColor,
+      '--foreground': iconTokens.foreground,
+      '--muted-foreground': iconTokens.mutedForeground,
+    } as React.CSSProperties
   }
 
-  const sharedIconWrapClass = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${actionRadiusClass}`
+  const sharedIconWrapClass = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full  ${actionRadiusClass}`
   const sharedRowClass =
-    'grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-3'
+    'grid grid-cols-[2.5rem_1fr_1.25rem] items-center gap-3 p-4'
 
   const renderActionBlock = (params: {
     key: string

@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils'
 import {
   getActionBlockRadius,
   getBlockCardBase,
-  getBlockRadius,
 } from '@/lib/block-styles'
 
 interface BlockStyleSelectorProps {

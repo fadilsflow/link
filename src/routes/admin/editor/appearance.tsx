@@ -510,21 +510,21 @@ function AppearanceEditor({ user, blocks }: { user: any; blocks: Array<any> }) {
                 onCommit={(value) => {
                   saveColor(value, 'appearanceBlockColor')
                 }}
-                disabled={blockStyle === 'basic'}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Shadow color</Label>
-              <ColorPicker
-                value={blockShadowColor}
-                onChange={setBlockShadowColor}
-                onCommit={(value) => {
-                  saveColor(value, 'appearanceBlockShadowColor')
-                }}
-                disabled={blockStyle !== 'shadow'}
-              />
-            </div>
+            {blockStyle === 'shadow' ? (
+              <div className="space-y-2">
+                <Label>Shadow color</Label>
+                <ColorPicker
+                  value={blockShadowColor}
+                  onChange={setBlockShadowColor}
+                  onCommit={(value) => {
+                    saveColor(value, 'appearanceBlockShadowColor')
+                  }}
+                />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

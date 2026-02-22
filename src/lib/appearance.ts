@@ -134,10 +134,15 @@ export function getAppearanceBlockStyle(options: {
   const { blockStyle, blockColor, blockShadowColor } = options
   const resolvedBlockColor = blockColor || APPEARANCE_DEFAULTS.blockColor
   const textTokens = getReadableTextTokens(resolvedBlockColor)
+  const adaptiveBorderColor =
+    textTokens.foreground === DARK_SURFACE_FOREGROUND
+      ? 'rgb(248 250 252 / 0.10)'
+      : 'rgb(15 23 42 / 0.10)'
 
-  if (blockStyle === 'flat') {
+  if (blockStyle === 'flat' || blockStyle === 'basic') {
     return {
       backgroundColor: resolvedBlockColor,
+      borderColor: adaptiveBorderColor,
       '--foreground': textTokens.foreground,
       '--card-foreground': textTokens.foreground,
       '--popover-foreground': textTokens.foreground,
@@ -160,6 +165,23 @@ export function getAppearanceBlockStyle(options: {
   }
 
   return {}
+}
+
+export function getAppearanceIconBackgroundColor(options: {
+  backgroundType?: AppearanceBackgroundType | null
+  backgroundColor?: string | null
+}): string | undefined {
+  const { backgroundType, backgroundColor } = options
+
+  if (backgroundType === 'flat') {
+    return backgroundColor || APPEARANCE_DEFAULTS.backgroundColor
+  }
+
+  if (backgroundType === 'none' || !backgroundType) {
+    return APPEARANCE_DEFAULTS.backgroundColor
+  }
+
+  return undefined
 }
 
 export function getAppearancePageBackgroundStyle(options: {

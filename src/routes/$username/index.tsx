@@ -23,6 +23,7 @@ import {
 import {
   getAppearanceBlockStyle,
   getAppearanceFontClass,
+  getAppearanceIconBackgroundColor,
   getAppearancePageBackgroundStyle,
   getAppearanceTextVars,
   getAppearanceTextColor,
@@ -208,13 +209,11 @@ function DeferredVideoEmbed({
   cardClass,
   radiusClass,
   cardStyle,
-  iconColor,
 }: {
   block: PublicBlock
   cardClass: string
   radiusClass: string
   cardStyle?: React.CSSProperties
-  iconColor?: string
 }) {
   const { embedUrl, posterUrl, provider, youtubeVideoId } = React.useMemo(
     () => getVideoMeta(block.content),
@@ -231,7 +230,7 @@ function DeferredVideoEmbed({
       style={cardStyle}
     >
       <div className="flex items-center gap-2 text-sm font-semibold">
-        <PlayCircle className="h-4 w-4" style={iconColor ? { color: iconColor } : undefined} />
+        <PlayCircle className="h-4 w-4 text-foreground" />
         {block.title || 'Video'}
       </div>
 
@@ -331,7 +330,6 @@ function UserProfile() {
     blockColor: user.appearanceBlockColor,
     blockShadowColor: user.appearanceBlockShadowColor,
   })
-  const blockColor = user.appearanceBlockColor || undefined
   const backgroundStyles = getAppearancePageBackgroundStyle({
     backgroundType: user.appearanceBackgroundType,
     backgroundColor: user.appearanceBackgroundColor,
@@ -358,6 +356,14 @@ function UserProfile() {
     userImage: user.image,
   })
   const divideClass = isDarkBg ? 'divide-white/10' : 'divide-border'
+  const iconBackgroundColor = getAppearanceIconBackgroundColor({
+    backgroundType: user.appearanceBackgroundType,
+    backgroundColor: user.appearanceBackgroundColor,
+  })
+  const iconBackgroundType =
+    user.appearanceBackgroundType === 'none' || !user.appearanceBackgroundType
+      ? 'flat'
+      : user.appearanceBackgroundType
 
   const productMap = new Map(
     (products as Array<PublicProduct>).map((product) => [product.id, product]),
@@ -394,8 +400,8 @@ function UserProfile() {
       radiusClass={radiusClass}
       actionRadiusClass={actionRadiusClass}
       cardStyle={blockInlineStyle}
-      iconBackgroundColor={user.appearanceBackgroundColor || undefined}
-      backgroundType={user.appearanceBackgroundType || undefined}
+      iconBackgroundColor={iconBackgroundColor}
+      backgroundType={iconBackgroundType}
       backgroundGradientTop={user.appearanceBackgroundGradientTop || undefined}
       backgroundGradientBottom={user.appearanceBackgroundGradientBottom || undefined}
       onOpenBlockUrl={openBlockUrl}
@@ -409,7 +415,6 @@ function UserProfile() {
           cardClass={cardBase}
           radiusClass={radiusClass}
           cardStyle={blockInlineStyle}
-          iconColor={blockColor}
         />
       )}
       renderProductBlock={(block) => {

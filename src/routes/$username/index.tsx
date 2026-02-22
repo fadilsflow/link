@@ -489,7 +489,7 @@ function UserProfile() {
             {socialItems.length > 0 ? (
               <SocialProfileBlocks
                 links={socialItems}
-                iconBackgroundColor={user.appearanceBackgroundColor || undefined}
+                // iconBackgroundColor={user.appearanceBackgroundColor || undefined}
                 className="mt-5"
               />
             ) : null}

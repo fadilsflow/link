@@ -69,10 +69,10 @@ export function SocialProfileBlocks({
   const iconTokens = getReadableTextTokensForBackground(iconBackgroundColor)
   const iconWrapperStyle = iconBackgroundColor
     ? ({
-        backgroundColor: iconBackgroundColor,
-        '--foreground': iconTokens.foreground,
-        '--muted-foreground': iconTokens.mutedForeground,
-      } as CSSProperties)
+      backgroundColor: iconBackgroundColor,
+      '--foreground': iconTokens.foreground,
+      '--muted-foreground': iconTokens.mutedForeground,
+    } as CSSProperties)
     : undefined
 
   return (

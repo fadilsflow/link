@@ -51,10 +51,10 @@ export function PublicProfileBlocks({
   const iconTokens = getReadableTextTokensForBackground(iconBackgroundColor)
   const iconWrapperStyle = iconBackgroundColor
     ? ({
-        backgroundColor: iconBackgroundColor,
-        '--foreground': iconTokens.foreground,
-        '--muted-foreground': iconTokens.mutedForeground,
-      } as React.CSSProperties)
+      backgroundColor: iconBackgroundColor,
+      '--foreground': iconTokens.foreground,
+      '--muted-foreground': iconTokens.mutedForeground,
+    } as React.CSSProperties)
     : undefined
   const sharedIconWrapClass =
     'flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/80 '

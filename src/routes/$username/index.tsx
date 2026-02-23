@@ -637,8 +637,9 @@ function UserProfile() {
             : 'sm:max-w-2xl md:max-w-3xl lg:max-w-3xl mx-auto grid grid-cols-1 px-5'
         )}>
           <section className={cn(
-            'relative pt-10 lg:pt-[70px] ',
-            hasActiveProducts && 'lg:pr-6 lg:border-r lg:border-border'
+            'relative pt-10 lg:pt-[70px]',
+            hasActiveProducts && 'lg:pr-6 lg:border-r', isDarkBg ? 'border-white/10' : 'border-border'
+
           )}>
             <Avatar className="absolute -top-14 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full ring-2 ring-primary/10 lg:-top-[60px] lg:left-0 lg:h-[120px] lg:w-[120px] lg:translate-x-0">
               {/* <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  lg:-top-[60px] lg:h-[120px] lg:w-[120px]"> */}
@@ -740,6 +741,6 @@ function UserProfile() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   )
 }

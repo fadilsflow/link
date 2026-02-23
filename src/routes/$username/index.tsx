@@ -611,9 +611,9 @@ function UserProfile() {
       ) : null}
       <SiteUserProfileHeader logoColor={headerLogoColor} backgroundLogoColor={profileTextColor.foreground} />
 
-      <div className={cn('relative z-10 mx-auto min-h-screen w-full', isDarkBg ? 'border-white/10' : 'border-border/70')}>
+      <div className={cn('relative z-10 min-h-screen w-full', isDarkBg ? 'border-white/10' : 'border-border/70')}>
         {isBanner && lcpBannerSrc ? (
-          <div className="h-[120px] overflow-hidden lg:h-[200px] sm:max-w-2xl md:max-w-3xl lg:max-w-7xl mx-auto lg:overflow-hidden px-3 lg:px-0">
+          <div className="h-[120px] overflow-hidden lg:h-[200px] sm:max-w-2xl md:max-w-3xl sm:mx-auto lg:max-w-full lg:overflow-hidden px-3 lg:px-0">
             <img
               src={lcpBannerSrc}
               alt={`${user.name} banner`}

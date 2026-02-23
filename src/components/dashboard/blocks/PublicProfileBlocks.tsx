@@ -208,8 +208,6 @@ export function PublicProfileBlocks({
           onTrackClick(block.id)
           window.open(telegramUrl, '_blank', 'noopener,noreferrer')
         },
-        arrowClassName:
-          'transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5',
       })
     }
 

@@ -1,21 +1,22 @@
 import { Link } from '@tanstack/react-router'
-
-import { COMPANY_NAME } from '@/lib/constans'
+import { LogoType } from './kreasi-logo'
 
 interface PublicMarkProps {
   textColor?: string
+  logoColor?: string
 }
 
-export default function PublicMark({ textColor }: PublicMarkProps) {
+export default function PublicMark({ textColor, logoColor }: PublicMarkProps) {
   return (
-    <div className="container mx-auto flex w-full items-center justify-center gap-2 px-4 sm:px-6">
-      <p style={{ color: textColor }}>
-        © {new Date().getFullYear()}{' '}
-        <Link className="font-heading text-lg" to="/" style={{ color: textColor }}>
-          {COMPANY_NAME}
-        </Link>{' '}
-        – open source, open heart, open mind.
-      </p>
-    </div>
+    <div className="flex w-full font-sans  items-center justify-center px-4 sm:px-6">
+      <div className='flex gap-3 items-center'>
+        <p style={{ color: textColor }} className="text-sm">
+          Powered by{" "}
+        </p>
+        <Link className="font-heading" to="/" style={{ color: textColor }}>
+          <LogoType style={{ color: logoColor }} />
+        </Link>
+      </div>
+    </div >
   )
 }

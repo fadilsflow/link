@@ -4,13 +4,7 @@ import { cn } from "@/lib/utils";
 
 const LogoMark = ({ className }: { className?: string }) => {
   return (
-    <img
-      src="/logo-black.svg"
-      alt=""
-      width={24}
-      height={24}
-      className={cn(className)}
-    />
+    <KreasiLogo width={24} height={24} className={className} />
   );
 };
 const LogoType = ({
@@ -42,7 +36,7 @@ const LogoStudioSidebar = ({ className }: { className?: string }) => {
         className,
       )}
     >
-      <img src="/logo-black.svg" alt="Logo" width={30} height={30} />
+      <KreasiLogo width={30} height={30} />
       <span className="relative top-0.5 text-3xl font-heading">Studio</span>
     </div>
   );

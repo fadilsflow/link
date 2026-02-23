@@ -734,9 +734,9 @@ function UserProfile() {
           )}
         </div>
 
-        <div className="pb-4 pt-10 flex justify-center ">
-          <div className="flex items-center">
-            <PublicMark textColor={profileTextColor.foreground} />
+        <div className="pb-4 pt-10">
+          <div className="mx-auto sm:max-w-2xl md:max-w-3xl lg:max-w-7xl">
+            <PublicMark textColor={profileTextColor.mutedForeground} logoColor={headerLogoColor} />
           </div>
         </div>
       </div>

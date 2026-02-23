@@ -43,7 +43,7 @@ export function getBlockCardBase(
       if (disableHover) {
         return 'bg-card border border-border shadow-sm'
       }
-      return 'bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200'
+      return 'bg-card border border-border shadow-sm hover:shadow-lg transition-shadow duration-200'
   }
 }
 
@@ -54,7 +54,7 @@ export function getBlockCardBase(
  * @returns CSS classes for border radius
  */
 export function getBlockRadius(radius: BlockRadius): string {
-  return radius === 'rounded' ? 'rounded-2xl' : 'rounded-none'
+  return radius === 'rounded' ? 'rounded-xl' : 'rounded-none'
 }
 
 /**

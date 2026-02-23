@@ -249,7 +249,7 @@ function ProductCard({
   return (
     <Card
       className={cn(
-        'group w-full overflow-hidden border border-border bg-background shadow-sm transition-all hover:scale-102',
+        'group w-full overflow-hidden border border-border bg-background shadow-sm hover:scale-101',
         cardBase,
         radiusClass,
 
@@ -266,7 +266,7 @@ function ProductCard({
       }
     >
       <CardContent className="p-2">
-        <div className={cn("aspect-square w-full overflow-hidden bg-muted", imageRadiusClass || 'rounded-xl')}>
+        <div className={cn("aspect-square w-full overflow-hidden bg-muted", imageRadiusClass && 'rounded-md')}>
           {hasImage ? (
             <img
               loading="lazy"

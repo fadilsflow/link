@@ -474,10 +474,9 @@ function UserProfile() {
   )
   const socialItems = socialLinks as Array<PublicSocialLink>
 
-  // Check if user has active products (totalQuantity > 0)
+  // Check if user has active products (products exist in the array)
   const hasActiveProducts = React.useMemo(() => {
-    if (!products || products.length === 0) return false
-    return products.some((p) => (p.totalQuantity ?? 0) > 0)
+    return !!(products && products.length > 0)
   }, [products])
 
   // Render non-product blocks type
@@ -719,7 +718,7 @@ function UserProfile() {
               </div>
             )}
 
-            <div className={cn('mt-6', !hasActiveProducts ? 'block space-y-3 outline-none' : 'hidden lg:block')}>{profileBlocksSection}</div>
+            <div className={cn('mt-6', !hasActiveProducts ? 'block space-y-3 outline-none' : 'hidden lg:block space-y-3 outline-none')}>{profileBlocksSection}</div>
           </section>
 
           {hasActiveProducts && (

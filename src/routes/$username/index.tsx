@@ -645,13 +645,13 @@ function UserProfile() {
               {/* <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  lg:-top-[60px] lg:h-[120px] lg:w-[120px]"> */}
               <AvatarImage src={user.image || '/avatar-placeholder.png'} />
               <AvatarFallback className="text-lg font-bold">
-                {user.name.slice(0, 2).toUpperCase()}
+                {user.name}
               </AvatarFallback>
             </Avatar>
 
             <h1
               id="profile-name"
-              className="pt-4 text-center text-xl font-bold lg:text-left lg:text-2xl"
+              className="mt-4 text-center text-xl font-bold lg:text-left lg:text-2xl"
               style={{ color: profileTextColor.foreground }}
             >
               {user.name}

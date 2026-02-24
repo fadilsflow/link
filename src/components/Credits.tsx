@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react'
 import { COMPANY_NAME, LINK_VERSION } from '@/lib/constans'
 
 // Use import.meta.env for Vite-compatible environment variables
-const vercelCommitHash = import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA
-const commitHash = vercelCommitHash ? `-${vercelCommitHash.slice(0, 7)}` : ''
+// Cloudflare Workers uses WORKERS_CI_COMMIT_SHA
+const cloudflareCommitHash = import.meta.env.VITE_WORKERS_CI_COMMIT_SHA || import.meta.env.WORKERS_CI_COMMIT_SHA
+const commitHash = cloudflareCommitHash ? `-${cloudflareCommitHash.slice(0, 7)}` : ''
 const LinkVersion = `v.${LINK_VERSION}`
 
 export default function Credits() {
@@ -33,9 +34,9 @@ export default function Credits() {
           >
             {LinkVersion}
           </a>
-          {vercelCommitHash ? (
+          {cloudflareCommitHash ? (
             <a
-              href={`https://github.com/fadilsflow/link/commit/${vercelCommitHash}`}
+              href={`https://github.com/fadilsflow/link/commit/${cloudflareCommitHash}`}
               target="_blank"
               className="hover:underline"
             >

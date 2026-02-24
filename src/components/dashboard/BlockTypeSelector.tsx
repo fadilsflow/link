@@ -11,9 +11,36 @@ import { Plus } from 'lucide-react'
 import {
   BLOCK_TYPE_CONFIG,
   type BlockType,
+  type BlockCategory,
 } from '@/lib/block-type-config'
 
-export type { BlockType } from '@/lib/block-type-config'
+export type { BlockType, BlockCategory } from '@/lib/block-type-config'
+
+/** Category metadata for grouping block types */
+const CATEGORY_INFO: Record<BlockCategory, { title: string }> = {
+  general: {
+    title: 'General',
+  },
+  social: {
+    title: 'Social Media',
+  },
+}
+
+/** Group block types by category for scalable rendering */
+function getBlocksByCategory() {
+  const grouped: Record<BlockCategory, typeof BLOCK_TYPE_CONFIG> = {
+    general: [],
+    social: [],
+  }
+
+  for (const block of BLOCK_TYPE_CONFIG) {
+    if (grouped[block.category]) {
+      grouped[block.category].push(block)
+    }
+  }
+
+  return grouped
+}
 
 interface BlockTypeSelectorProps {
   open: boolean
@@ -30,6 +57,9 @@ export function BlockTypeSelector({
   onOpenChange,
   onSelect,
 }: BlockTypeSelectorProps) {
+  const blocksByCategory = getBlocksByCategory()
+  const categories = Object.keys(blocksByCategory) as BlockCategory[]
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
@@ -48,23 +78,32 @@ export function BlockTypeSelector({
           <DialogTitle className="font-heading">Add a Block</DialogTitle>
         </DialogHeader>
         <DialogPanel className="grid grid-cols-2 gap-4 ">
-          {BLOCK_TYPE_CONFIG.map((option) => (
-            <div
-              key={option.type}
-              onClick={() => onSelect(option.type)}
-              className={`p-3 text-foreground border border-input rounded-xl flex gap-4 items-center cursor-pointer group`}
-            >
-              <div
-                className={`p-1 border-2 group-hover:opacity-80 ${option.iconBgColor || 'bg-muted'} border-white ring-1 ring-border rounded-md flex items-center justify-center`}
-              >
-                <option.icon className={` ${option.iconColor} h-6 w-6`} />
+          {categories.map((category) => (
+            <div key={category} className="contents">
+              <div className="col-span-2 pt-2 pb-1">
+                <h3 className="text-sm font-semibold text-foreground">
+                  {CATEGORY_INFO[category].title}
+                </h3>
               </div>
-              <div className="gap-0 flex group-hover:opacity-70 flex-col">
-                <span className="text-sm font-semibold">{option.title}</span>
-                <p className="text-[10px] leading-tight">
-                  {option.description}
-                </p>
-              </div>
+              {blocksByCategory[category].map((option) => (
+                <div
+                  key={option.type}
+                  onClick={() => onSelect(option.type)}
+                  className={`p-3 text-foreground border border-input rounded-xl flex gap-4 items-center cursor-pointer group`}
+                >
+                  <div
+                    className={`p-1 border-2 group-hover:opacity-80 ${option.iconBgColor || 'bg-muted'} border-white ring-1 ring-border rounded-md flex items-center justify-center`}
+                  >
+                    <option.icon className={` ${option.iconColor} h-6 w-6`} />
+                  </div>
+                  <div className="gap-0 flex group-hover:opacity-70 flex-col">
+                    <span className="text-sm font-semibold">{option.title}</span>
+                    <p className="text-[10px] leading-tight">
+                      {option.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
         </DialogPanel>

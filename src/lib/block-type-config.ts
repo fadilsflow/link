@@ -33,10 +33,13 @@ export const SOCIAL_BLOCK_TYPES = [
 
 export type SocialBlockType = (typeof SOCIAL_BLOCK_TYPES)[number]
 
+export type BlockCategory = 'general' | 'social'
+
 type IconComponent = (props: SVGProps<SVGSVGElement>) => React.ReactNode
 
 export interface BlockTypeConfig {
   type: BlockType
+  category: BlockCategory
   icon: LucideIcon | IconComponent
   iconBgColor?: string
   title: string
@@ -83,6 +86,7 @@ const SOCIAL_BLOCK_STYLE_MAP: Record<SocialBlockType, SocialBlockStyle> = {
 export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
   {
     type: 'link',
+    category: 'general',
     icon: Link2Icon,
     title: 'Custom Link',
     iconColor: 'text-white -rotate-45',
@@ -91,6 +95,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
   },
   {
     type: 'product',
+    category: 'general',
     icon: Package2,
     iconColor: 'text-indigo-500 fill-white',
     iconBgColor: 'bg-indigo-500',
@@ -99,6 +104,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
   },
   {
     type: 'text',
+    category: 'general',
     icon: TypeIcon,
     title: 'Title & Description',
     iconColor: 'text-white',
@@ -107,6 +113,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
   },
   {
     type: 'image',
+    category: 'general',
     icon: ImageIcon,
     title: 'Image',
     iconColor: 'text-lime-500 fill-white',
@@ -115,6 +122,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
   },
   {
     type: 'video',
+    category: 'general',
     icon: YouTubeColor,
     iconColor: '',
     title: 'Youtube',
@@ -122,6 +130,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
   },
   {
     type: 'discord',
+    category: 'social',
     icon: Discord,
     iconColor: 'text-white',
     iconBgColor: 'bg-[#5865F2]',
@@ -130,6 +139,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
   },
   {
     type: 'telegram',
+    category: 'social',
     icon: TelegramColor,
     iconColor: 'text-white',
     iconBgColor: 'bg-[#2AABEE]',
@@ -138,6 +148,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
   },
   {
     type: 'threads',
+    category: 'social',
     icon: Threads,
     iconColor: 'text-white',
     iconBgColor: 'bg-zinc-900',
@@ -146,6 +157,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
   },
   {
     type: 'instagram',
+    category: 'social',
     icon: Instagram,
     iconColor: 'text-white',
     iconBgColor: 'bg-pink-500',
@@ -154,6 +166,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
   },
   {
     type: 'tiktok',
+    category: 'social',
     icon: TikTokColor,
     iconColor: 'text-white',
     iconBgColor: 'bg-black',
@@ -162,6 +175,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
   },
   {
     type: 'twitter',
+    category: 'social',
     icon: XformerlyTwitter,
     iconColor: 'text-white',
     iconBgColor: 'bg-black',

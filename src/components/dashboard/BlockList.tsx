@@ -21,6 +21,7 @@ interface Block {
   url: string
   type?: string
   content?: string
+  clicks?: number
   order: number
   isEnabled: boolean
   syncStatus?: 'saved' | 'saving' | 'unsaved' | 'error'

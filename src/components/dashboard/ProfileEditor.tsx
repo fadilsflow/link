@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Camera, X } from 'lucide-react'
+import { Camera, Paintbrush, X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { uploadFile } from '@/lib/upload-client'
 import { useFileUpload } from '@/hooks/use-file-upload'
@@ -183,7 +183,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
             </p>
           )}
         </div>
-        <Button variant="secondary" size="sm" onClick={() => setDialogOpen(true)}>
+        <Button className='absolute right-0 top-0' variant="secondary" size="sm" onClick={() => setDialogOpen(true)}>
           Edit Profile
         </Button>
 
@@ -283,9 +283,9 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
                 Save
               </Button>
             </DialogFooter>
-          </Form>
-        </DialogPopup>
-      </Dialog>
-    </div>
+          </Form >
+        </DialogPopup >
+      </Dialog >
+    </div >
   )
 }

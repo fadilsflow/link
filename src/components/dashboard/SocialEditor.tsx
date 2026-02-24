@@ -1,19 +1,13 @@
 import { useEffect, useState } from 'react'
-import {
-  GripVertical,
-  Mail,
-  PlusIcon,
-  Trash2,
-} from 'lucide-react'
+import { GripVertical, Mail, PlusIcon, Trash2 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   DndContext,
-
   KeyboardSensor,
   PointerSensor,
   closestCenter,
   useSensor,
-  useSensors
+  useSensors,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -66,7 +60,7 @@ import {
   InputGroupInput,
   InputGroupText,
 } from '../ui/input-group'
-import type { DragEndEvent } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { cn } from '@/lib/utils'
 import { GitHub } from '../icon/github'
@@ -192,6 +186,7 @@ interface SocialLink {
 interface SocialEditorProps {
   username: string
   socialLinks: Array<SocialLink>
+  onSocialLinksChange?: (links: Array<SocialLink>) => void
 }
 
 function getPlatformIcon(platform: string) {
@@ -255,6 +250,7 @@ function SortableSocialItem({ link, onEdit }: SortableSocialItemProps) {
 export default function SocialEditor({
   username,
   socialLinks: initialSocialLinks,
+  onSocialLinksChange,
 }: SocialEditorProps) {
   const queryClient = useQueryClient()
   const [localSocialLinks, setLocalSocialLinks] =
@@ -294,8 +290,12 @@ export default function SocialEditor({
     mutationFn: (data: { platform: string; url: string }) =>
       trpcClient.socialLink.create.mutate(data),
     onSuccess: (newLink) => {
-      setLocalSocialLinks((prev) => [...prev, newLink])
-      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      setLocalSocialLinks((prev) => {
+        const next = [...prev, newLink]
+        onSocialLinksChange?.(next)
+        return next
+      })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 
@@ -308,10 +308,14 @@ export default function SocialEditor({
       isEnabled?: boolean
     }) => trpcClient.socialLink.update.mutate(data),
     onSuccess: (updatedLink) => {
-      setLocalSocialLinks((prev) =>
-        prev.map((l) => (l.id === updatedLink.id ? updatedLink : l)),
-      )
-      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      setLocalSocialLinks((prev) => {
+        const next = prev.map((l) =>
+          l.id === updatedLink.id ? updatedLink : l,
+        )
+        onSocialLinksChange?.(next)
+        return next
+      })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 
@@ -319,8 +323,12 @@ export default function SocialEditor({
     mutationKey: ['deleteSocialLink', username],
     mutationFn: (id: string) => trpcClient.socialLink.delete.mutate({ id }),
     onSuccess: (_, id) => {
-      setLocalSocialLinks((prev) => prev.filter((l) => l.id !== id))
-      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      setLocalSocialLinks((prev) => {
+        const next = prev.filter((l) => l.id !== id)
+        onSocialLinksChange?.(next)
+        return next
+      })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 
@@ -329,7 +337,7 @@ export default function SocialEditor({
     mutationFn: (items: Array<{ id: string; order: number }>) =>
       trpcClient.socialLink.reorder.mutate({ items }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard', username] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 
@@ -346,9 +354,9 @@ export default function SocialEditor({
       order: index + 1,
     }))
 
-    setLocalSocialLinks(
-      newOrder.map((link, index) => ({ ...link, order: index + 1 })),
-    )
+    const next = newOrder.map((link, index) => ({ ...link, order: index + 1 }))
+    setLocalSocialLinks(next)
+    onSocialLinksChange?.(next)
     reorderMutation.mutate(updates)
   }
 
@@ -638,7 +646,11 @@ export default function SocialEditor({
                   <AlertDialogClose render={<Button variant="ghost" />}>
                     Cancel
                   </AlertDialogClose>
-                  <Button onClick={handleDelete} variant={'destructive'} loading={isDeleting}>
+                  <Button
+                    onClick={handleDelete}
+                    variant={'destructive'}
+                    loading={isDeleting}
+                  >
                     Delete
                   </Button>
                 </AlertDialogFooter>
@@ -648,7 +660,11 @@ export default function SocialEditor({
               <DialogClose render={<Button variant="ghost" />}>
                 Cancel
               </DialogClose>
-              <Button onClick={handleSaveEdit} disabled={!editUrl} loading={isSaving}>
+              <Button
+                onClick={handleSaveEdit}
+                disabled={!editUrl}
+                loading={isSaving}
+              >
                 Save
               </Button>
             </div>

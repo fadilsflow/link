@@ -30,10 +30,10 @@ import { ImageUploader } from '@/components/dashboard/appearance/ImageUploader'
 import {
   AppHeader,
   AppHeaderContent,
-  AppHeaderDescription,
 } from '@/components/app-header'
 import { usePreview } from '@/lib/preview-context'
 import { cn } from '@/lib/utils'
+import { Redo2 } from 'lucide-react'
 
 export const Route = createFileRoute('/admin/editor/appearance')({
   component: AppearanceRouteComponent,
@@ -355,15 +355,17 @@ function AppearanceEditor({
             <CardTitle>Banner</CardTitle>
             <Button
               type="button"
+              size={"xs"}
               variant="outline"
               className="gap-2"
               onClick={resetBannerSection}
             >
+              <Redo2 />
               Reset
             </Button>
           </CardHeader>
 
-          <CardContent className="p-6 space-y-4">
+          <CardContent className="space-y-4">
             <div className="flex items-center justify-between rounded-xl border p-3">
               <div>
                 <Label htmlFor="banner-enabled">Show banner</Label>
@@ -396,14 +398,16 @@ function AppearanceEditor({
             <CardTitle>Background</CardTitle>
             <Button
               type="button"
+              size={"xs"}
               variant="outline"
               className="gap-2"
               onClick={resetBackgroundSection}
             >
+              <Redo2 />
               Reset
             </Button>
           </CardHeader>
-          <CardContent className="p-6 space-y-4">
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <SectionOptionCard
                 selected={backgroundType === 'none'}
@@ -516,11 +520,13 @@ function AppearanceEditor({
               variant="outline"
               className="gap-2"
               onClick={resetBlockSection}
+              size='xs'
             >
+              <Redo2 />
               Reset
             </Button>
           </CardHeader>
-          <CardContent className="space-y-4 p-6">
+          <CardContent className="space-y-4">
             <BlockStyleSelector
               blockStyle={blockStyle}
               blockRadius={blockRadius}
@@ -561,11 +567,13 @@ function AppearanceEditor({
               variant="outline"
               className="gap-2"
               onClick={resetTextSection}
+              size='xs'
             >
+              <Redo2 />
               Reset
             </Button>
           </CardHeader>
-          <CardContent className="space-y-4 p-6">
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Font</Label>
               <Select

@@ -77,6 +77,9 @@ function AdminDashboard() {
     Array<SocialLinkRecord>
   >([])
   const [isAddBlockOpen, setIsAddBlockOpen] = useState(false)
+  const [pendingCreateType, setPendingCreateType] = useState<BlockType | null>(
+    null,
+  )
   const [blockFormState, setBlockFormState] = useState<BlockFormState | null>(
     null,
   )
@@ -138,6 +141,15 @@ function AdminDashboard() {
       return { ...old, blocks: localBlocks }
     })
   }, [localBlocks, queryClient])
+
+  useEffect(() => {
+    if (isAddBlockOpen || !pendingCreateType) return
+    setBlockFormState({
+      mode: 'create',
+      values: getDefaultBlockValues(pendingCreateType),
+    })
+    setPendingCreateType(null)
+  }, [isAddBlockOpen, pendingCreateType])
 
   const user = dashboardData?.user
 
@@ -328,10 +340,8 @@ function AdminDashboard() {
   }
 
   const handleAddBlockTypeSelect = (type: BlockType) => {
-    setBlockFormState({
-      mode: 'create',
-      values: getDefaultBlockValues(type),
-    })
+    setPendingCreateType(type)
+    setIsAddBlockOpen(false)
   }
 
   const handleEditBlock = (id: string) => {
@@ -375,12 +385,7 @@ function AdminDashboard() {
         <section className="space-y-6">
           <BlockTypeSelector
             open={isAddBlockOpen}
-            onOpenChange={(open) => {
-              setIsAddBlockOpen(open)
-              if (!open && blockFormState?.mode === 'create') {
-                setBlockFormState(null)
-              }
-            }}
+            onOpenChange={setIsAddBlockOpen}
             onSelect={handleAddBlockTypeSelect}
           />
 

@@ -295,11 +295,11 @@ function AppearanceEditor({
 
   const resetBannerSection = () => {
     setBannerEnabled(APPEARANCE_DEFAULTS.bannerEnabled)
-    setCurrentBannerUrl(undefined)
-    setCurrentBannerId(undefined)
+    setCurrentBannerUrl('/banner/profile_bg_1.webp')
+    setCurrentBannerId('local-1')
     save({
       appearanceBannerEnabled: APPEARANCE_DEFAULTS.bannerEnabled,
-      appearanceBgImageUrl: null,
+      appearanceBgImageUrl: '/banner/profile_bg_1.webp',
     })
   }
 

@@ -397,12 +397,12 @@ export const Route = createFileRoute('/$username/')({
     return {
       links: lcpHref
         ? [
-            {
-              rel: 'preload',
-              as: 'image',
-              href: lcpHref,
-            },
-          ]
+          {
+            rel: 'preload',
+            as: 'image',
+            href: lcpHref,
+          },
+        ]
         : [],
     }
   },
@@ -456,9 +456,9 @@ function UserProfile() {
   })
   const defaultHeaderLogoColor = isBanner
     ? getAppearanceTextColor({
-        backgroundType: 'image',
-        backgroundImageUrl: user.appearanceBgImageUrl,
-      }).foreground
+      backgroundType: 'image',
+      backgroundImageUrl: user.appearanceBgImageUrl,
+    }).foreground
     : profileTextColor.foreground
   const [headerLogoColor, setHeaderLogoColor] = React.useState(
     defaultHeaderLogoColor,
@@ -805,7 +805,7 @@ function UserProfile() {
           <div className="mx-auto sm:max-w-2xl md:max-w-3xl lg:max-w-7xl">
             <PublicMark
               textColor={profileTextColor.mutedForeground}
-              logoColor={headerLogoColor}
+              logoColor={profileTextColor.foreground}
             />
           </div>
         </div>

@@ -8,11 +8,7 @@ import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { ProfileEditor } from '@/components/dashboard/ProfileEditor'
 import { BlockList } from '@/components/dashboard/BlockList'
-import {
-  AppHeader,
-  AppHeaderContent,
-  AppHeaderDescription,
-} from '@/components/app-header'
+import { AppHeader, AppHeaderContent } from '@/components/app-header'
 import SocialEditor from '@/components/dashboard/SocialEditor'
 import { usePreview } from '@/lib/preview-context'
 import { BlockTypeSelector } from '@/components/dashboard/BlockTypeSelector'
@@ -33,10 +29,20 @@ type BlockRecord = {
   url: string
   type?: string
   content?: string
+  clicks?: number
   isEnabled: boolean
   order: number
   syncStatus?: 'saved' | 'saving' | 'unsaved' | 'error'
   errors?: { title?: string; url?: string; content?: string }
+}
+
+type SocialLinkRecord = {
+  id: string
+  userId: string
+  platform: string
+  url: string
+  order: number
+  isEnabled: boolean
 }
 
 type BlockFormState = {
@@ -58,9 +64,18 @@ function mapBlockToFormValues(block: BlockRecord): BlockFormValues {
 function AdminDashboard() {
   const queryClient = useQueryClient()
   const hasHydratedRef = useRef(false)
-  const { user: previewUser, setUser, setBlocks, setSocialLinks, updateUser } = usePreview()
+  const {
+    user: previewUser,
+    setUser,
+    setBlocks,
+    setSocialLinks,
+    updateUser,
+  } = usePreview()
 
   const [localBlocks, setLocalBlocks] = useState<Array<BlockRecord>>([])
+  const [localSocialLinks, setLocalSocialLinks] = useState<
+    Array<SocialLinkRecord>
+  >([])
   const [isAddBlockOpen, setIsAddBlockOpen] = useState(false)
   const [blockFormState, setBlockFormState] = useState<BlockFormState | null>(
     null,
@@ -94,8 +109,8 @@ function AdminDashboard() {
   }, [localBlocks, setBlocks])
 
   useEffect(() => {
-    setSocialLinks(dashboardData?.socialLinks || [])
-  }, [dashboardData?.socialLinks, setSocialLinks])
+    setSocialLinks(localSocialLinks)
+  }, [localSocialLinks, setSocialLinks])
 
   useEffect(() => {
     if (hasHydratedRef.current || !dashboardData?.blocks) return
@@ -110,6 +125,11 @@ function AdminDashboard() {
 
     hasHydratedRef.current = true
   }, [dashboardData?.blocks])
+
+  useEffect(() => {
+    if (!dashboardData?.socialLinks) return
+    setLocalSocialLinks(dashboardData.socialLinks as Array<SocialLinkRecord>)
+  }, [dashboardData?.socialLinks])
 
   useEffect(() => {
     if (!hasHydratedRef.current) return
@@ -188,10 +208,12 @@ function AdminDashboard() {
     })
   }
 
-  const productOptions = (dashboardData?.products || []).map((product: any) => ({
-    id: product.id,
-    title: product.title,
-  }))
+  const productOptions = (dashboardData?.products || []).map(
+    (product: any) => ({
+      id: product.id,
+      title: product.title,
+    }),
+  )
 
   const withProductTitle = (values: BlockFormValues): BlockFormValues => {
     if (values.type !== 'product') return values
@@ -231,13 +253,13 @@ function AdminDashboard() {
         prev.map((block) =>
           block.id === updated.id
             ? {
-              ...block,
-              ...updated,
-              url: updated.url || '',
-              content: updated.content || '',
-              syncStatus: 'saved',
-              errors: {},
-            }
+                ...block,
+                ...updated,
+                url: updated.url || '',
+                content: updated.content || '',
+                syncStatus: 'saved',
+                errors: {},
+              }
             : block,
         ),
       )
@@ -267,20 +289,22 @@ function AdminDashboard() {
         prev.map((block) =>
           block.id === updated.id
             ? {
-              ...block,
-              ...updated,
-              url: updated.url || '',
-              content: updated.content || '',
-              syncStatus: 'saved',
-              errors: {},
-            }
+                ...block,
+                ...updated,
+                url: updated.url || '',
+                content: updated.content || '',
+                syncStatus: 'saved',
+                errors: {},
+              }
             : block,
         ),
       )
     } catch {
       setLocalBlocks((prev) =>
         prev.map((block) =>
-          block.id === id ? { ...block, isEnabled: target.isEnabled, syncStatus: 'error' } : block,
+          block.id === id
+            ? { ...block, isEnabled: target.isEnabled, syncStatus: 'error' }
+            : block,
         ),
       )
     }
@@ -326,7 +350,7 @@ function AdminDashboard() {
 
   return (
     <div className="pb-20">
-      <AppHeader className='px-6 pt-6'>
+      <AppHeader className="px-6 pt-6">
         <AppHeaderContent title="My Page">
           {/* <AppHeaderDescription>
             Manage the products that appear on your public profile.
@@ -343,7 +367,8 @@ function AdminDashboard() {
         <section>
           <SocialEditor
             username={user.username ?? ''}
-            socialLinks={dashboardData.socialLinks}
+            socialLinks={localSocialLinks}
+            onSocialLinksChange={setLocalSocialLinks}
           />
         </section>
 
@@ -374,15 +399,16 @@ function AdminDashboard() {
             if (!open) setBlockFormState(null)
           }}
           mode={blockFormState?.mode || 'create'}
-          values={
-            blockFormState?.values || getDefaultBlockValues('link')
-          }
+          values={blockFormState?.values || getDefaultBlockValues('link')}
           products={productOptions}
           submitting={createBlock.isPending || updateBlockMutation.isPending}
           deleting={deleteBlockMutation.isPending}
           onDelete={async () => {
-            if (blockFormState?.mode !== 'edit' || !blockFormState.blockId) return
-            await deleteBlockMutation.mutateAsync({ id: blockFormState.blockId })
+            if (blockFormState?.mode !== 'edit' || !blockFormState.blockId)
+              return
+            await deleteBlockMutation.mutateAsync({
+              id: blockFormState.blockId,
+            })
             setBlockFormState(null)
           }}
           onSubmit={handleBlockFormSubmit}

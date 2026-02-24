@@ -148,7 +148,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
     type: 'instagram',
     icon: Instagram,
     iconColor: 'text-white',
-    iconBgColor: 'bg-[#E1306C]',
+    iconBgColor: 'bg-black',
     title: 'Instagram',
     description: 'Share your Instagram username.',
   },

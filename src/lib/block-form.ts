@@ -8,6 +8,10 @@ export const blockTypeEnum = z.enum([
   'product',
   'discord',
   'telegram',
+  'threads',
+  'instagram',
+  'tiktok',
+  'twitter',
 ])
 
 export type BlockType = z.infer<typeof blockTypeEnum>
@@ -15,6 +19,14 @@ export type BlockType = z.infer<typeof blockTypeEnum>
 export const telegramUsernameSchema = z
   .string()
   .regex(/^[a-zA-Z0-9_]{5,32}$/, 'Invalid Telegram username')
+
+export const socialHandleSchema = z
+  .string()
+  .regex(/^[a-zA-Z0-9._]{1,30}$/, 'Invalid username')
+
+export const twitterHandleSchema = z
+  .string()
+  .regex(/^[a-zA-Z0-9_]{1,15}$/, 'Invalid X username')
 
 export const blockCreateInputSchema = z
   .object({
@@ -30,8 +42,12 @@ export const blockCreateInputSchema = z
       () => Array<{ path: 'title' | 'url' | 'content'; message: string }>
     > = {
       link: () => {
-        const errors: Array<{ path: 'title' | 'url' | 'content'; message: string }> = []
-        if (!input.title.trim()) errors.push({ path: 'title', message: 'Title is required' })
+        const errors: Array<{
+          path: 'title' | 'url' | 'content'
+          message: string
+        }> = []
+        if (!input.title.trim())
+          errors.push({ path: 'title', message: 'Title is required' })
         if (input.url && !z.string().url().safeParse(input.url).success) {
           errors.push({ path: 'url', message: 'Invalid URL' })
         }
@@ -44,8 +60,14 @@ export const blockCreateInputSchema = z
         return []
       },
       image: () => {
-        const errors: Array<{ path: 'title' | 'url' | 'content'; message: string }> = []
-        if (!input.content || !z.string().url().safeParse(input.content).success) {
+        const errors: Array<{
+          path: 'title' | 'url' | 'content'
+          message: string
+        }> = []
+        if (
+          !input.content ||
+          !z.string().url().safeParse(input.content).success
+        ) {
           errors.push({ path: 'content', message: 'Invalid image URL' })
         }
         if (input.url && !z.string().url().safeParse(input.url).success) {
@@ -54,9 +76,16 @@ export const blockCreateInputSchema = z
         return errors
       },
       video: () => {
-        const errors: Array<{ path: 'title' | 'url' | 'content'; message: string }> = []
-        if (!input.title.trim()) errors.push({ path: 'title', message: 'Title is required' })
-        if (!input.content || !z.string().url().safeParse(input.content).success) {
+        const errors: Array<{
+          path: 'title' | 'url' | 'content'
+          message: string
+        }> = []
+        if (!input.title.trim())
+          errors.push({ path: 'title', message: 'Title is required' })
+        if (
+          !input.content ||
+          !z.string().url().safeParse(input.content).success
+        ) {
           errors.push({ path: 'content', message: 'Invalid video URL' })
         }
         return errors
@@ -68,18 +97,92 @@ export const blockCreateInputSchema = z
         return []
       },
       discord: () => {
-        const errors: Array<{ path: 'title' | 'url' | 'content'; message: string }> = []
-        if (!input.title.trim()) errors.push({ path: 'title', message: 'Title is required' })
+        const errors: Array<{
+          path: 'title' | 'url' | 'content'
+          message: string
+        }> = []
+        if (!input.title.trim())
+          errors.push({ path: 'title', message: 'Title is required' })
         if (!input.url || !z.string().url().safeParse(input.url).success) {
           errors.push({ path: 'url', message: 'Invalid URL' })
         }
         return errors
       },
       telegram: () => {
-        const errors: Array<{ path: 'title' | 'url' | 'content'; message: string }> = []
-        if (!input.title.trim()) errors.push({ path: 'title', message: 'Title is required' })
-        if (!input.content || !telegramUsernameSchema.safeParse(input.content).success) {
+        const errors: Array<{
+          path: 'title' | 'url' | 'content'
+          message: string
+        }> = []
+        if (!input.title.trim())
+          errors.push({ path: 'title', message: 'Title is required' })
+        if (
+          !input.content ||
+          !telegramUsernameSchema.safeParse(input.content).success
+        ) {
           errors.push({ path: 'content', message: 'Invalid Telegram username' })
+        }
+        return errors
+      },
+      threads: () => {
+        const errors: Array<{
+          path: 'title' | 'url' | 'content'
+          message: string
+        }> = []
+        if (!input.title.trim())
+          errors.push({ path: 'title', message: 'Title is required' })
+        if (
+          !input.content ||
+          !socialHandleSchema.safeParse(input.content).success
+        ) {
+          errors.push({ path: 'content', message: 'Invalid Threads username' })
+        }
+        return errors
+      },
+      instagram: () => {
+        const errors: Array<{
+          path: 'title' | 'url' | 'content'
+          message: string
+        }> = []
+        if (!input.title.trim())
+          errors.push({ path: 'title', message: 'Title is required' })
+        if (
+          !input.content ||
+          !socialHandleSchema.safeParse(input.content).success
+        ) {
+          errors.push({
+            path: 'content',
+            message: 'Invalid Instagram username',
+          })
+        }
+        return errors
+      },
+      tiktok: () => {
+        const errors: Array<{
+          path: 'title' | 'url' | 'content'
+          message: string
+        }> = []
+        if (!input.title.trim())
+          errors.push({ path: 'title', message: 'Title is required' })
+        if (
+          !input.content ||
+          !socialHandleSchema.safeParse(input.content).success
+        ) {
+          errors.push({ path: 'content', message: 'Invalid TikTok username' })
+        }
+        return errors
+      },
+      twitter: () => {
+        const errors: Array<{
+          path: 'title' | 'url' | 'content'
+          message: string
+        }> = []
+        if (!input.title.trim())
+          errors.push({ path: 'title', message: 'Title is required' })
+        if (
+          !input.content ||
+          !twitterHandleSchema.safeParse(input.content).success
+        ) {
+          errors.push({ path: 'content', message: 'Invalid X username' })
         }
         return errors
       },
@@ -106,7 +209,20 @@ export type BlockFieldErrors = Partial<
 export function getDefaultBlockValues(type: BlockType): BlockFormValues {
   return {
     type,
-    title: type === 'discord' ? 'Discord' : type === 'telegram' ? 'Telegram' : '',
+    title:
+      type === 'discord'
+        ? 'Discord'
+        : type === 'telegram'
+          ? 'Telegram'
+          : type === 'threads'
+            ? 'Threads'
+            : type === 'instagram'
+              ? 'Instagram'
+              : type === 'tiktok'
+                ? 'TikTok'
+                : type === 'twitter'
+                  ? 'X / Twitter'
+                  : '',
     url: '',
     content: '',
     isEnabled: true,
@@ -128,4 +244,3 @@ export function getBlockFieldErrors(values: BlockFormValues): BlockFieldErrors {
   }
   return errors
 }
-

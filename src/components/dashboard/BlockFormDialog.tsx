@@ -27,12 +27,21 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Spinner } from '@/components/ui/spinner'
-import {
-  getBlockFieldErrors,
-} from '@/lib/block-form'
+import { getBlockFieldErrors } from '@/lib/block-form'
 import { uploadFile } from '@/lib/upload-client'
 
 interface ProductOption {
@@ -64,6 +73,41 @@ function normalizeTelegramUsername(value: string): string {
   return trimmed.replace(/^@+/, '').split('/')[0] || ''
 }
 
+function normalizeSocialUsername(
+  value: string,
+  platform: 'threads' | 'instagram' | 'tiktok' | 'twitter',
+): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+
+  const fromPath = (pathname: string) => {
+    const parts = pathname.split('/').filter(Boolean)
+    if (parts.length === 0) return ''
+    if (platform === 'threads') {
+      return (parts[0] || '').replace(/^@+/, '')
+    }
+    if (platform === 'tiktok') {
+      const withAt = parts.find((part) => part.startsWith('@'))
+      return (withAt || parts[0] || '').replace(/^@+/, '')
+    }
+    return (parts[0] || '').replace(/^@+/, '')
+  }
+
+  try {
+    if (
+      trimmed.includes('://') ||
+      (trimmed.includes('.') && trimmed.includes('/'))
+    ) {
+      const url = trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
+      return fromPath(new URL(url).pathname)
+    }
+  } catch {
+    // fallback to raw input
+  }
+
+  return trimmed.replace(/^@+/, '').split('/')[0] || ''
+}
+
 function getDialogTitle(mode: 'create' | 'edit', type: BlockType): string {
   const action = mode === 'create' ? 'Add' : 'Edit'
   const names: Record<BlockType, string> = {
@@ -74,6 +118,10 @@ function getDialogTitle(mode: 'create' | 'edit', type: BlockType): string {
     product: 'Product',
     discord: 'Discord',
     telegram: 'Telegram',
+    threads: 'Threads',
+    instagram: 'Instagram',
+    tiktok: 'TikTok',
+    twitter: 'X / Twitter',
   }
   return `${action} ${names[type]} Block`
 }
@@ -95,7 +143,9 @@ export function BlockFormDialog({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   // Lock mode and type when dialog opens to prevent title flash during close
-  const lockedRef = useRef<{ mode: 'create' | 'edit'; type: BlockType } | null>(null)
+  const lockedRef = useRef<{ mode: 'create' | 'edit'; type: BlockType } | null>(
+    null,
+  )
 
   useEffect(() => {
     if (!open) return
@@ -115,7 +165,8 @@ export function BlockFormDialog({
   const setField = (field: keyof BlockFormValues, value: string | boolean) => {
     setFormValues((prev) => ({ ...prev, [field]: value }))
     setErrors((prev) => {
-      if (field !== 'title' && field !== 'url' && field !== 'content') return prev
+      if (field !== 'title' && field !== 'url' && field !== 'content')
+        return prev
       if (!prev[field]) return prev
       const next = { ...prev }
       delete next[field]
@@ -150,7 +201,15 @@ export function BlockFormDialog({
           <DialogTitle>{getDialogTitle(titleMode, titleType)}</DialogTitle>
         </DialogHeader>
         <DialogPanel className="space-y-4">
-          {(type === 'link' || type === 'text' || type === 'video' || type === 'discord' || type === 'telegram') && (
+          {(type === 'link' ||
+            type === 'text' ||
+            type === 'video' ||
+            type === 'discord' ||
+            type === 'telegram' ||
+            type === 'threads' ||
+            type === 'instagram' ||
+            type === 'tiktok' ||
+            type === 'twitter') && (
             <Field>
               <FieldLabel>Title</FieldLabel>
               <Input
@@ -214,7 +273,9 @@ export function BlockFormDialog({
                     {isUploading ? <Spinner className="h-4 w-4" /> : null}
                   </div>
                 </div>
-                {errors.content ? <FieldError>{errors.content}</FieldError> : null}
+                {errors.content ? (
+                  <FieldError>{errors.content}</FieldError>
+                ) : null}
               </Field>
               <Field>
                 <FieldLabel>Optional Link</FieldLabel>
@@ -238,7 +299,9 @@ export function BlockFormDialog({
                 type="url"
                 placeholder="https://youtube.com/watch?v=..."
               />
-              {errors.content ? <FieldError>{errors.content}</FieldError> : null}
+              {errors.content ? (
+                <FieldError>{errors.content}</FieldError>
+              ) : null}
             </Field>
           )}
 
@@ -260,7 +323,9 @@ export function BlockFormDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.content ? <FieldError>{errors.content}</FieldError> : null}
+              {errors.content ? (
+                <FieldError>{errors.content}</FieldError>
+              ) : null}
             </Field>
           )}
 
@@ -287,10 +352,56 @@ export function BlockFormDialog({
                 }
                 placeholder="username"
               />
-              {errors.content ? <FieldError>{errors.content}</FieldError> : null}
+              {errors.content ? (
+                <FieldError>{errors.content}</FieldError>
+              ) : null}
             </Field>
           )}
 
+          {(type === 'threads' ||
+            type === 'instagram' ||
+            type === 'tiktok' ||
+            type === 'twitter') && (
+            <Field>
+              <FieldLabel>Username</FieldLabel>
+              <InputGroup>
+                <InputGroupInput
+                  value={formValues.content || ''}
+                  onChange={(e) =>
+                    setField(
+                      'content',
+                      normalizeSocialUsername(e.target.value, type),
+                    )
+                  }
+                  onBlur={(e) =>
+                    setField(
+                      'content',
+                      normalizeSocialUsername(e.target.value, type),
+                    )
+                  }
+                  placeholder={
+                    type === 'threads' || type === 'instagram'
+                      ? 'username'
+                      : type === 'twitter'
+                        ? 'x_username'
+                        : 'tiktok_username'
+                  }
+                />
+                <InputGroupAddon>
+                  {type === 'threads'
+                    ? 'threads.net/@'
+                    : type === 'instagram'
+                      ? 'instagram.com/'
+                      : type === 'twitter'
+                        ? 'x.com/'
+                        : 'tiktok.com/@'}
+                </InputGroupAddon>
+              </InputGroup>
+              {errors.content ? (
+                <FieldError>{errors.content}</FieldError>
+              ) : null}
+            </Field>
+          )}
         </DialogPanel>
         <DialogFooter variant="bare">
           {mode === 'edit' ? (
@@ -332,9 +443,7 @@ export function BlockFormDialog({
               </AlertDialogPopup>
             </AlertDialog>
           ) : null}
-          <DialogClose render={<Button variant="ghost" />}>
-            Cancel
-          </DialogClose>
+          <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
           <Button
             onClick={handleSubmit}
             disabled={submitting || deleting || isUploading}

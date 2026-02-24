@@ -189,7 +189,12 @@ async function getReadableLogoColorFromBanner(
           canvas.height,
         )
 
-        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+        const pixels = context.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        ).data
         let luminanceTotal = 0
         let pixelCount = 0
 
@@ -242,7 +247,9 @@ function ProductCard({
   const price = hasDiscount
     ? formatPrice(product.salePrice as number)
     : getProductPriceLabel(product)
-  const originalPrice = hasDiscount ? formatPrice(product.price as number) : null
+  const originalPrice = hasDiscount
+    ? formatPrice(product.price as number)
+    : null
   const productImages = product.images
   const hasImage = !!productImages?.length
 
@@ -252,7 +259,6 @@ function ProductCard({
         'group w-full overflow-hidden border border-border bg-background shadow-sm hover:scale-101',
         cardBase,
         radiusClass,
-
       )}
       style={cardStyle}
       render={
@@ -266,7 +272,12 @@ function ProductCard({
       }
     >
       <CardContent className="p-2">
-        <div className={cn("aspect-square w-full overflow-hidden bg-muted", imageRadiusClass && 'rounded-md')}>
+        <div
+          className={cn(
+            'aspect-square w-full overflow-hidden bg-muted',
+            imageRadiusClass && 'rounded-md',
+          )}
+        >
           {hasImage ? (
             <img
               loading="lazy"
@@ -282,7 +293,6 @@ function ProductCard({
           )}
         </div>
 
-
         <div className="space-y-1 mt-2">
           <h3 className="line-clamp-2 text-sm font-semibold">
             {product.title}
@@ -290,7 +300,9 @@ function ProductCard({
           <div className="flex flex-col gap-2 text-sm">
             <p className="font-semibold text-foreground">{price}</p>
             {originalPrice ? (
-              <p className="text-foreground/80 text-xs line-through">{originalPrice}</p>
+              <p className="text-foreground/80 text-xs line-through">
+                {originalPrice}
+              </p>
             ) : null}
           </div>
         </div>
@@ -385,12 +397,12 @@ export const Route = createFileRoute('/$username/')({
     return {
       links: lcpHref
         ? [
-          {
-            rel: 'preload',
-            as: 'image',
-            href: lcpHref,
-          },
-        ]
+            {
+              rel: 'preload',
+              as: 'image',
+              href: lcpHref,
+            },
+          ]
         : [],
     }
   },
@@ -444,9 +456,9 @@ function UserProfile() {
   })
   const defaultHeaderLogoColor = isBanner
     ? getAppearanceTextColor({
-      backgroundType: 'image',
-      backgroundImageUrl: user.appearanceBgImageUrl,
-    }).foreground
+        backgroundType: 'image',
+        backgroundImageUrl: user.appearanceBgImageUrl,
+      }).foreground
     : profileTextColor.foreground
   const [headerLogoColor, setHeaderLogoColor] = React.useState(
     defaultHeaderLogoColor,
@@ -497,10 +509,12 @@ function UserProfile() {
 
     let isCancelled = false
 
-    void getReadableLogoColorFromBanner(user.appearanceBgImageUrl).then((color) => {
-      if (isCancelled || !color) return
-      setHeaderLogoColor(color)
-    })
+    void getReadableLogoColorFromBanner(user.appearanceBgImageUrl).then(
+      (color) => {
+        if (isCancelled || !color) return
+        setHeaderLogoColor(color)
+      },
+    )
 
     return () => {
       isCancelled = true
@@ -515,10 +529,14 @@ function UserProfile() {
     })
   }, [user.username])
 
+  const trackBlockClick = React.useCallback((blockId: string) => {
+    void trpcClient.block.trackClick.mutate({ id: blockId })
+  }, [])
+
   const openBlockUrl = (block: PublicBlock) => {
     if (!block.url) return
     runWhenBrowserIdle(() => {
-      void trpcClient.block.trackClick.mutate({ id: block.id })
+      trackBlockClick(block.id)
     })
     window.open(block.url, '_blank', 'noopener,noreferrer')
   }
@@ -536,11 +554,11 @@ function UserProfile() {
       iconBackgroundColor={iconBackgroundColor}
       backgroundType={iconBackgroundType}
       backgroundGradientTop={user.appearanceBackgroundGradientTop || undefined}
-      backgroundGradientBottom={user.appearanceBackgroundGradientBottom || undefined}
+      backgroundGradientBottom={
+        user.appearanceBackgroundGradientBottom || undefined
+      }
       onOpenBlockUrl={openBlockUrl}
-      onTrackClick={(blockId) => {
-        void trpcClient.block.trackClick.mutate({ id: blockId })
-      }}
+      onTrackClick={trackBlockClick}
       renderVideoBlock={(block) => (
         <DeferredVideoEmbed
           key={block.id}
@@ -551,7 +569,9 @@ function UserProfile() {
         />
       )}
       renderProductBlock={(block) => {
-        const selectedProduct = block.content ? productMap.get(block.content) : null
+        const selectedProduct = block.content
+          ? productMap.get(block.content)
+          : null
         if (!selectedProduct) return null
 
         return (
@@ -609,9 +629,17 @@ function UserProfile() {
           <div className="absolute inset-0 bg-background/45" />
         </div>
       ) : null}
-      <SiteUserProfileHeader logoColor={headerLogoColor} backgroundLogoColor={profileTextColor.foreground} />
+      <SiteUserProfileHeader
+        logoColor={headerLogoColor}
+        backgroundLogoColor={profileTextColor.foreground}
+      />
 
-      <div className={cn('relative z-10 min-h-screen w-full', isDarkBg ? 'border-white/10' : 'border-border/70')}>
+      <div
+        className={cn(
+          'relative z-10 min-h-screen w-full',
+          isDarkBg ? 'border-white/10' : 'border-border/70',
+        )}
+      >
         {isBanner && lcpBannerSrc ? (
           <div className="h-[120px] overflow-hidden lg:h-[200px] sm:max-w-2xl md:max-w-3xl sm:mx-auto lg:max-w-full lg:overflow-hidden px-3 lg:px-0">
             <img
@@ -629,18 +657,22 @@ function UserProfile() {
           <div className="h-[160px] w-full lg:h-[150px]" />
         )}
 
-        <div className={cn(
-          // 'lg:divide-x',
-          divideClass,
-          hasActiveProducts
-            ? 'sm:max-w-2xl md:max-w-3xl lg:max-w-7xl mx-auto grid grid-cols-1 px-5 lg:grid-cols-2 lg:auto-rows-max lg:px-10'
-            : 'sm:max-w-2xl md:max-w-3xl lg:max-w-3xl mx-auto grid grid-cols-1 px-5'
-        )}>
-          <section className={cn(
-            'relative pt-10 lg:pt-[70px]',
-            hasActiveProducts && 'lg:pr-6 lg:border-r', isDarkBg ? 'border-white/10' : 'border-border'
-
-          )}>
+        <div
+          className={cn(
+            // 'lg:divide-x',
+            divideClass,
+            hasActiveProducts
+              ? 'sm:max-w-2xl md:max-w-3xl lg:max-w-7xl mx-auto grid grid-cols-1 px-5 lg:grid-cols-2 lg:auto-rows-max lg:px-10'
+              : 'sm:max-w-2xl md:max-w-3xl lg:max-w-3xl mx-auto grid grid-cols-1 px-5',
+          )}
+        >
+          <section
+            className={cn(
+              'relative pt-10 lg:pt-[70px]',
+              hasActiveProducts && 'lg:pr-6 lg:border-r',
+              isDarkBg ? 'border-white/10' : 'border-border',
+            )}
+          >
             <Avatar className="absolute -top-14 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full ring-2 ring-primary/10 lg:-top-[60px] lg:left-0 lg:h-[120px] lg:w-[120px] lg:translate-x-0">
               {/* <Avatar className="absolute -top-14 left-0 h-24 w-24 rounded-full  ring-2 ring-primary/10  lg:-top-[60px] lg:h-[120px] lg:w-[120px]"> */}
               <AvatarImage src={user.image || '/avatar-placeholder.png'} />
@@ -689,12 +721,14 @@ function UserProfile() {
                   className="w-full"
                 >
                   <TabsList
-                    variant='underline'
+                    variant="underline"
                     className="grid w-full grid-cols-2 border-b-0"
-                    style={{
-                      color: profileTextColor.foreground,
-                      '--tabs-indicator-color': profileTextColor.foreground,
-                    } as React.CSSProperties}
+                    style={
+                      {
+                        color: profileTextColor.foreground,
+                        '--tabs-indicator-color': profileTextColor.foreground,
+                      } as React.CSSProperties
+                    }
                   >
                     <TabsTab
                       value="profile"
@@ -709,38 +743,73 @@ function UserProfile() {
                       Products
                     </TabsTab>
                   </TabsList>
-                  <TabsPanel value="profile" className="mt-4 space-y-3 outline-none">
+                  <TabsPanel
+                    value="profile"
+                    className="mt-4 space-y-3 outline-none"
+                  >
                     {profileBlocksSection}
                   </TabsPanel>
-                  <TabsPanel value="products" className="mt-4 space-y-3 outline-none">
+                  <TabsPanel
+                    value="products"
+                    className="mt-4 space-y-3 outline-none"
+                  >
                     {productsSection}
                   </TabsPanel>
                 </Tabs>
               </div>
             )}
 
-            <div className={cn('mt-6', !hasActiveProducts ? 'block space-y-3 outline-none' : 'hidden lg:block space-y-3 outline-none')}>{profileBlocksSection}</div>
+            <div
+              className={cn(
+                'mt-6',
+                !hasActiveProducts
+                  ? 'block space-y-3 outline-none'
+                  : 'hidden lg:block space-y-3 outline-none',
+              )}
+            >
+              {profileBlocksSection}
+            </div>
           </section>
 
           {hasActiveProducts && (
-            <aside className={cn('pb-6 lg:border-y border-r hidden lg:block h-full', isDarkBg ? 'border-white/10' : 'border-border')}>
-              <div className={cn('mb-5 lg:px-6 border-b py-4', isDarkBg ? 'border-white/10' : 'border-border')}>
+            <aside
+              className={cn(
+                'pb-6 lg:border-y border-r hidden lg:block h-full',
+                isDarkBg ? 'border-white/10' : 'border-border',
+              )}
+            >
+              <div
+                className={cn(
+                  'mb-5 lg:px-6 border-b py-4',
+                  isDarkBg ? 'border-white/10' : 'border-border',
+                )}
+              >
                 <div className="flex  items-center gap-2 text-sm font-semibold">
-                  <Package2 className='size-4' style={{ color: profileTextColor.foreground }} />
-                  <span style={{ color: profileTextColor.foreground }}>Products</span>
+                  <Package2
+                    className="size-4"
+                    style={{ color: profileTextColor.foreground }}
+                  />
+                  <span style={{ color: profileTextColor.foreground }}>
+                    Products
+                  </span>
                 </div>
               </div>
-              <div className="hidden space-y-5 lg:block  lg:px-6">{productsSection}</div>
+              <div className="hidden space-y-5 lg:block  lg:px-6">
+                {productsSection}
+              </div>
             </aside>
           )}
         </div>
 
         <div className="pb-4 pt-10">
           <div className="mx-auto sm:max-w-2xl md:max-w-3xl lg:max-w-7xl">
-            <PublicMark textColor={profileTextColor.mutedForeground} logoColor={headerLogoColor} />
+            <PublicMark
+              textColor={profileTextColor.mutedForeground}
+              logoColor={headerLogoColor}
+            />
           </div>
         </div>
       </div>
-    </div >
+    </div>
   )
 }

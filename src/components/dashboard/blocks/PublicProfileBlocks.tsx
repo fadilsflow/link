@@ -3,7 +3,12 @@ import { ArrowUpRight, Link2Icon } from 'lucide-react'
 
 import type { AppearanceBackgroundType } from '@/lib/appearance'
 import { getReadableTextTokensForBackground } from '@/lib/appearance'
-import { getBlockTypeConfigOrDefault } from '@/lib/block-type-config'
+import {
+  getBlockTypeConfigOrDefault,
+  getSocialBlockStyle,
+  getSocialBlockUrl,
+  isSocialBlockType,
+} from '@/lib/block-type-config'
 import { getBlockSkeletonClasses } from '@/lib/block-styles'
 import { cn } from '@/lib/utils'
 
@@ -32,12 +37,6 @@ interface PublicProfileBlocksProps {
   onTrackClick: (blockId: string) => void
   renderVideoBlock: (block: PublicProfileBlock) => React.ReactNode
   renderProductBlock: (block: PublicProfileBlock) => React.ReactNode
-}
-
-function getTelegramUrl(username?: string | null): string | null {
-  const trimmed = username?.trim() || ''
-  if (!trimmed) return null
-  return `https://t.me/${trimmed.replace(/^@+/, '')}`
 }
 
 export function PublicProfileBlocks({
@@ -103,12 +102,15 @@ export function PublicProfileBlocks({
     icon: React.ReactNode
     onClick: () => void
     arrowClassName?: string
+    iconWrapperStyle?: React.CSSProperties
   }) => (
     <div
       key={params.key}
       className={cn(
         'w-full overflow-hidden',
-        isInteractive ? 'group cursor-pointer transition-all' : 'cursor-default',
+        isInteractive
+          ? 'group cursor-pointer transition-all'
+          : 'cursor-default',
         isInteractive ? cardBaseWithHover : cardBase,
         actionRadiusClass,
       )}
@@ -116,10 +118,15 @@ export function PublicProfileBlocks({
       onClick={isInteractive ? params.onClick : undefined}
     >
       <div className={sharedRowClass}>
-        <div className={sharedIconWrapClass} style={iconWrapperStyle}>
+        <div
+          className={sharedIconWrapClass}
+          style={params.iconWrapperStyle ?? iconWrapperStyle}
+        >
           {params.icon}
         </div>
-        <span className="text-center text-md font-semibold text-foreground">{params.title}</span>
+        <span className="text-center text-md font-semibold text-foreground">
+          {params.title}
+        </span>
         <ArrowUpRight
           className={cn(
             'h-5 w-5 text-muted-foreground',
@@ -139,13 +146,8 @@ export function PublicProfileBlocks({
   return blocks.map((block) => {
     if (block.type === 'text') {
       return (
-        <div
-          key={block.id}
-          className={cn('text-left w-full',)}
-        >
-          <h2 className="text-md font-bold text-foreground">
-            {block.title}
-          </h2>
+        <div key={block.id} className={cn('text-left w-full')}>
+          <h2 className="text-md font-bold text-foreground">{block.title}</h2>
           {block.content && (
             <p className="text-sm  text-foreground">{block.content}</p>
           )}
@@ -164,7 +166,9 @@ export function PublicProfileBlocks({
             block.url && isInteractive && 'cursor-pointer',
           )}
           style={cardStyle}
-          onClick={block.url && isInteractive ? () => onOpenBlockUrl(block) : undefined}
+          onClick={
+            block.url && isInteractive ? () => onOpenBlockUrl(block) : undefined
+          }
         >
           {block.content && (
             <div className="relative w-full overflow-hidden bg-muted">
@@ -194,41 +198,37 @@ export function PublicProfileBlocks({
       return renderProductBlock(block)
     }
 
-    if (block.type === 'telegram') {
-      const telegramUrl = getTelegramUrl(block.content)
-      if (!telegramUrl) return null
+    if (isSocialBlockType(block.type)) {
+      const blockConfig = getBlockTypeConfigOrDefault(block.type)
+      const IconComponent = blockConfig.icon
+      const socialStyle = getSocialBlockStyle(block.type)
+      const socialValue =
+        block.type === 'discord' ? block.url : block.content || block.url
+      const socialUrl = getSocialBlockUrl(block.type, socialValue)
 
-      const IconComponent = getBlockTypeConfigOrDefault('telegram').icon
+      if (!socialUrl) return null
 
       return renderActionBlock({
         key: block.id,
-        title: block.title || 'Telegram',
-        icon: <IconComponent className="h-5 w-5 text-foreground" />,
+        title: block.title || blockConfig.title,
+        icon: (
+          <IconComponent className={cn('h-5 w-5', socialStyle.iconClassName)} />
+        ),
+        iconWrapperStyle: {
+          backgroundColor: socialStyle.iconBackgroundColor,
+        },
         onClick: () => {
           onTrackClick(block.id)
-          window.open(telegramUrl, '_blank', 'noopener,noreferrer')
+          window.open(socialUrl, '_blank', 'noopener,noreferrer')
         },
       })
     }
 
-    if (block.type === 'discord' && !block.url) {
-      return null
-    }
-
-    const iconType = block.type === 'discord' ? 'discord' : 'link'
-    const IconComponent = getBlockTypeConfigOrDefault(iconType).icon
-
     return renderActionBlock({
       key: block.id,
-      title: block.title || (block.type === 'discord' ? 'Discord' : 'Link'),
-      icon:
-        block.type === 'discord' ? (
-          <IconComponent className="h-5 w-5 text-foreground" />
-        ) : (
-          <Link2Icon className="h-5 w-5 -rotate-45 text-foreground" />
-        ),
+      title: block.title || 'Link',
+      icon: <Link2Icon className="h-5 w-5 -rotate-45 text-foreground" />,
       onClick: () => onOpenBlockUrl(block),
     })
   })
 }
-

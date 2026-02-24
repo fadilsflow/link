@@ -36,7 +36,7 @@ export function BlockTypeSelector({
         render={
           <Button
             size="lg"
-            className="w-full rounded-full flex active:scale-[0.98]"
+            className="w-full rounded-full flex "
           />
         }
       >
@@ -52,7 +52,7 @@ export function BlockTypeSelector({
             <div
               key={option.type}
               onClick={() => onSelect(option.type)}
-              className={`p-3 ${option.bgColor} text-foreground border border-input rounded-xl flex gap-4 items-center cursor-pointer group`}
+              className={`p-3 text-foreground border border-input rounded-xl flex gap-4 items-center cursor-pointer group`}
             >
               <div
                 className={`p-1 border-2 group-hover:opacity-80 ${option.iconBgColor || 'bg-muted'} border-white ring-1 ring-border rounded-md flex items-center justify-center`}

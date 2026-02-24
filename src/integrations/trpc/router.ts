@@ -1445,71 +1445,78 @@ const payoutRouter = {
     .mutation(async ({ input, ctx }) => {
       const actorUserId = ctx.session.user.id
       const now = new Date()
+      let createdPayoutId: string | null = null
 
       try {
-        const result = await db.transaction(async (tx) => {
-          // Calculate available balance using drizzle's query builder
-          const availableResult = await tx
-            .select({
-              availableBalance: sql<number>`COALESCE(SUM(${transactions.amount} - ${transactions.platformFeeAmount}), 0)`,
-            })
-            .from(transactions)
-            .where(
-              and(
-                eq(transactions.creatorId, actorUserId),
-                lte(transactions.availableAt, now),
-              ),
-            )
+        const existingPendingPayout = await db.query.payouts.findFirst({
+          where: and(
+            eq(payouts.creatorId, actorUserId),
+            eq(payouts.status, 'pending'),
+          ),
+          columns: { id: true },
+        })
+        if (existingPendingPayout) {
+          throw new Error('You already have a pending payout request')
+        }
 
-          const availableBalance = Number(
-            availableResult[0]?.availableBalance ?? 0,
-          )
-          const payoutAmount = input.amount ?? availableBalance
-
-          if (payoutAmount <= 0) {
-            throw new Error('No available balance for payout')
-          }
-          if (payoutAmount > availableBalance) {
-            throw new Error(
-              `Requested ${payoutAmount} but only ${availableBalance} available`,
-            )
-          }
-
-          const payoutId = crypto.randomUUID()
-
-          // Insert payout record
-          const [payout] = await tx
-            .insert(payouts)
-            .values({
-              id: payoutId,
-              creatorId: actorUserId,
-              amount: payoutAmount,
-              status: 'pending',
-              periodEnd: now,
-              payoutMethod: input.payoutMethod ?? null,
-              payoutDetails: input.payoutDetails ?? null,
-            })
-            .returning()
-
-          // Insert debit transaction
-          await tx.insert(transactions).values({
-            id: crypto.randomUUID(),
-            creatorId: actorUserId,
-            payoutId: payoutId,
-            type: TRANSACTION_TYPE.PAYOUT,
-            amount: -payoutAmount,
-            netAmount: -payoutAmount,
-            platformFeePercent: 0,
-            platformFeeAmount: 0,
-            description: `Payout request #${payoutId.slice(0, 8)}`,
-            metadata: { payoutId, payoutMethod: input.payoutMethod },
-            availableAt: now,
+        // Calculate available balance using drizzle's query builder
+        const availableResult = await db
+          .select({
+            availableBalance: sql<number>`COALESCE(SUM(${transactions.amount} - ${transactions.platformFeeAmount}), 0)`,
           })
+          .from(transactions)
+          .where(
+            and(
+              eq(transactions.creatorId, actorUserId),
+              lte(transactions.availableAt, now),
+            ),
+          )
 
-          return payout
+        const availableBalance = Number(availableResult[0]?.availableBalance ?? 0)
+        const payoutAmount = input.amount ?? availableBalance
+
+        if (payoutAmount <= 0) {
+          throw new Error('No available balance for payout')
+        }
+        if (payoutAmount > availableBalance) {
+          throw new Error(
+            `Requested ${payoutAmount} but only ${availableBalance} available`,
+          )
+        }
+
+        const payoutId = crypto.randomUUID()
+        createdPayoutId = payoutId
+
+        // Insert payout record
+        const [payout] = await db
+          .insert(payouts)
+          .values({
+            id: payoutId,
+            creatorId: actorUserId,
+            amount: payoutAmount,
+            status: 'pending',
+            periodEnd: now,
+            payoutMethod: input.payoutMethod ?? null,
+            payoutDetails: input.payoutDetails ?? null,
+          })
+          .returning()
+
+        // Insert debit transaction
+        await db.insert(transactions).values({
+          id: crypto.randomUUID(),
+          creatorId: actorUserId,
+          payoutId: payoutId,
+          type: TRANSACTION_TYPE.PAYOUT,
+          amount: -payoutAmount,
+          netAmount: -payoutAmount,
+          platformFeePercent: 0,
+          platformFeeAmount: 0,
+          description: `Payout request #${payoutId.slice(0, 8)}`,
+          metadata: { payoutId, payoutMethod: input.payoutMethod },
+          availableAt: now,
         })
 
-        return result
+        return payout
       } catch (error) {
         console.error('[finance][payout-request] transaction failed', {
           userId: actorUserId,
@@ -1517,13 +1524,54 @@ const payoutRouter = {
           error,
         })
 
-        const message =
-          error instanceof Error ? error.message.toLowerCase() : ''
-        if (message.includes('payout_one_pending_per_creator_idx')) {
-          throw new Error('You already have a pending payout request')
+        if (createdPayoutId) {
+          await db
+            .update(payouts)
+            .set({
+              status: 'failed',
+              failureReason: 'Failed to create ledger debit transaction',
+              updatedAt: new Date(),
+            })
+            .where(eq(payouts.id, createdPayoutId))
+            .catch((rollbackError) => {
+              console.error('[finance][payout-request] payout rollback failed', {
+                payoutId: createdPayoutId,
+                rollbackError,
+              })
+            })
         }
 
-        throw new Error('Payout request failed. Please retry.')
+        const rawMessage =
+          error instanceof Error ? error.message : String(error)
+        const message = rawMessage.toLowerCase()
+        const isDomainValidationError =
+          message.includes('you already have a pending payout request') ||
+          message.includes('no available balance for payout') ||
+          (message.includes('requested') && message.includes('available'))
+
+        if (
+          message.includes('payout_one_pending_per_creator_idx') ||
+          (message.includes('duplicate key') &&
+            message.includes('payout') &&
+            message.includes('pending'))
+        ) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'You already have a pending payout request',
+          })
+        }
+
+        if (isDomainValidationError) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: rawMessage,
+          })
+        }
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Payout request failed. Please retry.',
+        })
       }
     }),
 

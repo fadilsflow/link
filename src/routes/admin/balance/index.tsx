@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -5,20 +6,31 @@ import {
   ArrowUpRight,
   Banknote,
   DollarSign,
+  RefreshCw,
   XCircle,
 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import {
   AppHeader,
   AppHeaderContent,
-  AppHeaderDescription,
 } from '@/components/app-header'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { authClient } from '@/lib/auth-client'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
-import { formatPrice } from '@/lib/utils'
+import { cn, formatPrice, formatPriceInput, parsePriceInput } from '@/lib/utils'
 import { toastManager } from '@/components/ui/toast'
 import { Spinner } from '@/components/ui/spinner'
 
@@ -45,6 +57,9 @@ export const Route = createFileRoute('/admin/balance/')({
 function BalancePage() {
   const { data: session } = authClient.useSession()
   const queryClient = useQueryClient()
+  const [payoutDialogOpen, setPayoutDialogOpen] = useState(false)
+  const [payoutAmountInput, setPayoutAmountInput] = useState('')
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Balance summary
   const { data: summary, isLoading: isSummaryLoading } = useQuery({
@@ -80,9 +95,10 @@ function BalancePage() {
 
   // Request payout mutation
   const requestPayoutMutation = useMutation({
-    mutationFn: async () => {
+    mutationKey: ['payout', 'request', session?.user.id ?? 'anonymous'],
+    mutationFn: async ({ amount }: { amount: number }) => {
       if (!session?.user.id) throw new Error('Unauthorized')
-      return await trpcClient.payout.request.mutate({})
+      return await trpcClient.payout.request.mutate({ amount })
     },
     onSuccess: () => {
       toastManager.add({
@@ -90,6 +106,8 @@ function BalancePage() {
         description: 'Your payout request has been submitted.',
       })
       queryClient.invalidateQueries({ queryKey: ['balance'] })
+      setPayoutDialogOpen(false)
+      setPayoutAmountInput('')
     },
     onError: (error) => {
       toastManager.add({
@@ -102,6 +120,7 @@ function BalancePage() {
 
   // Cancel payout mutation
   const cancelPayoutMutation = useMutation({
+    mutationKey: ['payout', 'cancel', session?.user.id ?? 'anonymous'],
     mutationFn: async (payoutId: string) => {
       if (!session?.user.id) throw new Error('Unauthorized')
       return await trpcClient.payout.cancel.mutate({ payoutId })
@@ -132,76 +151,161 @@ function BalancePage() {
   )
   const disablePayoutRequest =
     requestPayoutMutation.isPending || availableBalance <= 0 || hasPendingPayout
+  const payoutAmount = parsePriceInput(payoutAmountInput) ?? 0
+  const payoutAmountError =
+    payoutAmount <= 0
+      ? 'Enter a payout amount.'
+      : payoutAmount > availableBalance
+        ? `Amount exceeds available balance (${formatPrice(availableBalance)}).`
+        : null
+
+  const handleRefreshBalance = async () => {
+    setIsRefreshing(true)
+    try {
+      await queryClient.refetchQueries({
+        queryKey: ['balance'],
+        type: 'active',
+      })
+      toastManager.add({
+        title: 'Balance Refreshed',
+        description: 'Latest balance and payout data loaded.',
+      })
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   return (
     <div className="space-y-6 pb-20">
       <AppHeader>
-        <AppHeaderContent title="Balance & Payouts">
-          <AppHeaderDescription>
+        <AppHeaderContent title="Balance">
+          {/* <AppHeaderDescription>
             Ledger-based balances and payout lifecycle from immutable
             transactions
-          </AppHeaderDescription>
+          </AppHeaderDescription> */}
         </AppHeaderContent>
       </AppHeader>
 
       {/* Balance Cards */}
-      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 ">
         <BalanceCard
-          title="Available Balance"
+          title="Active Balance"
           value={summary?.availableBalance ?? 0}
-          description="Ledger Available (withdrawable now)"
           isLoading={isLoading}
-          highlight
+          activeBalance
+          actionLabel={
+            requestPayoutMutation.isPending
+              ? 'Requesting...'
+              : hasPendingPayout
+                ? 'Pending payout in progress'
+                : 'Withdraw'
+          }
+          actionDisabled={disablePayoutRequest}
+          actionLoading={requestPayoutMutation.isPending}
+          onAction={() => setPayoutDialogOpen(true)}
+          actionIcon={
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M5.74992 14.416L5.74992 13.0827L11.0833 13.0827L11.0833 14.416L5.74992 14.416ZM5.74992 11.7493L5.74992 10.416L11.0833 10.416L11.0833 11.7493L5.74992 11.7493ZM5.74992 9.08268L5.74992 7.74935L11.0833 7.74935L11.0833 9.08268L5.74992 9.08268ZM13.2499 6.41602L3.58325 6.41602L8.41658 1.58268L13.2499 6.41602Z"
+                fill="currentColor"
+              />
+            </svg>
+          }
         />
         <BalanceCard
           title="Pending Balance"
           value={summary?.pendingBalance ?? 0}
-          description={`Ledger Pending (${summary?.holdPeriodDays ?? 7}-day hold)`}
           isLoading={isLoading}
-        />
-        <BalanceCard
-          title="Total Earnings"
-          value={summary?.totalEarnings ?? 0}
-          description="All time (net of fees)"
-          isLoading={isLoading}
+          actionLabel={isRefreshing ? 'Refreshing...' : 'Refresh'}
+          actionDisabled={isRefreshing}
+          actionLoading={isRefreshing}
+          onAction={handleRefreshBalance}
+          actionIcon={<RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />}
         />
       </div>
+      <p className="text-sm text-muted-foreground">
+        Available = funds ready to withdraw. Pending = funds still in hold (
+        {summary?.holdPeriodDays ?? 7} days).
+      </p>
+      {hasPendingPayout && (
+        <p className="text-xs text-muted-foreground -mt-3">
+          You already have a pending payout request. Only one pending payout is
+          allowed.
+        </p>
+      )}
 
-      {/* Payout Action */}
-      <Card>
-        <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-6">
-          <div className="space-y-1">
-            <h3 className="font-semibold">Request Payout</h3>
-            <p className="text-sm text-muted-foreground">
-              Available = funds ready to withdraw. Pending = funds still in hold
-              ({summary?.holdPeriodDays ?? 7} days).
-            </p>
-            {hasPendingPayout && (
-              <p className="text-xs text-muted-foreground mt-1">
-                You already have a pending payout request. Only one pending
-                payout is allowed.
+      <Dialog
+        open={payoutDialogOpen}
+        onOpenChange={(open) => {
+          setPayoutDialogOpen(open)
+          if (!open) setPayoutAmountInput('')
+        }}
+      >
+        <DialogPopup className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Payout</DialogTitle>
+            <DialogDescription>
+              Enter the amount you want to withdraw.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogPanel className="space-y-3">
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Available balance: {formatPrice(availableBalance)}
               </p>
-            )}
-          </div>
-          <Button
-            onClick={() => {
-              if (
-                confirm(`Request payout of ${formatPrice(availableBalance)}?`)
-              ) {
-                requestPayoutMutation.mutate()
-              }
-            }}
-            disabled={disablePayoutRequest}
-            className="shrink-0"
-          >
-            {requestPayoutMutation.isPending
-              ? 'Requesting...'
-              : hasPendingPayout
-                ? 'Pending payout in progress'
-                : `Withdraw ${formatPrice(availableBalance)}`}
-          </Button>
-        </CardContent>
-      </Card>
+              <div className="flex gap-2">
+                <Input
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={payoutAmountInput}
+                  onChange={(e) => {
+                    const amount = parsePriceInput(e.target.value)
+                    setPayoutAmountInput(formatPriceInput(amount))
+                  }}
+                  autoFocus
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() =>
+                    setPayoutAmountInput(formatPriceInput(availableBalance))
+                  }
+                  disabled={availableBalance <= 0}
+                >
+                  Max
+                </Button>
+              </div>
+              {payoutAmountError && (
+                <p className="text-xs text-red-500">{payoutAmountError}</p>
+              )}
+            </div>
+          </DialogPanel>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setPayoutDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => requestPayoutMutation.mutate({ amount: payoutAmount })}
+              disabled={requestPayoutMutation.isPending || !!payoutAmountError}
+            >
+              {requestPayoutMutation.isPending
+                ? 'Requesting...'
+                : 'Confirm Payout'}
+            </Button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
 
       {/* Payouts Section */}
       {(isPayoutsSectionLoading || (payoutsList ?? []).length > 0) && (
@@ -293,24 +397,39 @@ function BalancePage() {
 function BalanceCard({
   title,
   value,
-  description,
   isLoading,
-  highlight,
+  activeBalance,
   negative,
+  actionLabel,
+  actionDisabled,
+  actionLoading,
+  onAction,
+  actionIcon,
 }: {
   title: string
   value: number
-  description: string
   isLoading?: boolean
-  highlight?: boolean
+  activeBalance?: boolean
   negative?: boolean
+  actionLabel?: string
+  actionDisabled?: boolean
+  actionLoading?: boolean
+  onAction?: () => void
+  actionIcon?: ReactNode
 }) {
   return (
-    <Card className={highlight ? 'border-primary/20 bg-primary/[0.02]' : ''}>
+    <Card
+      className={cn(
+        'p-4',
+        activeBalance
+          ? 'bg-linear-to-br from-black via-zinc-900 to-zinc-600 text-white shadow-xl'
+          : '',
+      )}
+    >
       <CardHeader className="pb-2">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-4">
             <Spinner className="h-5 w-5 text-muted-foreground" />
@@ -318,13 +437,31 @@ function BalanceCard({
         ) : (
           <>
             <div
-              className={`text-2xl font-mono ${negative && value > 0 ? 'text-red-500' : ''} ${highlight ? 'text-primary' : ''}`}
+              className={`text-4xl font-heading  ${negative && value > 0 ? 'text-red-500' : ''} ${activeBalance ? 'text-primary-fo  reground' : ''}`}
             >
               {negative && value > 0 ? '-' : ''}
               {formatPrice(value)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">{description}</p>
           </>
+        )}
+        {actionLabel && onAction && (
+          <Button
+            type="button"
+            onClick={onAction}
+            disabled={actionDisabled}
+            variant={activeBalance ? 'outline' : 'secondary'}
+            className="w-fit rounded-full"
+            size="lg"
+          >
+            {actionLoading ? (
+              actionLabel
+            ) : (
+              <>
+                {actionIcon}
+                {actionLabel}
+              </>
+            )}
+          </Button>
         )}
       </CardContent>
     </Card>

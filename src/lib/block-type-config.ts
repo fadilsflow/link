@@ -63,7 +63,7 @@ const SOCIAL_BLOCK_STYLE_MAP: Record<SocialBlockType, SocialBlockStyle> = {
     iconClassName: 'text-white',
   },
   instagram: {
-    iconBackgroundColor: '#000000',
+    iconBackgroundColor: '#E91E63',
     iconClassName: 'text-white',
   },
   tiktok: {
@@ -148,7 +148,7 @@ export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
     type: 'instagram',
     icon: Instagram,
     iconColor: 'text-white',
-    iconBgColor: 'bg-black',
+    iconBgColor: 'bg-pink-500',
     title: 'Instagram',
     description: 'Share your Instagram username.',
   },

@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, MoreVertical } from 'lucide-react'
+import { ChartNoAxesColumn, GripVertical, MoreVertical } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Card, CardContent } from '../ui/card'
 import { cn } from '@/lib/utils'
@@ -20,6 +20,7 @@ interface BlockItemProps {
     url: string
     type?: string
     content?: string
+    clicks?: number
     isEnabled: boolean
     syncStatus?: 'saved' | 'saving' | 'unsaved' | 'error'
     errors?: { title?: string; url?: string; content?: string }
@@ -117,7 +118,7 @@ export function SortableBlockItem({
         className={cn(
           'w-full shadow-none',
           block.syncStatus === 'error' ? 'border-red-500' : 'border-border',
-          blockConfig.bgColor,
+          // blockConfig.bgColor,
         )}
       >
         <CardContent className="flex items-center gap-4 p-4 sm:p-5">
@@ -139,13 +140,18 @@ export function SortableBlockItem({
             <p className="truncate text-sm font-semibold">
               {block.title || blockConfig.title}
             </p>
-            <p className="truncate text-xs text-muted-foreground">{contentSummary}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {contentSummary}
+            </p>
+            <div className="flex gap-1 items-center">
+              <ChartNoAxesColumn className='w-[12px] h-[12px]' />
+              <p className="text-[12px] text-foreground">
+                {block.clicks ?? 0}
+              </p>
+            </div>
           </div>
 
-          <Switch
-            checked={enabled}
-            onCheckedChange={handleSwitchChange}
-          />
+          <Switch checked={enabled} onCheckedChange={handleSwitchChange} />
 
           <Button
             variant="ghost"

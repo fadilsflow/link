@@ -89,10 +89,10 @@ export function BlockTypeSelector({
                 <div
                   key={option.type}
                   onClick={() => onSelect(option.type)}
-                  className={`p-3 text-foreground bg-muted rounded-xl flex gap-4 items-center cursor-pointer group`}
+                  className={`p-3 text-foreground bg-muted  rounded-xl flex gap-4 items-center cursor-pointer group`}
                 >
                   <div
-                    className={`p-1  group-hover:opacity-80 ${option.iconBgColor || 'bg-muted'}  rounded-md flex items-center justify-center`}
+                    className={`p-1 border-2 group-hover:opacity-80 ${option.iconBgColor || 'bg-muted'} border-white ring-1 ring-border rounded-md flex items-center justify-center`}
                   >
                     <option.icon className={` ${option.iconColor} h-6 w-6`} />
                   </div>

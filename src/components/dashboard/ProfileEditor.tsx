@@ -194,9 +194,6 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
           <Form className="contents" onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>Edit profile</DialogTitle>
-              <DialogDescription>
-                Make changes to your profile here. Click save when you're done.
-              </DialogDescription>
             </DialogHeader>
 
             <DialogPanel className="grid gap-4">

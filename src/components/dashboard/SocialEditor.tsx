@@ -230,7 +230,7 @@ function SortableSocialItem({ link, onEdit }: SortableSocialItemProps) {
     >
       <Button
         size="icon"
-        variant="secondary"
+        variant="outline"
         className={cn('relative', !link.isEnabled && 'opacity-50')}
         onClick={() => onEdit(link)}
       >

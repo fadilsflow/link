@@ -179,10 +179,6 @@ function BalancePage() {
     <div className="space-y-6 pb-20">
       <AppHeader>
         <AppHeaderContent title="Balance">
-          {/* <AppHeaderDescription>
-            Ledger-based balances and payout lifecycle from immutable
-            transactions
-          </AppHeaderDescription> */}
         </AppHeaderContent>
       </AppHeader>
 
@@ -194,14 +190,12 @@ function BalancePage() {
           isLoading={isLoading}
           activeBalance
           actionLabel={
-            requestPayoutMutation.isPending
-              ? 'Requesting...'
-              : hasPendingPayout
-                ? 'Pending payout in progress'
-                : 'Withdraw'
+            hasPendingPayout
+              ? 'Pending payout in progress'
+              : 'Withdraw'
           }
-          actionDisabled={disablePayoutRequest}
-          actionLoading={requestPayoutMutation.isPending}
+          actionDisabled={disablePayoutRequest || isLoading}
+          // actionLoading={requestPayoutMutation.isPending}
           onAction={() => setPayoutDialogOpen(true)}
           actionIcon={
             <svg
@@ -222,11 +216,9 @@ function BalancePage() {
           title="Pending Balance"
           value={summary?.pendingBalance ?? 0}
           isLoading={isLoading}
-          actionLabel={isRefreshing ? 'Refreshing...' : 'Refresh'}
-          actionDisabled={isRefreshing}
+          actionLabel={'Refresh'}
           actionLoading={isRefreshing}
           onAction={handleRefreshBalance}
-          actionIcon={<RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />}
         />
       </div>
       <p className="text-sm text-muted-foreground">
@@ -298,10 +290,9 @@ function BalancePage() {
               type="button"
               onClick={() => requestPayoutMutation.mutate({ amount: payoutAmount })}
               disabled={requestPayoutMutation.isPending || !!payoutAmountError}
+              loading={requestPayoutMutation.isPending}
             >
-              {requestPayoutMutation.isPending
-                ? 'Requesting...'
-                : 'Confirm Payout'}
+              Confirm Payout
             </Button>
           </DialogFooter>
         </DialogPopup>
@@ -429,7 +420,7 @@ function BalanceCard({
       <CardHeader className="pb-2">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      <CardContent className="space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-4">
             <Spinner className="h-5 w-5 text-muted-foreground" />
@@ -449,8 +440,9 @@ function BalanceCard({
             type="button"
             onClick={onAction}
             disabled={actionDisabled}
+            loading={actionLoading}
             variant={activeBalance ? 'outline' : 'secondary'}
-            className="w-fit rounded-full"
+            className="rounded-full"
             size="lg"
           >
             {actionLoading ? (

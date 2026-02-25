@@ -48,6 +48,7 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
+import { Frame } from './frame'
 
 interface DataTableProps<TData, TValue> {
   columns: Array<ColumnDef<TData, TValue>>
@@ -123,7 +124,7 @@ export function DataTable<TData, TValue>({
           {/* Add View Options or Clear filters if needed */}
         </div>
       </div>
-      <div className="rounded-md">
+      <Frame className='w-full'>
         <Table>
           <TableHeader className="border-t">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -134,9 +135,9 @@ export function DataTable<TData, TValue>({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   )
                 })}
@@ -179,7 +180,7 @@ export function DataTable<TData, TValue>({
             )}
           </TableBody>
         </Table>
-      </div>
+      </Frame>
       <DataTablePagination table={table} />
     </div>
   )

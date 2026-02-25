@@ -4,6 +4,7 @@ import { authClient } from '@/lib/auth-client'
 import { Button } from './ui/button'
 import { GitHub } from './icon/github'
 import { REPO_URL } from '@/lib/constans'
+import { LogoType } from './kreasi-logo'
 
 export const Header = () => {
   const { data: session, isPending } = authClient.useSession()
@@ -16,8 +17,8 @@ export const Header = () => {
         <div className="py-4">
           <div className="flex flex-wrap items-center justify-between gap-6  lg:gap-0">
             <div className="flex items-center gap-6">
-              <Link className="-mt-0.5 flex shrink-0 items-center gap-1.5 font-heading font-semibold  text-2xl " aria-label="Home" to="/">
-                kreasi
+              <Link className="-mt-0.5 flex shrink-0 items-center gap-1.5" aria-label="Home" to="/">
+                <LogoType />
               </Link>
             </div>
             {/* Right section — always mounted */}
@@ -32,7 +33,7 @@ export const Header = () => {
               ) : (
                 <div className="flex items-center gap-2">
                   <Button variant='outline' size='sm' render={<Link to='/login' />}>Log in</Button>
-                  <Button variant='default' size='sm' render={<Link to='/register' />}>Sign Up</Button>
+                  <Button variant='neutral' size='sm' render={<Link to='/register' />}>Sign Up</Button>
                 </div>
               )}
             </div>

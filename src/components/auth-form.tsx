@@ -73,7 +73,7 @@ export function AuthForm({ type }: AuthFormProps) {
                     {/* Auth Section */}
                     <div className="space-y-4">
                         <Button
-                            variant={"default"}
+                            variant={"neutral"}
                             disabled={loading}
                             onClick={() => handleGoogleLogin()}
                             className="w-full py-6"

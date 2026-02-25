@@ -43,7 +43,7 @@ function AdminLayout() {
       }
     >
       <AppSidebar />
-      <SidebarInset className="pb-20 md:pb-0 @container/main0">
+      <SidebarInset className="pb-20 md:pb-0 @container/main">
         <Outlet />
       </SidebarInset>
       <MobileAdminNav />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Camera, Paintbrush, X } from 'lucide-react'
+import { Camera, X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { uploadFile } from '@/lib/upload-client'
 import { useFileUpload } from '@/hooks/use-file-upload'
@@ -12,7 +12,6 @@ import { Form } from '@/components/ui/form'
 import {
   Dialog,
   DialogClose,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogPanel,

@@ -6,7 +6,6 @@ import {
   ArrowUpRight,
   Banknote,
   DollarSign,
-  RefreshCw,
   XCircle,
 } from 'lucide-react'
 import type { ReactNode } from 'react'

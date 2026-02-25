@@ -25,7 +25,7 @@ function OptionCard({
     <div
       className={cn(
         'relative p-4 transition-all duration-200 rounded-xl',
-        selected ? 'bg-input/80 ' : '',
+        selected ? 'bg-input/80 ' : 'border hover:bg-input/40',
       )}
     >
       <div className="space-y-2">
@@ -72,8 +72,8 @@ export function BlockStyleSelector({
   return (
     <div className="space-y-4">
       {styles.map((styleItem) => (
-        <div key={styleItem.key} className="space-y-4">
-          <h3 className="text-md">{styleItem.label}</h3>
+        <div key={styleItem.key} className="space-y-2">
+          <h3 className="text-sm">{styleItem.label}</h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <button

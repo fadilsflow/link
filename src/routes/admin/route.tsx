@@ -14,24 +14,12 @@ function AdminLayout() {
   const router = useRouter()
   const { data: session, isPending } = authClient.useSession()
 
-  if (isPending) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner className="h-5 w-5 text-muted-foreground" />
-      </div>
-    )
-  }
-
-  // If user is already logged in, redirect to admin dashboard
-  if (!session?.user) {
-    router.navigate({ to: '/login' })
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner className="h-5 w-5 text-muted-foreground" />
-      </div>
-    )
-  }
-
+  // Redirect only after loading selesai
+  React.useEffect(() => {
+    if (!isPending && !session?.user) {
+      router.navigate({ to: '/login' })
+    }
+  }, [isPending, session, router])
 
   return (
     <SidebarProvider
@@ -43,9 +31,17 @@ function AdminLayout() {
       }
     >
       <AppSidebar />
+
       <SidebarInset className="pb-20 md:pb-0 @container/main">
-        <Outlet />
+        {isPending ? (
+          <div className="flex h-full min-h-[60vh] items-center justify-center">
+            <Spinner className="h-5 w-5 text-muted-foreground" />
+          </div>
+        ) : (
+          <Outlet />
+        )}
       </SidebarInset>
+
       <MobileAdminNav />
     </SidebarProvider>
   )

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { CalendarIcon, MousePointerClick, Package } from 'lucide-react'
+import { CalendarIcon, InfoIcon, MousePointerClick, Package } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import {
   AppHeader,
@@ -29,6 +29,14 @@ import { ShareProfileModal } from '@/components/share-profile-modal'
 import { BASE_URL } from '@/lib/constans'
 import { cn, formatPrice } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
+import {
+  Frame,
+  FrameDescription,
+  FrameHeader,
+  FramePanel,
+  FrameTitle,
+} from "@/components/ui/frame";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 export const Route = createFileRoute('/admin/')({
   component: HomePage,
@@ -116,73 +124,103 @@ function HomePage() {
         <AppHeaderActions></AppHeaderActions>
       </AppHeader>
 
+      <Alert className='bg-muted border-none'>
+        <InfoIcon />
+        <AlertTitle>Payment processing is not yet available</AlertTitle>
+        <AlertDescription>
+          Complete all steps below to start accepting payments from customers
+        </AlertDescription>
+      </Alert>
       {/* Profile and Earnings Cards */}
       <div className="grid gap-4 sm:grid-cols-2">
         {/* Profile Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4 ">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="rounded-md h-14 w-14 border-2 border-background ring-2 ring-primary/10 transition-transform group-hover:scale-105">
-                  <AvatarImage src={session?.user.image || ''} />
-                  <AvatarFallback className="bg-primary/5 text-primary text-lg">
-                    {session?.user.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold tracking-tight truncate">
-                    {session?.user.name || 'Creator'}
-                  </h3>
-                  {username ? (
-                    <a
-                      href={`/${username}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-primary flex items-center text-sm hover:text-primary transition-colors mt-0.5 group/link w-fit"
-                    >
-                      <span className="font-medium underline-offset-4 group-hover/link:underline">
-                        {PUBLIC_BASE_HOST}/{username}
-                      </span>
-                    </a>
-                  ) : null}
-                </div>
+        <Frame>
+          <FrameHeader>
+            <FrameTitle>Account</FrameTitle>
+          </FrameHeader>
+          <FramePanel className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="rounded-md h-14 w-14 border-2 border-background ring-2 ring-primary/10 transition-transform group-hover:scale-105">
+                <AvatarImage src={session?.user.image || ''} />
+                <AvatarFallback className="bg-primary/5 text-primary text-lg">
+                  {session?.user.name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold tracking-tight truncate">
+                  {session?.user.name || 'Creator'}
+                </h3>
+                {username ? (
+                  <a
+                    href={`/${username}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-muted-foreground flex items-center text-sm mt-0.5 underline w-fit"
+                  >
+                    <span className="font-medium">
+                      {PUBLIC_BASE_HOST}/{username}
+                    </span>
+                  </a>
+                ) : null}
               </div>
-              <ShareProfileModal url={username ? `${BASE_URL}/${username}` : BASE_URL}>
-                <Button size="lg" variant={'outline'}>
-                  Share
-                </Button>
-              </ShareProfileModal>
             </div>
-          </CardContent>
-        </Card>
-
+            <ShareProfileModal url={username ? `${BASE_URL}/${username}` : BASE_URL}>
+              <Button size="lg" variant={'outline'}>
+                Share
+              </Button>
+            </ShareProfileModal>
+            {/* <p className='text-sm font-bold'>Start Creaating now!</p> */}
+            {/* <div className="flex gap-2  overflow-auto no-scrollbar">
+              <Button size='xs' variant='outline'>
+                add link
+              </Button>
+              <Button size='xs' variant='outline'>
+                add link
+              </Button>
+              <Button size='xs' variant='outline'>
+                add link
+              </Button>
+              <Button size='xs' variant='outline'>
+                add link
+              </Button>
+              <Button size='xs' variant='outline'>
+                add link
+              </Button>
+              <Button size='xs' variant='outline'>
+                add link
+              </Button>
+              <Button size='xs' variant='outline'>
+                add link
+              </Button>
+              <Button size='xs' variant='outline'>
+                add link
+              </Button>
+            </div> */}
+          </FramePanel>
+        </Frame>
         {/* Earnings Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Earnings</CardTitle>
-          </CardHeader>
+        <Frame >
+          <FrameHeader>
+            <FrameTitle>Earnings</FrameTitle>
+          </FrameHeader>
 
-          <CardContent className="flex items-center justify-between h-full">
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-mono tracking-tight">
-                {isLoadingBalance ? (
-                  <Spinner className="h-5 w-5 text-muted-foreground" />
-                ) : (
-                  formatPrice(balance?.currentBalance ?? 0)
-                )}
-              </span>
-            </div>
+          <FramePanel className="flex items-center justify-between gap-4">
+            <span className="text-4xl h-full  tracking-tight">
+              {isLoadingBalance ? (
+                <Spinner className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                formatPrice(balance?.currentBalance ?? 0)
+              )}
+            </span>
             <Button
               size="lg"
+              variant='outline'
               render={<Link to="/admin/balance" />}
             >
               Payout
             </Button>
-          </CardContent>
-        </Card>
+          </FramePanel>
+        </Frame>
       </div>
       <div className="justify-end flex">
         {/* Date Range Picker */}

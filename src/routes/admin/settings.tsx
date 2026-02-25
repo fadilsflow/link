@@ -27,6 +27,7 @@ function SettingsPage() {
             <CardTitle className="text-lg">Account & Security</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="your@email.com" />

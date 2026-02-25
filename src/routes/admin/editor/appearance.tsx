@@ -31,6 +31,13 @@ import {
   AppHeader,
   AppHeaderContent,
 } from '@/components/app-header'
+import {
+  Frame,
+  FrameDescription,
+  FrameHeader,
+  FramePanel,
+  FrameTitle,
+} from "@/components/ui/frame";
 import { usePreview } from '@/lib/preview-context'
 import { cn } from '@/lib/utils'
 import { Redo2 } from 'lucide-react'
@@ -77,8 +84,8 @@ function SectionOptionCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-xl border p-3 text-left transition-colors',
-        selected ? 'bg-input/80 border-foreground/20' : 'hover:bg-input/40',
+        'rounded-xl border p-3 text-left',
+        selected ? 'bg-input/80 ' : 'hover:bg-input/40',
       )}
     >
       <p className="text-sm font-medium">{title}</p>
@@ -349,10 +356,10 @@ function AppearanceEditor({
         </AppHeaderContent>
       </AppHeader>
       <Separator />
-      <div className="p-6">
-        <Card className="shadow-sm overflow-hidden">
-          <CardHeader className="border-b flex flex-row items-center justify-between">
-            <CardTitle>Banner</CardTitle>
+      <div className="p-6 space-y-6">
+        <Frame className="shadow-sm overflow-hidden">
+          <FrameHeader className="flex flex-row items-center justify-between">
+            <FrameTitle>Banner</FrameTitle>
             <Button
               type="button"
               size={"xs"}
@@ -363,10 +370,10 @@ function AppearanceEditor({
               <Redo2 />
               Reset
             </Button>
-          </CardHeader>
+          </FrameHeader>
 
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-xl border p-3">
+          <FramePanel className="space-y-4">
+            <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="banner-enabled">Show banner</Label>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -390,12 +397,12 @@ function AppearanceEditor({
                 onBannerSelect={handleBannerSelect}
               />
             ) : null}
-          </CardContent>
-        </Card>
+          </FramePanel>
+        </Frame>
 
-        <Card className="shadow-sm mt-6">
-          <CardHeader className="border-b flex flex-row items-center justify-between">
-            <CardTitle>Background</CardTitle>
+        <Frame className="shadow-sm">
+          <FrameHeader className="flex flex-row items-center justify-between">
+            <FrameTitle>Background</FrameTitle>
             <Button
               type="button"
               size={"xs"}
@@ -406,8 +413,8 @@ function AppearanceEditor({
               <Redo2 />
               Reset
             </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          </FrameHeader>
+          <FramePanel className="space-y-4">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <SectionOptionCard
                 selected={backgroundType === 'none'}
@@ -455,66 +462,72 @@ function AppearanceEditor({
                 }}
               />
             </div>
+          </FramePanel>
+          {backgroundType !== 'none' && backgroundType !== 'avatar-blur' &&
 
-            {backgroundType === 'flat' ? (
-              <div className="space-y-2">
-                <Label>Background color</Label>
-                <ColorPicker
-                  value={backgroundColor}
-                  onChange={setBackgroundColor}
-                  onCommit={(value) => {
-                    saveColor(value, 'appearanceBackgroundColor')
+
+            <FramePanel>
+              {backgroundType === 'flat' ? (
+                <div className="space-y-2">
+                  <Label>Background color</Label>
+                  <ColorPicker
+                    value={backgroundColor}
+                    onChange={setBackgroundColor}
+                    onCommit={(value) => {
+                      saveColor(value, 'appearanceBackgroundColor')
+                    }}
+                  />
+                </div>
+              ) : null}
+
+              {backgroundType === 'gradient' ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Top color</Label>
+                    <ColorPicker
+                      value={backgroundGradientTop}
+                      onChange={setBackgroundGradientTop}
+                      onCommit={(value) => {
+                        saveColor(value, 'appearanceBackgroundGradientTop')
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Bottom color</Label>
+                    <ColorPicker
+                      value={backgroundGradientBottom}
+                      onChange={setBackgroundGradientBottom}
+                      onCommit={(value) => {
+                        saveColor(value, 'appearanceBackgroundGradientBottom')
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              {backgroundType === 'image' ? (
+                <ImageUploader
+                  value={backgroundImageUrl}
+                  onChange={(url) => {
+                    setBackgroundImageUrl(url)
+                    save(
+                      { appearanceBackgroundImageUrl: url || null },
+                      { debounced: true },
+                    )
                   }}
+                  folder="backgrounds"
+                  aspectRatio="video"
+                  placeholder="Upload full-page background"
                 />
-              </div>
-            ) : null}
+              ) : null}
+            </FramePanel>
+          }
 
-            {backgroundType === 'gradient' ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Top color</Label>
-                  <ColorPicker
-                    value={backgroundGradientTop}
-                    onChange={setBackgroundGradientTop}
-                    onCommit={(value) => {
-                      saveColor(value, 'appearanceBackgroundGradientTop')
-                    }}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Bottom color</Label>
-                  <ColorPicker
-                    value={backgroundGradientBottom}
-                    onChange={setBackgroundGradientBottom}
-                    onCommit={(value) => {
-                      saveColor(value, 'appearanceBackgroundGradientBottom')
-                    }}
-                  />
-                </div>
-              </div>
-            ) : null}
+        </Frame>
 
-            {backgroundType === 'image' ? (
-              <ImageUploader
-                value={backgroundImageUrl}
-                onChange={(url) => {
-                  setBackgroundImageUrl(url)
-                  save(
-                    { appearanceBackgroundImageUrl: url || null },
-                    { debounced: true },
-                  )
-                }}
-                folder="backgrounds"
-                aspectRatio="video"
-                placeholder="Upload full-page background"
-              />
-            ) : null}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm mt-6">
-          <CardHeader className="border-b flex flex-row items-center justify-between">
-            <CardTitle>Blocks</CardTitle>
+        <Frame className="shadow-sm">
+          <FrameHeader className="flex flex-row items-center justify-between">
+            <FrameTitle>Blocks</FrameTitle>
             <Button
               type="button"
               variant="outline"
@@ -525,43 +538,46 @@ function AppearanceEditor({
               <Redo2 />
               Reset
             </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          </FrameHeader>
+          <FramePanel className="space-y-4">
             <BlockStyleSelector
               blockStyle={blockStyle}
               blockRadius={blockRadius}
               onChange={handleBlockStyleChange}
             />
-
-            <div className="space-y-2">
-              <Label>Block color</Label>
-              <ColorPicker
-                value={blockColor}
-                onChange={setBlockColor}
-                onCommit={(value) => {
-                  saveColor(value, 'appearanceBlockColor')
-                }}
-              />
-            </div>
-
-            {blockStyle === 'shadow' ? (
+          </FramePanel>
+          <FramePanel>
+            <div className={cn(blockStyle === 'shadow' && "grid grid-cols-1 gap-4 sm:grid-cols-2")}>
               <div className="space-y-2">
-                <Label>Shadow color</Label>
+                <Label>Block color</Label>
                 <ColorPicker
-                  value={blockShadowColor}
-                  onChange={setBlockShadowColor}
+                  value={blockColor}
+                  onChange={setBlockColor}
                   onCommit={(value) => {
-                    saveColor(value, 'appearanceBlockShadowColor')
+                    saveColor(value, 'appearanceBlockColor')
                   }}
                 />
               </div>
-            ) : null}
-          </CardContent>
-        </Card>
 
-        <Card className="shadow-sm mt-6">
-          <CardHeader className="border-b flex flex-row items-center justify-between">
-            <CardTitle>Text</CardTitle>
+              {blockStyle === 'shadow' ? (
+                <div className="space-y-2">
+                  <Label>Shadow color</Label>
+                  <ColorPicker
+                    value={blockShadowColor}
+                    onChange={setBlockShadowColor}
+                    onCommit={(value) => {
+                      saveColor(value, 'appearanceBlockShadowColor')
+                    }}
+                  />
+                </div>
+              ) : null}
+            </div>
+          </FramePanel>
+        </Frame>
+
+        <Frame className="shadow-sm">
+          <FrameHeader className="flex flex-row items-center justify-between">
+            <FrameTitle>Font</FrameTitle>
             <Button
               type="button"
               variant="outline"
@@ -572,32 +588,30 @@ function AppearanceEditor({
               <Redo2 />
               Reset
             </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Font</Label>
-              <Select
-                value={textFont}
-                onValueChange={(value) => {
-                  const next = value as AppearanceTextFont
-                  setTextFont(next)
-                  save({ appearanceTextFont: next })
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {APPEARANCE_FONT_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label} ({option.family})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+          </FrameHeader>
+          <FramePanel className="space-y-4">
+            <Label className='sr-only'>Font</Label>
+            <Select
+              value={textFont}
+              onValueChange={(value) => {
+                const next = value as AppearanceTextFont
+                setTextFont(next)
+                save({ appearanceTextFont: next })
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {APPEARANCE_FONT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label} ({option.family})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FramePanel>
+        </Frame>
       </div>
     </>
   )

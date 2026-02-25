@@ -65,8 +65,8 @@ export function BlockTypeSelector({
       <DialogTrigger
         render={
           <Button
-            size="lg"
-            className="w-full rounded-full flex "
+            size="xl"
+            className="w-full flex "
           />
         }
       >

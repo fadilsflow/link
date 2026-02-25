@@ -3,7 +3,6 @@ import {
   ChevronDown,
   Copy,
   ExternalLink,
-  Grid,
   Home,
   Package,
   Paintbrush,
@@ -16,7 +15,6 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter, useRouterState } from '@tanstack/react-router'
 import Credits from '../Credits'
-import { Button } from '../ui/button'
 import {
   Menu,
   MenuItem,
@@ -39,8 +37,6 @@ import {
 import { authClient } from '@/lib/auth-client'
 import { adminAuthQueryKey, useAdminAuthContext } from '@/lib/admin-auth'
 import { BASE_URL } from '@/lib/constans'
-import { LogoMark, LogoStudioSidebar } from '../kreasi-logo'
-import { cn } from '@/lib/utils'
 
 const data = {
   navBottom: [
@@ -102,7 +98,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const queryClient = useQueryClient()
   const location = useRouterState({ select: (s) => s.location })
 
-  const { data: adminAuth } = useAdminAuthContext()
+  const { data: adminAuth, isPending } = useAdminAuthContext()
   const username = adminAuth?.username ?? ''
 
   const handleCopyLink = async () => {
@@ -118,144 +114,150 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar
       {...props}
       collapsible="icon"
-      variant="sidebar"
+      variant="inset"
       className="border-muted"
     >
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem className="flex gap-3 items-center">
-            <Menu>
-              <MenuTrigger render={<SidebarMenuButton size="default" />}>
-                <Avatar className="h-6 w-6 border">
-                  <AvatarImage src={adminAuth?.image || ''} />
-                  <AvatarFallback>
-                    {adminAuth?.name?.slice(0, 2).toUpperCase() || 'US'}
-                  </AvatarFallback>
-                </Avatar>
 
-                <div className="min-w-0 flex-1 text-left">
-                  <h3 className="truncate text-sm text-foreground">
-                    {username || adminAuth?.name}
-                  </h3>
-                </div>
+      {isPending ? (null) : (
+        <>
+          <SidebarHeader>
+            <SidebarMenu>
+              <SidebarMenuItem className="flex gap-3 items-center">
+                <Menu>
+                  <MenuTrigger render={<SidebarMenuButton size="default" />}>
+                    <Avatar className="h-6 w-6 border">
+                      <AvatarImage src={adminAuth?.image || ''} />
+                      <AvatarFallback>
+                        {adminAuth?.name?.slice(0, 2).toUpperCase() || 'US'}
+                      </AvatarFallback>
+                    </Avatar>
 
-                <ChevronDown className="h-3 w-3 text-zinc-400" />
-              </MenuTrigger>
-              <MenuPopup className={'w-40'}>
-                <MenuItem render={<Link to={'/admin/settings'} rel="noopener noreferrer" />}>
-                  Settings
-                </MenuItem>
-                <MenuItem
-                  render={
-                    <Link to={'/'} target="_blank" rel="noopener noreferrer" />
-                  }
-                >
-                  Help
-                </MenuItem>
-                <MenuSeparator />
-                <MenuItem
-                  onClick={async () => {
-                    await authClient.signOut({
-                      fetchOptions: {
-                        onSuccess: () => {
-                          queryClient.removeQueries({
-                            queryKey: adminAuthQueryKey(),
-                          })
-                          router.invalidate()
-                          router.navigate({ to: '/login' })
-                        },
-                      },
-                    })
-                  }}
-                >
-                  Sign Out
-                </MenuItem>
-              </MenuPopup>
-            </Menu>
+                    <div className="min-w-0 flex-1 text-left">
+                      <h3 className="truncate text-sm text-foreground">
+                        {username || adminAuth?.name}
+                      </h3>
+                    </div>
 
-            <SidebarMenuButton size={'default'} className='size-9 sm:size-8 shrink-0 justify-center items-center ml-auto'>
-              <Search />
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+                    <ChevronDown className="h-3 w-3 text-zinc-400" />
+                  </MenuTrigger>
+                  <MenuPopup className={'w-40'}>
+                    <MenuItem render={<Link to={'/admin/settings'} rel="noopener noreferrer" />}>
+                      Settings
+                    </MenuItem>
+                    <MenuItem
+                      render={
+                        <Link to={'/'} target="_blank" rel="noopener noreferrer" />
+                      }
+                    >
+                      Help
+                    </MenuItem>
+                    <MenuSeparator />
+                    <MenuItem
+                      onClick={async () => {
+                        await authClient.signOut({
+                          fetchOptions: {
+                            onSuccess: () => {
+                              queryClient.removeQueries({
+                                queryKey: adminAuthQueryKey(),
+                              })
+                              router.invalidate()
+                              router.navigate({ to: '/login' })
+                            },
+                          },
+                        })
+                      }}
+                    >
+                      Sign Out
+                    </MenuItem>
+                  </MenuPopup>
+                </Menu>
 
-        </SidebarMenu>
-      </SidebarHeader>
+                <SidebarMenuButton size={'default'} className='size-9 sm:size-8 shrink-0 justify-center items-center ml-auto'>
+                  <Search />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            {data.navMain.map((item) => {
-              const isActive = isAdminPage(item.url, location.pathname)
-              return (
+            </SidebarMenu>
+          </SidebarHeader>
+
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarMenu>
+                {data.navMain.map((item) => {
+                  const isActive = isAdminPage(item.url, location.pathname)
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        size={'default'}
+                        variant={'default'}
+                        render={
+                          <Link
+                            to={item.url as any}
+                            activeOptions={{
+                              exact: item.url === '/admin',
+                            }}
+                          />
+                        }
+                        isActive={isActive}
+                        className="text-foreground"
+                      >
+                        <item.icon className=" h-4 w-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroup>
+          </SidebarContent>
+
+          <SidebarFooter>
+            <SidebarMenu>
+              {username ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    render={
+                      <Link
+                        to={'/$username'}
+                        params={{ username }}
+                      />
+                    }
+                    className="text-foreground"
+                  >
+                    <ExternalLink />
+                    View Public page
+                  </SidebarMenuButton>
+                  <SidebarMenuButton
+                    onClick={handleCopyLink}
+                    className="text-foreground"
+                  >
+                    <Copy />
+                    Copy Public page link
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
+              {data.navBottom.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     size={'default'}
-                    variant={'default'}
-                    render={
-                      <Link
-                        to={item.url as any}
-                        activeOptions={{
-                          exact: item.url === '/admin',
-                        }}
-                      />
-                    }
-                    isActive={isActive}
+                    render={<Link to={item.url as any} />}
+                    isActive={location.pathname === item.url}
                     className="text-foreground"
                   >
                     <item.icon className=" h-4 w-4" />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              )
-            })}
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent>
+              ))}
 
-      <SidebarFooter>
-        <SidebarMenu>
-          {username ? (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                render={
-                  <Link
-                    to={'/$username'}
-                    params={{ username }}
-                  />
-                }
-                className="text-foreground"
-              >
-                <ExternalLink />
-                View Public page
-              </SidebarMenuButton>
-              <SidebarMenuButton
-                onClick={handleCopyLink}
-                className="text-foreground"
-              >
-                <Copy />
-                Copy Public page link
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ) : null}
-          {data.navBottom.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                size={'default'}
-                render={<Link to={item.url as any} />}
-                isActive={location.pathname === item.url}
-                className="text-foreground"
-              >
-                <item.icon className=" h-4 w-4" />
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-
-          <SidebarMenuItem>
-            <Credits />
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+              <SidebarMenuItem>
+                <Credits />
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        </>
+      )}
     </Sidebar>
+
   )
 }

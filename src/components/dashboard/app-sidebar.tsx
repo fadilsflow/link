@@ -39,7 +39,7 @@ import {
 import { authClient } from '@/lib/auth-client'
 import { adminAuthQueryKey, useAdminAuthContext } from '@/lib/admin-auth'
 import { BASE_URL } from '@/lib/constans'
-import { LogoStudioSidebar } from '../kreasi-logo'
+import { LogoMark, LogoStudioSidebar } from '../kreasi-logo'
 import { cn } from '@/lib/utils'
 
 const data = {
@@ -123,8 +123,59 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     >
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem className="flex gap-3 justify-center items-center my-5">
-            <LogoStudioSidebar />
+          <SidebarMenuItem className="flex gap-3 items-center">
+            <Menu>
+              <MenuTrigger render={<SidebarMenuButton size="default" />}>
+                <Avatar className="h-6 w-6 border">
+                  <AvatarImage src={adminAuth?.image || ''} />
+                  <AvatarFallback>
+                    {adminAuth?.name?.slice(0, 2).toUpperCase() || 'US'}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="min-w-0 flex-1 text-left">
+                  <h3 className="truncate text-sm text-foreground">
+                    {username || adminAuth?.name}
+                  </h3>
+                </div>
+
+                <ChevronDown className="h-3 w-3 text-zinc-400" />
+              </MenuTrigger>
+              <MenuPopup className={'w-40'}>
+                <MenuItem render={<Link to={'/admin/settings'} rel="noopener noreferrer" />}>
+                  Settings
+                </MenuItem>
+                <MenuItem
+                  render={
+                    <Link to={'/'} target="_blank" rel="noopener noreferrer" />
+                  }
+                >
+                  Help
+                </MenuItem>
+                <MenuSeparator />
+                <MenuItem
+                  onClick={async () => {
+                    await authClient.signOut({
+                      fetchOptions: {
+                        onSuccess: () => {
+                          queryClient.removeQueries({
+                            queryKey: adminAuthQueryKey(),
+                          })
+                          router.invalidate()
+                          router.navigate({ to: '/login' })
+                        },
+                      },
+                    })
+                  }}
+                >
+                  Sign Out
+                </MenuItem>
+              </MenuPopup>
+            </Menu>
+
+            <SidebarMenuButton size={'default'} className='size-9 sm:size-8 shrink-0 justify-center items-center ml-auto'>
+              <Search />
+            </SidebarMenuButton>
           </SidebarMenuItem>
 
         </SidebarMenu>
@@ -199,60 +250,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
-          <SidebarMenuItem className="flex gap-3 items-center">
-            <Menu>
-              <MenuTrigger render={<SidebarMenuButton size="default" />}>
-                <Avatar className="h-6 w-6 border">
-                  <AvatarImage src={adminAuth?.image || ''} />
-                  <AvatarFallback>
-                    {adminAuth?.name?.slice(0, 2).toUpperCase() || 'US'}
-                  </AvatarFallback>
-                </Avatar>
 
-                <div className="min-w-0 flex-1 text-left">
-                  <h3 className="truncate text-sm text-foreground">
-                    {username || adminAuth?.name}
-                  </h3>
-                </div>
-
-                <ChevronDown className="h-3 w-3 text-zinc-400" />
-              </MenuTrigger>
-              <MenuPopup className={'w-40'}>
-                <MenuItem render={<Link to={'/admin/settings'} rel="noopener noreferrer" />}>
-                  Settings
-                </MenuItem>
-                <MenuItem
-                  render={
-                    <Link to={'/'} target="_blank" rel="noopener noreferrer" />
-                  }
-                >
-                  Help
-                </MenuItem>
-                <MenuSeparator />
-                <MenuItem
-                  onClick={async () => {
-                    await authClient.signOut({
-                      fetchOptions: {
-                        onSuccess: () => {
-                          queryClient.removeQueries({
-                            queryKey: adminAuthQueryKey(),
-                          })
-                          router.invalidate()
-                          router.navigate({ to: '/login' })
-                        },
-                      },
-                    })
-                  }}
-                >
-                  Sign Out
-                </MenuItem>
-              </MenuPopup>
-            </Menu>
-
-            <SidebarMenuButton render={<Button size="icon" variant="ghost" />}>
-              <Search />
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <Credits />
           </SidebarMenuItem>

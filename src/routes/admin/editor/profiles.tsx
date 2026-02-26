@@ -360,7 +360,7 @@ function AdminDashboard() {
   if (!user) return null
 
   return (
-    <div className="space-y-4 p-6 pb-20">
+    <div className="space-y-4 p-6">
       <AppHeader>
         <AppHeaderContent title="My Page">
           {/* <AppHeaderDescription>

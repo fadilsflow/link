@@ -36,6 +36,7 @@ import {
 import { authClient } from '@/lib/auth-client'
 import { adminAuthQueryKey, useAdminAuthContext } from '@/lib/admin-auth'
 import { BASE_URL } from '@/lib/constans'
+import { cn } from '@/lib/utils'
 
 const data = {
   navBottom: [
@@ -194,9 +195,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           />
                         }
                         isActive={isActive}
-                        className="text-foreground"
+                        className={cn(
+                          'text-foreground',
+                          isActive && 'bg-background! border text-primary'
+                        )}
                       >
-                        <item.icon className=" h-4 w-4" />
+                        <item.icon className={cn('h-4 w-4 mr-1', isActive && 'text-primary')} />
                         <span>{item.title}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

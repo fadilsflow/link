@@ -492,7 +492,7 @@ const sidebarMenuButtonVariants = cva(
     variants: {
       size: {
         default: 'h-8 text-sm',
-        lg: 'h-12 text-sm group-data-[collapsible=icon]:p-0!',
+        lg: 'h-12 text-sm group-datpa-[collapsible=icon]:p-0!',
         sm: 'h-7 text-xs',
       },
       variant: {
@@ -577,7 +577,7 @@ function SidebarMenuAction({
       'peer-data-[size=lg]/menu-button:top-2.5',
       'group-data-[collapsible=icon]:hidden',
       showOnHover &&
-        'group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0',
+      'group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0',
       className,
     ),
     'data-sidebar': 'menu-action',

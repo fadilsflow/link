@@ -421,7 +421,7 @@ function ProductAdminLayout() {
   if (!session?.user) return null
 
   return (
-    <div className="space-y-6 pb-20 p-6">
+    <div className="space-y-6 p-6">
       <AppHeader>
         <AppHeaderContent title="Products">
           <AppHeaderDescription>

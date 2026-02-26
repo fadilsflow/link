@@ -303,7 +303,7 @@ function OrdersPage() {
 
   return (
     <>
-      <div className="space-y-6 pb-20">
+      <div className="space-y-6">
         <AppHeader>
           <AppHeaderContent title="Orders">
             <AppHeaderDescription>

@@ -328,7 +328,7 @@ function BalancePage() {
   }
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6">
       <AppHeader>
         <AppHeaderContent title="Balance">
         </AppHeaderContent>

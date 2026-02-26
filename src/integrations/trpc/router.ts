@@ -20,7 +20,10 @@ import {
 import { StorageService } from '@/lib/storage'
 import { sendConsolidatedCheckoutEmail, sendOrderEmail } from '@/lib/email'
 import { BASE_URL } from '@/lib/constans'
-import { blockCreateInputSchema, blockUpdateInputSchema } from '@/lib/block-form'
+import {
+  blockCreateInputSchema,
+  blockUpdateInputSchema,
+} from '@/lib/block-form'
 
 // ─── Hold period for funds (in days) ─────────────────────────────────────────
 const HOLD_PERIOD_DAYS = 7
@@ -43,14 +46,11 @@ function isSafeUrlValue(value: string): boolean {
   }
 }
 
-const nullableTrimmedStringSchema = z.preprocess(
-  (value) => {
-    if (typeof value !== 'string') return value
-    const trimmed = value.trim()
-    return trimmed.length === 0 ? null : trimmed
-  },
-  z.string().nullable(),
-)
+const nullableTrimmedStringSchema = z.preprocess((value) => {
+  if (typeof value !== 'string') return value
+  const trimmed = value.trim()
+  return trimmed.length === 0 ? null : trimmed
+}, z.string().nullable())
 
 const nullableUrlSchema = z.preprocess(
   (value) => {
@@ -67,17 +67,11 @@ const nullableUrlSchema = z.preprocess(
     .nullable(),
 )
 
-const nullableHexColorSchema = z.preprocess(
-  (value) => {
-    if (typeof value !== 'string') return value
-    const trimmed = value.trim()
-    return trimmed.length === 0 ? null : trimmed
-  },
-  z
-    .string()
-    .regex(HEX_COLOR_PATTERN, 'Invalid color format')
-    .nullable(),
-)
+const nullableHexColorSchema = z.preprocess((value) => {
+  if (typeof value !== 'string') return value
+  const trimmed = value.trim()
+  return trimmed.length === 0 ? null : trimmed
+}, z.string().regex(HEX_COLOR_PATTERN, 'Invalid color format').nullable())
 
 function calculateFee(amount: number): {
   feeAmount: number
@@ -285,7 +279,10 @@ const userRouter = {
               }
             : {}),
           ...(input.appearanceBackgroundImageUrl !== undefined
-            ? { appearanceBackgroundImageUrl: input.appearanceBackgroundImageUrl }
+            ? {
+                appearanceBackgroundImageUrl:
+                  input.appearanceBackgroundImageUrl,
+              }
             : {}),
           ...(input.appearanceBlockStyle !== undefined
             ? { appearanceBlockStyle: input.appearanceBlockStyle }
@@ -381,7 +378,9 @@ const blockRouter = {
             ? { isEnabled: input.isEnabled }
             : {}),
         })
-        .where(and(eq(blocks.id, input.id), eq(blocks.userId, ctx.session.user.id)))
+        .where(
+          and(eq(blocks.id, input.id), eq(blocks.userId, ctx.session.user.id)),
+        )
         .returning()
 
       return updatedBlock
@@ -391,7 +390,9 @@ const blockRouter = {
     .mutation(async ({ input, ctx }) => {
       const deleted = await db
         .delete(blocks)
-        .where(and(eq(blocks.id, input.id), eq(blocks.userId, ctx.session.user.id)))
+        .where(
+          and(eq(blocks.id, input.id), eq(blocks.userId, ctx.session.user.id)),
+        )
         .returning({ id: blocks.id })
 
       if (!deleted.length) {
@@ -418,7 +419,12 @@ const blockRouter = {
           db
             .update(blocks)
             .set({ order: item.order })
-            .where(and(eq(blocks.id, item.id), eq(blocks.userId, ctx.session.user.id))),
+            .where(
+              and(
+                eq(blocks.id, item.id),
+                eq(blocks.userId, ctx.session.user.id),
+              ),
+            ),
         ),
       )
       return { success: true }
@@ -481,40 +487,39 @@ export type CustomerQuestionInput = z.infer<typeof customerQuestionInputSchema>
 export type ProductInput = z.infer<typeof productInputSchema>
 
 const productRouter = {
-  listByUser: protectedProcedure
-    .query(async ({ ctx }) => {
-      const actorUserId = ctx.session.user.id
-      const rows = await db.query.products.findMany({
-        where: and(
-          eq(products.userId, actorUserId),
-          eq(products.isDeleted, false),
-        ),
-        orderBy: [desc(products.createdAt)],
+  listByUser: protectedProcedure.query(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
+    const rows = await db.query.products.findMany({
+      where: and(
+        eq(products.userId, actorUserId),
+        eq(products.isDeleted, false),
+      ),
+      orderBy: [desc(products.createdAt)],
+    })
+
+    // Fetch net revenue from transactions (ledger)
+    const stats = await db
+      .select({
+        productId: orders.productId,
+        netRevenue: sql<number>`sum(${transactions.netAmount})`,
       })
+      .from(transactions)
+      .leftJoin(orders, eq(transactions.orderId, orders.id))
+      .where(
+        and(
+          eq(transactions.creatorId, actorUserId),
+          eq(transactions.type, TRANSACTION_TYPE.SALE),
+        ),
+      )
+      .groupBy(orders.productId)
 
-      // Fetch net revenue from transactions (ledger)
-      const stats = await db
-        .select({
-          productId: orders.productId,
-          netRevenue: sql<number>`sum(${transactions.netAmount})`,
-        })
-        .from(transactions)
-        .leftJoin(orders, eq(transactions.orderId, orders.id))
-        .where(
-          and(
-            eq(transactions.creatorId, actorUserId),
-            eq(transactions.type, TRANSACTION_TYPE.SALE),
-          ),
-        )
-        .groupBy(orders.productId)
+    const revenueMap = new Map(stats.map((s) => [s.productId, s.netRevenue]))
 
-      const revenueMap = new Map(stats.map((s) => [s.productId, s.netRevenue]))
-
-      return rows.map((product) => ({
-        ...product,
-        totalRevenue: revenueMap.get(product.id) ?? 0,
-      }))
-    }),
+    return rows.map((product) => ({
+      ...product,
+      totalRevenue: revenueMap.get(product.id) ?? 0,
+    }))
+  }),
   create: protectedProcedure
     .input(productMutationInput)
     .mutation(async ({ input, ctx }) => {
@@ -550,7 +555,6 @@ const productRouter = {
             : null,
         })
         .returning()
-
 
       return row
     }),
@@ -588,9 +592,13 @@ const productRouter = {
             ? JSON.stringify(input.customerQuestions)
             : null,
         })
-        .where(and(eq(products.id, input.id), eq(products.userId, ctx.session.user.id)))
+        .where(
+          and(
+            eq(products.id, input.id),
+            eq(products.userId, ctx.session.user.id),
+          ),
+        )
         .returning()
-
 
       return row
     }),
@@ -598,7 +606,10 @@ const productRouter = {
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const product = await db.query.products.findFirst({
-        where: and(eq(products.id, input.id), eq(products.userId, ctx.session.user.id)),
+        where: and(
+          eq(products.id, input.id),
+          eq(products.userId, ctx.session.user.id),
+        ),
       })
 
       if (!product) {
@@ -643,9 +654,13 @@ const productRouter = {
       await db
         .update(products)
         .set({ isDeleted: true, isActive: false })
-        .where(and(eq(products.id, input.id), eq(products.userId, ctx.session.user.id)))
+        .where(
+          and(
+            eq(products.id, input.id),
+            eq(products.userId, ctx.session.user.id),
+          ),
+        )
         .returning({ id: products.id })
-
 
       return { success: true }
     }),
@@ -656,9 +671,13 @@ const productRouter = {
       const [row] = await db
         .update(products)
         .set({ isActive: input.isActive })
-        .where(and(eq(products.id, input.id), eq(products.userId, ctx.session.user.id)))
+        .where(
+          and(
+            eq(products.id, input.id),
+            eq(products.userId, ctx.session.user.id),
+          ),
+        )
         .returning()
-
 
       return row
     }),
@@ -714,7 +733,12 @@ const socialLinkRouter = {
             ? { isEnabled: input.isEnabled }
             : {}),
         })
-        .where(and(eq(socialLinks.id, input.id), eq(socialLinks.userId, ctx.session.user.id)))
+        .where(
+          and(
+            eq(socialLinks.id, input.id),
+            eq(socialLinks.userId, ctx.session.user.id),
+          ),
+        )
         .returning()
 
       return updatedSocialLink
@@ -724,7 +748,12 @@ const socialLinkRouter = {
     .mutation(async ({ input, ctx }) => {
       const deleted = await db
         .delete(socialLinks)
-        .where(and(eq(socialLinks.id, input.id), eq(socialLinks.userId, ctx.session.user.id)))
+        .where(
+          and(
+            eq(socialLinks.id, input.id),
+            eq(socialLinks.userId, ctx.session.user.id),
+          ),
+        )
         .returning({ id: socialLinks.id })
 
       if (!deleted.length) {
@@ -749,7 +778,12 @@ const socialLinkRouter = {
           db
             .update(socialLinks)
             .set({ order: item.order })
-            .where(and(eq(socialLinks.id, item.id), eq(socialLinks.userId, ctx.session.user.id))),
+            .where(
+              and(
+                eq(socialLinks.id, item.id),
+                eq(socialLinks.userId, ctx.session.user.id),
+              ),
+            ),
         ),
       )
       return { success: true }
@@ -807,9 +841,7 @@ const orderRouter = {
       }
 
       // Check quantity limits
-      if (
-        product.totalQuantity !== null && product.totalQuantity <= 0
-      ) {
+      if (product.totalQuantity !== null && product.totalQuantity <= 0) {
         throw new Error('Product sold out')
       }
 
@@ -1208,38 +1240,37 @@ const orderRouter = {
       }
     }),
 
-  listByCreator: protectedProcedure
-    .query(async ({ ctx }) => {
-      const actorUserId = ctx.session.user.id
-      const creatorItemRows = await db.query.orderItems.findMany({
-        where: eq(orderItems.creatorId, actorUserId),
-        columns: { orderId: true },
-      })
+  listByCreator: protectedProcedure.query(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
+    const creatorItemRows = await db.query.orderItems.findMany({
+      where: eq(orderItems.creatorId, actorUserId),
+      columns: { orderId: true },
+    })
 
-      const orderIdsFromItems = creatorItemRows.map((row) => row.orderId)
-      const whereClause =
-        orderIdsFromItems.length > 0
-          ? or(
-              eq(orders.creatorId, actorUserId),
-              inArray(orders.id, orderIdsFromItems),
-            )
-          : eq(orders.creatorId, actorUserId)
+    const orderIdsFromItems = creatorItemRows.map((row) => row.orderId)
+    const whereClause =
+      orderIdsFromItems.length > 0
+        ? or(
+            eq(orders.creatorId, actorUserId),
+            inArray(orders.id, orderIdsFromItems),
+          )
+        : eq(orders.creatorId, actorUserId)
 
-      const rows = await db.query.orders.findMany({
-        where: whereClause,
-        with: {
-          product: true,
-          transactions: {
-            where: eq(transactions.creatorId, actorUserId),
-          },
-          items: {
-            where: eq(orderItems.creatorId, actorUserId),
-          },
+    const rows = await db.query.orders.findMany({
+      where: whereClause,
+      with: {
+        product: true,
+        transactions: {
+          where: eq(transactions.creatorId, actorUserId),
         },
-        orderBy: [desc(orders.createdAt)],
-      })
-      return rows
-    }),
+        items: {
+          where: eq(orderItems.creatorId, actorUserId),
+        },
+      },
+      orderBy: [desc(orders.createdAt)],
+    })
+    return rows
+  }),
 
   getDetail: protectedProcedure
     .input(z.object({ orderId: z.string() }))
@@ -1334,59 +1365,58 @@ const balanceRouter = {
    * Get creator's financial summary.
    * Balance is computed from the transactions ledger (single source of truth).
    */
-  getSummary: protectedProcedure
-    .query(async ({ ctx }) => {
-      const actorUserId = ctx.session.user.id
-      const now = new Date()
+  getSummary: protectedProcedure.query(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
+    const now = new Date()
 
-      // Total balance (all transactions)
-      const allTxns = await db.query.transactions.findMany({
-        where: eq(transactions.creatorId, actorUserId),
-        columns: {
-          amount: true,
-          platformFeeAmount: true,
-          type: true,
-          availableAt: true,
-        },
-      })
+    // Total balance (all transactions)
+    const allTxns = await db.query.transactions.findMany({
+      where: eq(transactions.creatorId, actorUserId),
+      columns: {
+        amount: true,
+        platformFeeAmount: true,
+        type: true,
+        availableAt: true,
+      },
+    })
 
-      let totalEarnings = 0
-      let totalPayouts = 0
-      let totalFees = 0
-      let availableBalance = 0
-      let pendingBalance = 0
+    let totalEarnings = 0
+    let totalPayouts = 0
+    let totalFees = 0
+    let availableBalance = 0
+    let pendingBalance = 0
 
-      for (const txn of allTxns) {
-        const netAmount = getTransactionNetAmount(txn)
+    for (const txn of allTxns) {
+      const netAmount = getTransactionNetAmount(txn)
 
-        if (txn.type === TRANSACTION_TYPE.SALE) {
-          totalEarnings += netAmount
-        } else if (txn.type === TRANSACTION_TYPE.PAYOUT) {
-          totalPayouts += Math.abs(netAmount)
-        } else if (txn.type === TRANSACTION_TYPE.FEE) {
-          totalFees += Math.abs(netAmount)
-        }
-
-        // Compute available vs pending balance from ledger + availableAt only.
-        if (txn.availableAt <= now) {
-          availableBalance += netAmount
-        } else {
-          pendingBalance += netAmount
-        }
+      if (txn.type === TRANSACTION_TYPE.SALE) {
+        totalEarnings += netAmount
+      } else if (txn.type === TRANSACTION_TYPE.PAYOUT) {
+        totalPayouts += Math.abs(netAmount)
+      } else if (txn.type === TRANSACTION_TYPE.FEE) {
+        totalFees += Math.abs(netAmount)
       }
 
-      const currentBalance = availableBalance + pendingBalance
-
-      return {
-        totalEarnings,
-        totalPayouts,
-        totalFees,
-        currentBalance,
-        availableBalance,
-        pendingBalance,
-        holdPeriodDays: HOLD_PERIOD_DAYS,
+      // Compute available vs pending balance from ledger + availableAt only.
+      if (txn.availableAt <= now) {
+        availableBalance += netAmount
+      } else {
+        pendingBalance += netAmount
       }
-    }),
+    }
+
+    const currentBalance = availableBalance + pendingBalance
+
+    return {
+      totalEarnings,
+      totalPayouts,
+      totalFees,
+      currentBalance,
+      availableBalance,
+      pendingBalance,
+      holdPeriodDays: HOLD_PERIOD_DAYS,
+    }
+  }),
 
   /**
    * Get transaction history for a creator.
@@ -1472,7 +1502,9 @@ const payoutRouter = {
             ),
           )
 
-        const availableBalance = Number(availableResult[0]?.availableBalance ?? 0)
+        const availableBalance = Number(
+          availableResult[0]?.availableBalance ?? 0,
+        )
         const payoutAmount = input.amount ?? availableBalance
 
         if (payoutAmount <= 0) {
@@ -1534,10 +1566,13 @@ const payoutRouter = {
             })
             .where(eq(payouts.id, createdPayoutId))
             .catch((rollbackError) => {
-              console.error('[finance][payout-request] payout rollback failed', {
-                payoutId: createdPayoutId,
-                rollbackError,
-              })
+              console.error(
+                '[finance][payout-request] payout rollback failed',
+                {
+                  payoutId: createdPayoutId,
+                  rollbackError,
+                },
+              )
             })
         }
 
@@ -1578,15 +1613,14 @@ const payoutRouter = {
   /**
    * List all payouts for a creator.
    */
-  list: protectedProcedure
-    .query(async ({ ctx }) => {
-      const actorUserId = ctx.session.user.id
-      const rows = await db.query.payouts.findMany({
-        where: eq(payouts.creatorId, actorUserId),
-        orderBy: [desc(payouts.createdAt)],
-      })
-      return rows
-    }),
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
+    const rows = await db.query.payouts.findMany({
+      where: eq(payouts.creatorId, actorUserId),
+      orderBy: [desc(payouts.createdAt)],
+    })
+    return rows
+  }),
 
   /**
    * Cancel a pending payout (reverses the debit transaction).
@@ -1806,56 +1840,54 @@ const analyticsRouter = {
     }),
 
   // Get per-product analytics
-  getProductAnalytics: protectedProcedure
-    .query(async ({ ctx }) => {
-      const actorUserId = ctx.session.user.id
-      const productRows = await db.query.products.findMany({
-        where: and(
-          eq(products.userId, actorUserId),
-          eq(products.isDeleted, false),
-        ),
-        columns: {
-          id: true,
-          title: true,
-          images: true,
-          salesCount: true,
-          totalRevenue: true,
-          isActive: true,
-          createdAt: true,
-        },
-        orderBy: [desc(products.totalRevenue)],
+  getProductAnalytics: protectedProcedure.query(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
+    const productRows = await db.query.products.findMany({
+      where: and(
+        eq(products.userId, actorUserId),
+        eq(products.isDeleted, false),
+      ),
+      columns: {
+        id: true,
+        title: true,
+        images: true,
+        salesCount: true,
+        totalRevenue: true,
+        isActive: true,
+        createdAt: true,
+      },
+      orderBy: [desc(products.totalRevenue)],
+    })
+
+    // Fetch net revenue from transactions (ledger)
+    const stats = await db
+      .select({
+        productId: orders.productId,
+        netRevenue: sql<number>`sum(${transactions.netAmount})`,
       })
+      .from(transactions)
+      .leftJoin(orders, eq(transactions.orderId, orders.id))
+      .where(
+        and(
+          eq(transactions.creatorId, actorUserId),
+          eq(transactions.type, TRANSACTION_TYPE.SALE),
+        ),
+      )
+      .groupBy(orders.productId)
 
-      // Fetch net revenue from transactions (ledger)
-      const stats = await db
-        .select({
-          productId: orders.productId,
-          netRevenue: sql<number>`sum(${transactions.netAmount})`,
-        })
-        .from(transactions)
-        .leftJoin(orders, eq(transactions.orderId, orders.id))
-        .where(
-          and(
-            eq(transactions.creatorId, actorUserId),
-            eq(transactions.type, TRANSACTION_TYPE.SALE),
-          ),
-        )
-        .groupBy(orders.productId)
+    const revenueMap = new Map(stats.map((s) => [s.productId, s.netRevenue]))
 
-      const revenueMap = new Map(stats.map((s) => [s.productId, s.netRevenue]))
-
-      return productRows.map((p) => ({
-        id: p.id,
-        title: p.title,
-        image: p.images?.[0] ?? null,
-        salesCount: p.salesCount,
-        totalRevenue: revenueMap.get(p.id) ?? 0,
-        isActive: p.isActive,
-        createdAt: p.createdAt,
-      }))
-    }),
+    return productRows.map((p) => ({
+      id: p.id,
+      title: p.title,
+      image: p.images?.[0] ?? null,
+      salesCount: p.salesCount,
+      totalRevenue: revenueMap.get(p.id) ?? 0,
+      isActive: p.isActive,
+      createdAt: p.createdAt,
+    }))
+  }),
 } satisfies TRPCRouterRecord
-
 
 const adminRouter = {
   getCurrentUser: protectedProcedure.query(({ ctx }) => ({

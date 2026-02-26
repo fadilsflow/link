@@ -347,272 +347,266 @@ function AppearanceEditor({
   }
 
   return (
-    <>
-      <AppHeader className='px-6 pt-6'>
+    <div className='p-6 space-y-6'>
+      <AppHeader >
         <AppHeaderContent title="Appearance">
-          {/* <AppHeaderDescription>
-            Customize banner, background, blocks, and text for your public page.
-          </AppHeaderDescription> */}
         </AppHeaderContent>
       </AppHeader>
-      <Separator />
-      <div className="p-6 space-y-6">
-        <Frame className="shadow-sm overflow-hidden">
-          <FrameHeader className="flex flex-row items-center justify-between">
-            <FrameTitle>Banner</FrameTitle>
-            <Button
-              type="button"
-              size={"xs"}
-              variant="outline"
-              className="gap-2"
-              onClick={resetBannerSection}
-            >
-              <Redo2 />
-              Reset
-            </Button>
-          </FrameHeader>
+      <Frame className="shadow-sm overflow-hidden">
+        <FrameHeader className="flex flex-row items-center justify-between">
+          <FrameTitle>Banner</FrameTitle>
+          <Button
+            type="button"
+            size={"xs"}
+            variant="outline"
+            className="gap-2"
+            onClick={resetBannerSection}
+          >
+            <Redo2 />
+            Reset
+          </Button>
+        </FrameHeader>
 
-          <FramePanel className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="banner-enabled">Show banner</Label>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Turn off if you want a profile page without banner.
-                </p>
-              </div>
-              <Switch
-                id="banner-enabled"
-                checked={bannerEnabled}
-                onCheckedChange={(checked) => {
-                  setBannerEnabled(checked)
-                  save({ appearanceBannerEnabled: checked })
-                }}
-              />
+        <FramePanel className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="banner-enabled">Show banner</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Turn off if you want a profile page without banner.
+              </p>
             </div>
+            <Switch
+              id="banner-enabled"
+              checked={bannerEnabled}
+              onCheckedChange={(checked) => {
+                setBannerEnabled(checked)
+                save({ appearanceBannerEnabled: checked })
+              }}
+            />
+          </div>
 
-            {bannerEnabled ? (
-              <BannerSelector
-                currentBannerUrl={currentBannerUrl}
-                currentBannerId={currentBannerId}
-                onBannerSelect={handleBannerSelect}
+          {bannerEnabled ? (
+            <BannerSelector
+              currentBannerUrl={currentBannerUrl}
+              currentBannerId={currentBannerId}
+              onBannerSelect={handleBannerSelect}
+            />
+          ) : null}
+        </FramePanel>
+      </Frame>
+
+      <Frame className="shadow-sm">
+        <FrameHeader className="flex flex-row items-center justify-between">
+          <FrameTitle>Background</FrameTitle>
+          <Button
+            type="button"
+            size={"xs"}
+            variant="outline"
+            className="gap-2"
+            onClick={resetBackgroundSection}
+          >
+            <Redo2 />
+            Reset
+          </Button>
+        </FrameHeader>
+        <FramePanel className="space-y-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <SectionOptionCard
+              selected={backgroundType === 'none'}
+              title="Default"
+              description="Use default page background."
+              onClick={() => {
+                setBackgroundType('none')
+                save({ appearanceBackgroundType: 'none' })
+              }}
+            />
+            <SectionOptionCard
+              selected={backgroundType === 'flat'}
+              title="Flat Color"
+              description="Single color background."
+              onClick={() => {
+                setBackgroundType('flat')
+                save({ appearanceBackgroundType: 'flat' })
+              }}
+            />
+            <SectionOptionCard
+              selected={backgroundType === 'gradient'}
+              title="Gradient"
+              description="Top and bottom color gradient."
+              onClick={() => {
+                setBackgroundType('gradient')
+                save({ appearanceBackgroundType: 'gradient' })
+              }}
+            />
+            <SectionOptionCard
+              selected={backgroundType === 'avatar-blur'}
+              title="Avatar Blur"
+              description="Use profile image as blurred background."
+              onClick={() => {
+                setBackgroundType('avatar-blur')
+                save({ appearanceBackgroundType: 'avatar-blur' })
+              }}
+            />
+            <SectionOptionCard
+              selected={backgroundType === 'image'}
+              title="Image Upload"
+              description="Upload a full-page background image."
+              onClick={() => {
+                setBackgroundType('image')
+                save({ appearanceBackgroundType: 'image' })
+              }}
+            />
+          </div>
+        </FramePanel>
+        {backgroundType !== 'none' && backgroundType !== 'avatar-blur' &&
+
+
+          <FramePanel>
+            {backgroundType === 'flat' ? (
+              <div className="space-y-2">
+                <Label>Background color</Label>
+                <ColorPicker
+                  value={backgroundColor}
+                  onChange={setBackgroundColor}
+                  onCommit={(value) => {
+                    saveColor(value, 'appearanceBackgroundColor')
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {backgroundType === 'gradient' ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Top color</Label>
+                  <ColorPicker
+                    value={backgroundGradientTop}
+                    onChange={setBackgroundGradientTop}
+                    onCommit={(value) => {
+                      saveColor(value, 'appearanceBackgroundGradientTop')
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Bottom color</Label>
+                  <ColorPicker
+                    value={backgroundGradientBottom}
+                    onChange={setBackgroundGradientBottom}
+                    onCommit={(value) => {
+                      saveColor(value, 'appearanceBackgroundGradientBottom')
+                    }}
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {backgroundType === 'image' ? (
+              <ImageUploader
+                value={backgroundImageUrl}
+                onChange={(url) => {
+                  setBackgroundImageUrl(url)
+                  save(
+                    { appearanceBackgroundImageUrl: url || null },
+                    { debounced: true },
+                  )
+                }}
+                folder="backgrounds"
+                aspectRatio="video"
+                placeholder="Upload full-page background"
               />
             ) : null}
           </FramePanel>
-        </Frame>
+        }
 
-        <Frame className="shadow-sm">
-          <FrameHeader className="flex flex-row items-center justify-between">
-            <FrameTitle>Background</FrameTitle>
-            <Button
-              type="button"
-              size={"xs"}
-              variant="outline"
-              className="gap-2"
-              onClick={resetBackgroundSection}
-            >
-              <Redo2 />
-              Reset
-            </Button>
-          </FrameHeader>
-          <FramePanel className="space-y-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <SectionOptionCard
-                selected={backgroundType === 'none'}
-                title="Default"
-                description="Use default page background."
-                onClick={() => {
-                  setBackgroundType('none')
-                  save({ appearanceBackgroundType: 'none' })
-                }}
-              />
-              <SectionOptionCard
-                selected={backgroundType === 'flat'}
-                title="Flat Color"
-                description="Single color background."
-                onClick={() => {
-                  setBackgroundType('flat')
-                  save({ appearanceBackgroundType: 'flat' })
-                }}
-              />
-              <SectionOptionCard
-                selected={backgroundType === 'gradient'}
-                title="Gradient"
-                description="Top and bottom color gradient."
-                onClick={() => {
-                  setBackgroundType('gradient')
-                  save({ appearanceBackgroundType: 'gradient' })
-                }}
-              />
-              <SectionOptionCard
-                selected={backgroundType === 'avatar-blur'}
-                title="Avatar Blur"
-                description="Use profile image as blurred background."
-                onClick={() => {
-                  setBackgroundType('avatar-blur')
-                  save({ appearanceBackgroundType: 'avatar-blur' })
-                }}
-              />
-              <SectionOptionCard
-                selected={backgroundType === 'image'}
-                title="Image Upload"
-                description="Upload a full-page background image."
-                onClick={() => {
-                  setBackgroundType('image')
-                  save({ appearanceBackgroundType: 'image' })
+      </Frame>
+
+      <Frame className="shadow-sm">
+        <FrameHeader className="flex flex-row items-center justify-between">
+          <FrameTitle>Blocks</FrameTitle>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={resetBlockSection}
+            size='xs'
+          >
+            <Redo2 />
+            Reset
+          </Button>
+        </FrameHeader>
+        <FramePanel className="space-y-4">
+          <BlockStyleSelector
+            blockStyle={blockStyle}
+            blockRadius={blockRadius}
+            onChange={handleBlockStyleChange}
+          />
+        </FramePanel>
+        <FramePanel>
+          <div className={cn(blockStyle === 'shadow' && "grid grid-cols-1 gap-4 sm:grid-cols-2")}>
+            <div className="space-y-2">
+              <Label>Block color</Label>
+              <ColorPicker
+                value={blockColor}
+                onChange={setBlockColor}
+                onCommit={(value) => {
+                  saveColor(value, 'appearanceBlockColor')
                 }}
               />
             </div>
-          </FramePanel>
-          {backgroundType !== 'none' && backgroundType !== 'avatar-blur' &&
 
-
-            <FramePanel>
-              {backgroundType === 'flat' ? (
-                <div className="space-y-2">
-                  <Label>Background color</Label>
-                  <ColorPicker
-                    value={backgroundColor}
-                    onChange={setBackgroundColor}
-                    onCommit={(value) => {
-                      saveColor(value, 'appearanceBackgroundColor')
-                    }}
-                  />
-                </div>
-              ) : null}
-
-              {backgroundType === 'gradient' ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Top color</Label>
-                    <ColorPicker
-                      value={backgroundGradientTop}
-                      onChange={setBackgroundGradientTop}
-                      onCommit={(value) => {
-                        saveColor(value, 'appearanceBackgroundGradientTop')
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Bottom color</Label>
-                    <ColorPicker
-                      value={backgroundGradientBottom}
-                      onChange={setBackgroundGradientBottom}
-                      onCommit={(value) => {
-                        saveColor(value, 'appearanceBackgroundGradientBottom')
-                      }}
-                    />
-                  </div>
-                </div>
-              ) : null}
-
-              {backgroundType === 'image' ? (
-                <ImageUploader
-                  value={backgroundImageUrl}
-                  onChange={(url) => {
-                    setBackgroundImageUrl(url)
-                    save(
-                      { appearanceBackgroundImageUrl: url || null },
-                      { debounced: true },
-                    )
-                  }}
-                  folder="backgrounds"
-                  aspectRatio="video"
-                  placeholder="Upload full-page background"
-                />
-              ) : null}
-            </FramePanel>
-          }
-
-        </Frame>
-
-        <Frame className="shadow-sm">
-          <FrameHeader className="flex flex-row items-center justify-between">
-            <FrameTitle>Blocks</FrameTitle>
-            <Button
-              type="button"
-              variant="outline"
-              className="gap-2"
-              onClick={resetBlockSection}
-              size='xs'
-            >
-              <Redo2 />
-              Reset
-            </Button>
-          </FrameHeader>
-          <FramePanel className="space-y-4">
-            <BlockStyleSelector
-              blockStyle={blockStyle}
-              blockRadius={blockRadius}
-              onChange={handleBlockStyleChange}
-            />
-          </FramePanel>
-          <FramePanel>
-            <div className={cn(blockStyle === 'shadow' && "grid grid-cols-1 gap-4 sm:grid-cols-2")}>
+            {blockStyle === 'shadow' ? (
               <div className="space-y-2">
-                <Label>Block color</Label>
+                <Label>Shadow color</Label>
                 <ColorPicker
-                  value={blockColor}
-                  onChange={setBlockColor}
+                  value={blockShadowColor}
+                  onChange={setBlockShadowColor}
                   onCommit={(value) => {
-                    saveColor(value, 'appearanceBlockColor')
+                    saveColor(value, 'appearanceBlockShadowColor')
                   }}
                 />
               </div>
+            ) : null}
+          </div>
+        </FramePanel>
+      </Frame>
 
-              {blockStyle === 'shadow' ? (
-                <div className="space-y-2">
-                  <Label>Shadow color</Label>
-                  <ColorPicker
-                    value={blockShadowColor}
-                    onChange={setBlockShadowColor}
-                    onCommit={(value) => {
-                      saveColor(value, 'appearanceBlockShadowColor')
-                    }}
-                  />
-                </div>
-              ) : null}
-            </div>
-          </FramePanel>
-        </Frame>
-
-        <Frame className="shadow-sm">
-          <FrameHeader className="flex flex-row items-center justify-between">
-            <FrameTitle>Font</FrameTitle>
-            <Button
-              type="button"
-              variant="outline"
-              className="gap-2"
-              onClick={resetTextSection}
-              size='xs'
-            >
-              <Redo2 />
-              Reset
-            </Button>
-          </FrameHeader>
-          <FramePanel className="space-y-4">
-            <Label className='sr-only'>Font</Label>
-            <Select
-              value={textFont}
-              onValueChange={(value) => {
-                const next = value as AppearanceTextFont
-                setTextFont(next)
-                save({ appearanceTextFont: next })
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {APPEARANCE_FONT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label} ({option.family})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FramePanel>
-        </Frame>
-      </div>
-    </>
+      <Frame className="shadow-sm">
+        <FrameHeader className="flex flex-row items-center justify-between">
+          <FrameTitle>Font</FrameTitle>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={resetTextSection}
+            size='xs'
+          >
+            <Redo2 />
+            Reset
+          </Button>
+        </FrameHeader>
+        <FramePanel className="space-y-4">
+          <Label className='sr-only'>Font</Label>
+          <Select
+            value={textFont}
+            onValueChange={(value) => {
+              const next = value as AppearanceTextFont
+              setTextFont(next)
+              save({ appearanceTextFont: next })
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {APPEARANCE_FONT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label} ({option.family})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FramePanel>
+      </Frame>
+    </div>
   )
 }

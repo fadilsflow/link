@@ -1,22 +1,14 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  Banknote,
-  DollarSign,
-  XCircle,
-} from 'lucide-react'
+import { XCircle } from 'lucide-react'
+import type { ColumnDef } from '@tanstack/react-table'
 import type { ReactNode } from 'react'
-import {
-  AppHeader,
-  AppHeaderContent,
-} from '@/components/app-header'
-
+import { AppHeader, AppHeaderContent } from '@/components/app-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Frame, FrameHeader, FramePanel, FrameTitle } from '@/components/ui/frame'
 import {
   Dialog,
   DialogDescription,
@@ -26,12 +18,21 @@ import {
   DialogPopup,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { DataTable } from '@/components/ui/data-table'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Spinner } from '@/components/ui/spinner'
+import { Tabs, TabsList, TabsTab } from '@/components/ui/tabs'
+import { toastManager } from '@/components/ui/toast'
 import { authClient } from '@/lib/auth-client'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { cn, formatPrice, formatPriceInput, parsePriceInput } from '@/lib/utils'
-import { toastManager } from '@/components/ui/toast'
-import { Spinner } from '@/components/ui/spinner'
 
 function getFinanceUiError(message: string): string {
   const lower = message.toLowerCase()
@@ -49,6 +50,22 @@ function getFinanceUiError(message: string): string {
   return message
 }
 
+type HistoryTab = 'all' | 'pending' | 'settled'
+type HistorySort = 'recent' | 'older'
+
+type HistoryRow = {
+  id: string
+  type: string
+  amount: number
+  status: string
+  statusGroup: Exclude<HistoryTab, 'all'>
+  createdAt: string
+  timestamp: number
+  source: 'transaction' | 'payout'
+  payoutId?: string
+  canCancelPayout: boolean
+}
+
 export const Route = createFileRoute('/admin/balance/')({
   component: BalancePage,
 })
@@ -59,6 +76,9 @@ function BalancePage() {
   const [payoutDialogOpen, setPayoutDialogOpen] = useState(false)
   const [payoutAmountInput, setPayoutAmountInput] = useState('')
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [historyTab, setHistoryTab] = useState<HistoryTab>('all')
+  const [historyTypeFilter, setHistoryTypeFilter] = useState('all')
+  const [historyDateOrder, setHistoryDateOrder] = useState<HistorySort>('recent')
 
   // Balance summary
   const { data: summary, isLoading: isSummaryLoading } = useQuery({
@@ -142,12 +162,9 @@ function BalancePage() {
   })
 
   const isLoading = isSummaryLoading
-  const isTransactionsSectionLoading = isTxnsLoading
-  const isPayoutsSectionLoading = isPayoutsLoading
+  const isHistoryLoading = isTxnsLoading || isPayoutsLoading
   const availableBalance = summary?.availableBalance ?? 0
-  const hasPendingPayout = (payoutsList ?? []).some(
-    (p: any) => p.status === 'pending',
-  )
+  const hasPendingPayout = (payoutsList ?? []).some((p: any) => p.status === 'pending')
   const disablePayoutRequest =
     requestPayoutMutation.isPending || availableBalance <= 0 || hasPendingPayout
   const payoutAmount = parsePriceInput(payoutAmountInput) ?? 0
@@ -157,6 +174,142 @@ function BalancePage() {
       : payoutAmount > availableBalance
         ? `Amount exceeds available balance (${formatPrice(availableBalance)}).`
         : null
+
+  const historyRows = useMemo<Array<HistoryRow>>(() => {
+    const transactionRows = (txns ?? [])
+      .filter((txn: any) => txn.type !== 'payout')
+      .map((txn: any) => {
+        const createdAt = new Date(txn.createdAt).toISOString()
+        const netAmount = (txn.amount ?? 0) - (txn.platformFeeAmount ?? 0)
+
+        return {
+          id: `txn-${txn.id}`,
+          type: getTransactionTypeConfig(txn.type, txn.metadata).label,
+          amount: netAmount,
+          status: 'settled',
+          statusGroup: 'settled' as const,
+          createdAt,
+          timestamp: new Date(createdAt).getTime(),
+          source: 'transaction' as const,
+          canCancelPayout: false,
+        }
+      })
+
+    const payoutRows = (payoutsList ?? []).map((payout: any) => {
+      const createdAt = new Date(payout.createdAt).toISOString()
+      const normalizedStatus = `${payout.status ?? 'pending'}`.toLowerCase()
+
+      return {
+        id: `payout-${payout.id}`,
+        type: 'Withdrawal',
+        amount: -Math.abs(payout.amount ?? 0),
+        status: normalizedStatus,
+        statusGroup: getHistoryStatusGroup(normalizedStatus),
+        createdAt,
+        timestamp: new Date(createdAt).getTime(),
+        source: 'payout' as const,
+        payoutId: payout.id,
+        canCancelPayout: normalizedStatus === 'pending',
+      }
+    })
+
+    return [...transactionRows, ...payoutRows]
+  }, [txns, payoutsList])
+
+  const historyTypeOptions = useMemo(() => {
+    return [
+      'all',
+      ...Array.from(new Set(historyRows.map((row) => row.type))),
+    ]
+  }, [historyRows])
+
+  const filteredHistoryRows = useMemo(() => {
+    return historyRows
+      .filter((row) => {
+        if (historyTab !== 'all' && row.statusGroup !== historyTab) return false
+        if (historyTypeFilter !== 'all' && row.type !== historyTypeFilter) return false
+        return true
+      })
+      .sort((a, b) => {
+        if (historyDateOrder === 'older') return a.timestamp - b.timestamp
+        return b.timestamp - a.timestamp
+      })
+  }, [historyRows, historyTab, historyTypeFilter, historyDateOrder])
+
+  const historyColumns = useMemo<Array<ColumnDef<HistoryRow>>>(() => {
+    return [
+      {
+        accessorKey: 'type',
+        header: () => <span className="font-semibold">TYPE</span>,
+        cell: ({ row }) => {
+          return (
+            <span className="font-medium">{row.original.type}</span>
+          )
+        },
+      },
+      {
+        accessorKey: 'amount',
+        header: () => <span className="font-semibold">AMOUNT</span>,
+        cell: ({ row }) => {
+          const isCredit = row.original.amount > 0
+          return (
+            <span
+              className={cn(
+                'font-medium tabular-nums',
+                isCredit ? 'text-emerald-600' : 'text-red-500',
+              )}
+            >
+              {isCredit ? '+' : '-'}
+              {formatPrice(Math.abs(row.original.amount))}
+            </span>
+          )
+        },
+      },
+      {
+        accessorKey: 'status',
+        header: () => <span className="font-semibold">STATUS</span>,
+        cell: ({ row }) => {
+          return (
+            <div className="flex items-center gap-2">
+              <HistoryStatusBadge status={row.original.status} />
+              {row.original.canCancelPayout && row.original.payoutId && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    if (confirm('Cancel this payout request?')) {
+                      cancelPayoutMutation.mutate(row.original.payoutId as string)
+                    }
+                  }}
+                  disabled={cancelPayoutMutation.isPending}
+                >
+                  <XCircle className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              )}
+            </div>
+          )
+        },
+      },
+      {
+        accessorKey: 'createdAt',
+        header: () => <span className="font-semibold">DATE</span>,
+        cell: ({ row }) => {
+          return (
+            <span className="text-sm text-muted-foreground">
+              {new Date(row.original.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
+          )
+        },
+      },
+    ]
+  }, [cancelPayoutMutation])
 
   const handleRefreshBalance = async () => {
     setIsRefreshing(true)
@@ -297,89 +450,67 @@ function BalancePage() {
         </DialogPopup>
       </Dialog>
 
-      {/* Payouts Section */}
-      {(isPayoutsSectionLoading || (payoutsList ?? []).length > 0) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Payout History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isPayoutsSectionLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Spinner className="h-5 w-5 text-muted-foreground" />
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {(payoutsList ?? []).map((payout: any) => (
-                  <div
-                    key={payout.id}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-card"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-muted">
-                        <Banknote className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {formatPrice(payout.amount)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(payout.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <PayoutStatusBadge status={payout.status} />
-                      {payout.status === 'pending' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            if (confirm('Cancel this payout request?')) {
-                              cancelPayoutMutation.mutate(payout.id)
-                            }
-                          }}
-                          disabled={cancelPayoutMutation.isPending}
-                        >
-                          <XCircle className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <Frame className=''>
+        <FrameHeader>
+          <FrameTitle>History</FrameTitle>
+        </FrameHeader>
+        <FramePanel className="space-y-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <Tabs
+              value={historyTab}
+              onValueChange={(value) => setHistoryTab(value as HistoryTab)}
+              className="gap-0"
+            >
+              <TabsList variant="underline" className="w-full md:w-auto">
+                <TabsTab value="all">All</TabsTab>
+                <TabsTab value="pending">Pending</TabsTab>
+                <TabsTab value="settled">Settled</TabsTab>
+              </TabsList>
+            </Tabs>
 
-      {/* Transaction History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isTransactionsSectionLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Spinner className="h-5 w-5 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <Select
+                value={historyTypeFilter}
+                onValueChange={(value) => setHistoryTypeFilter(value ?? 'all')}
+              >
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="By type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {historyTypeOptions.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type === 'all' ? 'All Types' : type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={historyDateOrder}
+                onValueChange={(value) => {
+                  setHistoryDateOrder((value as HistorySort | null) ?? 'recent')
+                }}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="By date" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Recent</SelectItem>
+                  <SelectItem value="older">Older</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          ) : (txns ?? []).length === 0 ? (
-            <div className="text-center py-12">
-              <DollarSign className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">
-                No transactions yet. Revenue from sales will appear here.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {(txns ?? []).map((txn: any) => (
-                <TransactionRow key={txn.id} txn={txn} />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+
+          <DataTable
+            variant='none'
+            columns={historyColumns}
+            data={filteredHistoryRows}
+            isLoading={isHistoryLoading}
+            emptyText="No history found for the selected filters."
+          />
+        </FramePanel>
+      </Frame>
     </div>
   )
 }
@@ -459,76 +590,16 @@ function BalanceCard({
   )
 }
 
-function TransactionRow({ txn }: { txn: any }) {
-  const isCredit = txn.amount > 0
-  const typeConfig = getTransactionTypeConfig(txn.type)
-
-  return (
-    <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-      <div className="flex items-center gap-3">
-        <div
-          className={`p-2 rounded-lg ${isCredit ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}
-        >
-          {isCredit ? (
-            <ArrowUpRight className="h-4 w-4" />
-          ) : (
-            <ArrowDownRight className="h-4 w-4" />
-          )}
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">{txn.description}</p>
-            <Badge variant="secondary" className="text-[10px] h-5">
-              {typeConfig.label}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>
-              {new Date(txn.createdAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </span>
-            {txn.order && (
-              <>
-                <span>•</span>
-                <span>{txn.order.buyerEmail}</span>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="text-right">
-        <p
-          className={`text-sm font-semibold tabular-nums ${isCredit ? 'text-emerald-600' : 'text-red-500'}`}
-        >
-          {isCredit ? '+' : ''}
-          {formatPrice(
-            Math.abs((txn.amount ?? 0) - (txn.platformFeeAmount ?? 0)),
-          )}
-        </p>
-        {txn.platformFeeAmount > 0 && (
-          <p className="text-[10px] text-muted-foreground">
-            Fee: {formatPrice(txn.platformFeeAmount)}
-          </p>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function PayoutStatusBadge({ status }: { status: string }) {
+function HistoryStatusBadge({ status }: { status: string }) {
   switch (status) {
+    case 'settled':
     case 'completed':
       return (
         <Badge
           variant="outline"
           className="border-emerald-500/30 text-emerald-600 bg-emerald-50/50"
         >
-          Completed
+          Settled
         </Badge>
       )
     case 'processing':
@@ -572,15 +643,27 @@ function PayoutStatusBadge({ status }: { status: string }) {
   }
 }
 
-function getTransactionTypeConfig(type: string) {
+function getHistoryStatusGroup(status: string): Exclude<HistoryTab, 'all'> {
+  if (status === 'settled' || status === 'completed') {
+    return 'settled'
+  }
+
+  return 'pending'
+}
+
+function getTransactionTypeConfig(
+  type: string,
+  metadata?: Record<string, unknown> | null,
+) {
   switch (type) {
     case 'sale':
       return { label: 'Sale', color: 'emerald' }
     case 'payout':
-      return { label: 'Payout', color: 'blue' }
-    case 'fee':
-      return { label: 'Fee', color: 'zinc' }
+      return { label: 'Withdrawal', color: 'blue' }
     case 'adjustment':
+      if (metadata && 'cancelledPayoutId' in metadata) {
+        return { label: 'Reversal', color: 'blue' }
+      }
       return { label: 'Adjustment', color: 'purple' }
     default:
       return { label: type, color: 'zinc' }

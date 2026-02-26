@@ -14,7 +14,8 @@ import { usePreview } from '@/lib/preview-context'
 import { BlockTypeSelector } from '@/components/dashboard/BlockTypeSelector'
 import { BlockFormDialog } from '@/components/dashboard/BlockFormDialog'
 import { blockCreateInputSchema, getDefaultBlockValues } from '@/lib/block-form'
-import { Separator } from '@/components/ui/separator'
+import { Frame } from '@/components/ui/frame'
+import { Card, CardPanel } from '@/components/ui/card'
 
 export const Route = createFileRoute('/admin/editor/profiles')({
   component: AdminDashboard,
@@ -265,13 +266,13 @@ function AdminDashboard() {
         prev.map((block) =>
           block.id === updated.id
             ? {
-                ...block,
-                ...updated,
-                url: updated.url || '',
-                content: updated.content || '',
-                syncStatus: 'saved',
-                errors: {},
-              }
+              ...block,
+              ...updated,
+              url: updated.url || '',
+              content: updated.content || '',
+              syncStatus: 'saved',
+              errors: {},
+            }
             : block,
         ),
       )
@@ -301,13 +302,13 @@ function AdminDashboard() {
         prev.map((block) =>
           block.id === updated.id
             ? {
-                ...block,
-                ...updated,
-                url: updated.url || '',
-                content: updated.content || '',
-                syncStatus: 'saved',
-                errors: {},
-              }
+              ...block,
+              ...updated,
+              url: updated.url || '',
+              content: updated.content || '',
+              syncStatus: 'saved',
+              errors: {},
+            }
             : block,
         ),
       )
@@ -359,36 +360,38 @@ function AdminDashboard() {
   if (!user) return null
 
   return (
-    <div className="pb-20">
-      <AppHeader className="px-6 pt-6">
+    <div className="space-y-4 p-6 pb-20">
+      <AppHeader>
         <AppHeaderContent title="My Page">
           {/* <AppHeaderDescription>
             Manage the products that appear on your public profile.
           </AppHeaderDescription> */}
         </AppHeaderContent>
       </AppHeader>
-      <Separator />
 
-      <div className="space-y-4 p-6">
-        <section>
-          <ProfileEditor user={user} onSave={handleProfileSave} />
-        </section>
 
-        <section>
-          <SocialEditor
-            username={user.username ?? ''}
-            socialLinks={localSocialLinks}
-            onSocialLinksChange={setLocalSocialLinks}
-          />
-        </section>
+      <Card>
+        <CardPanel className='gap-4 flex flex-col'>
+          <section>
+            <ProfileEditor user={user} onSave={handleProfileSave} />
+          </section>
 
-        <section className="space-y-6">
-          <BlockTypeSelector
-            open={isAddBlockOpen}
-            onOpenChange={setIsAddBlockOpen}
-            onSelect={handleAddBlockTypeSelect}
-          />
-
+          <section>
+            <SocialEditor
+              username={user.username ?? ''}
+              socialLinks={localSocialLinks}
+              onSocialLinksChange={setLocalSocialLinks}
+            />
+          </section>
+        </CardPanel>
+      </Card>
+      <section className="space-y-6">
+        <BlockTypeSelector
+          open={isAddBlockOpen}
+          onOpenChange={setIsAddBlockOpen}
+          onSelect={handleAddBlockTypeSelect}
+        />
+        <Frame>
           <BlockList
             blocks={localBlocks}
             products={productOptions}
@@ -396,29 +399,29 @@ function AdminDashboard() {
             onToggleEnabled={handleToggleBlockEnabled}
             onReorder={handleReorder}
           />
-        </section>
+        </Frame>
+      </section>
 
-        <BlockFormDialog
-          open={!!blockFormState}
-          onOpenChange={(open) => {
-            if (!open) setBlockFormState(null)
-          }}
-          mode={blockFormState?.mode || 'create'}
-          values={blockFormState?.values || getDefaultBlockValues('link')}
-          products={productOptions}
-          submitting={createBlock.isPending || updateBlockMutation.isPending}
-          deleting={deleteBlockMutation.isPending}
-          onDelete={async () => {
-            if (blockFormState?.mode !== 'edit' || !blockFormState.blockId)
-              return
-            await deleteBlockMutation.mutateAsync({
-              id: blockFormState.blockId,
-            })
-            setBlockFormState(null)
-          }}
-          onSubmit={handleBlockFormSubmit}
-        />
-      </div>
+      <BlockFormDialog
+        open={!!blockFormState}
+        onOpenChange={(open) => {
+          if (!open) setBlockFormState(null)
+        }}
+        mode={blockFormState?.mode || 'create'}
+        values={blockFormState?.values || getDefaultBlockValues('link')}
+        products={productOptions}
+        submitting={createBlock.isPending || updateBlockMutation.isPending}
+        deleting={deleteBlockMutation.isPending}
+        onDelete={async () => {
+          if (blockFormState?.mode !== 'edit' || !blockFormState.blockId)
+            return
+          await deleteBlockMutation.mutateAsync({
+            id: blockFormState.blockId,
+          })
+          setBlockFormState(null)
+        }}
+        onSubmit={handleBlockFormSubmit}
+      />
     </div>
   )
 }

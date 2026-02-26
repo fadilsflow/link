@@ -91,7 +91,7 @@ export function BlockList({
         items={blocks.map((b) => b.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
           {blocks.map((block) => (
             <SortableBlockItem
               key={block.id}

@@ -14,7 +14,6 @@ import {
 import {
   AppHeader,
   AppHeaderContent,
-  AppHeaderDescription,
 } from '@/components/app-header'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -131,98 +130,96 @@ function HomePage() {
   const userInitial = userName.slice(0, 1).toUpperCase() || 'C'
 
   return (
-    <div className="space-y-6 p-6">
-      <AppHeader>
+    <>
+      <AppHeader className="px-6 pt-6" showSeparator>
         <AppHeaderContent title="Home">
-          <AppHeaderDescription>
-            Simple analytics overview with one source of truth.
-          </AppHeaderDescription>
         </AppHeaderContent>
       </AppHeader>
+      <div className="p-6 space-y-6">
+        <Alert className="border-none bg-muted">
+          <InfoIcon />
+          <AlertTitle>Payment processing is not yet available</AlertTitle>
+          <AlertDescription>
+            Complete all steps below to start accepting payments from customers.
+          </AlertDescription>
+        </Alert>
 
-      <Alert className="border-none bg-muted">
-        <InfoIcon />
-        <AlertTitle>Payment processing is not yet available</AlertTitle>
-        <AlertDescription>
-          Complete all steps below to start accepting payments from customers.
-        </AlertDescription>
-      </Alert>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Frame>
-          <FrameHeader>
-            <FrameTitle>Account</FrameTitle>
-          </FrameHeader>
-          <FramePanel className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-14 w-14 rounded-md border-2 border-background ring-2 ring-primary/10">
-                <AvatarImage src={session?.user.image || ''} />
-                <AvatarFallback className="bg-primary/5 text-lg text-primary">
-                  {userInitial}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <h3 className="truncate text-lg font-bold tracking-tight">{userName}</h3>
-                {username ? (
-                  <a
-                    href={`/${username}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-0.5 flex w-fit items-center text-sm text-muted-foreground underline"
-                  >
-                    <span className="font-medium">
-                      {PUBLIC_BASE_HOST}/{username}
-                    </span>
-                  </a>
-                ) : null}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Frame>
+            <FrameHeader>
+              <FrameTitle>Account</FrameTitle>
+            </FrameHeader>
+            <FramePanel className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-14 w-14 rounded-md border-2 border-background ring-2 ring-primary/10">
+                  <AvatarImage src={session?.user.image || ''} />
+                  <AvatarFallback className="bg-primary/5 text-lg text-primary">
+                    {userInitial}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-lg font-bold tracking-tight">{userName}</h3>
+                  {username ? (
+                    <a
+                      href={`/${username}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-0.5 flex w-fit items-center text-sm text-muted-foreground underline"
+                    >
+                      <span className="font-medium">
+                        {PUBLIC_BASE_HOST}/{username}
+                      </span>
+                    </a>
+                  ) : null}
+                </div>
               </div>
-            </div>
-            <ShareProfileModal url={username ? `${BASE_URL}/${username}` : BASE_URL}>
-              <Button size="lg" variant="outline">
-                Share
+              <ShareProfileModal url={username ? `${BASE_URL}/${username}` : BASE_URL}>
+                <Button size="lg" variant="outline">
+                  Share
+                </Button>
+              </ShareProfileModal>
+            </FramePanel>
+          </Frame>
+
+          <Frame>
+            <FrameHeader>
+              <FrameTitle>Earnings</FrameTitle>
+            </FrameHeader>
+            <FramePanel className="flex items-center justify-between gap-4">
+              <span className="h-full text-4xl tracking-tight">
+                {isLoadingBalance ? (
+                  <Spinner className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  formatPrice(balance?.currentBalance ?? 0)
+                )}
+              </span>
+              <Button size="lg" variant="outline" render={<Link to="/admin/balance" />}>
+                Payout
               </Button>
-            </ShareProfileModal>
-          </FramePanel>
-        </Frame>
+            </FramePanel>
+          </Frame>
+        </div>
 
-        <Frame>
-          <FrameHeader>
-            <FrameTitle>Earnings</FrameTitle>
-          </FrameHeader>
-          <FramePanel className="flex items-center justify-between gap-4">
-            <span className="h-full text-4xl tracking-tight">
-              {isLoadingBalance ? (
-                <Spinner className="h-5 w-5 text-muted-foreground" />
-              ) : (
-                formatPrice(balance?.currentBalance ?? 0)
-              )}
-            </span>
-            <Button size="lg" variant="outline" render={<Link to="/admin/balance" />}>
-              Payout
-            </Button>
-          </FramePanel>
-        </Frame>
+        <AnalyticsCard
+          mode={mode}
+          onModeChange={setMode}
+          dateRange={dateRange}
+          onDateRangeChange={(range) => {
+            setDateRange(range)
+            setActivePreset(null)
+          }}
+          activePreset={activePreset}
+          onPresetSelect={handlePreset}
+          chartData={chartData}
+          rangeRevenue={rangeRevenue}
+          rangeSales={rangeSales}
+          rangeViews={rangeViews}
+          rangeClicks={rangeClicks}
+          ctr={ctr}
+          isLoading={isLoading}
+        />
       </div>
-
-      <AnalyticsCard
-        mode={mode}
-        onModeChange={setMode}
-        dateRange={dateRange}
-        onDateRangeChange={(range) => {
-          setDateRange(range)
-          setActivePreset(null)
-        }}
-        activePreset={activePreset}
-        onPresetSelect={handlePreset}
-        chartData={chartData}
-        rangeRevenue={rangeRevenue}
-        rangeSales={rangeSales}
-        rangeViews={rangeViews}
-        rangeClicks={rangeClicks}
-        ctr={ctr}
-        isLoading={isLoading}
-      />
-    </div>
+    </>
   )
 }
 
@@ -261,7 +258,7 @@ function AnalyticsCard({
 
         {/* Views */}
         <div className="flex flex-col items-center">
-          <span className="text-3xl font-normal">
+          <span className="text-3xl font-">
             {rangeViews}
           </span>
 
@@ -275,7 +272,7 @@ function AnalyticsCard({
 
         {/* Clicks */}
         <div className="flex flex-col items-center">
-          <span className="text-3xl font-normal">
+          <span className="text-3xl font-">
             {rangeClicks}
           </span>
 
@@ -291,7 +288,7 @@ function AnalyticsCard({
     ),
     revenue: (
       <>
-        <span className="text-3xl font-normal">{formatPrice(rangeRevenue)}</span>
+        <span className="text-3xl font-">{formatPrice(rangeRevenue)}</span>
       </>
     ),
   }

@@ -59,6 +59,7 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean
   loadingText?: string
   emptyText?: string
+  variant?: 'frame' | 'none'
 }
 
 export function DataTable<TData, TValue>({
@@ -69,6 +70,7 @@ export function DataTable<TData, TValue>({
   isLoading = false,
   loadingText = 'Loading...',
   emptyText = 'No results.',
+  variant = 'frame',
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -124,7 +126,65 @@ export function DataTable<TData, TValue>({
           {/* Add View Options or Clear filters if needed */}
         </div>
       </div>
-      <Frame className='w-full'>
+      {variant === 'frame' ? (
+        <Frame className="w-full">
+          <Table>
+            <TableHeader className="border-t">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id} colSpan={header.colSpan}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                      </TableHead>
+                    )
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                        <Spinner className="h-4 w-4" />
+                        <span>{loadingText}</span>
+                      </div>
+                    ) : (
+                      emptyText
+                    )}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Frame>
+      ) : (
         <Table>
           <TableHeader className="border-t">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -180,7 +240,7 @@ export function DataTable<TData, TValue>({
             )}
           </TableBody>
         </Table>
-      </Frame>
+      )}
       <DataTablePagination table={table} />
     </div>
   )

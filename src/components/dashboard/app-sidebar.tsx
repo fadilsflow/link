@@ -47,6 +47,11 @@ const data = {
   ],
   navMain: [
     {
+      title: 'Home',
+      url: '/admin',
+      icon: Home,
+    },
+    {
       title: 'Kreasi Page',
       url: '/admin/editor/profiles',
       icon: UserIcon,
@@ -56,11 +61,7 @@ const data = {
       url: '/admin/editor/appearance',
       icon: Paintbrush,
     },
-    {
-      title: 'Home',
-      url: '/admin',
-      icon: Home,
-    },
+
     {
       title: 'Balance',
       url: '/admin/balance',

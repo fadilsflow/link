@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
-  BarChart3,
   Grid,
   Home,
   Menu,
@@ -30,7 +29,6 @@ type AdminNavItem = {
   | '/admin/products'
   | '/admin/orders'
   | '/admin/balance'
-  | '/admin/analytics'
   | '/admin/settings'
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
 }
@@ -42,7 +40,6 @@ const navItems: Array<AdminNavItem> = [
   { title: 'Products', url: '/admin/products', icon: Package },
   { title: 'Orders', url: '/admin/orders', icon: ShoppingBag },
   { title: 'Balance', url: '/admin/balance', icon: Wallet },
-  { title: 'Analytics', url: '/admin/analytics', icon: BarChart3 },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ]
 
@@ -50,7 +47,7 @@ const quickNav: Array<AdminNavItem> = [
   navItems[0],
   navItems[3],
   navItems[4],
-  navItems[6],
+  navItems[5],
 ]
 
 function isActivePath(path: string, currentPath: string) {

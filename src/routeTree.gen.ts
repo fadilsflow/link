@@ -24,7 +24,6 @@ import { Route as AdminProductsRouteRouteImport } from './routes/admin/products/
 import { Route as AdminOrdersRouteRouteImport } from './routes/admin/orders/route'
 import { Route as AdminEditorRouteRouteImport } from './routes/admin/editor/route'
 import { Route as AdminBalanceRouteRouteImport } from './routes/admin/balance/route'
-import { Route as AdminAnalyticsRouteRouteImport } from './routes/admin/analytics/route'
 import { Route as AdminProductsIndexRouteImport } from './routes/admin/products/index'
 import { Route as AdminOrdersIndexRouteImport } from './routes/admin/orders/index'
 import { Route as AdminBalanceIndexRouteImport } from './routes/admin/balance/index'
@@ -113,11 +112,6 @@ const AdminBalanceRouteRoute = AdminBalanceRouteRouteImport.update({
   path: '/balance',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminAnalyticsRouteRoute = AdminAnalyticsRouteRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
 const AdminProductsIndexRoute = AdminProductsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -134,9 +128,9 @@ const AdminBalanceIndexRoute = AdminBalanceIndexRouteImport.update({
   getParentRoute: () => AdminBalanceRouteRoute,
 } as any)
 const AdminAnalyticsIndexRoute = AdminAnalyticsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminAnalyticsRouteRoute,
+  id: '/analytics/',
+  path: '/analytics/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
@@ -187,7 +181,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
-  '/admin/analytics': typeof AdminAnalyticsRouteRouteWithChildren
   '/admin/balance': typeof AdminBalanceRouteRouteWithChildren
   '/admin/editor': typeof AdminEditorRouteRouteWithChildren
   '/admin/orders': typeof AdminOrdersRouteRouteWithChildren
@@ -243,7 +236,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
-  '/admin/analytics': typeof AdminAnalyticsRouteRouteWithChildren
   '/admin/balance': typeof AdminBalanceRouteRouteWithChildren
   '/admin/editor': typeof AdminEditorRouteRouteWithChildren
   '/admin/orders': typeof AdminOrdersRouteRouteWithChildren
@@ -275,7 +267,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/register'
-    | '/admin/analytics'
     | '/admin/balance'
     | '/admin/editor'
     | '/admin/orders'
@@ -330,7 +321,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/register'
-    | '/admin/analytics'
     | '/admin/balance'
     | '/admin/editor'
     | '/admin/orders'
@@ -478,13 +468,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBalanceRouteRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/analytics': {
-      id: '/admin/analytics'
-      path: '/analytics'
-      fullPath: '/admin/analytics'
-      preLoaderRoute: typeof AdminAnalyticsRouteRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
     '/admin/products/': {
       id: '/admin/products/'
       path: '/'
@@ -508,10 +491,10 @@ declare module '@tanstack/react-router' {
     }
     '/admin/analytics/': {
       id: '/admin/analytics/'
-      path: '/'
+      path: '/analytics'
       fullPath: '/admin/analytics/'
       preLoaderRoute: typeof AdminAnalyticsIndexRouteImport
-      parentRoute: typeof AdminAnalyticsRouteRoute
+      parentRoute: typeof AdminRouteRoute
     }
     '/api/trpc/$': {
       id: '/api/trpc/$'
@@ -572,17 +555,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AdminAnalyticsRouteRouteChildren {
-  AdminAnalyticsIndexRoute: typeof AdminAnalyticsIndexRoute
-}
-
-const AdminAnalyticsRouteRouteChildren: AdminAnalyticsRouteRouteChildren = {
-  AdminAnalyticsIndexRoute: AdminAnalyticsIndexRoute,
-}
-
-const AdminAnalyticsRouteRouteWithChildren =
-  AdminAnalyticsRouteRoute._addFileChildren(AdminAnalyticsRouteRouteChildren)
-
 interface AdminBalanceRouteRouteChildren {
   AdminBalanceIndexRoute: typeof AdminBalanceIndexRoute
 }
@@ -634,23 +606,23 @@ const AdminProductsRouteRouteWithChildren =
   AdminProductsRouteRoute._addFileChildren(AdminProductsRouteRouteChildren)
 
 interface AdminRouteRouteChildren {
-  AdminAnalyticsRouteRoute: typeof AdminAnalyticsRouteRouteWithChildren
   AdminBalanceRouteRoute: typeof AdminBalanceRouteRouteWithChildren
   AdminEditorRouteRoute: typeof AdminEditorRouteRouteWithChildren
   AdminOrdersRouteRoute: typeof AdminOrdersRouteRouteWithChildren
   AdminProductsRouteRoute: typeof AdminProductsRouteRouteWithChildren
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminAnalyticsIndexRoute: typeof AdminAnalyticsIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
-  AdminAnalyticsRouteRoute: AdminAnalyticsRouteRouteWithChildren,
   AdminBalanceRouteRoute: AdminBalanceRouteRouteWithChildren,
   AdminEditorRouteRoute: AdminEditorRouteRouteWithChildren,
   AdminOrdersRouteRoute: AdminOrdersRouteRouteWithChildren,
   AdminProductsRouteRoute: AdminProductsRouteRouteWithChildren,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminAnalyticsIndexRoute: AdminAnalyticsIndexRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(

@@ -13,7 +13,8 @@ import {
 } from 'recharts'
 
 import type {
-  ChartConfig} from '@/components/ui/chart';
+  ChartConfig
+} from '@/components/ui/chart';
 import {
   AppHeader,
   AppHeaderActions,
@@ -141,17 +142,6 @@ function AnalyticsPage() {
         </AppHeaderActions>
       </AppHeader>
 
-      {/* Key Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          title="Net Revenue"
-          value={formatPrice(rangeRevenue)}
-          isLoading={isLoading}
-        />
-        <StatCard title="Sales" value={rangeSales} isLoading={isLoading} />
-        <StatCard title="CTR" value={`${ctr}%`} isLoading={isLoading} />
-      </div>
-
       {/* Revenue Chart */}
       <RevenueChart data={chartData} isLoading={isLoading} />
 
@@ -172,35 +162,6 @@ function AnalyticsPage() {
         />
       </div>
     </div>
-  )
-}
-
-function StatCard({
-  title,
-  value,
-  isLoading,
-}: {
-  title: string
-  value: string | number
-  isLoading?: boolean
-}) {
-  return (
-    <Card className="relative overflow-hidden min-h-28">
-      <CardHeader className="pb-2">
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-4">
-            <Spinner className="h-5 w-5 text-muted-foreground" />
-          </div>
-        ) : (
-          <>
-            <div className="text-2xl font-mono">{value}</div>
-          </>
-        )}
-      </CardContent>
-    </Card>
   )
 }
 
@@ -371,7 +332,7 @@ function TopBlocksCard({
                     <p className="text-sm font-medium truncate">
                       {block.title || 'Untitled'}
                     </p>
-                    <span className="text-xs text-muted-foreground shrink-0">
+                    <span className="text-xs text-muted-foreground shrietnk-0">
                       {block.clicks} clicks
                     </span>
                   </div>
@@ -491,36 +452,36 @@ function RevenueChart({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Net Revenue Trend</CardTitle>
-        </CardHeader>
-        <CardContent className="h-[300px] flex items-center justify-center">
+      <Frame>
+        <FrameHeader>
+          <FrameTitle>Net Revenue Trend</FrameTitle>
+        </FrameHeader>
+        <FramePanel className="h-[300px] flex items-center justify-center">
           <Spinner className="h-5 w-5 text-muted-foreground" />
-        </CardContent>
-      </Card>
+        </FramePanel>
+      </Frame>
     )
   }
 
   if (data.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Net Revenue Trend</CardTitle>
-        </CardHeader>
-        <CardContent className="h-[200px] flex items-center justify-center text-muted-foreground">
+      <Frame>
+        <FrameHeader>
+          <FrameTitle>Net Revenue Trend</FrameTitle>
+        </FrameHeader>
+        <FramePanel className="h-[200px] flex items-center justify-center text-muted-foreground">
           No data for this period
-        </CardContent>
-      </Card>
+        </FramePanel>
+      </Frame>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Net Revenue Trend</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Frame>
+      <FrameHeader>
+        <FrameTitle>Net Revenue Trend</FrameTitle>
+      </FrameHeader>
+      <FramePanel>
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
           <AreaChart
             data={data}
@@ -597,8 +558,8 @@ function RevenueChart({
           <span className="font-medium">Period net total:</span>
           <span className="font-monon">{formatPrice(totalRevenue)}</span>
         </div>
-      </CardContent>
-    </Card>
+      </FramePanel>
+    </Frame>
   )
 }
 
@@ -661,3 +622,4 @@ function DateRangePicker({
     </Popover>
   )
 }
+

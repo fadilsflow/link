@@ -1,17 +1,25 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { CalendarIcon, InfoIcon, MousePointerClick, Package } from 'lucide-react'
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import { CalendarIcon, InfoIcon } from 'lucide-react'
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from 'recharts'
+import type { ChartConfig } from '@/components/ui/chart'
 import {
   AppHeader,
-  AppHeaderActions,
   AppHeaderContent,
+  AppHeaderDescription,
 } from '@/components/app-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   ChartContainer,
   ChartTooltip,
@@ -29,13 +37,7 @@ import { ShareProfileModal } from '@/components/share-profile-modal'
 import { BASE_URL } from '@/lib/constans'
 import { cn, formatPrice } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
-import {
-  Frame,
-  FrameDescription,
-  FrameHeader,
-  FramePanel,
-  FrameTitle,
-} from "@/components/ui/frame";
+import { Frame, FrameHeader, FramePanel, FrameTitle } from '@/components/ui/frame'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 export const Route = createFileRoute('/admin/')({
@@ -49,6 +51,7 @@ const RANGE_PRESETS = [
   { label: '7D', days: 7 },
   { label: '30D', days: 30 },
 ] as const
+
 const PUBLIC_BASE_HOST = new URL(BASE_URL).host
 
 function HomePage() {
@@ -71,7 +74,7 @@ function HomePage() {
     queryKey: ['analytics', 'overview', session?.user.id, fromStr, toStr],
     queryFn: async () => {
       if (!session?.user.id) return null
-      return await trpcClient.analytics.getOverview.query({
+      return trpcClient.analytics.getOverview.query({
         from: fromStr,
         to: toStr,
       })
@@ -83,7 +86,16 @@ function HomePage() {
     queryKey: ['analytics', 'products', session?.user.id],
     queryFn: async () => {
       if (!session?.user.id) return null
-      return await trpcClient.analytics.getProductAnalytics.query()
+      return trpcClient.analytics.getProductAnalytics.query()
+    },
+    enabled: !!session?.user.id,
+  })
+
+  const { data: balance, isLoading: isLoadingBalance } = useQuery({
+    queryKey: ['balance', session?.user.id],
+    queryFn: async () => {
+      if (!session?.user.id) return null
+      return trpcClient.balance.getSummary.query()
     },
     enabled: !!session?.user.id,
   })
@@ -99,63 +111,59 @@ function HomePage() {
 
   const isLoading = isSessionPending || isLoadingOverview
   const chartData = overview?.chart ?? []
-
-  // Calculate specific metrics
+  const rangeRevenue = overview?.range.revenue ?? 0
+  const rangeSales = overview?.range.sales ?? 0
   const rangeViews = overview?.range.views ?? 0
   const rangeClicks = overview?.range.clicks ?? 0
+  const ctr = rangeViews > 0 ? ((rangeClicks / rangeViews) * 100).toFixed(1) : '0'
   const blocks = overview?.blocks ?? []
   const topBlocks = blocks.slice(0, 5)
   const topProducts = (productAnalytics ?? []).slice(0, 5)
-
-  // New Data Fetching for Dashboard Cards
-  const { data: balance, isLoading: isLoadingBalance } = useQuery({
-    queryKey: ['balance', session?.user.id],
-    queryFn: async () => {
-      if (!session?.user.id) return null
-      return await trpcClient.balance.getSummary.query()
-    },
-    enabled: !!session?.user.id,
-  })
+  const userName = session?.user.name ?? 'Creator'
+  const userInitial = userName.slice(0, 1).toUpperCase() || 'C'
 
   return (
     <div className="space-y-6 p-6">
       <AppHeader>
-        <AppHeaderContent title="Home"></AppHeaderContent>
-        <AppHeaderActions></AppHeaderActions>
+        <AppHeaderContent title="Home">
+          <AppHeaderDescription>
+            Net metrics are near-real-time. Product ranking cards below use
+            cached counters.
+          </AppHeaderDescription>
+        </AppHeaderContent>
       </AppHeader>
 
-      <Alert className='bg-muted border-none'>
+      <Alert className="bg-muted border-none">
         <InfoIcon />
         <AlertTitle>Payment processing is not yet available</AlertTitle>
         <AlertDescription>
-          Complete all steps below to start accepting payments from customers
+          Complete all steps below to start accepting payments from customers.
         </AlertDescription>
       </Alert>
-      {/* Profile and Earnings Cards */}
+
       <div className="grid gap-4 sm:grid-cols-2">
-        {/* Profile Card */}
         <Frame>
           <FrameHeader>
             <FrameTitle>Account</FrameTitle>
           </FrameHeader>
           <FramePanel className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Avatar className="rounded-md h-14 w-14 border-2 border-background ring-2 ring-primary/10 transition-transform group-hover:scale-105">
+              <Avatar className="h-14 w-14 rounded-md border-2 border-background ring-2 ring-primary/10">
                 <AvatarImage src={session?.user.image || ''} />
                 <AvatarFallback className="bg-primary/5 text-primary text-lg">
-                  {session?.user.name.charAt(0)}
+                  {userInitial}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-bold tracking-tight truncate">
-                  {session?.user.name || 'Creator'}
+              <div className="min-w-0 flex-1">
+                <h3 className="truncate text-lg font-bold tracking-tight">
+                  {userName}
                 </h3>
                 {username ? (
                   <a
                     href={`/${username}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-muted-foreground flex items-center text-sm mt-0.5 underline w-fit"
+                    className="mt-0.5 flex w-fit items-center text-sm text-muted-foreground underline"
                   >
                     <span className="font-medium">
                       {PUBLIC_BASE_HOST}/{username}
@@ -164,66 +172,36 @@ function HomePage() {
                 ) : null}
               </div>
             </div>
-            <ShareProfileModal url={username ? `${BASE_URL}/${username}` : BASE_URL}>
-              <Button size="lg" variant={'outline'}>
+            <ShareProfileModal
+              url={username ? `${BASE_URL}/${username}` : BASE_URL}
+            >
+              <Button size="lg" variant="outline">
                 Share
               </Button>
             </ShareProfileModal>
-            {/* <p className='text-sm font-bold'>Start Creaating now!</p> */}
-            {/* <div className="flex gap-2  overflow-auto no-scrollbar">
-              <Button size='xs' variant='outline'>
-                add link
-              </Button>
-              <Button size='xs' variant='outline'>
-                add link
-              </Button>
-              <Button size='xs' variant='outline'>
-                add link
-              </Button>
-              <Button size='xs' variant='outline'>
-                add link
-              </Button>
-              <Button size='xs' variant='outline'>
-                add link
-              </Button>
-              <Button size='xs' variant='outline'>
-                add link
-              </Button>
-              <Button size='xs' variant='outline'>
-                add link
-              </Button>
-              <Button size='xs' variant='outline'>
-                add link
-              </Button>
-            </div> */}
           </FramePanel>
         </Frame>
-        {/* Earnings Card */}
-        <Frame >
+
+        <Frame>
           <FrameHeader>
             <FrameTitle>Earnings</FrameTitle>
           </FrameHeader>
-
           <FramePanel className="flex items-center justify-between gap-4">
-            <span className="text-4xl h-full  tracking-tight">
+            <span className="h-full text-4xl tracking-tight">
               {isLoadingBalance ? (
                 <Spinner className="h-5 w-5 text-muted-foreground" />
               ) : (
                 formatPrice(balance?.currentBalance ?? 0)
               )}
             </span>
-            <Button
-              size="lg"
-              variant='outline'
-              render={<Link to="/admin/balance" />}
-            >
+            <Button size="lg" variant="outline" render={<Link to="/admin/balance" />}>
               Payout
             </Button>
           </FramePanel>
         </Frame>
       </div>
-      <div className="justify-end flex">
-        {/* Date Range Picker */}
+
+      <div className="flex justify-end">
         <div className="flex flex-wrap items-center gap-2">
           {RANGE_PRESETS.map((preset) => (
             <Button
@@ -246,7 +224,6 @@ function HomePage() {
         </div>
       </div>
 
-      {/* Engagement Chart */}
       <EngagementCard
         views={rangeViews}
         clicks={rangeClicks}
@@ -254,7 +231,8 @@ function HomePage() {
         isLoading={isLoading}
       />
 
-      {/* Two Column Layout for Top Blocks and Products */}
+      <RevenueChart data={chartData} isLoading={isLoading} />
+
       <div className="grid gap-6 lg:grid-cols-2">
         <TopBlocksCard blocks={topBlocks} isLoading={isLoading} />
         <TopProductsCard
@@ -282,115 +260,104 @@ function EngagementCard({
   isLoading?: boolean
 }) {
   return (
-    <Card className="relative overflow-hidden min-h-28">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">
-          Total Views & Clicks
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Frame className="min-h-28 overflow-hidden">
+      <FrameHeader className="pb-2">
+        <FrameTitle className="text-base font-medium">Activity</FrameTitle>
+        <div className="mt-4 flex items-center gap-8">
+          <div className="space-y-1">
+            <div className="text-4xl font-sans font-semibold">
+              {views}
+              <span className="text-xs font-normal"> views</span>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="text-4xl font-sans font-semibold">
+              {clicks}
+              <span className="text-xs font-normal"> clicks</span>
+            </div>
+          </div>
+        </div>
+      </FrameHeader>
+      <FramePanel>
         {isLoading ? (
-          <div className="h-[300px] flex items-center justify-center">
+          <div className="flex h-[300px] items-center justify-center">
             <Spinner className="h-5 w-5 text-muted-foreground" />
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex items-center gap-8">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-3 w-3 rounded-full bg-(--color-chart-4)" />
-                  Views
-                </div>
-                <div className="text-3xl font-bold">{views}</div>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-3 w-3 rounded-full bg-(--color-chart-2)" />
-                  Clicks
-                </div>
-                <div className="text-3xl font-bold">{clicks}</div>
-              </div>
-            </div>
-
-            <div className="h-[300px] w-full mt-4">
-              <ChartContainer
-                config={{
-                  views: {
-                    label: 'Views',
-                    color: 'var(--chart-4)',
-                  },
-                  clicks: {
-                    label: 'Clicks',
-                    color: 'var(--chart-2)',
-                  },
-                }}
-                className="h-full w-full"
-              >
-                <BarChart data={data}>
-                  <CartesianGrid
-                    strokeDasharray="4 4"
-                    vertical={false}
-                    stroke="var(--edge)"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={10}
-                    tickFormatter={(value) => {
-                      const date = new Date(value)
-                      return (
-                        date.toLocaleDateString('en-US', {
-                          day: 'numeric',
-                        }) +
-                        '\n' +
-                        date.toLocaleDateString('en-US', {
+          <div className="mt-4 h-[300px] w-full">
+            <ChartContainer
+              config={{
+                views: {
+                  label: 'Views',
+                  color: 'var(--chart-4)',
+                },
+                clicks: {
+                  label: 'Clicks',
+                  color: 'var(--chart-2)',
+                },
+              }}
+              className="h-full w-full"
+            >
+              <BarChart data={data}>
+                <CartesianGrid
+                  strokeDasharray="4 4"
+                  vertical={false}
+                  stroke="var(--edge)"
+                />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  interval={0}
+                  style={{ fontSize: '12px' }}
+                  tickFormatter={(value) => {
+                    const date = new Date(value)
+                    return (
+                      date.toLocaleDateString('en-US', { day: 'numeric' }) +
+                      '\n' +
+                      date.toLocaleDateString('en-US', { month: 'short' })
+                    )
+                  }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  allowDecimals={false}
+                  style={{ fontSize: '12px' }}
+                />
+                <ChartTooltip
+                  cursor={{ fill: 'var(--muted)' }}
+                  content={
+                    <ChartTooltipContent
+                      labelFormatter={(value) => {
+                        return new Date(value).toLocaleDateString('en-US', {
                           month: 'short',
+                          day: 'numeric',
                         })
-                      )
-                    }}
-                    interval={0}
-                    style={{ fontSize: '12px' }}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={10}
-                    allowDecimals={false}
-                    style={{ fontSize: '12px' }}
-                  />
-                  <ChartTooltip
-                    cursor={{ fill: 'var(--muted)' }}
-                    content={
-                      <ChartTooltipContent
-                        labelFormatter={(value) => {
-                          return new Date(value).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                          })
-                        }}
-                      />
-                    }
-                  />
-                  <Bar
-                    dataKey="views"
-                    fill="var(--color-views)"
-                    radius={[4, 4, 4, 4]}
-                    barSize={8}
-                  />
-                  <Bar
-                    dataKey="clicks"
-                    fill="var(--color-clicks)"
-                    radius={[4, 4, 4, 4]}
-                    barSize={8}
-                  />
-                </BarChart>
-              </ChartContainer>
-            </div>
+                      }}
+                    />
+                  }
+                />
+                <Bar
+                  dataKey="views"
+                  fill="var(--color-views)"
+                  radius={[4, 4, 4, 4]}
+                  barSize={8}
+                />
+                <Bar
+                  dataKey="clicks"
+                  fill="var(--color-clicks)"
+                  radius={[4, 4, 4, 4]}
+                  barSize={8}
+                />
+              </BarChart>
+            </ChartContainer>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </FramePanel>
+    </Frame>
   )
 }
 
@@ -410,39 +377,38 @@ function TopBlocksCard({
   const maxClicks = Math.max(...blocks.map((b) => b.clicks), 1)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <MousePointerClick className="h-4 w-4" />
+    <Frame>
+      <FrameHeader>
+        <FrameTitle className="flex items-center gap-2 text-base">
           Top Blocks
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </FrameTitle>
+      </FrameHeader>
+      <FramePanel>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Spinner className="h-5 w-5 text-muted-foreground" />
           </div>
         ) : blocks.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <p className="py-4 text-center text-sm text-muted-foreground">
             No block data yet
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 h-[200px] overflow-auto no-scrollbar">
             {blocks.map((block, index) => (
               <div key={block.id} className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded bg-muted text-xs font-medium">
                   {index + 1}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium truncate">
+                    <p className="truncate text-sm font-medium">
                       {block.title || 'Untitled'}
                     </p>
-                    <span className="text-xs text-muted-foreground shrink-0">
+                    <span className="shrink-0 text-xs text-muted-foreground">
                       {block.clicks} clicks
                     </span>
                   </div>
-                  <div className="mt-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
                     <div
                       className="h-full bg-primary transition-all"
                       style={{
@@ -455,8 +421,8 @@ function TopBlocksCard({
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </FramePanel>
+    </Frame>
   )
 }
 
@@ -475,28 +441,23 @@ function TopProductsCard({
   isLoading?: boolean
 }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Package className="h-4 w-4" />
-          Top Products (Cached)
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Uses cached counters for ranking. Ledger-based balances are
-          authoritative in Balance page.
-        </p>
-      </CardHeader>
-      <CardContent>
+    <Frame>
+      <FrameHeader>
+        <FrameTitle className="flex items-center gap-2 text-base">
+          Top Products
+        </FrameTitle>
+      </FrameHeader>
+      <FramePanel>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Spinner className="h-5 w-5 text-muted-foreground" />
           </div>
         ) : products.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <p className="py-4 text-center text-sm text-muted-foreground">
             No products yet
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3  h-[200px] overflow-auto no-scrollbar">
             {products.map((product) => (
               <div key={product.id} className="flex items-center gap-3">
                 {product.image ? (
@@ -510,13 +471,11 @@ function TopProductsCard({
                     <Package className="h-4 w-4 text-muted-foreground" />
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium truncate">
-                      {product.title}
-                    </p>
+                    <p className="truncate text-sm font-medium">{product.title}</p>
                     {!product.isActive && (
-                      <Badge variant="secondary" className="text-xs shrink-0">
+                      <Badge variant="secondary" className="shrink-0 text-xs">
                         Inactive
                       </Badge>
                     )}
@@ -531,8 +490,130 @@ function TopProductsCard({
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </FramePanel>
+    </Frame>
+  )
+}
+
+const chartConfig = {
+  revenue: {
+    label: 'Net Revenue',
+    color: 'hsl(var(--chart-1))',
+  },
+  sales: {
+    label: 'Sales',
+    color: 'hsl(var(--chart-2))',
+  },
+} satisfies ChartConfig
+
+function RevenueChart({
+  data,
+  isLoading,
+}: {
+  data: Array<{ date: string; sales: number; revenue: number }>
+  isLoading?: boolean
+}) {
+  const totalRevenue = React.useMemo(
+    () => data.reduce((acc, item) => acc + item.revenue, 0),
+    [data],
+  )
+
+  if (isLoading) {
+    return (
+      <Frame>
+        <FrameHeader>
+          <FrameTitle>Net Revenue Trend</FrameTitle>
+        </FrameHeader>
+        <FramePanel className="flex h-[300px] items-center justify-center">
+          <Spinner className="h-5 w-5 text-muted-foreground" />
+        </FramePanel>
+      </Frame>
+    )
+  }
+
+  if (data.length === 0) {
+    return (
+      <Frame>
+        <FrameHeader>
+          <FrameTitle>Net Revenue Trend</FrameTitle>
+        </FrameHeader>
+        <FramePanel className="flex h-[200px] items-center justify-center text-muted-foreground">
+          No data for this period
+        </FramePanel>
+      </Frame>
+    )
+  }
+
+  return (
+    <Frame>
+      <FrameHeader>
+        <FrameTitle>Net Revenue</FrameTitle>
+        <div className="mt-4 flex items-center gap-2 text-sm">
+          <span className="font-mono text-5xl ">{formatPrice(totalRevenue)}</span>
+        </div>
+      </FrameHeader>
+      <FramePanel>
+        <ChartContainer config={chartConfig} className="h-[250px] w-full">
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0.1} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis
+              dataKey="date"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(value) => {
+                const date = new Date(value)
+                return date.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })
+              }}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tickFormatter={(value) => formatPrice(value as number)}
+            />
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(value) => {
+                    return new Date(value).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  }}
+                  formatter={(value, name) => (
+                    <div className="flex min-w-[120px] items-center text-xs text-muted-foreground">
+                      {name === 'revenue' ? 'Revenue' : 'Sales'}
+                      <div className="ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums text-foreground">
+                        {name === 'revenue' ? formatPrice(value as number) : value}
+                      </div>
+                    </div>
+                  )}
+                />
+              }
+            />
+            <Area
+              dataKey="revenue"
+              type="monotone"
+              fill="url(#fillRevenue)"
+              stroke="var(--color-revenue)"
+              strokeWidth={2}
+            />
+          </AreaChart>
+        </ChartContainer>
+      </FramePanel>
+    </Frame>
   )
 }
 
@@ -554,7 +635,11 @@ function DateRangePicker({
         year: 'numeric',
       })
     }
+
     return `${value.from.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    })} - ${value.to.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',

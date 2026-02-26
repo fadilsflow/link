@@ -1,5 +1,4 @@
 import {
-  BarChart3,
   ChevronDown,
   Copy,
   ExternalLink,
@@ -78,11 +77,6 @@ const data = {
       icon: ShoppingBag,
     },
 
-    {
-      title: 'Analytics',
-      url: '/admin/analytics',
-      icon: BarChart3,
-    },
   ],
 }
 

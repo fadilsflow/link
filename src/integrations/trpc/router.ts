@@ -1638,73 +1638,83 @@ const analyticsRouter = {
       z.object({
         from: z.string().optional(),
         to: z.string().optional(),
+        mode: z.enum(['all', 'activity', 'revenue']).optional(),
       }),
     )
     .query(async ({ input, ctx }) => {
       const actorUserId = ctx.session.user.id
+      const mode = input.mode ?? 'all'
+      const includeActivity = mode === 'all' || mode === 'activity'
+      const includeRevenue = mode === 'all' || mode === 'revenue'
+      const includeLegacyTotals = mode === 'all'
       const fromDate = input.from
         ? new Date(`${input.from}T00:00:00.000Z`)
         : null
       const toDate = input.to ? new Date(`${input.to}T23:59:59.999Z`) : null
 
-      const profile = await db.query.user.findFirst({
-        where: eq(user.id, actorUserId),
-        columns: {
-          totalRevenue: true,
-          totalSalesCount: true,
-          totalViews: true,
-        },
-      })
+      const profile = includeLegacyTotals
+        ? await db.query.user.findFirst({
+            where: eq(user.id, actorUserId),
+            columns: {
+              totalRevenue: true,
+              totalSalesCount: true,
+              totalViews: true,
+            },
+          })
+        : null
 
-      const blockRows = await db.query.blocks.findMany({
-        where: eq(blocks.userId, actorUserId),
-        columns: {
-          id: true,
-          title: true,
-          type: true,
-          clicks: true,
-          isEnabled: true,
-        },
-        orderBy: [desc(blocks.clicks)],
-      })
+      const blockRows = includeLegacyTotals
+        ? await db.query.blocks.findMany({
+            where: eq(blocks.userId, actorUserId),
+            columns: {
+              id: true,
+              title: true,
+              type: true,
+              clicks: true,
+              isEnabled: true,
+            },
+            orderBy: [desc(blocks.clicks)],
+          })
+        : []
 
-      // Transactions query for revenue calculation (replacing orders query)
-      const txnConditions = [
-        eq(transactions.creatorId, actorUserId),
-        eq(transactions.type, TRANSACTION_TYPE.SALE),
-      ]
-      if (fromDate) txnConditions.push(gte(transactions.createdAt, fromDate))
-      if (toDate) txnConditions.push(lte(transactions.createdAt, toDate))
+      const txnRows = includeRevenue
+        ? await db.query.transactions.findMany({
+            where: and(
+              eq(transactions.creatorId, actorUserId),
+              eq(transactions.type, TRANSACTION_TYPE.SALE),
+              ...(fromDate ? [gte(transactions.createdAt, fromDate)] : []),
+              ...(toDate ? [lte(transactions.createdAt, toDate)] : []),
+            ),
+            columns: {
+              netAmount: true,
+              type: true,
+              createdAt: true,
+            },
+            orderBy: [asc(transactions.createdAt)],
+          })
+        : []
 
-      const txnRows = await db.query.transactions.findMany({
-        where: and(...txnConditions),
-        columns: {
-          netAmount: true,
-          type: true,
-          createdAt: true,
-        },
-        orderBy: [asc(transactions.createdAt)],
-      })
+      const viewRows = includeActivity
+        ? await db.query.profileViews.findMany({
+            where: and(
+              eq(profileViews.userId, actorUserId),
+              ...(fromDate ? [gte(profileViews.createdAt, fromDate)] : []),
+              ...(toDate ? [lte(profileViews.createdAt, toDate)] : []),
+            ),
+            columns: { id: true, createdAt: true },
+          })
+        : []
 
-      // Views query for period
-      const viewsConditions = [eq(profileViews.userId, actorUserId)]
-      if (fromDate) viewsConditions.push(gte(profileViews.createdAt, fromDate))
-      if (toDate) viewsConditions.push(lte(profileViews.createdAt, toDate))
-
-      const viewRows = await db.query.profileViews.findMany({
-        where: and(...viewsConditions),
-        columns: { id: true, createdAt: true },
-      })
-
-      // Clicks query for period
-      const clicksConditions = [eq(blockClicks.userId, actorUserId)]
-      if (fromDate) clicksConditions.push(gte(blockClicks.createdAt, fromDate))
-      if (toDate) clicksConditions.push(lte(blockClicks.createdAt, toDate))
-
-      const clickRows = await db.query.blockClicks.findMany({
-        where: and(...clicksConditions),
-        columns: { id: true, createdAt: true },
-      })
+      const clickRows = includeActivity
+        ? await db.query.blockClicks.findMany({
+            where: and(
+              eq(blockClicks.userId, actorUserId),
+              ...(fromDate ? [gte(blockClicks.createdAt, fromDate)] : []),
+              ...(toDate ? [lte(blockClicks.createdAt, toDate)] : []),
+            ),
+            columns: { id: true, createdAt: true },
+          })
+        : []
 
       const byDay = new Map<
         string,

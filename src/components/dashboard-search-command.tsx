@@ -1,5 +1,5 @@
 import { ArrowDownIcon, ArrowUpIcon, CornerDownLeftIcon } from "lucide-react";
-import { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Command,
@@ -19,6 +19,7 @@ import {
     CommandShortcut,
 } from "@/components/ui/command";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { SimpleTooltip } from "./ui/tooltip";
 
 export interface Item {
     value: string;
@@ -52,7 +53,7 @@ export const groupedItems: Group[] = [
     { items: commands, value: "Commands" },
 ];
 
-export default function DashboardSearchCommand() {
+export default function DashboardSearchCommand({ children }: { children?: React.ReactElement }) {
     const [open, setOpen] = useState(false);
 
     function handleItemClick(_item: Item) {
@@ -73,13 +74,17 @@ export default function DashboardSearchCommand() {
 
     return (
         <CommandDialog onOpenChange={setOpen} open={open}>
-            <CommandDialogTrigger render={<Button variant="outline" />}>
-                Open Command Palette
-                <KbdGroup>
-                    <Kbd>⌘</Kbd>
-                    <Kbd>J</Kbd>
-                </KbdGroup>
-            </CommandDialogTrigger>
+            <SimpleTooltip side="right" content={<KbdGroup >search
+                <Kbd>⌘</Kbd>
+                <Kbd>J</Kbd>
+            </KbdGroup>} render={< CommandDialogTrigger render={children || <Button variant="outline" />} />}>
+                {!children && (
+                    <>
+                        Open Command Palette
+
+                    </>
+                )}
+            </SimpleTooltip >
             <CommandDialogPopup>
                 <Command items={groupedItems}>
                     <CommandInput placeholder="Search for apps and commands..." />
@@ -137,6 +142,6 @@ export default function DashboardSearchCommand() {
                     </CommandFooter>
                 </Command>
             </CommandDialogPopup>
-        </CommandDialog>
+        </CommandDialog >
     );
 }

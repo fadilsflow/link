@@ -59,10 +59,12 @@ function SimpleTooltip({
   children,
   content,
   render,
+  side
 }: {
   children?: React.ReactNode;
   content: React.ReactNode;
   render?: React.ReactElement;
+  side?: TooltipPrimitive.Positioner.Props['side']
 }) {
   return (
     <Tooltip>
@@ -71,7 +73,7 @@ function SimpleTooltip({
       >
         {children}
       </TooltipTrigger>
-      <TooltipPopup>{content}</TooltipPopup>
+      <TooltipPopup side={side}>{content}</TooltipPopup>
     </Tooltip>
   );
 }

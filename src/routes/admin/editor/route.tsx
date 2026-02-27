@@ -7,7 +7,7 @@ import { BASE_URL } from '@/lib/constans'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 import { Group, GroupSeparator } from '@/components/ui/group'
-import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip'
+import { SimpleTooltip, Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip'
 
 const PUBLIC_BASE_HOST = new URL(BASE_URL).host
 
@@ -54,19 +54,13 @@ function EditorLayout() {
                 </Button>
               </ShareProfileModal>
               <GroupSeparator />
-              <Tooltip>
-                <TooltipTrigger render={<Button variant='secondary' className='rounded-full py-6 px-6' />}>
-
-                  {status.isSaving ? (
-                    <div className="flex items-center">
-                      <Spinner className="w-4 h-4" />
-                    </div>
-                  ) : <ExternalLink />}
-                </TooltipTrigger>
-                <TooltipPopup>
-                  Open Link
-                </TooltipPopup>
-              </Tooltip>
+              <SimpleTooltip content='Open Link' render={<Button variant='secondary' className='rounded-full py-6 px-6' />}>
+                {status.isSaving ? (
+                  <div className="flex items-center">
+                    <Spinner className="w-4 h-4" />
+                  </div>
+                ) : <ExternalLink />}
+              </SimpleTooltip>
             </Group>
           </div>
           <div className="pt-5 relative flex-1 w-full min-h-0 ">

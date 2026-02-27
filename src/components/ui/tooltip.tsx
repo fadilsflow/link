@@ -55,7 +55,28 @@ function TooltipPopup({
   )
 }
 
+function SimpleTooltip({
+  children,
+  content,
+  render,
+}: {
+  children?: React.ReactNode;
+  content: React.ReactNode;
+  render?: React.ReactElement;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        {...(render ? { render } : {})}
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipPopup>{content}</TooltipPopup>
+    </Tooltip>
+  );
+}
 export {
+  SimpleTooltip,
   TooltipCreateHandle,
   TooltipProvider,
   Tooltip,

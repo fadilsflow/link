@@ -16,6 +16,7 @@ import type { TRPCRouter } from '@/integrations/trpc/router'
 import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query'
 import NotFound from '@/components/not-found'
 import { AnchoredToastProvider, ToastProvider } from '@/components/ui/toast'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -61,7 +62,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
   shellComponent: RootDocument,
   notFoundComponent: NotFound,
-  
+
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -72,7 +73,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ToastProvider>
-          <AnchoredToastProvider>{children}</AnchoredToastProvider>
+          <AnchoredToastProvider>
+            <TooltipProvider delay={0}>
+              {children}
+            </TooltipProvider>
+          </AnchoredToastProvider>
         </ToastProvider>
         <TanStackDevtools
           config={{

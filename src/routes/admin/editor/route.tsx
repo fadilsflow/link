@@ -1,5 +1,5 @@
 import { Outlet, createFileRoute } from '@tanstack/react-router'
-import { CircleCheck, Share } from 'lucide-react'
+import { CircleCheck, ExternalLink, Share } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { PreviewProvider, usePreview } from '@/lib/preview-context'
 import { AppearancePreview } from '@/components/dashboard/appearance/AppearancePreview'
@@ -7,6 +7,8 @@ import { ShareProfileModal } from '@/components/share-profile-modal'
 import { BASE_URL } from '@/lib/constans'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
+import { Group, GroupSeparator } from '@/components/ui/group'
+import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip'
 
 const PUBLIC_BASE_HOST = new URL(BASE_URL).host
 
@@ -48,25 +50,41 @@ function EditorLayout() {
       <div className="block border-t lg:border-t-0 lg:border-l lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden bg-zinc-50/50 lg:bg-transparent">
         <div className="lg:h-full flex flex-col items-center py-10 lg:pt-10">
           <div className="flex items-center gap-2 mb-6 shrink-0">
-            <ShareProfileModal url={`${BASE_URL}/${user?.username || ''}`}>
-              <Button
-                className="rounded-full py-6 px-6 font-semibold"
-                variant={'outline'}
-                size={'lg'}
-              >
-                <span className="truncate max-w-[120px] md:max-w-40">
-                  {user?.username
-                    ? `${PUBLIC_BASE_HOST}/${user.username}`
-                    : `${PUBLIC_BASE_HOST}/loading`}
-                </span>
-                <Share className="ml-2 h-4 w-4" />
-              </Button>
-            </ShareProfileModal>
+            <Group>
+              <ShareProfileModal url={`${BASE_URL}/${user?.username || ''}`}>
+                <Button
+                  className="rounded-full py-6 px-6 font-semibold"
+                  variant={'outline'}
+                  size={'lg'}
+                >
+                  <span className="truncate max-w-[120px] md:max-w-40">
+                    {user?.username
+                      ? `${PUBLIC_BASE_HOST}/${user.username}`
+                      : `${PUBLIC_BASE_HOST}/loading`}
+                  </span>
+                  {/* <Share className="ml-2 h-4 w-4" /> */}
+                </Button>
+              </ShareProfileModal>
+              <GroupSeparator />
+              <Tooltip>
+                <TooltipTrigger render={<Button variant='secondary' className='rounded-full py-6 px-6' />}>
+
+                  {status.isSaving ? (
+                    <div className="flex items-center">
+                      <Spinner className="w-4 h-4" />
+                    </div>
+                  ) : <ExternalLink />}
+                </TooltipTrigger>
+                <TooltipPopup>
+                  Open Link
+                </TooltipPopup>
+              </Tooltip>
+            </Group>
           </div>
-          <div className="pt-5 relative flex-1 w-full min-h-0 pb-10">
+          <div className="pt-5 relative flex-1 w-full min-h-0 ">
             {user ? (
               <>
-                <div className="absolute top-0 left-0 right-0 flex justify-center mb-6 shrink-0">
+                {/* <div className="absolute top-0 left-0 right-0 flex justify-center mb-6 shrink-0">
                   {status.isSaving && (
                     <div className="flex items-center">
                       <Spinner className="w-4 h-4" />
@@ -79,7 +97,7 @@ function EditorLayout() {
                       )}
                     </div>
                   )}
-                </div>
+                </div> */}
                 <AppearancePreview user={user} blocks={blocks} socialLinks={socialLinks} />
               </>
             ) : (
@@ -94,6 +112,6 @@ function EditorLayout() {
           </div>
         </div>
       </div>
-    </main>
+    </main >
   )
 }

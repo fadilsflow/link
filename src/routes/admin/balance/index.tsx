@@ -335,7 +335,7 @@ function BalancePage() {
       </AppHeader>
 
       {/* Balance Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 ">
+      <Frame className="grid gap-0 sm:grid-cols-2 ">
         <BalanceCard
           title="Active Balance"
           value={summary?.availableBalance ?? 0}
@@ -372,7 +372,7 @@ function BalancePage() {
           actionLoading={isRefreshing}
           onAction={handleRefreshBalance}
         />
-      </div>
+      </Frame>
       <p className="text-sm text-muted-foreground">
         Available = funds ready to withdraw. Pending = funds still in hold (
         {summary?.holdPeriodDays ?? 7} days).
@@ -543,8 +543,8 @@ function BalanceCard({
       className={cn(
         'p-4',
         activeBalance
-          ? 'bg-linear-to-br from-black via-zinc-900 to-zinc-600 text-white shadow-xl'
-          : '',
+          ? ''
+          : 'bg-muted border-none shadow-none rounded-l-none',
       )}
     >
       <CardHeader className="pb-2">
@@ -571,7 +571,7 @@ function BalanceCard({
             onClick={onAction}
             disabled={actionDisabled}
             loading={actionLoading}
-            variant={activeBalance ? 'outline' : 'secondary'}
+            variant={activeBalance ? 'default' : 'outline'}
             className="rounded-full"
             size="lg"
           >

@@ -6,7 +6,7 @@
     "dev": "vite dev --port 3000",
     "build": "vite build --mode production",
     "preview": "vite preview",
-    "deploy": "bun run build && wrangler deploy --dotenv .env.prod",
+    "deploy": "bun run build && wrangler deploy",
     "cf-typegen": "wrangler types",
     "test": "vitest run",
     "lint": "eslint",

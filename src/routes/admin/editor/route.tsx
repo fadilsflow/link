@@ -54,7 +54,7 @@ function EditorLayout() {
                 </Button>
               </ShareProfileModal>
               <GroupSeparator />
-              <SimpleTooltip content='Open Link' render={<Button variant='secondary' className='rounded-full py-6 px-6' render={<a href={`${PUBLIC_BASE_HOST}/${user?.username}`} target='_blank' rel="noopener noreferrer" />} />}>
+              <SimpleTooltip content='Open Link' render={<Button variant='secondary' className='rounded-full py-6 px-6' render={<a href={`${BASE_URL}/${user?.username}`} target='_blank' rel="noopener noreferrer" />} />}>
                 {status.isSaving ? (
                   <div className="flex items-center">
                     <Spinner className="w-4 h-4" />

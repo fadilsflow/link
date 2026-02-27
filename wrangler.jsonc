@@ -5,7 +5,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "VITE_BASE_URL": "https://link.kreeasi.web.id",
-    "R2_PUBLIC_URL": "https://pub-ed164978c3cc4811973dd1143ca030fe.r2.dev"
+    "R2_PUBLIC_URL": "https://pub-ed164978c3cc4811973dd1143ca030fe.r2.dev",
   },
   "main": "@tanstack/react-start/server-entry",
 }

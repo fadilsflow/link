@@ -125,7 +125,7 @@ export function AppearancePreview({ user, blocks, socialLinks = [] }: Appearance
     <div className="w-full h-full flex items-center justify-center p-2">
       <div
         className={cn(
-          'aspect-9/18 w-full max-w-[280px] overflow-hidden rounded-[32px] border-3 border-border bg-muted relative',
+          'aspect-9/18 w-full max-w-[300px] overflow-hidden rounded-[32px] border-3 border-border bg-muted relative',
           textFontClass,
         )}
       >

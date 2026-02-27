@@ -7,7 +7,7 @@ import { BASE_URL } from '@/lib/constans'
 import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 import { Group, GroupSeparator } from '@/components/ui/group'
-import { SimpleTooltip, Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip'
+import { SimpleTooltip } from '@/components/ui/tooltip'
 
 const PUBLIC_BASE_HOST = new URL(BASE_URL).host
 

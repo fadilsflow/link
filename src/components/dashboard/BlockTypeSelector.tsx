@@ -13,6 +13,7 @@ import {
   type BlockType,
   type BlockCategory,
 } from '@/lib/block-type-config'
+import { Frame } from '../ui/frame'
 
 export type { BlockType, BlockCategory } from '@/lib/block-type-config'
 
@@ -77,33 +78,36 @@ export function BlockTypeSelector({
         <DialogHeader>
           <DialogTitle className="font-heading">Add a Block</DialogTitle>
         </DialogHeader>
-        <DialogPanel className="grid grid-cols-2 gap-2 ">
+        <DialogPanel >
           {categories.map((category) => (
             <div key={category} className="contents">
-              <div className="col-span-2 pt-2 pb-1">
+              <div className="col-span-2 pt-3 pb-1">
                 <h3 className="text-sm font-semibold text-foreground">
                   {CATEGORY_INFO[category].title}
                 </h3>
               </div>
-              {blocksByCategory[category].map((option) => (
-                <div
-                  key={option.type}
-                  onClick={() => onSelect(option.type)}
-                  className={`p-3 text-foreground bg-muted  rounded-xl flex gap-4 items-center cursor-pointer group`}
-                >
+              <Frame className="grid grid-cols-2 gap-1">
+
+                {blocksByCategory[category].map((option) => (
                   <div
-                    className={`p-1 border-2 group-hover:opacity-80 ${option.iconBgColor || 'bg-muted'} border-white ring-1 ring-border rounded-md flex items-center justify-center`}
-                  >
-                    <option.icon className={` ${option.iconColor} h-6 w-6`} />
+                    key={option.type}
+                    onClick={() => onSelect(option.type)}
+                    className={`p-3 text-foreground rounded-xl border bg-card flex gap-4 items-center cursor-pointer group`}
+                    >
+                    <div
+                      className={`p-1 border-2 group-hover:opacity-80 ${option.iconBgColor || 'bg-muted'} border-white ring-1 ring-border rounded-md flex items-center justify-center`}
+                    >
+                      <option.icon className={` ${option.iconColor} h-6 w-6`} />
+                    </div>
+                    <div className="gap-0 flex group-hover:opacity-70 flex-col">
+                      <span className="text-sm font-semibold">{option.title}</span>
+                      <p className="text-[10px] leading-tight">
+                        {option.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="gap-0 flex group-hover:opacity-70 flex-col">
-                    <span className="text-sm font-semibold">{option.title}</span>
-                    <p className="text-[10px] leading-tight">
-                      {option.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </Frame>
             </div>
           ))}
         </DialogPanel>

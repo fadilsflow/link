@@ -37,6 +37,7 @@ import { authClient } from '@/lib/auth-client'
 import { adminAuthQueryKey, useAdminAuthContext } from '@/lib/admin-auth'
 import { BASE_URL } from '@/lib/constans'
 import { cn } from '@/lib/utils'
+import DashboardSearchCommand from '../dashboard-search-command'
 
 const data = {
   navBottom: [
@@ -167,10 +168,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </MenuItem>
                   </MenuPopup>
                 </Menu>
-
-                <SidebarMenuButton size={'default'} className='size-9 sm:size-8 shrink-0 justify-center items-center ml-auto'>
-                  <Search />
-                </SidebarMenuButton>
+                <DashboardSearchCommand >
+                  <SidebarMenuButton size={'default'} className='size-9 sm:size-8 shrink-0 justify-center items-center ml-auto'>
+                    <Search />
+                  </SidebarMenuButton>
+                </DashboardSearchCommand>
               </SidebarMenuItem>
 
             </SidebarMenu>
@@ -255,8 +257,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenu>
           </SidebarFooter>
         </>
-      )}
-    </Sidebar>
+      )
+      }
+    </Sidebar >
 
   )
 }

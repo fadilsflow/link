@@ -17,6 +17,7 @@ import type { TRPCOptionsProxy } from '@trpc/tanstack-react-query'
 import NotFound from '@/components/not-found'
 import { AnchoredToastProvider, ToastProvider } from '@/components/ui/toast'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { ThemeProvider } from '@/components/theme-provider'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -72,13 +73,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ToastProvider>
-          <AnchoredToastProvider>
-            <TooltipProvider delay={0}>
-              {children}
-            </TooltipProvider>
-          </AnchoredToastProvider>
-        </ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <AnchoredToastProvider>
+              <TooltipProvider delay={0}>
+                {children}
+              </TooltipProvider>
+            </AnchoredToastProvider>
+          </ToastProvider>
+        </ThemeProvider>
         <TanStackDevtools
           config={{
             position: 'bottom-right',

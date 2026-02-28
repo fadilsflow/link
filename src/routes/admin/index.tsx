@@ -188,7 +188,7 @@ function HomePage() {
               <FrameTitle>Earnings</FrameTitle>
             </FrameHeader>
             <FramePanel className="flex items-center justify-center h-24">
-              <div className="flex justify-between w-full">
+              <div className="flex justify-between items-center w-full">
                 <span className="h-full text-4xl tracking-tight">
                   {isLoadingBalance ? (
                     <Spinner className="h-5 w-5 text-muted-foreground" />

@@ -182,7 +182,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
             </p>
           )}
         </div>
-        <Button className='absolute right-0 top-0' variant="secondary" size="sm" onClick={() => setDialogOpen(true)}>
+        <Button className='absolute right-0 top-0' variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
           Edit Profile
         </Button>
 

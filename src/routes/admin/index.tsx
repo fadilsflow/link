@@ -131,7 +131,7 @@ function HomePage() {
 
   return (
     <>
-      <AppHeader className="px-6 pt-6" showSeparator>
+      <AppHeader className="px-6 pt-6">
         <AppHeaderContent title="Home">
         </AppHeaderContent>
       </AppHeader>
@@ -149,35 +149,37 @@ function HomePage() {
             <FrameHeader>
               <FrameTitle>Account</FrameTitle>
             </FrameHeader>
-            <FramePanel className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-14 w-14 rounded-md border-2 border-background ring-2 ring-primary/10">
-                  <AvatarImage src={session?.user.image || ''} />
-                  <AvatarFallback className="bg-primary/5 text-lg text-primary">
-                    {userInitial}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-lg font-bold tracking-tight">{userName}</h3>
-                  {username ? (
-                    <a
-                      href={`/${username}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-0.5 flex w-fit items-center text-sm text-muted-foreground underline"
-                    >
-                      <span className="font-medium">
-                        {PUBLIC_BASE_HOST}/{username}
-                      </span>
-                    </a>
-                  ) : null}
+            <FramePanel className="flex items-center justify-center h-24">
+              <div className="flex justify-between items-center w-full">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-14 w-14 rounded-md border-2 border-background ring-2 ring-primary/10">
+                    <AvatarImage src={session?.user.image || ''} />
+                    <AvatarFallback className="bg-primary/5 text-lg text-primary">
+                      {userInitial}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-lg font-bold tracking-tight">{userName}</h3>
+                    {username ? (
+                      <a
+                        href={`/${username}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-0.5 flex w-fit items-center text-sm text-muted-foreground underline"
+                      >
+                        <span className="font-medium">
+                          {PUBLIC_BASE_HOST}/{username}
+                        </span>
+                      </a>
+                    ) : null}
+                  </div>
                 </div>
+                <ShareProfileModal url={username ? `${BASE_URL}/${username}` : BASE_URL}>
+                  <Button size="lg" variant="outline">
+                    Share
+                  </Button>
+                </ShareProfileModal>
               </div>
-              <ShareProfileModal url={username ? `${BASE_URL}/${username}` : BASE_URL}>
-                <Button size="lg" variant="outline">
-                  Share
-                </Button>
-              </ShareProfileModal>
             </FramePanel>
           </Frame>
 
@@ -185,17 +187,19 @@ function HomePage() {
             <FrameHeader>
               <FrameTitle>Earnings</FrameTitle>
             </FrameHeader>
-            <FramePanel className="flex items-center justify-between gap-4">
-              <span className="h-full text-4xl tracking-tight">
-                {isLoadingBalance ? (
-                  <Spinner className="h-5 w-5 text-muted-foreground" />
-                ) : (
-                  formatPrice(balance?.currentBalance ?? 0)
-                )}
-              </span>
-              <Button size="lg" variant="outline" render={<Link to="/admin/balance" />}>
-                Payout
-              </Button>
+            <FramePanel className="flex items-center justify-center h-24">
+              <div className="flex justify-between w-full">
+                <span className="h-full text-4xl tracking-tight">
+                  {isLoadingBalance ? (
+                    <Spinner className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    formatPrice(balance?.currentBalance ?? 0)
+                  )}
+                </span>
+                <Button size="lg" variant="outline" render={<Link to="/admin/balance" />}>
+                  Payout
+                </Button>
+              </div>
             </FramePanel>
           </Frame>
         </div>

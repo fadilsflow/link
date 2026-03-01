@@ -9,14 +9,15 @@ export const Route = createFileRoute('/auth/callback')({
     const status = await checkOnboardingStatus()
 
     if (status.isLoggedIn) {
-      const username = status.user.username
-
-      if (username) {
+      if (status.isOnboardingComplete) {
         throw redirect({
           to: '/admin/editor/profiles',
         })
       } else {
-        throw redirect({ to: '/onboarding' })
+        throw redirect({
+          to: '/onboarding',
+          search: { page: status.nextPage },
+        })
       }
     }
   },
@@ -37,13 +38,15 @@ function AuthCallbackPage() {
       if (isCancelled) return
 
       if (status.isLoggedIn) {
-        const username = status.user.username
-        if (username) {
+        if (status.isOnboardingComplete) {
           navigate({
             to: '/admin/editor/profiles',
           })
         } else {
-          navigate({ to: '/onboarding' })
+          navigate({
+            to: '/onboarding',
+            search: { page: status.nextPage },
+          })
         }
       } else {
         // If still nothing after a brief wait, go home

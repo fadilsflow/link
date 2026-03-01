@@ -93,6 +93,13 @@ const stepItems: Array<StepMeta> = [
   },
 ]
 
+const skippableStepMap: Record<OnboardingPage, boolean> = {
+  username: false,
+  role: true,
+  details: true,
+  finish: false,
+}
+
 function hasValue(value: string | null | undefined): boolean {
   return typeof value === 'string' && value.trim().length > 0
 }
@@ -278,6 +285,7 @@ function OnboardingPage() {
     onboardingPages[Math.min(currentPageIndex + 1, onboardingPages.length - 1)]
   const previousPage = onboardingPages[Math.max(currentPageIndex - 1, 0)]
   const isBusy = saveStepMutation.isPending || isUploadingAvatar
+  const canSkipCurrentStep = skippableStepMap[currentPage]
 
   const previewUsername = username.trim().toLowerCase()
   const profileUrl =
@@ -396,6 +404,45 @@ function OnboardingPage() {
     }
   }
 
+  const handleSkip = async () => {
+    if (!canSkipCurrentStep || isBusy) return
+    setErrorMessage(null)
+
+    try {
+      if (currentPage === 'role') {
+        const fallbackTitle =
+          title.trim() || onboardingState?.title?.trim() || 'Creator'
+        await saveStepMutation.mutateAsync({
+          step: 'role',
+          title: fallbackTitle,
+        })
+        goToPage(nextPage)
+        return
+      }
+
+      if (currentPage === 'details') {
+        const fallbackDisplayName =
+          displayName.trim() ||
+          onboardingState?.name?.trim() ||
+          username.trim() ||
+          'User'
+        await saveStepMutation.mutateAsync({
+          step: 'details',
+          details: {
+            displayName: fallbackDisplayName,
+            bio: bio.trim(),
+            avatarUrl: avatarUrl.trim(),
+          },
+        })
+        goToPage(nextPage)
+      }
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Terjadi kesalahan. Coba lagi.',
+      )
+    }
+  }
+
   const canGoBack = currentPage !== 'username'
 
   return (
@@ -403,12 +450,17 @@ function OnboardingPage() {
       <header className="border-b">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between px-6 py-5">
           <LogoStudioSidebar className="justify-start" />
-          <Button
-            variant="ghost"
-            onClick={() => navigate({ to: '/admin/editor/profiles' })}
-          >
-            Skip
-          </Button>
+          {canSkipCurrentStep ? (
+            <Button
+              variant="ghost"
+              onClick={handleSkip}
+              disabled={isBusy}
+            >
+              Skip
+            </Button>
+          ) : (
+            <div className="h-9 w-16" />
+          )}
         </div>
       </header>
 

@@ -284,12 +284,13 @@ function OnboardingPage() {
 
   React.useEffect(() => {
     if (!search.page) return
+    const page: OnboardingPage = search.page
     setCurrentPage((previousPage) => {
-      if (previousPage === search.page) return previousPage
+      if (previousPage === page) return previousPage
       const previousIndex = onboardingPages.indexOf(previousPage)
-      const nextIndex = onboardingPages.indexOf(search.page)
+      const nextIndex = onboardingPages.indexOf(page)
       setDirection(nextIndex > previousIndex ? 'forward' : 'backward')
-      return search.page
+      return page
     })
   }, [search.page])
 

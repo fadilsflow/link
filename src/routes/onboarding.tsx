@@ -398,8 +398,8 @@ function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-10">
+    <div className=" bg-background text-foreground flex flex-col">
+      <main className="min-h-screen flex-1 flex flex-col items-center justify-center px-6 py-10">
         <div className="w-full max-w-md relative">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
@@ -566,18 +566,15 @@ function OnboardingPage() {
           </AnimatePresence>
 
           {/* Stepper - Absolute at bottom with top-to-bottom animation */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut', delay: 0.1 }}
-            className="absolute -bottom-16 left-0 right-0 flex justify-center"
-          >
-            <Stepper
-              currentPage={currentPage}
-              onBackToStep={(page) => goToPage(page)}
-              disabled={isBusy}
-            />
-          </motion.div>
+        </div>
+        <div
+          className="absolute bottom-12 left-0 right-0 flex justify-center"
+        >
+          <Stepper
+            currentPage={currentPage}
+            onBackToStep={(page) => goToPage(page)}
+            disabled={isBusy}
+          />
         </div>
       </main>
     </div>

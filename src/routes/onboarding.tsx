@@ -126,8 +126,8 @@ function Stepper({
             disabled={!canGoBack}
             className={cn(
               'h-2 w-2 rounded-full transition-colors',
-              isCurrent || isCompleted ? 'bg-foreground' : 'bg-muted-foreground/30',
-              canGoBack ? 'cursor-pointer hover:bg-foreground/80' : 'cursor-not-allowed',
+              isCurrent ? 'bg-foreground/50' : 'bg-muted-foreground/30',
+              canGoBack ? 'cursor-pointer' : '',
             )}
             aria-current={isCurrent ? 'step' : undefined}
             aria-label={isCurrent ? `Current step: ${step.title}` : `Go back to ${step.title}`}

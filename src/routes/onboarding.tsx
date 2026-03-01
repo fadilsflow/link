@@ -422,7 +422,7 @@ function OnboardingPage() {
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: 0.04, duration: 0.32, ease: [0.34, 1.56, 0.64, 1] }}
                       >
-                        <LogoMark  size={104} />
+                        <LogoMark className='bg-muted/74 px-3  shadow-2xl' size={104} />
                       </motion.div>
                     </div>
                   </AnimatedField>

@@ -158,15 +158,12 @@ const slideVariants = {
   enter: (dir: 'forward' | 'backward') => ({
     x: dir === 'forward' ? 48 : -48,
     opacity: 0,
-    scale: 0.97,
   }),
   center: {
     x: 0,
     opacity: 1,
-    scale: 1,
   },
   exit: {
-    scale: 0.92,
     opacity: 0,
   },
 }
@@ -401,7 +398,7 @@ function OnboardingPage() {
   return (
     <div className="bg-background text-foreground flex flex-col">
       <main className="min-h-screen flex-1 flex flex-col items-center justify-center px-6 py-10">
-        <div className="w-full max-w-md relative overflow-hidden">
+        <div className="w-full max-w-md relative">
           <AnimatePresence mode="wait" initial={false} custom={direction}>
             <motion.div
               key={currentPage}
@@ -418,11 +415,17 @@ function OnboardingPage() {
                   <AnimatedField index={0}>
                     <div className="flex justify-center mb-4">
                       <motion.div
-                        initial={{ scale: 0.7, opacity: 0 }}
+                        initial={{ scale: 6, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.04, duration: 0.32, ease: [0.34, 1.56, 0.64, 1] }}
+                        transition={{
+                          duration: 0.8,
+                          ease: [0.16, 1, 0.3, 1], // cinematic ease-out
+                        }}
                       >
-                        <LogoMark className='bg-muted/74 px-3  shadow-2xl' size={104} />
+                        <LogoMark
+                          className=" px-3 shadow-2xl"
+                          size={104}
+                        />
                       </motion.div>
                     </div>
                   </AnimatedField>
@@ -585,15 +588,13 @@ function OnboardingPage() {
 
               <AnimatedField index={currentPage === 'details' ? 5 : 3}>
                 <div className="mt-10">
-                  <motion.div whileTap={{ scale: 0.97 }} transition={{ duration: 0.1 }}>
-                    <Button onClick={handleNext} className="w-full text-xl py-6 opacity-90">
-                      {currentPage === 'welcome'
-                        ? 'Get started'
-                        : currentPage === 'finish'
-                          ? 'Go to dashboard'
-                          : 'Continue'}
-                    </Button>
-                  </motion.div>
+                  <Button onClick={handleNext} className="w-full text-xl py-6 opacity-90">
+                    {currentPage === 'welcome'
+                      ? 'Get started'
+                      : currentPage === 'finish'
+                        ? 'Go to dashboard'
+                        : 'Continue'}
+                  </Button>
                 </div>
               </AnimatedField>
             </motion.div>

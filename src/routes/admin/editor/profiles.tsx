@@ -16,6 +16,7 @@ import { BlockFormDialog } from '@/components/dashboard/BlockFormDialog'
 import { blockCreateInputSchema, getDefaultBlockValues } from '@/lib/block-form'
 import { Frame } from '@/components/ui/frame'
 import { Card, CardPanel } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/admin/editor/profiles')({
   component: AdminDashboard,
@@ -398,6 +399,9 @@ function AdminDashboard() {
             onEdit={handleEditBlock}
             onToggleEnabled={handleToggleBlockEnabled}
             onReorder={handleReorder}
+            emptyAction={
+              <Button onClick={() => setIsAddBlockOpen(true)}>Add block</Button>
+            }
           />
         </Frame>
       </section>

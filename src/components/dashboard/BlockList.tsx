@@ -12,8 +12,11 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
+import { LayoutGrid } from 'lucide-react'
 import { SortableBlockItem } from './SortableBlockItem'
 import type { DragEndEvent } from '@dnd-kit/core'
+import type { ReactElement } from 'react'
+import EmptyState from '@/components/empty-state'
 
 interface Block {
   id: string
@@ -41,6 +44,7 @@ interface BlockListProps {
   products?: Array<ProductOption>
   onDragStart?: () => void
   onDragCancel?: () => void
+  emptyAction?: ReactElement
 }
 
 export function BlockList({
@@ -51,7 +55,21 @@ export function BlockList({
   products,
   onDragStart,
   onDragCancel,
+  emptyAction,
 }: BlockListProps) {
+  if (blocks.length === 0) {
+    return (
+      <EmptyState
+        title="No blocks yet"
+        description="Start by adding your first block to build your page."
+        icon={<LayoutGrid className="size-5" />}
+        className='min-h-100'
+      >
+        {emptyAction}
+      </EmptyState>
+    )
+  }
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },

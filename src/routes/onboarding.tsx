@@ -116,7 +116,7 @@ function Stepper({
   const currentPageIndex = onboardingPages.indexOf(currentPage)
 
   return (
-    <div className="mt-10 flex items-center justify-center gap-5">
+    <div className="flex items-center justify-center gap-5">
       {stepItems.map((step) => {
         const stepIndex = onboardingPages.indexOf(step.page)
         const isCompleted = stepIndex < currentPageIndex
@@ -177,7 +177,6 @@ function OnboardingPage() {
   const [avatarPreviewUrl, setAvatarPreviewUrl] = React.useState('')
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [isUploadingAvatar, setIsUploadingAvatar] = React.useState(false)
-  const [transitionDirection, setTransitionDirection] = React.useState<1 | -1>(1)
 
   const currentPage = search.page ?? 'welcome'
   const currentStep = stepItems.find((step) => step.page === currentPage) ?? stepItems[0]
@@ -269,8 +268,6 @@ function OnboardingPage() {
   ])
 
   const goToPage = (page: OnboardingPage, replace = false) => {
-    const nextIndex = onboardingPages.indexOf(page)
-    setTransitionDirection(nextIndex >= currentPageIndex ? 1 : -1)
     navigate({ search: { page }, replace })
   }
 
@@ -402,45 +399,30 @@ function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-
-
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-10">
-        {/* <div className="flex justify-center"><LogoMark size={35} className=" mb-10" /></div> */}
-
-        <div className="w-full max-w-md">
-
-          <section className="rounded-xl p-6 sm:p-8">
-
-            <div>
-              {currentPage === 'welcome' && (
-                <div className="flex justify-center mb-4">
-                  <LogoMark size={44} />
-                </div>
-              )}
-              <h1 className="text-2xl font-semibold sm:text-3xl text-center">{currentStep.title}</h1>
-              <p className="mt-2 text-sm text-muted-foreground sm:text-base text-center">
-                {currentStep.description}
-              </p>
-            </div>
-
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={currentPage}
-                className="mt-8 space-y-4"
-                initial={{ opacity: 0, x: transitionDirection > 0 ? 28 : -28 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: transitionDirection > 0 ? -28 : 28 }}
-                transition={{ duration: 0.22, ease: 'easeOut' }}
-              >
+        <div className="w-full max-w-md relative">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={currentPage}
+              className="rounded-xl p-6 sm:p-8 bg-background"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+            >
+              <div>
                 {currentPage === 'welcome' && (
-                  <div className="flex flex-col items-center rounded-lg border bg-muted/30 px-6 py-8 text-center">
-                    <LogoMark size={44} className="mb-4" />
-                    <p className="text-sm text-muted-foreground">
-                      Build halaman link kamu dalam hitungan menit.
-                    </p>
+                  <div className="flex justify-center mb-4">
+                    <LogoMark size={104} />
                   </div>
                 )}
+                <h1 className="text-2xl font-semibold sm:text-3xl text-center">{currentStep.title}</h1>
+                <p className="mt-2 text-sm text-muted-foreground sm:text-base text-center">
+                  {currentStep.description}
+                </p>
+              </div>
 
+              <div className="mt-8 space-y-4">
                 {currentPage === 'username' && (
                   <Field>
                     <FieldLabel>Username</FieldLabel>
@@ -565,31 +547,37 @@ function OnboardingPage() {
                 )}
 
                 {errorMessage && <FieldError>{errorMessage}</FieldError>}
-              </motion.div>
-            </AnimatePresence>
+              </div>
 
-            <div className="mt-10">
-              <Button
-                onClick={handleNext}
-                disabled={isBusy}
-                className='w-full'
-                size='lg'
-              >
-                {currentPage === 'welcome'
-                  ? 'Get started'
-                  : currentPage === 'finish'
-                    ? 'Go to dashboard'
-                    : 'Continue'}
-              </Button>
-            </div>
-            <div className="absolute bottom-8 right-0 left-0">
-              <Stepper
-                currentPage={currentPage}
-                onBackToStep={(page) => goToPage(page)}
-                disabled={isBusy}
-              />
-            </div>
-          </section>
+              <div className="mt-10">
+                <Button
+                  onClick={handleNext}
+                  disabled={isBusy}
+                  className='w-full text-xl py-6 opacity-90'
+                >
+                  {currentPage === 'welcome'
+                    ? 'Get started'
+                    : currentPage === 'finish'
+                      ? 'Go to dashboard'
+                      : 'Continue'}
+                </Button>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Stepper - Absolute at bottom with top-to-bottom animation */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut', delay: 0.1 }}
+            className="absolute -bottom-16 left-0 right-0 flex justify-center"
+          >
+            <Stepper
+              currentPage={currentPage}
+              onBackToStep={(page) => goToPage(page)}
+              disabled={isBusy}
+            />
+          </motion.div>
         </div>
       </main>
     </div>

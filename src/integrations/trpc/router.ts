@@ -2043,8 +2043,9 @@ const analyticsRouter = {
 
 const adminRouter = {
   getCurrentUser: protectedProcedure.query(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
     const currentUser = await db.query.user.findFirst({
-      where: eq(user.id, ctx.session.user.id),
+      where: eq(user.id, actorUserId),
       columns: { username: true },
     })
 
@@ -2054,8 +2055,9 @@ const adminRouter = {
   }),
 
   getContext: protectedProcedure.query(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
     const currentUser = await db.query.user.findFirst({
-      where: eq(user.id, ctx.session.user.id),
+      where: eq(user.id, actorUserId),
       columns: {
         id: true,
         username: true,
@@ -2065,14 +2067,13 @@ const adminRouter = {
       },
     })
 
-    const currentUsername = currentUser?.username
-    if (!currentUsername) {
+    if (!currentUser || !currentUser.username) {
       throw new TRPCError({ code: 'FORBIDDEN' })
     }
 
     return {
       userId: currentUser.id,
-      username: currentUsername,
+      username: currentUser.username,
       name: currentUser.name,
       email: currentUser.email,
       image: currentUser.image ?? null,

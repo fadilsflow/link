@@ -10,6 +10,7 @@ const trustedOrigins = [process.env.BETTER_AUTH_URL].filter(
 )
 
 export const auth = betterAuth({
+  appName: 'Kreeasi',
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema,

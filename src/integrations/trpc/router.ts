@@ -73,6 +73,41 @@ const nullableHexColorSchema = z.preprocess((value) => {
   return trimmed.length === 0 ? null : trimmed
 }, z.string().regex(HEX_COLOR_PATTERN, 'Invalid color format').nullable())
 
+const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3, 'Username minimal 3 karakter')
+  .max(30, 'Username maksimal 30 karakter')
+  .regex(
+    /^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$/,
+    'Username hanya boleh huruf kecil, angka, underscore, atau dash',
+  )
+
+const onboardingDetailsSchema = z.object({
+  displayName: z.string().trim().min(1).max(80),
+  bio: nullableTrimmedStringSchema.pipe(z.string().max(300).nullable()).optional(),
+  avatarUrl: nullableUrlSchema.optional(),
+})
+
+const onboardingStepSchema = z.discriminatedUnion('step', [
+  z.object({
+    step: z.literal('username'),
+    username: usernameSchema,
+  }),
+  z.object({
+    step: z.literal('role'),
+    title: z.string().trim().min(1).max(80),
+  }),
+  z.object({
+    step: z.literal('details'),
+    details: onboardingDetailsSchema,
+  }),
+  z.object({
+    step: z.literal('finish'),
+  }),
+])
+
 function calculateFee(amount: number): {
   feeAmount: number
   netAmount: number
@@ -140,7 +175,7 @@ const userRouter = {
       return foundUser ?? null
     }),
   getByUsername: publicProcedure
-    .input(z.object({ username: z.string() }))
+    .input(z.object({ username: usernameSchema }))
     .query(async ({ input }) => {
       const foundUser = await db.query.user.findFirst({
         where: eq(user.username, input.username),
@@ -148,7 +183,7 @@ const userRouter = {
       return foundUser ?? null
     }),
   setUsername: protectedProcedure
-    .input(z.object({ username: z.string() }))
+    .input(z.object({ username: usernameSchema }))
     .mutation(async ({ input, ctx }) => {
       const actorUserId = ctx.session.user.id
       const existing = await db.query.user.findFirst({
@@ -156,7 +191,10 @@ const userRouter = {
       })
 
       if (existing && existing.id !== actorUserId) {
-        throw new Error('Username is already taken')
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'Username is already taken',
+        })
       }
 
       const [updatedUser] = await db
@@ -305,6 +343,120 @@ const userRouter = {
         })
         .where(eq(user.id, actorUserId))
         .returning()
+      return updatedUser
+    }),
+} satisfies TRPCRouterRecord
+
+const onboardingRouter = {
+  getState: protectedProcedure.query(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
+    const existingUser = await db.query.user.findFirst({
+      where: eq(user.id, actorUserId),
+      columns: {
+        username: true,
+        title: true,
+        name: true,
+        bio: true,
+        image: true,
+      },
+    })
+
+    if (!existingUser) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'User not found',
+      })
+    }
+
+    return existingUser
+  }),
+  saveStep: protectedProcedure
+    .input(onboardingStepSchema)
+    .mutation(async ({ input, ctx }) => {
+      const actorUserId = ctx.session.user.id
+
+      if (input.step === 'finish') {
+        const existingUser = await db.query.user.findFirst({
+          where: eq(user.id, actorUserId),
+          columns: {
+            username: true,
+            title: true,
+            name: true,
+            bio: true,
+            image: true,
+          },
+        })
+
+        if (!existingUser) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'User not found',
+          })
+        }
+
+        return existingUser
+      }
+
+      if (input.step === 'username') {
+        const existing = await db.query.user.findFirst({
+          where: eq(user.username, input.username),
+          columns: { id: true },
+        })
+
+        if (existing && existing.id !== actorUserId) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'Username is already taken',
+          })
+        }
+
+        const [updatedUser] = await db
+          .update(user)
+          .set({ username: input.username })
+          .where(eq(user.id, actorUserId))
+          .returning({
+            username: user.username,
+            title: user.title,
+            name: user.name,
+            bio: user.bio,
+            image: user.image,
+          })
+
+        return updatedUser
+      }
+
+      if (input.step === 'role') {
+        const [updatedUser] = await db
+          .update(user)
+          .set({ title: input.title })
+          .where(eq(user.id, actorUserId))
+          .returning({
+            username: user.username,
+            title: user.title,
+            name: user.name,
+            bio: user.bio,
+            image: user.image,
+          })
+
+        return updatedUser
+      }
+
+      const [updatedUser] = await db
+        .update(user)
+        .set({
+          name: input.details.displayName,
+          bio: input.details.bio ?? null,
+          image: input.details.avatarUrl ?? null,
+        })
+        .where(eq(user.id, actorUserId))
+        .returning({
+          username: user.username,
+          title: user.title,
+          name: user.name,
+          bio: user.bio,
+          image: user.image,
+        })
+
       return updatedUser
     }),
 } satisfies TRPCRouterRecord
@@ -1890,22 +2042,40 @@ const analyticsRouter = {
 } satisfies TRPCRouterRecord
 
 const adminRouter = {
-  getCurrentUser: protectedProcedure.query(({ ctx }) => ({
-    username: ctx.session.user.username ?? null,
-  })),
+  getCurrentUser: protectedProcedure.query(async ({ ctx }) => {
+    const currentUser = await db.query.user.findFirst({
+      where: eq(user.id, ctx.session.user.id),
+      columns: { username: true },
+    })
 
-  getContext: protectedProcedure.query(({ ctx }) => {
-    const currentUsername = ctx.session.user.username
+    return {
+      username: currentUser?.username ?? null,
+    }
+  }),
+
+  getContext: protectedProcedure.query(async ({ ctx }) => {
+    const currentUser = await db.query.user.findFirst({
+      where: eq(user.id, ctx.session.user.id),
+      columns: {
+        id: true,
+        username: true,
+        name: true,
+        email: true,
+        image: true,
+      },
+    })
+
+    const currentUsername = currentUser?.username
     if (!currentUsername) {
       throw new TRPCError({ code: 'FORBIDDEN' })
     }
 
     return {
-      userId: ctx.session.user.id,
+      userId: currentUser.id,
       username: currentUsername,
-      name: ctx.session.user.name,
-      email: ctx.session.user.email,
-      image: ctx.session.user.image ?? null,
+      name: currentUser.name,
+      email: currentUser.email,
+      image: currentUser.image ?? null,
     }
   }),
 } satisfies TRPCRouterRecord
@@ -1914,6 +2084,7 @@ const adminRouter = {
 
 export const trpcRouter = createTRPCRouter({
   user: userRouter,
+  onboarding: onboardingRouter,
   block: blockRouter,
   product: productRouter,
   socialLink: socialLinkRouter,

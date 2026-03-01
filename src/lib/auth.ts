@@ -3,6 +3,7 @@ import { tanstackStartCookies } from 'better-auth/tanstack-start'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from '@/db'
 import * as schema from '@/db/schema'
+import { dash } from '@better-auth/infra'
 
 const trustedOrigins = [process.env.BETTER_AUTH_URL].filter(
   (origin): origin is string => typeof origin === 'string' && origin.length > 0,
@@ -48,5 +49,5 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [tanstackStartCookies()],
+  plugins: [tanstackStartCookies(), dash()],
 })

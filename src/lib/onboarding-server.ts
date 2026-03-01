@@ -3,8 +3,14 @@ import { eq } from 'drizzle-orm'
 import { getServerAuthContext } from './auth-server'
 import { db } from '@/db'
 import { user } from '@/db/schema'
+import { fchown } from 'node:fs'
 
-export const ONBOARDING_PAGES = ['username', 'role', 'details', 'finish'] as const
+export const ONBOARDING_PAGES = [
+  'username',
+  'role',
+  'details',
+  'finish',
+] as const
 export type OnboardingPage = (typeof ONBOARDING_PAGES)[number]
 
 function hasValue(value: string | null | undefined): boolean {

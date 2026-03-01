@@ -7,24 +7,40 @@ import {
   Check,
   CircleUserRound,
   PartyPopper,
+  Upload,
   UserRound,
+  X,
 } from 'lucide-react'
 import { z } from 'zod'
 import type { AdminAuthContextData } from '@/lib/admin-auth'
 import { adminAuthQueryKey } from '@/lib/admin-auth'
 import { LogoStudioSidebar } from '@/components/kreasi-logo'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { checkOnboardingStatus } from '@/lib/onboarding-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
+import { checkOnboardingStatus } from '@/lib/onboarding-server'
+import { uploadFile } from '@/lib/upload-client'
 import { cn } from '@/lib/utils'
 
 const onboardingPages = ['username', 'role', 'details', 'finish'] as const
 
 type OnboardingPage = (typeof onboardingPages)[number]
+
+type SaveStepPayload =
+  | { step: 'username'; username: string }
+  | { step: 'role'; title: string }
+  | {
+      step: 'details'
+      details: {
+        displayName: string
+        bio?: string
+        avatarUrl?: string
+      }
+    }
+  | { step: 'finish' }
 
 type OnboardingState = {
   username: string | null
@@ -34,33 +50,45 @@ type OnboardingState = {
   image: string | null
 }
 
+type StepMeta = {
+  page: OnboardingPage
+  label: string
+  title: string
+  description: string
+  icon: React.ReactNode
+}
+
 const onboardingSearchSchema = z.object({
   page: z.enum(onboardingPages).optional(),
 })
 
-const stepItems: Array<{
-  page: OnboardingPage
-  label: string
-  icon: React.ReactNode
-}> = [
+const stepItems: Array<StepMeta> = [
   {
     page: 'username',
     label: 'Username',
+    title: 'Choose your username',
+    description: 'Buat handle unik untuk link publik kamu.',
     icon: <UserRound className="size-4" />,
   },
   {
     page: 'role',
     label: 'Role',
+    title: 'What do you do?',
+    description: 'Tambahkan title supaya pengunjung langsung paham keahlianmu.',
     icon: <BriefcaseBusiness className="size-4" />,
   },
   {
     page: 'details',
     label: 'Details',
+    title: 'Complete your profile',
+    description: 'Upload avatar, isi display name, dan deskripsi singkat.',
     icon: <CircleUserRound className="size-4" />,
   },
   {
     page: 'finish',
     label: 'Finish',
+    title: 'You are ready to go',
+    description: 'Profil kamu sudah siap. Lanjutkan ke dashboard.',
     icon: <PartyPopper className="size-4" />,
   },
 ]
@@ -74,6 +102,57 @@ function getFirstIncompletePage(state: OnboardingState): OnboardingPage {
   if (!hasValue(state.title)) return 'role'
   if (!hasValue(state.name)) return 'details'
   return 'finish'
+}
+
+function validateUsername(value: string): string | null {
+  if (!value) return 'Username wajib diisi'
+  if (value.length < 3) return 'Username minimal 3 karakter'
+  if (value.length > 30) return 'Username maksimal 30 karakter'
+  if (!/^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$/.test(value)) {
+    return 'Gunakan huruf kecil, angka, underscore, atau dash'
+  }
+  return null
+}
+
+function Stepper({
+  currentPage,
+}: {
+  currentPage: OnboardingPage
+}) {
+  const currentPageIndex = onboardingPages.indexOf(currentPage)
+
+  return (
+    <div className="mb-6 flex flex-wrap gap-2">
+      {stepItems.map((step, index) => {
+        const stepIndex = onboardingPages.indexOf(step.page)
+        const isActive = step.page === currentPage
+        const isCompleted = stepIndex < currentPageIndex
+
+        return (
+          <div
+            key={step.page}
+            className={cn(
+              'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium',
+              isActive ? 'bg-muted' : 'bg-background',
+            )}
+          >
+            <span
+              className={cn(
+                'inline-flex size-4 items-center justify-center rounded-full',
+                isActive || isCompleted
+                  ? 'bg-foreground text-background'
+                  : 'bg-muted text-muted-foreground',
+              )}
+            >
+              {isCompleted ? <Check className="size-3" /> : step.icon}
+            </span>
+            <span>{step.label}</span>
+            {index < stepItems.length - 1 && <span className="sr-only">step</span>}
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 export const Route = createFileRoute('/onboarding')({
@@ -102,9 +181,14 @@ function OnboardingPage() {
   const [displayName, setDisplayName] = React.useState('')
   const [bio, setBio] = React.useState('')
   const [avatarUrl, setAvatarUrl] = React.useState('')
+  const [avatarFile, setAvatarFile] = React.useState<File | null>(null)
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = React.useState('')
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+  const [isUploadingAvatar, setIsUploadingAvatar] = React.useState(false)
 
   const currentPage = search.page ?? 'username'
+  const currentStep = stepItems.find((step) => step.page === currentPage) ?? stepItems[0]
+  const currentPageIndex = onboardingPages.indexOf(currentPage)
 
   const { data: onboardingState, isLoading } = useQuery({
     queryKey: ['onboarding-state'],
@@ -121,25 +205,20 @@ function OnboardingPage() {
     setAvatarUrl((prev) => prev || onboardingState.image || '')
   }, [onboardingState])
 
+  React.useEffect(() => {
+    return () => {
+      if (avatarPreviewUrl) {
+        URL.revokeObjectURL(avatarPreviewUrl)
+      }
+    }
+  }, [avatarPreviewUrl])
+
   const saveStepMutation = useMutation({
-    mutationFn: (
-      payload:
-        | { step: 'username'; username: string }
-        | { step: 'role'; title: string }
-        | {
-            step: 'details'
-            details: {
-              displayName: string
-              bio?: string
-              avatarUrl?: string
-            }
-          }
-        | { step: 'finish' },
-    ) => trpcClient.onboarding.saveStep.mutate(payload),
+    mutationFn: (payload: SaveStepPayload) =>
+      trpcClient.onboarding.saveStep.mutate(payload),
     onSuccess: (nextState, variables) => {
       queryClient.setQueryData(['onboarding-state'], nextState)
 
-      // Keep sidebar auth context in sync without requiring a full refresh.
       queryClient.setQueryData(
         adminAuthQueryKey(),
         (previous: AdminAuthContextData | undefined) => {
@@ -149,13 +228,13 @@ function OnboardingPage() {
             return { ...previous, username: variables.username }
           }
 
-        if (variables.step === 'details') {
-          return {
-            ...previous,
-            name: variables.details.displayName,
-            image: variables.details.avatarUrl || null,
+          if (variables.step === 'details') {
+            return {
+              ...previous,
+              name: variables.details.displayName,
+              image: variables.details.avatarUrl || null,
+            }
           }
-        }
 
           return previous
         },
@@ -172,7 +251,6 @@ function OnboardingPage() {
   }
 
   const firstIncompletePage = getFirstIncompletePage(normalizedState)
-  const currentPageIndex = onboardingPages.indexOf(currentPage)
   const maxAllowedPageIndex = onboardingPages.indexOf(firstIncompletePage)
 
   React.useEffect(() => {
@@ -199,15 +277,45 @@ function OnboardingPage() {
   const nextPage =
     onboardingPages[Math.min(currentPageIndex + 1, onboardingPages.length - 1)]
   const previousPage = onboardingPages[Math.max(currentPageIndex - 1, 0)]
+  const isBusy = saveStepMutation.isPending || isUploadingAvatar
 
-  const validateUsername = (value: string): string | null => {
-    if (!value) return 'Username wajib diisi'
-    if (value.length < 3) return 'Username minimal 3 karakter'
-    if (value.length > 30) return 'Username maksimal 30 karakter'
-    if (!/^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$/.test(value)) {
-      return 'Gunakan huruf kecil, angka, underscore, atau dash'
+  const previewUsername = username.trim().toLowerCase()
+  const profileUrl =
+    previewUsername.length > 0
+      ? `${typeof window !== 'undefined' ? window.location.origin : ''}/@${previewUsername}`
+      : '/@username'
+  const resolvedAvatarPreview = avatarPreviewUrl || avatarUrl || ''
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setErrorMessage('File avatar harus berupa gambar')
+      return
     }
-    return null
+
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage('Ukuran avatar maksimal 5MB')
+      return
+    }
+
+    if (avatarPreviewUrl) {
+      URL.revokeObjectURL(avatarPreviewUrl)
+    }
+
+    setAvatarFile(file)
+    setAvatarPreviewUrl(URL.createObjectURL(file))
+    setErrorMessage(null)
+  }
+
+  const clearAvatarSelection = () => {
+    if (avatarPreviewUrl) {
+      URL.revokeObjectURL(avatarPreviewUrl)
+    }
+    setAvatarFile(null)
+    setAvatarPreviewUrl('')
+    setAvatarUrl('')
   }
 
   const handleNext = async () => {
@@ -252,12 +360,25 @@ function OnboardingPage() {
           return
         }
 
+        let nextAvatarUrl = avatarUrl.trim()
+        if (avatarFile) {
+          setIsUploadingAvatar(true)
+          nextAvatarUrl = await uploadFile(avatarFile, 'avatars')
+          setAvatarUrl(nextAvatarUrl)
+          setAvatarFile(null)
+          if (avatarPreviewUrl) {
+            URL.revokeObjectURL(avatarPreviewUrl)
+          }
+          setAvatarPreviewUrl('')
+          setIsUploadingAvatar(false)
+        }
+
         await saveStepMutation.mutateAsync({
           step: 'details',
           details: {
             displayName: nextDisplayName,
             bio: bio.trim(),
-            avatarUrl: avatarUrl.trim(),
+            avatarUrl: nextAvatarUrl,
           },
         })
         goToPage(nextPage)
@@ -268,6 +389,7 @@ function OnboardingPage() {
       await queryClient.invalidateQueries({ queryKey: adminAuthQueryKey() })
       navigate({ to: '/admin/editor/profiles' })
     } catch (error) {
+      setIsUploadingAvatar(false)
       setErrorMessage(
         error instanceof Error ? error.message : 'Terjadi kesalahan. Coba lagi.',
       )
@@ -275,11 +397,6 @@ function OnboardingPage() {
   }
 
   const canGoBack = currentPage !== 'username'
-  const previewUsername = username.trim().toLowerCase()
-  const profileUrl =
-    previewUsername.length > 0
-      ? `${typeof window !== 'undefined' ? window.location.origin : ''}/@${previewUsername}`
-      : '/@username'
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -296,56 +413,13 @@ function OnboardingPage() {
       </header>
 
       <main className="mx-auto flex w-full max-w-4xl flex-col px-6 py-8 md:py-10">
-        <div className="mb-6 flex flex-wrap gap-2">
-          {stepItems.map((step, index) => {
-            const stepIndex = onboardingPages.indexOf(step.page)
-            const isActive = step.page === currentPage
-            const isCompleted = stepIndex < currentPageIndex
-
-            return (
-              <div
-                key={step.page}
-                className={cn(
-                  'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium',
-                  isActive && 'bg-muted',
-                  isCompleted && 'bg-background',
-                  !isActive && !isCompleted && 'bg-background',
-                )}
-              >
-                <span
-                  className={cn(
-                    'inline-flex size-4 items-center justify-center rounded-full',
-                    isActive && 'bg-foreground text-background',
-                    isCompleted && 'bg-foreground text-background',
-                    !isActive && !isCompleted && 'bg-muted text-muted-foreground',
-                  )}
-                >
-                  {isCompleted ? <Check className="size-3" /> : step.icon}
-                </span>
-                <span>{step.label}</span>
-                {index < stepItems.length - 1 && <span className="sr-only">step</span>}
-              </div>
-            )
-          })}
-        </div>
+        <Stepper currentPage={currentPage} />
 
         <section className="w-full rounded-xl border bg-card p-6 sm:p-8">
           <div>
-            <h1 className="text-2xl font-semibold sm:text-3xl">
-              {currentPage === 'username' && 'Choose your username'}
-              {currentPage === 'role' && 'What do you do?'}
-              {currentPage === 'details' && 'Complete your profile'}
-              {currentPage === 'finish' && 'You are ready to go'}
-            </h1>
+            <h1 className="text-2xl font-semibold sm:text-3xl">{currentStep.title}</h1>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              {currentPage === 'username' &&
-                'Buat handle unik untuk link publik kamu.'}
-              {currentPage === 'role' &&
-                'Tambahkan title supaya pengunjung langsung paham keahlianmu.'}
-              {currentPage === 'details' &&
-                'Isi informasi penting agar profile terlihat profesional.'}
-              {currentPage === 'finish' &&
-                'Profil kamu sudah siap. Lanjutkan ke dashboard untuk mulai setup halaman.'}
+              {currentStep.description}
             </p>
           </div>
 
@@ -356,12 +430,14 @@ function OnboardingPage() {
                 <Input
                   value={username}
                   onChange={(event) => {
-                    setUsername(event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))
+                    setUsername(
+                      event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
+                    )
                     if (errorMessage) setErrorMessage(null)
                   }}
                   placeholder="yourname"
                   autoFocus
-                  disabled={saveStepMutation.isPending}
+                  disabled={isBusy}
                   aria-invalid={!!errorMessage}
                 />
                 <FieldDescription>Gunakan 3-30 karakter.</FieldDescription>
@@ -380,7 +456,7 @@ function OnboardingPage() {
                   }}
                   placeholder="Designer, Creator, Product Manager"
                   autoFocus
-                  disabled={saveStepMutation.isPending}
+                  disabled={isBusy}
                   aria-invalid={!!errorMessage}
                 />
               </Field>
@@ -389,37 +465,44 @@ function OnboardingPage() {
             {currentPage === 'details' && (
               <>
                 <Field>
-                  <FieldLabel>Avatar URL</FieldLabel>
-                  <Input
-                    value={avatarUrl}
-                    onChange={(event) => {
-                      setAvatarUrl(event.target.value)
-                      if (errorMessage) setErrorMessage(null)
-                    }}
-                    placeholder="https://..."
-                    disabled={saveStepMutation.isPending}
-                    aria-invalid={!!errorMessage}
-                  />
-                </Field>
-
-                <div className="rounded-lg border bg-muted/50 p-3">
-                  <div className="flex items-center gap-3">
+                  <FieldLabel>Avatar</FieldLabel>
+                  <div className="flex items-center gap-3 rounded-lg border p-3">
                     <Avatar className="size-12 border bg-background">
-                      {avatarUrl.trim().length > 0 && <AvatarImage src={avatarUrl.trim()} />}
+                      {resolvedAvatarPreview ? <AvatarImage src={resolvedAvatarPreview} /> : null}
                       <AvatarFallback>
                         {displayName.trim().slice(0, 2).toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <p className="text-sm font-semibold">
-                        {displayName.trim() || 'Your Name'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {title.trim() || 'Your role'}
-                      </p>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                        <Upload className="size-4" />
+                        Upload Avatar
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleAvatarChange}
+                          disabled={isBusy}
+                        />
+                      </label>
+
+                      {(avatarFile || avatarUrl) && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearAvatarSelection}
+                          disabled={isBusy}
+                        >
+                          <X className="size-4" />
+                          Remove
+                        </Button>
+                      )}
                     </div>
                   </div>
-                </div>
+                  <FieldDescription>JPG, PNG, WEBP. Maksimal 5MB.</FieldDescription>
+                </Field>
 
                 <Field>
                   <FieldLabel>Display Name</FieldLabel>
@@ -431,7 +514,7 @@ function OnboardingPage() {
                     }}
                     placeholder="Nama yang akan tampil di profil"
                     autoFocus
-                    disabled={saveStepMutation.isPending}
+                    disabled={isBusy}
                     aria-invalid={!!errorMessage}
                   />
                 </Field>
@@ -445,7 +528,7 @@ function OnboardingPage() {
                       if (errorMessage) setErrorMessage(null)
                     }}
                     placeholder="Ceritakan secara singkat tentang kamu"
-                    disabled={saveStepMutation.isPending}
+                    disabled={isBusy}
                     aria-invalid={!!errorMessage}
                     maxLength={300}
                   />
@@ -456,15 +539,11 @@ function OnboardingPage() {
 
             {currentPage === 'finish' && (
               <div className="rounded-lg border bg-muted/50 p-5 text-left">
-                <p className="text-sm font-semibold">
-                  Selamat, profil kamu berhasil dibuat.
-                </p>
+                <p className="text-sm font-semibold">Selamat, profil kamu berhasil dibuat.</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Username: @{normalizedState.username ?? (previewUsername || 'username')}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  Public URL: {profileUrl}
-                </p>
+                <p className="text-sm text-muted-foreground">Public URL: {profileUrl}</p>
               </div>
             )}
 
@@ -475,7 +554,7 @@ function OnboardingPage() {
             <Button
               className="h-11 w-full"
               onClick={handleNext}
-              loading={saveStepMutation.isPending}
+              loading={isBusy}
             >
               {currentPage === 'finish' ? 'Go to dashboard' : 'Next'}
               {currentPage !== 'finish' && <ArrowRight className="size-4" />}
@@ -486,7 +565,7 @@ function OnboardingPage() {
                 variant="secondary"
                 className="h-11 w-full"
                 onClick={() => goToPage(previousPage)}
-                disabled={saveStepMutation.isPending}
+                disabled={isBusy}
               >
                 Back
               </Button>

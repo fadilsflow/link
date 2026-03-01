@@ -2,19 +2,13 @@ import * as React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import {
-  ArrowRight,
-  BriefcaseBusiness,
-  Check,
-  CircleUserRound,
-  PartyPopper,
   Upload,
-  UserRound,
   X,
 } from 'lucide-react'
 import { z } from 'zod'
 import type { AdminAuthContextData } from '@/lib/admin-auth'
 import { adminAuthQueryKey } from '@/lib/admin-auth'
-import { LogoStudioSidebar } from '@/components/kreasi-logo'
+import { LogoMark } from '@/components/kreasi-logo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
@@ -52,10 +46,8 @@ type OnboardingState = {
 
 type StepMeta = {
   page: OnboardingPage
-  label: string
   title: string
   description: string
-  icon: React.ReactNode
 }
 
 const onboardingSearchSchema = z.object({
@@ -65,31 +57,23 @@ const onboardingSearchSchema = z.object({
 const stepItems: Array<StepMeta> = [
   {
     page: 'username',
-    label: 'Username',
     title: 'Choose your username',
     description: 'Buat handle unik untuk link publik kamu.',
-    icon: <UserRound className="size-4" />,
   },
   {
     page: 'role',
-    label: 'Role',
     title: 'What do you do?',
     description: 'Tambahkan title supaya pengunjung langsung paham keahlianmu.',
-    icon: <BriefcaseBusiness className="size-4" />,
   },
   {
     page: 'details',
-    label: 'Details',
     title: 'Complete your profile',
     description: 'Upload avatar, isi display name, dan deskripsi singkat.',
-    icon: <CircleUserRound className="size-4" />,
   },
   {
     page: 'finish',
-    label: 'Finish',
     title: 'You are ready to go',
     description: 'Profil kamu sudah siap. Lanjutkan ke dashboard.',
-    icon: <PartyPopper className="size-4" />,
   },
 ]
 
@@ -129,33 +113,22 @@ function Stepper({
   const currentPageIndex = onboardingPages.indexOf(currentPage)
 
   return (
-    <div className="mb-6 flex flex-wrap gap-2">
-      {stepItems.map((step, index) => {
+    <div className="mt-30 flex items-center justify-center gap-2">
+      {stepItems.map((step) => {
         const stepIndex = onboardingPages.indexOf(step.page)
-        const isActive = step.page === currentPage
         const isCompleted = stepIndex < currentPageIndex
 
         return (
           <div
             key={step.page}
             className={cn(
-              'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium',
-              isActive ? 'bg-muted' : 'bg-background',
+              'h-2 w-2 rounded-full transition-colors',
+              isCompleted
+                ? 'bg-foreground'
+                : 'bg-muted-foreground/30'
             )}
-          >
-            <span
-              className={cn(
-                'inline-flex size-4 items-center justify-center rounded-full',
-                isActive || isCompleted
-                  ? 'bg-foreground text-background'
-                  : 'bg-muted text-muted-foreground',
-              )}
-            >
-              {isCompleted ? <Check className="size-3" /> : step.icon}
-            </span>
-            <span>{step.label}</span>
-            {index < stepItems.length - 1 && <span className="sr-only">step</span>}
-          </div>
+            aria-current={stepIndex === currentPageIndex ? 'step' : undefined}
+          />
         )
       })}
     </div>
@@ -446,184 +419,185 @@ function OnboardingPage() {
   const canGoBack = currentPage !== 'username'
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b">
-        <div className="mx-auto flex w-full max-w-4xl items-center justify-between px-6 py-5">
-          <LogoStudioSidebar className="justify-start" />
-          {canSkipCurrentStep ? (
-            <Button
-              variant="ghost"
-              onClick={handleSkip}
-              disabled={isBusy}
-            >
-              Skip
-            </Button>
-          ) : (
-            <div className="h-9 w-16" />
-          )}
-        </div>
-      </header>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
 
-      <main className="mx-auto flex w-full max-w-4xl flex-col px-6 py-8 md:py-10">
-        <Stepper currentPage={currentPage} />
 
-        <section className="w-full rounded-xl border bg-card p-6 sm:p-8 items-center flex fle-col justify-center">
-          <div>
-            <h1 className="text-2xl font-semibold sm:text-3xl">{currentStep.title}</h1>
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              {currentStep.description}
-            </p>
-          </div>
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-10">
+        {/* <div className="flex justify-center"><LogoMark size={35} className=" mb-10" /></div> */}
 
-          <div className="mt-8 max-w-xl space-y-4">
-            {currentPage === 'username' && (
-              <Field>
-                <FieldLabel>Username</FieldLabel>
-                <Input
-                  value={username}
-                  onChange={(event) => {
-                    setUsername(
-                      event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
-                    )
-                    if (errorMessage) setErrorMessage(null)
-                  }}
-                  placeholder="yourname"
-                  autoFocus
-                  disabled={isBusy}
-                  aria-invalid={!!errorMessage}
-                />
-                <FieldDescription>Gunakan 3-30 karakter.</FieldDescription>
-                <FieldDescription>Preview: {profileUrl}</FieldDescription>
-              </Field>
-            )}
+        <div className="w-full max-w-md">
 
-            {currentPage === 'role' && (
-              <Field>
-                <FieldLabel>Title / Role</FieldLabel>
-                <Input
-                  value={title}
-                  onChange={(event) => {
-                    setTitle(event.target.value)
-                    if (errorMessage) setErrorMessage(null)
-                  }}
-                  placeholder="Designer, Creator, Product Manager"
-                  autoFocus
-                  disabled={isBusy}
-                  aria-invalid={!!errorMessage}
-                />
-              </Field>
-            )}
+          <section className="rounded-xl p-6 sm:p-8">
+            <div>
+              <h1 className="text-2xl font-semibold sm:text-3xl text-center">{currentStep.title}</h1>
+              <p className="mt-2 text-sm text-muted-foreground sm:text-base text-center">
+                {currentStep.description}
+              </p>
+            </div>
 
-            {currentPage === 'details' && (
-              <>
+            <div className="mt-8 space-y-4">
+              {currentPage === 'username' && (
                 <Field>
-                  <FieldLabel>Avatar</FieldLabel>
-                  <div className="flex items-center gap-3 rounded-lg border p-3">
-                    <Avatar className="size-12 border bg-background">
-                      {resolvedAvatarPreview ? <AvatarImage src={resolvedAvatarPreview} /> : null}
-                      <AvatarFallback>
-                        {displayName.trim().slice(0, 2).toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm">
-                        <Upload className="size-4" />
-                        Upload Avatar
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleAvatarChange}
-                          disabled={isBusy}
-                        />
-                      </label>
-
-                      {(avatarFile || avatarUrl) && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={clearAvatarSelection}
-                          disabled={isBusy}
-                        >
-                          <X className="size-4" />
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  <FieldDescription>JPG, PNG, WEBP. Maksimal 5MB.</FieldDescription>
-                </Field>
-
-                <Field>
-                  <FieldLabel>Display Name</FieldLabel>
+                  <FieldLabel>Username</FieldLabel>
                   <Input
-                    value={displayName}
+                    value={username}
                     onChange={(event) => {
-                      setDisplayName(event.target.value)
+                      setUsername(
+                        event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
+                      )
                       if (errorMessage) setErrorMessage(null)
                     }}
-                    placeholder="Nama yang akan tampil di profil"
+                    placeholder="yourname"
+                    autoFocus
+                    disabled={isBusy}
+                    aria-invalid={!!errorMessage}
+                  />
+                  <FieldDescription>Gunakan 3-30 karakter.</FieldDescription>
+                  <FieldDescription>Preview: {profileUrl}</FieldDescription>
+                </Field>
+              )}
+
+              {currentPage === 'role' && (
+                <Field>
+                  <FieldLabel>Title / Role</FieldLabel>
+                  <Input
+                    value={title}
+                    onChange={(event) => {
+                      setTitle(event.target.value)
+                      if (errorMessage) setErrorMessage(null)
+                    }}
+                    placeholder="Designer, Creator, Product Manager"
                     autoFocus
                     disabled={isBusy}
                     aria-invalid={!!errorMessage}
                   />
                 </Field>
+              )}
 
-                <Field>
-                  <FieldLabel>Description</FieldLabel>
-                  <Textarea
-                    value={bio}
-                    onChange={(event) => {
-                      setBio(event.target.value)
-                      if (errorMessage) setErrorMessage(null)
-                    }}
-                    placeholder="Ceritakan secara singkat tentang kamu"
+              {currentPage === 'details' && (
+                <>
+                  <Field>
+                    <FieldLabel>Avatar</FieldLabel>
+                    <div className="flex items-center gap-3 rounded-lg border p-3">
+                      <Avatar className="size-12 border bg-background">
+                        {resolvedAvatarPreview ? <AvatarImage src={resolvedAvatarPreview} /> : null}
+                        <AvatarFallback>
+                          {displayName.trim().slice(0, 2).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                          <Upload className="size-4" />
+                          Upload Avatar
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAvatarChange}
+                            disabled={isBusy}
+                          />
+                        </label>
+
+                        {(avatarFile || avatarUrl) && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={clearAvatarSelection}
+                            disabled={isBusy}
+                          >
+                            <X className="size-4" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <FieldDescription>JPG, PNG, WEBP. Maksimal 5MB.</FieldDescription>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel>Display Name</FieldLabel>
+                    <Input
+                      value={displayName}
+                      onChange={(event) => {
+                        setDisplayName(event.target.value)
+                        if (errorMessage) setErrorMessage(null)
+                      }}
+                      placeholder="Nama yang akan tampil di profil"
+                      autoFocus
+                      disabled={isBusy}
+                      aria-invalid={!!errorMessage}
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel>Description</FieldLabel>
+                    <Textarea
+                      value={bio}
+                      onChange={(event) => {
+                        setBio(event.target.value)
+                        if (errorMessage) setErrorMessage(null)
+                      }}
+                      placeholder="Ceritakan secara singkat tentang kamu"
+                      disabled={isBusy}
+                      aria-invalid={!!errorMessage}
+                      maxLength={300}
+                    />
+                    <FieldDescription>{bio.length}/300 karakter</FieldDescription>
+                  </Field>
+                </>
+              )}
+
+              {currentPage === 'finish' && (
+                <div className="rounded-lg border bg-muted/50 p-5 text-left">
+                  <p className="text-sm font-semibold">Selamat, profil kamu berhasil dibuat.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Username: @{normalizedState.username ?? (previewUsername || 'username')}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Public URL: {profileUrl}</p>
+                </div>
+              )}
+
+              {errorMessage && <FieldError>{errorMessage}</FieldError>}
+            </div>
+
+            <div className="mt-10 flex justify-between max-w-md">
+              {canSkipCurrentStep ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSkip}
+                  disabled={isBusy}
+                >
+                  Skip
+                </Button>
+              ) : (
+                <div className="h-8 w-14" />
+              )}
+              <div className="flex gap-4 ">
+
+                {canGoBack && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => goToPage(previousPage)}
                     disabled={isBusy}
-                    aria-invalid={!!errorMessage}
-                    maxLength={300}
-                  />
-                  <FieldDescription>{bio.length}/300 karakter</FieldDescription>
-                </Field>
-              </>
-            )}
+                  >
+                    Back
+                  </Button>
+                )}
 
-            {currentPage === 'finish' && (
-              <div className="rounded-lg border bg-muted/50 p-5 text-left">
-                <p className="text-sm font-semibold">Selamat, profil kamu berhasil dibuat.</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Username: @{normalizedState.username ?? (previewUsername || 'username')}
-                </p>
-                <p className="text-sm text-muted-foreground">Public URL: {profileUrl}</p>
+                <Button
+                  onClick={handleNext}
+                  loading={isBusy}
+                >
+                  {currentPage === 'finish' ? 'Go to dashboard' : 'Continue'}
+                </Button>
               </div>
-            )}
-
-            {errorMessage && <FieldError>{errorMessage}</FieldError>}
-          </div>
-
-          <div className="mt-10 flex max-w-xl flex-col gap-3">
-            <Button
-              className="h-11 w-full"
-              onClick={handleNext}
-              loading={isBusy}
-            >
-              {currentPage === 'finish' ? 'Go to dashboard' : 'Next'}
-              {currentPage !== 'finish' && <ArrowRight className="size-4" />}
-            </Button>
-
-            {canGoBack && (
-              <Button
-                variant="secondary"
-                className="h-11 w-full"
-                onClick={() => goToPage(previousPage)}
-                disabled={isBusy}
-              >
-                Back
-              </Button>
-            )}
-          </div>
-        </section>
+            </div>
+            <Stepper currentPage={currentPage} />
+          </section>
+        </div>
       </main>
     </div>
   )

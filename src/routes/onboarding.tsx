@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { AnimatePresence, motion } from 'motion/react'
 import {
   Upload,
   X,
@@ -19,7 +20,7 @@ import { checkOnboardingStatus } from '@/lib/onboarding-server'
 import { uploadFile } from '@/lib/upload-client'
 import { cn } from '@/lib/utils'
 
-const onboardingPages = ['username', 'role', 'details', 'finish'] as const
+const onboardingPages = ['welcome', 'username', 'role', 'details', 'finish'] as const
 
 type OnboardingPage = (typeof onboardingPages)[number]
 
@@ -56,6 +57,11 @@ const onboardingSearchSchema = z.object({
 
 const stepItems: Array<StepMeta> = [
   {
+    page: 'welcome',
+    title: 'Welcome to Kreasi',
+    description: 'Setup profilmu dalam beberapa langkah singkat.',
+  },
+  {
     page: 'username',
     title: 'Choose your username',
     description: 'Buat handle unik untuk link publik kamu.',
@@ -76,13 +82,6 @@ const stepItems: Array<StepMeta> = [
     description: 'Profil kamu sudah siap. Lanjutkan ke dashboard.',
   },
 ]
-
-const skippableStepMap: Record<OnboardingPage, boolean> = {
-  username: false,
-  role: true,
-  details: true,
-  finish: false,
-}
 
 function hasValue(value: string | null | undefined): boolean {
   return typeof value === 'string' && value.trim().length > 0
@@ -107,27 +106,40 @@ function validateUsername(value: string): string | null {
 
 function Stepper({
   currentPage,
+  onBackToStep,
+  disabled,
 }: {
   currentPage: OnboardingPage
+  onBackToStep: (page: OnboardingPage) => void
+  disabled: boolean
 }) {
   const currentPageIndex = onboardingPages.indexOf(currentPage)
 
   return (
-    <div className="mt-30 flex items-center justify-center gap-2">
+    <div className="mt-10 flex items-center justify-center gap-5">
       {stepItems.map((step) => {
         const stepIndex = onboardingPages.indexOf(step.page)
         const isCompleted = stepIndex < currentPageIndex
+        const isCurrent = stepIndex === currentPageIndex
+        const canGoBack = isCompleted && !disabled
 
         return (
-          <div
+          <button
+            type="button"
             key={step.page}
+            onClick={() => canGoBack && onBackToStep(step.page)}
+            disabled={!canGoBack}
             className={cn(
               'h-2 w-2 rounded-full transition-colors',
-              isCompleted
+              isCurrent
                 ? 'bg-foreground'
-                : 'bg-muted-foreground/30'
+                : isCompleted
+                  ? 'bg-foreground'
+                  : 'bg-muted-foreground/30',
+              canGoBack ? 'cursor-pointer hover:bg-foreground/80' : 'cursor-not-allowed',
             )}
             aria-current={stepIndex === currentPageIndex ? 'step' : undefined}
+            aria-label={isCurrent ? `Current step: ${step.title}` : `Go back to ${step.title}`}
           />
         )
       })}
@@ -165,12 +177,13 @@ function OnboardingPage() {
   const [avatarPreviewUrl, setAvatarPreviewUrl] = React.useState('')
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [isUploadingAvatar, setIsUploadingAvatar] = React.useState(false)
+  const [transitionDirection, setTransitionDirection] = React.useState<1 | -1>(1)
 
-  const currentPage = search.page ?? 'username'
+  const currentPage = search.page ?? 'welcome'
   const currentStep = stepItems.find((step) => step.page === currentPage) ?? stepItems[0]
   const currentPageIndex = onboardingPages.indexOf(currentPage)
 
-  const { data: onboardingState, isLoading } = useQuery({
+  const { data: onboardingState } = useQuery({
     queryKey: ['onboarding-state'],
     queryFn: () => trpcClient.onboarding.getState.query(),
     refetchOnWindowFocus: false,
@@ -230,11 +243,18 @@ function OnboardingPage() {
     image: onboardingState?.image ?? null,
   }
 
-  const firstIncompletePage = getFirstIncompletePage(normalizedState)
+  const localState: OnboardingState = {
+    username: username.trim() || normalizedState.username,
+    title: title.trim() || normalizedState.title,
+    name: displayName.trim() || normalizedState.name,
+    bio: bio.trim() || normalizedState.bio,
+    image: avatarUrl.trim() || normalizedState.image,
+  }
+
+  const firstIncompletePage = getFirstIncompletePage(localState)
   const maxAllowedPageIndex = onboardingPages.indexOf(firstIncompletePage)
 
   React.useEffect(() => {
-    if (isLoading || !onboardingState) return
     if (currentPageIndex <= maxAllowedPageIndex) return
 
     navigate({
@@ -244,21 +264,19 @@ function OnboardingPage() {
   }, [
     currentPageIndex,
     firstIncompletePage,
-    isLoading,
     maxAllowedPageIndex,
     navigate,
-    onboardingState,
   ])
 
   const goToPage = (page: OnboardingPage, replace = false) => {
+    const nextIndex = onboardingPages.indexOf(page)
+    setTransitionDirection(nextIndex >= currentPageIndex ? 1 : -1)
     navigate({ search: { page }, replace })
   }
 
   const nextPage =
     onboardingPages[Math.min(currentPageIndex + 1, onboardingPages.length - 1)]
-  const previousPage = onboardingPages[Math.max(currentPageIndex - 1, 0)]
   const isBusy = saveStepMutation.isPending || isUploadingAvatar
-  const canSkipCurrentStep = skippableStepMap[currentPage]
 
   const previewUsername = username.trim().toLowerCase()
   const profileUrl =
@@ -315,6 +333,11 @@ function OnboardingPage() {
           step: 'username',
           username: normalizedUsername,
         })
+        goToPage(nextPage)
+        return
+      }
+
+      if (currentPage === 'welcome') {
         goToPage(nextPage)
         return
       }
@@ -377,47 +400,6 @@ function OnboardingPage() {
     }
   }
 
-  const handleSkip = async () => {
-    if (!canSkipCurrentStep || isBusy) return
-    setErrorMessage(null)
-
-    try {
-      if (currentPage === 'role') {
-        const fallbackTitle =
-          title.trim() || onboardingState?.title?.trim() || 'Creator'
-        await saveStepMutation.mutateAsync({
-          step: 'role',
-          title: fallbackTitle,
-        })
-        goToPage(nextPage)
-        return
-      }
-
-      if (currentPage === 'details') {
-        const fallbackDisplayName =
-          displayName.trim() ||
-          onboardingState?.name.trim() ||
-          username.trim() ||
-          'User'
-        await saveStepMutation.mutateAsync({
-          step: 'details',
-          details: {
-            displayName: fallbackDisplayName,
-            bio: bio.trim(),
-            avatarUrl: avatarUrl.trim(),
-          },
-        })
-        goToPage(nextPage)
-      }
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Terjadi kesalahan. Coba lagi.',
-      )
-    }
-  }
-
-  const canGoBack = currentPage !== 'username'
-
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
 
@@ -428,174 +410,185 @@ function OnboardingPage() {
         <div className="w-full max-w-md">
 
           <section className="rounded-xl p-6 sm:p-8">
+
             <div>
+              {currentPage === 'welcome' && (
+                <div className="flex justify-center mb-4">
+                  <LogoMark size={44} />
+                </div>
+              )}
               <h1 className="text-2xl font-semibold sm:text-3xl text-center">{currentStep.title}</h1>
               <p className="mt-2 text-sm text-muted-foreground sm:text-base text-center">
                 {currentStep.description}
               </p>
             </div>
 
-            <div className="mt-8 space-y-4">
-              {currentPage === 'username' && (
-                <Field>
-                  <FieldLabel>Username</FieldLabel>
-                  <Input
-                    value={username}
-                    onChange={(event) => {
-                      setUsername(
-                        event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
-                      )
-                      if (errorMessage) setErrorMessage(null)
-                    }}
-                    placeholder="yourname"
-                    autoFocus
-                    disabled={isBusy}
-                    aria-invalid={!!errorMessage}
-                  />
-                  <FieldDescription>Gunakan 3-30 karakter.</FieldDescription>
-                  <FieldDescription>Preview: {profileUrl}</FieldDescription>
-                </Field>
-              )}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={currentPage}
+                className="mt-8 space-y-4"
+                initial={{ opacity: 0, x: transitionDirection > 0 ? 28 : -28 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: transitionDirection > 0 ? -28 : 28 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+              >
+                {currentPage === 'welcome' && (
+                  <div className="flex flex-col items-center rounded-lg border bg-muted/30 px-6 py-8 text-center">
+                    <LogoMark size={44} className="mb-4" />
+                    <p className="text-sm text-muted-foreground">
+                      Build halaman link kamu dalam hitungan menit.
+                    </p>
+                  </div>
+                )}
 
-              {currentPage === 'role' && (
-                <Field>
-                  <FieldLabel>Title / Role</FieldLabel>
-                  <Input
-                    value={title}
-                    onChange={(event) => {
-                      setTitle(event.target.value)
-                      if (errorMessage) setErrorMessage(null)
-                    }}
-                    placeholder="Designer, Creator, Product Manager"
-                    autoFocus
-                    disabled={isBusy}
-                    aria-invalid={!!errorMessage}
-                  />
-                </Field>
-              )}
-
-              {currentPage === 'details' && (
-                <>
+                {currentPage === 'username' && (
                   <Field>
-                    <FieldLabel>Avatar</FieldLabel>
-                    <div className="flex items-center gap-3 rounded-lg border p-3">
-                      <Avatar className="size-12 border bg-background">
-                        {resolvedAvatarPreview ? <AvatarImage src={resolvedAvatarPreview} /> : null}
-                        <AvatarFallback>
-                          {displayName.trim().slice(0, 2).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm">
-                          <Upload className="size-4" />
-                          Upload Avatar
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleAvatarChange}
-                            disabled={isBusy}
-                          />
-                        </label>
-
-                        {(avatarFile || avatarUrl) && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={clearAvatarSelection}
-                            disabled={isBusy}
-                          >
-                            <X className="size-4" />
-                            Remove
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    <FieldDescription>JPG, PNG, WEBP. Maksimal 5MB.</FieldDescription>
-                  </Field>
-
-                  <Field>
-                    <FieldLabel>Display Name</FieldLabel>
+                    <FieldLabel>Username</FieldLabel>
                     <Input
-                      value={displayName}
+                      value={username}
                       onChange={(event) => {
-                        setDisplayName(event.target.value)
+                        setUsername(
+                          event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
+                        )
                         if (errorMessage) setErrorMessage(null)
                       }}
-                      placeholder="Nama yang akan tampil di profil"
+                      placeholder="yourname"
+                      autoFocus
+                      disabled={isBusy}
+                      aria-invalid={!!errorMessage}
+                    />
+                    <FieldDescription>Gunakan 3-30 karakter.</FieldDescription>
+                    <FieldDescription>Preview: {profileUrl}</FieldDescription>
+                  </Field>
+                )}
+
+                {currentPage === 'role' && (
+                  <Field>
+                    <FieldLabel>Title / Role</FieldLabel>
+                    <Input
+                      value={title}
+                      onChange={(event) => {
+                        setTitle(event.target.value)
+                        if (errorMessage) setErrorMessage(null)
+                      }}
+                      placeholder="Designer, Creator, Product Manager"
                       autoFocus
                       disabled={isBusy}
                       aria-invalid={!!errorMessage}
                     />
                   </Field>
-
-                  <Field>
-                    <FieldLabel>Description</FieldLabel>
-                    <Textarea
-                      value={bio}
-                      onChange={(event) => {
-                        setBio(event.target.value)
-                        if (errorMessage) setErrorMessage(null)
-                      }}
-                      placeholder="Ceritakan secara singkat tentang kamu"
-                      disabled={isBusy}
-                      aria-invalid={!!errorMessage}
-                      maxLength={300}
-                    />
-                    <FieldDescription>{bio.length}/300 karakter</FieldDescription>
-                  </Field>
-                </>
-              )}
-
-              {currentPage === 'finish' && (
-                <div className="rounded-lg border bg-muted/50 p-5 text-left">
-                  <p className="text-sm font-semibold">Selamat, profil kamu berhasil dibuat.</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Username: @{normalizedState.username ?? (previewUsername || 'username')}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Public URL: {profileUrl}</p>
-                </div>
-              )}
-
-              {errorMessage && <FieldError>{errorMessage}</FieldError>}
-            </div>
-
-            <div className="mt-10 flex justify-between max-w-md">
-              {canSkipCurrentStep ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSkip}
-                  disabled={isBusy}
-                >
-                  Skip
-                </Button>
-              ) : (
-                <div className="h-8 w-14" />
-              )}
-              <div className="flex gap-4 ">
-
-                {canGoBack && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => goToPage(previousPage)}
-                    disabled={isBusy}
-                  >
-                    Back
-                  </Button>
                 )}
 
-                <Button
-                  onClick={handleNext}
-                  loading={isBusy}
-                >
-                  {currentPage === 'finish' ? 'Go to dashboard' : 'Continue'}
-                </Button>
-              </div>
+                {currentPage === 'details' && (
+                  <>
+                    <Field>
+                      <FieldLabel>Avatar</FieldLabel>
+                      <div className="flex items-center gap-3 rounded-lg border p-3">
+                        <Avatar className="size-12 border bg-background">
+                          {resolvedAvatarPreview ? <AvatarImage src={resolvedAvatarPreview} /> : null}
+                          <AvatarFallback>
+                            {displayName.trim().slice(0, 2).toUpperCase() || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                            <Upload className="size-4" />
+                            Upload Avatar
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleAvatarChange}
+                              disabled={isBusy}
+                            />
+                          </label>
+
+                          {(avatarFile || avatarUrl) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={clearAvatarSelection}
+                              disabled={isBusy}
+                            >
+                              <X className="size-4" />
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <FieldDescription>JPG, PNG, WEBP. Maksimal 5MB.</FieldDescription>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>Display Name</FieldLabel>
+                      <Input
+                        value={displayName}
+                        onChange={(event) => {
+                          setDisplayName(event.target.value)
+                          if (errorMessage) setErrorMessage(null)
+                        }}
+                        placeholder="Nama yang akan tampil di profil"
+                        autoFocus
+                        disabled={isBusy}
+                        aria-invalid={!!errorMessage}
+                      />
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>Description</FieldLabel>
+                      <Textarea
+                        value={bio}
+                        onChange={(event) => {
+                          setBio(event.target.value)
+                          if (errorMessage) setErrorMessage(null)
+                        }}
+                        placeholder="Ceritakan secara singkat tentang kamu"
+                        disabled={isBusy}
+                        aria-invalid={!!errorMessage}
+                        maxLength={300}
+                      />
+                      <FieldDescription>{bio.length}/300 karakter</FieldDescription>
+                    </Field>
+                  </>
+                )}
+
+                {currentPage === 'finish' && (
+                  <div className="rounded-lg border bg-muted/50 p-5 text-left">
+                    <p className="text-sm font-semibold">Selamat, profil kamu berhasil dibuat.</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Username: @{localState.username ?? (previewUsername || 'username')}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Public URL: {profileUrl}</p>
+                  </div>
+                )}
+
+                {errorMessage && <FieldError>{errorMessage}</FieldError>}
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="mt-10">
+              <Button
+                onClick={handleNext}
+                disabled={isBusy}
+                className='w-full'
+                size='lg'
+              >
+                {currentPage === 'welcome'
+                  ? 'Get started'
+                  : currentPage === 'finish'
+                    ? 'Go to dashboard'
+                    : 'Continue'}
+              </Button>
             </div>
-            <Stepper currentPage={currentPage} />
+            <div className="absolute bottom-8 right-0 left-0">
+              <Stepper
+                currentPage={currentPage}
+                onBackToStep={(page) => goToPage(page)}
+                disabled={isBusy}
+              />
+            </div>
           </section>
         </div>
       </main>

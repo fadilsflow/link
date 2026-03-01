@@ -8,12 +8,26 @@ type CachedSessionEntry = {
 }
 
 const SESSION_CACHE_TTL_MS = 15_000
+const SESSION_CACHE_MAX_ENTRIES = 300
 const sessionCache = new Map<string, CachedSessionEntry>()
 
-function getSessionCacheKey(headers: Headers) {
+async function sha256Hex(value: string) {
+  const encoded = new TextEncoder().encode(value)
+  const digest = await crypto.subtle.digest('SHA-256', encoded)
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+async function getSessionCacheKey(headers: Headers) {
   const cookie = headers.get('cookie') ?? ''
   const authHeader = headers.get('authorization') ?? ''
-  return `${cookie}::${authHeader}`
+  if (!cookie && !authHeader) {
+    return '::'
+  }
+
+  // Avoid storing raw credential values as in-memory map keys.
+  return await sha256Hex(`${cookie}::${authHeader}`)
 }
 
 function pruneExpiredSessionCache(now = Date.now()) {
@@ -25,7 +39,7 @@ function pruneExpiredSessionCache(now = Date.now()) {
 }
 
 export async function getSessionFromHeaders(headers: Headers) {
-  const cacheKey = getSessionCacheKey(headers)
+  const cacheKey = await getSessionCacheKey(headers)
 
   if (!cacheKey || cacheKey === '::') {
     return await auth.api.getSession({ headers })
@@ -39,9 +53,9 @@ export async function getSessionFromHeaders(headers: Headers) {
 
   const session = await auth.api.getSession({ headers })
 
-  if (sessionCache.size > 300) {
+  if (sessionCache.size > SESSION_CACHE_MAX_ENTRIES) {
     pruneExpiredSessionCache(now)
-    if (sessionCache.size > 300) {
+    if (sessionCache.size > SESSION_CACHE_MAX_ENTRIES) {
       const firstKey = sessionCache.keys().next().value
       if (firstKey) {
         sessionCache.delete(firstKey)

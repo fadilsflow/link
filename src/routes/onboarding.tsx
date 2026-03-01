@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
   Upload,
   X,
@@ -104,6 +104,9 @@ function validateUsername(value: string): string | null {
   return null
 }
 
+// Direction context so child knows which way to animate
+const DirectionContext = React.createContext<'forward' | 'backward'>('forward')
+
 function Stepper({
   currentPage,
   onBackToStep,
@@ -163,10 +166,73 @@ export const Route = createFileRoute('/onboarding')({
   },
 })
 
+// Variants that respond to direction
+const slideVariants = {
+  enter: (direction: 'forward' | 'backward') => ({
+    x: direction === 'forward' ? 40 : -40,
+    opacity: 0,
+    scale: 0.98,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    scale: 1,
+  },
+  exit: (direction: 'forward' | 'backward') => ({
+    x: direction === 'forward' ? -40 : 40,
+    opacity: 0,
+    scale: 0.98,
+  }),
+}
+
+const slideTransition = {
+  duration: 0.22,
+  ease: [0.32, 0.72, 0, 1] as const, // custom ease: fast out, smooth
+}
+
+// Stagger children inside each card
+const contentVariants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.055 + 0.05, duration: 0.2, ease: 'easeOut' as const },
+  }),
+}
+
+function AnimatedField({
+  index,
+  children,
+}: {
+  index: number
+  children: React.ReactNode
+}) {
+  return (
+    <motion.div
+      custom={index}
+      variants={contentVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+// Shake animation for errors
+const shakeVariants = {
+  idle: { x: 0 },
+  shake: {
+    x: [0, -8, 8, -6, 6, -4, 4, 0],
+    transition: { duration: 0.4, ease: 'easeInOut' },
+  },
+}
+
 function OnboardingPage() {
   const navigate = Route.useNavigate()
   const search = Route.useSearch()
   const queryClient = useQueryClient()
+  const shouldReduceMotion = useReducedMotion()
 
   const [username, setUsername] = React.useState('')
   const [title, setTitle] = React.useState('')
@@ -178,6 +244,9 @@ function OnboardingPage() {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [isUploadingAvatar, setIsUploadingAvatar] = React.useState(false)
 
+  // Track direction for animation
+  const [direction, setDirection] = React.useState<'forward' | 'backward'>('forward')
+
   const currentPage = search.page ?? 'welcome'
   const currentStep = stepItems.find((step) => step.page === currentPage) ?? stepItems[0]
   const currentPageIndex = onboardingPages.indexOf(currentPage)
@@ -186,6 +255,8 @@ function OnboardingPage() {
     queryKey: ['onboarding-state'],
     queryFn: () => trpcClient.onboarding.getState.query(),
     refetchOnWindowFocus: false,
+    // Use stale data immediately — no loading spinner needed
+    staleTime: Infinity,
   })
 
   React.useEffect(() => {
@@ -268,6 +339,8 @@ function OnboardingPage() {
   ])
 
   const goToPage = (page: OnboardingPage, replace = false) => {
+    const targetIndex = onboardingPages.indexOf(page)
+    setDirection(targetIndex > currentPageIndex ? 'forward' : 'backward')
     navigate({ search: { page }, replace })
   }
 
@@ -326,11 +399,12 @@ function OnboardingPage() {
           return
         }
 
+        // Navigate immediately (optimistic), save in background
+        goToPage(nextPage)
         await saveStepMutation.mutateAsync({
           step: 'username',
           username: normalizedUsername,
         })
-        goToPage(nextPage)
         return
       }
 
@@ -346,11 +420,12 @@ function OnboardingPage() {
           return
         }
 
+        // Navigate immediately (optimistic), save in background
+        goToPage(nextPage)
         await saveStepMutation.mutateAsync({
           step: 'role',
           title: nextTitle,
         })
-        goToPage(nextPage)
         return
       }
 
@@ -374,6 +449,8 @@ function OnboardingPage() {
           setIsUploadingAvatar(false)
         }
 
+        // Navigate immediately (optimistic), save in background
+        goToPage(nextPage)
         await saveStepMutation.mutateAsync({
           step: 'details',
           details: {
@@ -382,7 +459,6 @@ function OnboardingPage() {
             avatarUrl: nextAvatarUrl,
           },
         })
-        goToPage(nextPage)
         return
       }
 
@@ -398,185 +474,246 @@ function OnboardingPage() {
   }
 
   return (
-    <div className=" bg-background text-foreground flex flex-col">
-      <main className="min-h-screen flex-1 flex flex-col items-center justify-center px-6 py-10">
-        <div className="w-full max-w-md relative">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={currentPage}
-              className="rounded-xl p-6 sm:p-8 bg-background"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
+    <DirectionContext.Provider value={direction}>
+      <div className="bg-background text-foreground flex flex-col">
+        <main className="min-h-screen flex-1 flex flex-col items-center justify-center px-6 py-10">
+          <div className="w-full max-w-md relative overflow-hidden">
+            <AnimatePresence
+              mode="wait"
+              initial={false}
+              custom={direction}
             >
-              <div>
-                {currentPage === 'welcome' && (
-                  <div className="flex justify-center mb-4">
-                    <LogoMark size={104} />
-                  </div>
-                )}
-                <h1 className="text-2xl font-semibold sm:text-3xl text-center">{currentStep.title}</h1>
-                <p className="mt-2 text-sm text-muted-foreground sm:text-base text-center">
-                  {currentStep.description}
-                </p>
-              </div>
-
-              <div className="mt-8 space-y-4">
-                {currentPage === 'username' && (
-                  <Field>
-                    <FieldLabel>Username</FieldLabel>
-                    <Input
-                      value={username}
-                      onChange={(event) => {
-                        setUsername(
-                          event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
-                        )
-                        if (errorMessage) setErrorMessage(null)
-                      }}
-                      placeholder="yourname"
-                      autoFocus
-                      disabled={isBusy}
-                      aria-invalid={!!errorMessage}
-                    />
-                    <FieldDescription>Gunakan 3-30 karakter.</FieldDescription>
-                    <FieldDescription>Preview: {profileUrl}</FieldDescription>
-                  </Field>
-                )}
-
-                {currentPage === 'role' && (
-                  <Field>
-                    <FieldLabel>Title / Role</FieldLabel>
-                    <Input
-                      value={title}
-                      onChange={(event) => {
-                        setTitle(event.target.value)
-                        if (errorMessage) setErrorMessage(null)
-                      }}
-                      placeholder="Designer, Creator, Product Manager"
-                      autoFocus
-                      disabled={isBusy}
-                      aria-invalid={!!errorMessage}
-                    />
-                  </Field>
-                )}
-
-                {currentPage === 'details' && (
-                  <>
-                    <Field>
-                      <FieldLabel>Avatar</FieldLabel>
-                      <div className="flex items-center gap-3 rounded-lg border p-3">
-                        <Avatar className="size-12 border bg-background">
-                          {resolvedAvatarPreview ? <AvatarImage src={resolvedAvatarPreview} /> : null}
-                          <AvatarFallback>
-                            {displayName.trim().slice(0, 2).toUpperCase() || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm">
-                            <Upload className="size-4" />
-                            Upload Avatar
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={handleAvatarChange}
-                              disabled={isBusy}
-                            />
-                          </label>
-
-                          {(avatarFile || avatarUrl) && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={clearAvatarSelection}
-                              disabled={isBusy}
-                            >
-                              <X className="size-4" />
-                              Remove
-                            </Button>
-                          )}
-                        </div>
+              <motion.div
+                key={currentPage}
+                custom={direction}
+                variants={shouldReduceMotion ? {} : slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={slideTransition}
+                className="rounded-xl p-6 sm:p-8 bg-background"
+              >
+                <div>
+                  {currentPage === 'welcome' && (
+                    <AnimatedField index={0}>
+                      <div className="flex justify-center mb-4">
+                        <motion.div
+                          initial={{ scale: 0.7, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: 0.05, duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
+                        >
+                          <LogoMark size={104} />
+                        </motion.div>
                       </div>
-                      <FieldDescription>JPG, PNG, WEBP. Maksimal 5MB.</FieldDescription>
-                    </Field>
-
-                    <Field>
-                      <FieldLabel>Display Name</FieldLabel>
-                      <Input
-                        value={displayName}
-                        onChange={(event) => {
-                          setDisplayName(event.target.value)
-                          if (errorMessage) setErrorMessage(null)
-                        }}
-                        placeholder="Nama yang akan tampil di profil"
-                        autoFocus
-                        disabled={isBusy}
-                        aria-invalid={!!errorMessage}
-                      />
-                    </Field>
-
-                    <Field>
-                      <FieldLabel>Description</FieldLabel>
-                      <Textarea
-                        value={bio}
-                        onChange={(event) => {
-                          setBio(event.target.value)
-                          if (errorMessage) setErrorMessage(null)
-                        }}
-                        placeholder="Ceritakan secara singkat tentang kamu"
-                        disabled={isBusy}
-                        aria-invalid={!!errorMessage}
-                        maxLength={300}
-                      />
-                      <FieldDescription>{bio.length}/300 karakter</FieldDescription>
-                    </Field>
-                  </>
-                )}
-
-                {currentPage === 'finish' && (
-                  <div className="rounded-lg border bg-muted/50 p-5 text-left">
-                    <p className="text-sm font-semibold">Selamat, profil kamu berhasil dibuat.</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Username: @{localState.username ?? (previewUsername || 'username')}
+                    </AnimatedField>
+                  )}
+                  <AnimatedField index={currentPage === 'welcome' ? 1 : 0}>
+                    <h1 className="text-2xl font-semibold sm:text-3xl text-center">{currentStep.title}</h1>
+                  </AnimatedField>
+                  <AnimatedField index={currentPage === 'welcome' ? 2 : 1}>
+                    <p className="mt-2 text-sm text-muted-foreground sm:text-base text-center">
+                      {currentStep.description}
                     </p>
-                    <p className="text-sm text-muted-foreground">Public URL: {profileUrl}</p>
+                  </AnimatedField>
+                </div>
+
+                <div className="mt-8 space-y-4">
+                  {currentPage === 'username' && (
+                    <AnimatedField index={2}>
+                      <Field>
+                        <FieldLabel>Username</FieldLabel>
+                        <Input
+                          value={username}
+                          onChange={(event) => {
+                            setUsername(
+                              event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''),
+                            )
+                            if (errorMessage) setErrorMessage(null)
+                          }}
+                          placeholder="yourname"
+                          autoFocus
+                          disabled={isBusy}
+                          aria-invalid={!!errorMessage}
+                        />
+                        <FieldDescription>Gunakan 3-30 karakter.</FieldDescription>
+                        <FieldDescription>Preview: {profileUrl}</FieldDescription>
+                      </Field>
+                    </AnimatedField>
+                  )}
+
+                  {currentPage === 'role' && (
+                    <AnimatedField index={2}>
+                      <Field>
+                        <FieldLabel>Title / Role</FieldLabel>
+                        <Input
+                          value={title}
+                          onChange={(event) => {
+                            setTitle(event.target.value)
+                            if (errorMessage) setErrorMessage(null)
+                          }}
+                          placeholder="Designer, Creator, Product Manager"
+                          autoFocus
+                          disabled={isBusy}
+                          aria-invalid={!!errorMessage}
+                        />
+                      </Field>
+                    </AnimatedField>
+                  )}
+
+                  {currentPage === 'details' && (
+                    <>
+                      <AnimatedField index={2}>
+                        <Field>
+                          <FieldLabel>Avatar</FieldLabel>
+                          <div className="flex items-center gap-3 rounded-lg border p-3">
+                            <Avatar className="size-12 border bg-background">
+                              {resolvedAvatarPreview ? <AvatarImage src={resolvedAvatarPreview} /> : null}
+                              <AvatarFallback>
+                                {displayName.trim().slice(0, 2).toUpperCase() || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                                <Upload className="size-4" />
+                                Upload Avatar
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={handleAvatarChange}
+                                  disabled={isBusy}
+                                />
+                              </label>
+
+                              {(avatarFile || avatarUrl) && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={clearAvatarSelection}
+                                  disabled={isBusy}
+                                >
+                                  <X className="size-4" />
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          <FieldDescription>JPG, PNG, WEBP. Maksimal 5MB.</FieldDescription>
+                        </Field>
+                      </AnimatedField>
+
+                      <AnimatedField index={3}>
+                        <Field>
+                          <FieldLabel>Display Name</FieldLabel>
+                          <Input
+                            value={displayName}
+                            onChange={(event) => {
+                              setDisplayName(event.target.value)
+                              if (errorMessage) setErrorMessage(null)
+                            }}
+                            placeholder="Nama yang akan tampil di profil"
+                            autoFocus
+                            disabled={isBusy}
+                            aria-invalid={!!errorMessage}
+                          />
+                        </Field>
+                      </AnimatedField>
+
+                      <AnimatedField index={4}>
+                        <Field>
+                          <FieldLabel>Description</FieldLabel>
+                          <Textarea
+                            value={bio}
+                            onChange={(event) => {
+                              setBio(event.target.value)
+                              if (errorMessage) setErrorMessage(null)
+                            }}
+                            placeholder="Ceritakan secara singkat tentang kamu"
+                            disabled={isBusy}
+                            aria-invalid={!!errorMessage}
+                            maxLength={300}
+                          />
+                          <FieldDescription>{bio.length}/300 karakter</FieldDescription>
+                        </Field>
+                      </AnimatedField>
+                    </>
+                  )}
+
+                  {currentPage === 'finish' && (
+                    <AnimatedField index={2}>
+                      <div className="rounded-lg border bg-muted/50 p-5 text-left">
+                        <p className="text-sm font-semibold">Selamat, profil kamu berhasil dibuat.</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Username: @{localState.username ?? (previewUsername || 'username')}
+                        </p>
+                        <p className="text-sm text-muted-foreground">Public URL: {profileUrl}</p>
+                      </div>
+                    </AnimatedField>
+                  )}
+
+                  <AnimatePresence mode="wait">
+                    {errorMessage && (
+                      <motion.div
+                        key={errorMessage}
+                        variants={shakeVariants}
+                        initial="idle"
+                        animate="shake"
+                      >
+                        <FieldError>{errorMessage}</FieldError>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <AnimatedField index={currentPage === 'details' ? 5 : 3}>
+                  <div className="mt-10">
+                    <motion.div
+                      whileTap={isBusy ? {} : { scale: 0.97 }}
+                      transition={{ duration: 0.1 }}
+                    >
+                      <Button
+                        onClick={handleNext}
+                        disabled={isBusy}
+                        className='w-full text-xl py-6 opacity-90'
+                        loading={isBusy}
+                      >
+                        <AnimatePresence mode="wait" initial={false}>
+                          <motion.span
+                            key={currentPage + (isBusy ? '-busy' : '')}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            {isBusy
+                              ? '...'
+                              : currentPage === 'welcome'
+                                ? 'Get started'
+                                : currentPage === 'finish'
+                                  ? 'Go to dashboard'
+                                  : 'Continue'}
+                          </motion.span>
+                        </AnimatePresence>
+                      </Button>
+                    </motion.div>
                   </div>
-                )}
+                </AnimatedField>
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
-                {errorMessage && <FieldError>{errorMessage}</FieldError>}
-              </div>
-
-              <div className="mt-10">
-                <Button
-                  onClick={handleNext}
-                  disabled={isBusy}
-                  className='w-full text-xl py-6 opacity-90'
-                >
-                  {currentPage === 'welcome'
-                    ? 'Get started'
-                    : currentPage === 'finish'
-                      ? 'Go to dashboard'
-                      : 'Continue'}
-                </Button>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Stepper - Absolute at bottom with top-to-bottom animation */}
-        </div>
-        <div
-          className="absolute bottom-12 left-0 right-0 flex justify-center"
-        >
-          <Stepper
-            currentPage={currentPage}
-            onBackToStep={(page) => goToPage(page)}
-            disabled={isBusy}
-          />
-        </div>
-      </main>
-    </div>
+          {/* Stepper - no animation, unchanged */}
+          <div className="absolute bottom-12 left-0 right-0 flex justify-center">
+            <Stepper
+              currentPage={currentPage}
+              onBackToStep={(page) => goToPage(page)}
+              disabled={isBusy}
+            />
+          </div>
+        </main>
+      </div>
+    </DirectionContext.Provider>
   )
 }

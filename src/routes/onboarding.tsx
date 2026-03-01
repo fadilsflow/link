@@ -165,11 +165,10 @@ const slideVariants = {
     opacity: 1,
     scale: 1,
   },
-  exit: (dir: 'forward' | 'backward') => ({
-    x: dir === 'forward' ? -48 : 48,
+  exit: {
+    scale: 0.92,
     opacity: 0,
-    scale: 0.97,
-  }),
+  },
 }
 
 const slideTransition = {
@@ -423,7 +422,7 @@ function OnboardingPage() {
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ delay: 0.04, duration: 0.32, ease: [0.34, 1.56, 0.64, 1] }}
                       >
-                        <LogoMark size={104} />
+                        <LogoMark  size={104} />
                       </motion.div>
                     </div>
                   </AnimatedField>

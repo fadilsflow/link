@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Upload, X } from 'lucide-react'
+import { CircleCheck, Upload, X } from 'lucide-react'
 import { z } from 'zod'
 import type { AdminAuthContextData } from '@/lib/admin-auth'
 import { adminAuthQueryKey } from '@/lib/admin-auth'
@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
@@ -360,12 +361,13 @@ function OnboardingPage() {
   const firstIncompletePage = getFirstIncompletePage(localState)
   const maxAllowedPageIndex = onboardingPages.indexOf(firstIncompletePage)
   const normalizedUsername = username.trim().toLowerCase()
-  const usernameValidationError = validateUsername(normalizedUsername)
+  const usernameFormatError =
+    normalizedUsername.length > 0 ? validateUsername(normalizedUsername) : null
   const currentSavedUsername = onboardingState?.username?.trim().toLowerCase() ?? ''
   const needsUsernameAvailabilityCheck =
     currentPage === 'username' &&
     normalizedUsername.length > 0 &&
-    !usernameValidationError &&
+    !usernameFormatError &&
     normalizedUsername !== currentSavedUsername
 
   const {
@@ -397,9 +399,25 @@ function OnboardingPage() {
   const isUsernameDebouncing =
     needsUsernameAvailabilityCheck &&
     debouncedUsername !== normalizedUsername
+  const usernameFailedMessage = usernameFormatError
+    ?? (isUsernameUnavailable
+      ? 'Username sudah ada, pakai username lain.'
+      : isUsernameCheckError
+        ? 'Gagal mengecek username. Coba lagi.'
+        : null)
+  const usernameStatus: 'idle' | 'loading' | 'success' | 'failed' =
+    normalizedUsername.length === 0
+      ? 'idle'
+      : usernameFailedMessage
+        ? 'failed'
+        : needsUsernameAvailabilityCheck && (isUsernameDebouncing || isCheckingUsername)
+          ? 'loading'
+          : isUsernameAvailable
+            ? 'success'
+            : 'idle'
   const isUsernameStepBlocked =
     currentPage === 'username' &&
-    (!!usernameValidationError ||
+    (!!usernameFormatError ||
       normalizedUsername.length === 0 ||
       isUsernameDebouncing ||
       isCheckingUsername ||
@@ -466,8 +484,12 @@ function OnboardingPage() {
     }
 
     if (currentPage === 'username') {
-      if (usernameValidationError) {
-        setErrorMessage(usernameValidationError)
+      if (!normalizedUsername) {
+        setErrorMessage('Username wajib diisi')
+        return
+      }
+      if (usernameFormatError) {
+        setErrorMessage(usernameFormatError)
         return
       }
       if (isUsernameStepBlocked) {
@@ -487,10 +509,6 @@ function OnboardingPage() {
           setErrorMessage('Username belum valid')
           return
         }
-      }
-      if (!normalizedUsername) {
-        setErrorMessage('Username wajib diisi')
-        return
       }
       goToPage(nextPage)
       persistStepInBackground({ step: 'username', username: normalizedUsername })
@@ -594,43 +612,34 @@ function OnboardingPage() {
                   <AnimatedField index={2}>
                     <Field>
                       <FieldLabel>Username</FieldLabel>
-                      <Input
-                        value={username}
-                        onChange={(e) => {
-                          setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))
-                          if (errorMessage) setErrorMessage(null)
-                        }}
-                        placeholder="yourname"
-                        autoFocus
-                        aria-invalid={!!errorMessage}
-                      />
-                      <FieldDescription>Gunakan 3-30 karakter.</FieldDescription>
+                      <InputGroup>
+                        <InputGroupInput
+                          value={username}
+                          onChange={(e) => {
+                            setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))
+                            if (errorMessage) setErrorMessage(null)
+                          }}
+                          placeholder="yourname"
+                          autoFocus
+                          aria-invalid={usernameFailedMessage ? true : undefined}
+                        />
+                        <InputGroupAddon align="inline-end">
+                          {usernameStatus === 'loading' ? (
+                            <Spinner className="mx-0 h-4 w-4 text-muted-foreground" />
+                          ) : null}
+                          {usernameStatus === 'success' ? (
+                            <CircleCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
+                          ) : null}
+                          {usernameStatus === 'failed' ? (
+                            <X className="size-4 text-destructive" />
+                          ) : null}
+                        </InputGroupAddon>
+                      </InputGroup>
                       <FieldDescription>Preview: {profileUrl}</FieldDescription>
-                      {usernameValidationError ? (
+                      {usernameFailedMessage ? (
                         <p role="alert" className="text-xs text-destructive">
-                          {usernameValidationError}
+                          {usernameFailedMessage}
                         </p>
-                      ) : null}
-                      {needsUsernameAvailabilityCheck && (isUsernameDebouncing || isCheckingUsername) ? (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Spinner className="mx-0 h-3.5 w-3.5 text-muted-foreground" />
-                          <span>Mengecek ketersediaan username...</span>
-                        </div>
-                      ) : null}
-                      {!usernameValidationError && isUsernameUnavailable ? (
-                        <p role="alert" className="text-xs text-destructive">
-                          Username sudah ada, pakai username lain.
-                        </p>
-                      ) : null}
-                      {!usernameValidationError && isUsernameCheckError ? (
-                        <p role="alert" className="text-xs text-destructive">
-                          Gagal mengecek username. Coba lagi.
-                        </p>
-                      ) : null}
-                      {!usernameValidationError && isUsernameAvailable ? (
-                        <FieldDescription className="text-emerald-600 dark:text-emerald-400">
-                          Username tersedia.
-                        </FieldDescription>
                       ) : null}
                     </Field>
                   </AnimatedField>

@@ -33,13 +33,13 @@ type SaveStepPayload =
   | { step: 'username'; username: string }
   | { step: 'role'; title: string }
   | {
-      step: 'details'
-      details: {
-        displayName: string
-        bio?: string
-        avatarUrl?: string
-      }
+    step: 'details'
+    details: {
+      displayName: string
+      bio?: string
+      avatarUrl?: string
     }
+  }
   | { step: 'finish' }
 
 type OnboardingState = {
@@ -467,7 +467,7 @@ function OnboardingPage() {
       <main className="mx-auto flex w-full max-w-4xl flex-col px-6 py-8 md:py-10">
         <Stepper currentPage={currentPage} />
 
-        <section className="w-full rounded-xl border bg-card p-6 sm:p-8">
+        <section className="w-full rounded-xl border bg-card p-6 sm:p-8 items-center flex fle-col justify-center">
           <div>
             <h1 className="text-2xl font-semibold sm:text-3xl">{currentStep.title}</h1>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">

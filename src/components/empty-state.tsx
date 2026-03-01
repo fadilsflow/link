@@ -12,14 +12,16 @@ export default function EmptyState({
   description,
   icon,
   children,
+  className
 }: {
   title: string
   description: string
   icon: React.ReactNode
   children?: React.ReactElement
+  className?: string,
 }) {
   return (
-    <Empty>
+    <Empty className={className}>
       <EmptyHeader>
         <EmptyMedia variant="icon">{icon}</EmptyMedia>
         <EmptyTitle>{title}</EmptyTitle>

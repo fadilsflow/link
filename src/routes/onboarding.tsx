@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { checkOnboardingStatus } from '@/lib/onboarding-server'
@@ -47,6 +48,8 @@ type StepMeta = {
   title: string
   description: string
 }
+
+const ONBOARDING_STATE_QUERY_KEY = ['onboarding-state'] as const
 
 const onboardingSearchSchema = z.object({
   page: z.enum(onboardingPages).optional(),
@@ -99,6 +102,36 @@ function validateUsername(value: string): string | null {
     return 'Gunakan huruf kecil, angka, underscore, atau dash'
   }
   return null
+}
+
+function applyStepOptimistically(
+  previous: OnboardingState,
+  payload: SaveStepPayload,
+): OnboardingState {
+  if (payload.step === 'username') {
+    return {
+      ...previous,
+      username: payload.username,
+    }
+  }
+
+  if (payload.step === 'role') {
+    return {
+      ...previous,
+      title: payload.title,
+    }
+  }
+
+  if (payload.step === 'details') {
+    return {
+      ...previous,
+      name: payload.details.displayName,
+      bio: payload.details.bio?.trim() || null,
+      image: payload.details.avatarUrl?.trim() || null,
+    }
+  }
+
+  return previous
 }
 
 function Stepper({
@@ -214,13 +247,14 @@ function OnboardingPage() {
   const [avatarPreviewUrl, setAvatarPreviewUrl] = React.useState('')
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [direction, setDirection] = React.useState<'forward' | 'backward'>('forward')
+  const [currentPage, setCurrentPage] = React.useState<OnboardingPage>(search.page ?? 'welcome')
+  const [debouncedUsername, setDebouncedUsername] = React.useState('')
 
-  const currentPage = search.page ?? 'welcome'
   const currentStep = stepItems.find((s) => s.page === currentPage) ?? stepItems[0]
   const currentPageIndex = onboardingPages.indexOf(currentPage)
 
   const { data: onboardingState } = useQuery({
-    queryKey: ['onboarding-state'],
+    queryKey: ONBOARDING_STATE_QUERY_KEY,
     queryFn: () => trpcClient.onboarding.getState.query(),
     refetchOnWindowFocus: false,
     staleTime: Infinity,
@@ -241,10 +275,29 @@ function OnboardingPage() {
     }
   }, [avatarPreviewUrl])
 
+  React.useEffect(() => {
+    if (!search.page) return
+    setCurrentPage((previousPage) => {
+      if (previousPage === search.page) return previousPage
+      const previousIndex = onboardingPages.indexOf(previousPage)
+      const nextIndex = onboardingPages.indexOf(search.page)
+      setDirection(nextIndex > previousIndex ? 'forward' : 'backward')
+      return search.page
+    })
+  }, [search.page])
+
+  React.useEffect(() => {
+    const normalized = username.trim().toLowerCase()
+    const timeout = window.setTimeout(() => {
+      setDebouncedUsername(normalized)
+    }, 300)
+    return () => window.clearTimeout(timeout)
+  }, [username])
+
   const saveStepMutation = useMutation({
     mutationFn: (payload: SaveStepPayload) => trpcClient.onboarding.saveStep.mutate(payload),
     onSuccess: (nextState, variables) => {
-      queryClient.setQueryData(['onboarding-state'], nextState)
+      queryClient.setQueryData(ONBOARDING_STATE_QUERY_KEY, nextState)
       queryClient.setQueryData(
         adminAuthQueryKey(),
         (previous: AdminAuthContextData | undefined) => {
@@ -262,6 +315,31 @@ function OnboardingPage() {
       )
     },
   })
+
+  const persistStepInBackground = React.useCallback(
+    (payload: SaveStepPayload) => {
+      queryClient.setQueryData(
+        ONBOARDING_STATE_QUERY_KEY,
+        (previous: OnboardingState | undefined) => {
+          const baseState: OnboardingState = {
+            username: previous?.username ?? null,
+            title: previous?.title ?? null,
+            name: previous?.name ?? '',
+            bio: previous?.bio ?? null,
+            image: previous?.image ?? null,
+          }
+          return applyStepOptimistically(baseState, payload)
+        },
+      )
+
+      saveStepMutation.mutate(payload, {
+        onError: (error) => {
+          console.error(`Failed to save onboarding step "${payload.step}"`, error)
+        },
+      })
+    },
+    [queryClient, saveStepMutation],
+  )
 
   const normalizedState: OnboardingState = {
     username: onboardingState?.username ?? null,
@@ -281,6 +359,53 @@ function OnboardingPage() {
 
   const firstIncompletePage = getFirstIncompletePage(localState)
   const maxAllowedPageIndex = onboardingPages.indexOf(firstIncompletePage)
+  const normalizedUsername = username.trim().toLowerCase()
+  const usernameValidationError = validateUsername(normalizedUsername)
+  const currentSavedUsername = onboardingState?.username?.trim().toLowerCase() ?? ''
+  const needsUsernameAvailabilityCheck =
+    currentPage === 'username' &&
+    normalizedUsername.length > 0 &&
+    !usernameValidationError &&
+    normalizedUsername !== currentSavedUsername
+
+  const {
+    data: usernameAvailability,
+    isFetching: isCheckingUsername,
+    isError: isUsernameCheckError,
+  } = useQuery({
+    queryKey: ['username-availability', debouncedUsername],
+    queryFn: async () => {
+      const existing = await trpcClient.user.getByUsername.query({
+        username: debouncedUsername,
+      })
+      return { isAvailable: !existing }
+    },
+    enabled:
+      needsUsernameAvailabilityCheck &&
+      debouncedUsername.length > 0 &&
+      debouncedUsername === normalizedUsername,
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  })
+
+  const isUsernameAvailable =
+    normalizedUsername === currentSavedUsername
+      ? true
+      : usernameAvailability?.isAvailable === true
+  const isUsernameUnavailable = usernameAvailability?.isAvailable === false
+  const isUsernameDebouncing =
+    needsUsernameAvailabilityCheck &&
+    debouncedUsername !== normalizedUsername
+  const isUsernameStepBlocked =
+    currentPage === 'username' &&
+    (!!usernameValidationError ||
+      normalizedUsername.length === 0 ||
+      isUsernameDebouncing ||
+      isCheckingUsername ||
+      isUsernameCheckError ||
+      isUsernameUnavailable ||
+      (!isUsernameAvailable && needsUsernameAvailabilityCheck))
 
   React.useEffect(() => {
     if (currentPageIndex <= maxAllowedPageIndex) return
@@ -290,11 +415,18 @@ function OnboardingPage() {
   const goToPage = (page: OnboardingPage, replace = false) => {
     const targetIndex = onboardingPages.indexOf(page)
     setDirection(targetIndex > currentPageIndex ? 'forward' : 'backward')
-    navigate({ search: { page }, replace })
+    setCurrentPage(page)
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        void navigate({ search: { page }, replace })
+      })
+      return
+    }
+    void navigate({ search: { page }, replace })
   }
 
   const nextPage = onboardingPages[Math.min(currentPageIndex + 1, onboardingPages.length - 1)]
-  const previewUsername = username.trim().toLowerCase()
+  const previewUsername = normalizedUsername
   const profileUrl =
     previewUsername.length > 0
       ? `${typeof window !== 'undefined' ? window.location.origin : ''}/@${previewUsername}`
@@ -334,15 +466,34 @@ function OnboardingPage() {
     }
 
     if (currentPage === 'username') {
-      const normalizedUsername = username.trim().toLowerCase()
-      const validationError = validateUsername(normalizedUsername)
-      if (validationError) {
-        setErrorMessage(validationError)
+      if (usernameValidationError) {
+        setErrorMessage(usernameValidationError)
         return
       }
-      // Navigate instantly — save fires in background, user never waits
+      if (isUsernameStepBlocked) {
+        if (isUsernameUnavailable) {
+          setErrorMessage('Username sudah dipakai, gunakan username lain')
+          return
+        }
+        if (isUsernameDebouncing || isCheckingUsername) {
+          setErrorMessage('Sedang mengecek ketersediaan username...')
+          return
+        }
+        if (isUsernameCheckError) {
+          setErrorMessage('Gagal mengecek username, coba lagi')
+          return
+        }
+        if (!isUsernameAvailable) {
+          setErrorMessage('Username belum valid')
+          return
+        }
+      }
+      if (!normalizedUsername) {
+        setErrorMessage('Username wajib diisi')
+        return
+      }
       goToPage(nextPage)
-      saveStepMutation.mutate({ step: 'username', username: normalizedUsername })
+      persistStepInBackground({ step: 'username', username: normalizedUsername })
       return
     }
 
@@ -352,9 +503,8 @@ function OnboardingPage() {
         setErrorMessage('Role wajib diisi')
         return
       }
-      // Navigate instantly — save fires in background
       goToPage(nextPage)
-      saveStepMutation.mutate({ step: 'role', title: nextTitle })
+      persistStepInBackground({ step: 'role', title: nextTitle })
       return
     }
 
@@ -364,9 +514,7 @@ function OnboardingPage() {
         setErrorMessage('Display name wajib diisi')
         return
       }
-      // Navigate instantly
       goToPage(nextPage)
-      // Upload + save fully in background — no blocking whatsoever
       const saveDetails = async () => {
         let nextAvatarUrl = avatarUrl.trim()
         if (avatarFile) {
@@ -376,7 +524,7 @@ function OnboardingPage() {
           if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl)
           setAvatarPreviewUrl('')
         }
-        saveStepMutation.mutate({
+        persistStepInBackground({
           step: 'details',
           details: { displayName: nextDisplayName, bio: bio.trim(), avatarUrl: nextAvatarUrl },
         })
@@ -386,12 +534,9 @@ function OnboardingPage() {
     }
 
     if (currentPage === 'finish') {
-      const finish = async () => {
-        await saveStepMutation.mutateAsync({ step: 'finish' })
-        await queryClient.invalidateQueries({ queryKey: adminAuthQueryKey() })
-        navigate({ to: '/admin/editor/profiles' })
-      }
-      void finish()
+      navigate({ to: '/admin/editor/profiles' })
+      persistStepInBackground({ step: 'finish' })
+      void queryClient.invalidateQueries({ queryKey: adminAuthQueryKey() })
     }
   }
 
@@ -461,6 +606,32 @@ function OnboardingPage() {
                       />
                       <FieldDescription>Gunakan 3-30 karakter.</FieldDescription>
                       <FieldDescription>Preview: {profileUrl}</FieldDescription>
+                      {usernameValidationError ? (
+                        <p role="alert" className="text-xs text-destructive">
+                          {usernameValidationError}
+                        </p>
+                      ) : null}
+                      {needsUsernameAvailabilityCheck && (isUsernameDebouncing || isCheckingUsername) ? (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Spinner className="mx-0 h-3.5 w-3.5 text-muted-foreground" />
+                          <span>Mengecek ketersediaan username...</span>
+                        </div>
+                      ) : null}
+                      {!usernameValidationError && isUsernameUnavailable ? (
+                        <p role="alert" className="text-xs text-destructive">
+                          Username sudah ada, pakai username lain.
+                        </p>
+                      ) : null}
+                      {!usernameValidationError && isUsernameCheckError ? (
+                        <p role="alert" className="text-xs text-destructive">
+                          Gagal mengecek username. Coba lagi.
+                        </p>
+                      ) : null}
+                      {!usernameValidationError && isUsernameAvailable ? (
+                        <FieldDescription className="text-emerald-600 dark:text-emerald-400">
+                          Username tersedia.
+                        </FieldDescription>
+                      ) : null}
                     </Field>
                   </AnimatedField>
                 )}
@@ -588,7 +759,11 @@ function OnboardingPage() {
 
               <AnimatedField index={currentPage === 'details' ? 5 : 3}>
                 <div className="mt-10">
-                  <Button onClick={handleNext} className="w-full text-xl py-6 opacity-90">
+                  <Button
+                    onClick={handleNext}
+                    disabled={isUsernameStepBlocked}
+                    className="w-full text-xl py-6 opacity-90"
+                  >
                     {currentPage === 'welcome'
                       ? 'Get started'
                       : currentPage === 'finish'

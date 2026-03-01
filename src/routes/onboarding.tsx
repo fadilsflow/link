@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { CircleCheck, Upload, X } from 'lucide-react'
+import { CircleCheck, CircleX, Upload } from 'lucide-react'
 import { z } from 'zod'
 import type { AdminAuthContextData } from '@/lib/admin-auth'
 import { adminAuthQueryKey } from '@/lib/admin-auth'
@@ -18,6 +18,9 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { checkOnboardingStatus } from '@/lib/onboarding-server'
 import { uploadFile } from '@/lib/upload-client'
 import { cn } from '@/lib/utils'
+import { BASE_URL } from '@/lib/constans'
+
+const PUBLIC_BASE_HOST = new URL(BASE_URL).host
 
 const onboardingPages = ['welcome', 'username', 'role', 'details', 'finish'] as const
 
@@ -56,6 +59,7 @@ const onboardingSearchSchema = z.object({
   page: z.enum(onboardingPages).optional(),
 })
 
+
 const stepItems: Array<StepMeta> = [
   {
     page: 'welcome',
@@ -64,8 +68,8 @@ const stepItems: Array<StepMeta> = [
   },
   {
     page: 'username',
-    title: 'Choose your username',
-    description: 'Buat handle unik untuk link publik kamu.',
+    title: 'Create your account',
+    description: 'Choose a username for your page.',
   },
   {
     page: 'role',
@@ -97,10 +101,11 @@ function getFirstIncompletePage(state: OnboardingState): OnboardingPage {
 
 function validateUsername(value: string): string | null {
   if (!value) return 'Username wajib diisi'
-  if (value.length < 3) return 'Username minimal 3 karakter'
-  if (value.length > 30) return 'Username maksimal 30 karakter'
-  if (!/^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$/.test(value)) {
-    return 'Gunakan huruf kecil, angka, underscore, atau dash'
+  if (value.length < 4 || value.length > 25) {
+    return 'Username must be 4-25 characters long.'
+  }
+  if (!/^[a-z0-9._]+$/.test(value)) {
+    return 'Username can only contain letters, numbers, periods, and underscores.'
   }
   return null
 }
@@ -171,6 +176,7 @@ function Stepper({
     </div>
   )
 }
+
 
 export const Route = createFileRoute('/onboarding')({
   component: OnboardingPage,
@@ -595,13 +601,13 @@ function OnboardingPage() {
                 )}
 
                 <AnimatedField index={currentPage === 'welcome' ? 1 : 0}>
-                  <h1 className="text-2xl font-semibold sm:text-3xl text-center">
+                  <h1 className="text-2xl font-semibold sm:text-3xl ">
                     {currentStep.title}
                   </h1>
                 </AnimatedField>
 
                 <AnimatedField index={currentPage === 'welcome' ? 2 : 1}>
-                  <p className="mt-2 text-sm text-muted-foreground sm:text-base text-center">
+                  <p className="mt-2 text-sm text-muted-foreground sm:text-base ">
                     {currentStep.description}
                   </p>
                 </AnimatedField>
@@ -611,31 +617,33 @@ function OnboardingPage() {
                 {currentPage === 'username' && (
                   <AnimatedField index={2}>
                     <Field>
-                      <FieldLabel>Username</FieldLabel>
+                      <FieldLabel className={"sr-only"}>Username</FieldLabel>
                       <InputGroup>
                         <InputGroupInput
                           value={username}
                           onChange={(e) => {
-                            setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))
+                            setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))
                             if (errorMessage) setErrorMessage(null)
                           }}
+                          className="*:[input]:ps-0!"
                           placeholder="yourname"
                           autoFocus
                           aria-invalid={usernameFailedMessage ? true : undefined}
                         />
+                        <InputGroupAddon>{PUBLIC_BASE_HOST}/</InputGroupAddon>
                         <InputGroupAddon align="inline-end">
                           {usernameStatus === 'loading' ? (
                             <Spinner className="mx-0 h-4 w-4 text-muted-foreground" />
                           ) : null}
                           {usernameStatus === 'success' ? (
-                            <CircleCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
+                            <CircleCheck className="size-4 fill-emerald-600 text-white dark:fill-emerald-400" />
                           ) : null}
                           {usernameStatus === 'failed' ? (
-                            <X className="size-4 text-destructive" />
+                            <CircleX className="size-4 fill-red-500 text-white" />
                           ) : null}
                         </InputGroupAddon>
                       </InputGroup>
-                      <FieldDescription>Preview: {profileUrl}</FieldDescription>
+                      {/* <FieldDescription>Preview: {profileUrl}</FieldDescription> */}
                       {usernameFailedMessage ? (
                         <p role="alert" className="text-xs text-destructive">
                           {usernameFailedMessage}
@@ -666,9 +674,9 @@ function OnboardingPage() {
                 {currentPage === 'details' && (
                   <>
                     <AnimatedField index={2}>
-                      <Field>
+                      <Field >
                         <FieldLabel>Avatar</FieldLabel>
-                        <div className="flex items-center gap-3 rounded-lg border p-3">
+                        <div className="flex items-center gap-3 rounded-lg border p-3 w-full">
                           <Avatar className="size-12 border bg-background">
                             {resolvedAvatarPreview ? (
                               <AvatarImage src={resolvedAvatarPreview} />
@@ -695,7 +703,7 @@ function OnboardingPage() {
                                 size="sm"
                                 onClick={clearAvatarSelection}
                               >
-                                <X className="size-4" />
+                                <CircleX className="size-4" />
                                 Remove
                               </Button>
                             )}

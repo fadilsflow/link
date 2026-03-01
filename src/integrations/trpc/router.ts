@@ -77,11 +77,11 @@ const usernameSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .min(3, 'Username minimal 3 karakter')
-  .max(30, 'Username maksimal 30 karakter')
+  .min(4, 'Username must be at least 4 characters long')
+  .max(25, 'Username must be at most 25 characters long')
   .regex(
-    /^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$/,
-    'Username hanya boleh huruf kecil, angka, underscore, atau dash',
+    /^[a-z0-9._]+$/,
+    'Username can only contain letters, numbers, periods, and underscores',
   )
 
 const onboardingDetailsSchema = z.object({

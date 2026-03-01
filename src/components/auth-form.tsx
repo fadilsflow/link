@@ -61,13 +61,13 @@ export function AuthForm({ type }: AuthFormProps) {
 
 
                     {/* Logo */}
-                    <div className="flex justify-center"><LogoMark className="h-12 w-12" /></div>
+                   <div className="flex justify-center"><LogoMark className="h-12 w-12" /></div>
                     {/* Title */}
                     <div>
                         <h1 className="text-xl sm:text-2xl font-sans">
                             {isLogin ? "Login" : "Sign Up"} to
                             {" "} kreasi.top
-                        </h1>
+                        </h1> 
                     </div>
 
                     {/* Auth Section */}

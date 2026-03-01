@@ -15,6 +15,9 @@ export const auth = betterAuth({
     provider: 'pg',
     schema,
   }),
+  experimental: {
+    joins: true,
+  },
   emailAndPassword: {
     enabled: true,
   },
@@ -22,6 +25,7 @@ export const auth = betterAuth({
     cookieCache: {
       enabled: true,
       maxAge: 60 * 5,
+      strategy: 'jwe',
     },
   },
   trustedOrigins,

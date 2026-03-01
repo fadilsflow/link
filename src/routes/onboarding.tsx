@@ -423,7 +423,7 @@ function OnboardingPage() {
       if (currentPage === 'details') {
         const fallbackDisplayName =
           displayName.trim() ||
-          onboardingState?.name?.trim() ||
+          onboardingState?.name.trim() ||
           username.trim() ||
           'User'
         await saveStepMutation.mutateAsync({

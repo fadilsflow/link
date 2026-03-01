@@ -224,7 +224,7 @@ const shakeVariants = {
   idle: { x: 0 },
   shake: {
     x: [0, -8, 8, -6, 6, -4, 4, 0],
-    transition: { duration: 0.4, ease: 'easeInOut' },
+    transition: { duration: 0.4, ease: 'easeInOut' as const },
   },
 }
 
@@ -677,7 +677,6 @@ function OnboardingPage() {
                         onClick={handleNext}
                         disabled={isBusy}
                         className='w-full text-xl py-6 opacity-90'
-                        loading={isBusy}
                       >
                         <AnimatePresence mode="wait" initial={false}>
                           <motion.span

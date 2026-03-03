@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { CalendarIcon, Copy, ExternalLink, InfoIcon } from 'lucide-react'
+import { CalendarIcon, InfoIcon } from 'lucide-react'
 import {
   Area,
   AreaChart,
@@ -269,7 +269,7 @@ function AnalyticsCard({
           </span>
 
           <div className="flex items-center gap-3 mt-4">
-            <div className="w-3 h-3 rounded-xs bg-yellow-300"></div>
+            <div className="w-3 h-3 rounded-xs bg-chart-4"></div>
             <div className="text-sm font-medium">
               Views
             </div>
@@ -283,7 +283,7 @@ function AnalyticsCard({
           </span>
 
           <div className="flex items-center gap-3 mt-4">
-            <div className="w-3 h-3 rounded-xs bg-emerald-300"></div>
+            <div className="w-3 h-3 rounded-xs bg-chart-2"></div>
             <span className="text-sm font-medium">
               Clicks
             </span>

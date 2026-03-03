@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { CalendarIcon, InfoIcon } from 'lucide-react'
+import { CalendarIcon, Eye, EyeOff, InfoIcon } from 'lucide-react'
+import * as motion from 'motion/react-client'
 import {
   Area,
   AreaChart,
@@ -85,6 +86,7 @@ function HomePage() {
     to: today,
   })
   const [activePreset, setActivePreset] = React.useState<string | null>('30D')
+  const [isBalanceHidden, setIsBalanceHidden] = React.useState(true)
 
   const fromStr = dateRange.from?.toISOString().slice(0, 10)
   const toStr = dateRange.to?.toISOString().slice(0, 10)
@@ -187,15 +189,39 @@ function HomePage() {
 
           <Card >
             <CardHeader>
-              <CardTitle>Earnings</CardTitle>
+              <CardTitle className='flex items-center'>
+                Earnings
+                <Button
+                  onClick={() => setIsBalanceHidden(!isBalanceHidden)}
+                  size={'icon-sm'}
+                  className='ml-3'
+                  variant='ghost'
+                  aria-label={isBalanceHidden ? 'Show balance' : 'Hide balance'}
+                >
+                  {isBalanceHidden ? (
+                    <Eye className='h-5 w-5' />
+                  ) : (
+                    <EyeOff className='h-5 w-5' />
+                  )}
+                </Button>
+              </CardTitle>
             </CardHeader>
             <CardPanel className="flex items-center justify-center h-24">
               <div className="flex justify-between items-center w-full">
-                <span className="h-full text-4xl tracking-tight">
+                <span className="h-full text-4xl tracking-tight overflow-hidden">
                   {isLoadingBalance ? (
                     <Spinner className="h-5 w-5 text-muted-foreground" />
                   ) : (
-                    formatPrice(balance?.currentBalance ?? 0)
+                    <motion.span
+                      key={isBalanceHidden ? 'hidden' : 'visible'}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      className="inline-block"
+                    >
+                      {isBalanceHidden ? '•••••' : formatPrice(balance?.currentBalance ?? 0)}
+                    </motion.span>
                   )}
                 </span>
                 <Button size="lg" variant="outline" render={<Link to="/admin/balance" />}>

@@ -39,14 +39,14 @@ export default function UserButton() {
       <MenuTrigger
         render={
           <Button
-            className="hover:bg-background/80 h-9 px-3 gap-2"
+            className="hover:bg-background/80 px-1.5 gap-2"
             variant={'outline'}
             size={'default'}
           />
         }
       >
         {session.user.image ? (
-          <Avatar className="size-5">
+          <Avatar className="size-5 rounded-md">
             <AvatarImage
               alt={session.user.name || 'User'}
               src={session.user.image}
@@ -54,7 +54,7 @@ export default function UserButton() {
             <AvatarFallback>{session.user.name.charAt(0)}</AvatarFallback>
           </Avatar>
         ) : (
-          <div className="size-5 rounded-full bg-muted flex items-center justify-center">
+          <div className="size-5 rounded-md bg-muted flex items-center justify-center">
             <UserIcon className="size-3 text-muted-foreground" />
           </div>
         )}
@@ -80,32 +80,6 @@ export default function UserButton() {
             }
           >
             Dashboard
-          </MenuItem>
-          <MenuItem
-            render={
-              <Link to="/admin/editor/profiles" />
-            }
-          >
-            Edit Profile
-          </MenuItem>
-          <MenuItem
-            render={
-              <Link to="/admin/editor/appearance" />
-            }
-          >
-            Appearance
-          </MenuItem>
-          <MenuItem
-            className="cursor-pointer"
-            render={
-              <Link
-                to={`/$username`}
-                params={{ username }}
-                target="_blank"
-              />
-            }
-          >
-            View My Page
           </MenuItem>
           <MenuItem onClick={copyProfileLink} className="cursor-pointer">
             Copy Page Link

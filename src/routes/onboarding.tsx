@@ -602,13 +602,13 @@ function OnboardingPage() {
                 )}
 
                 <AnimatedField index={currentPage === 'welcome' ? 1 : 0}>
-                  <h1 className="text-2xl font-semibold sm:text-3xl ">
+                  <h1 className="text-2xl text-center font-semibold sm:text-3xl ">
                     {currentStep.title}
                   </h1>
                 </AnimatedField>
 
                 <AnimatedField index={currentPage === 'welcome' ? 2 : 1}>
-                  <p className="mt-2 text-sm text-muted-foreground sm:text-base ">
+                  <p className="mt-2 text-sm text-center text-muted-foreground sm:text-base ">
                     {currentStep.description}
                   </p>
                 </AnimatedField>

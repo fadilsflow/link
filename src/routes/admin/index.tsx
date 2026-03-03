@@ -334,9 +334,10 @@ function AnalyticsCard({
             style={{ fontSize: '12px' }}
           />
           <ChartTooltip
-            cursor={{ fill: 'var(--muted)' }}
+            cursor={false}
             content={
               <ChartTooltipContent
+                indicator='dot'
                 labelFormatter={(value) =>
                   new Date(value).toLocaleDateString('en-US', {
                     month: 'short',
@@ -346,8 +347,8 @@ function AnalyticsCard({
               />
             }
           />
-          <Bar dataKey="views" fill="var(--color-views)" radius={[4, 4, 4, 4]} barSize={8} />
-          <Bar dataKey="clicks" fill="var(--color-clicks)" radius={[4, 4, 4, 4]} barSize={8} />
+          <Bar dataKey="views" fill="var(--color-views)" radius={4} />
+          <Bar dataKey="clicks" fill="var(--color-clicks)" radius={4} />
         </BarChart>
       </ChartContainer>
     ),
@@ -442,9 +443,9 @@ function AnalyticsCard({
             {RANGE_PRESETS.map((preset) => (
               <Button
                 key={preset.label}
-                variant={activePreset === preset.label ? 'secondary' : 'ghost'}
+                variant={activePreset === preset.label ? 'outline' : 'ghost'}
                 size="sm"
-                className="h-8 text-xs font-medium"
+                className={"h-8 text-xs font-medium"}
                 onClick={() => onPresetSelect(preset.days, preset.label)}
               >
                 {preset.label}
@@ -472,7 +473,7 @@ function AnalyticsCard({
           chartByMode[mode]
         )}
       </FramePanel>
-    </Frame>
+    </Frame >
   )
 }
 

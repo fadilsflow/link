@@ -335,7 +335,7 @@ function BalancePage() {
       </AppHeader>
 
       {/* Balance Cards */}
-      <Frame className="grid gap-0 sm:grid-cols-2 ">
+      <div className="grid gap-0 sm:grid-cols-2 gap-4 ">
         <BalanceCard
           title="Active Balance"
           value={summary?.availableBalance ?? 0}
@@ -372,7 +372,7 @@ function BalancePage() {
           actionLoading={isRefreshing}
           onAction={handleRefreshBalance}
         />
-      </Frame>
+      </div>
       <p className="text-sm text-muted-foreground">
         Available = funds ready to withdraw. Pending = funds still in hold (
         {summary?.holdPeriodDays ?? 7} days).
@@ -450,7 +450,7 @@ function BalancePage() {
         </DialogPopup>
       </Dialog>
 
-      <Frame className=''>
+      <Frame>
         <FrameHeader>
           <FrameTitle>History</FrameTitle>
         </FrameHeader>
@@ -544,7 +544,7 @@ function BalanceCard({
         'p-4',
         activeBalance
           ? ''
-          : 'bg-muted border-none shadow-none rounded-l-none',
+          : 'bg-muted',
       )}
     >
       <CardHeader className="pb-2">
@@ -558,7 +558,7 @@ function BalanceCard({
         ) : (
           <>
             <div
-              className={`text-4xl font-heading  ${negative && value > 0 ? 'text-red-500' : ''} ${activeBalance ? 'text-primary-fo  reground' : ''}`}
+              className={`text-4xl tracking-tight  ${negative && value > 0 ? 'text-red-500' : ''} ${activeBalance ? 'text-primary-fo  reground' : ''}`}
             >
               {negative && value > 0 ? '-' : ''}
               {formatPrice(value)}

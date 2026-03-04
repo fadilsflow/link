@@ -25,14 +25,14 @@ function AdminLayout() {
     <SidebarProvider
       style={
         {
-          '--sidebar-width': '220px',
+          '--sidebar-width': '240px',
           '--sidebar-width-icon': '64px',
         } as React.CSSProperties
       }
     >
       <AppSidebar />
 
-      <SidebarInset className="mb-20 md:pb-0 @container/main">
+      <SidebarInset className="md:pb-0 @container/main">
         {isPending ? (
           <div className="flex h-full min-h-[60vh] items-center justify-center">
             <Spinner className="h-5 w-5 text-muted-foreground" />

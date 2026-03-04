@@ -9,7 +9,6 @@ import {
   ShoppingBag,
   User as UserIcon,
   Wallet,
-  CircleQuestionMark,
   ExternalLink,
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -39,8 +38,6 @@ import { adminAuthQueryKey, useAdminAuthContext } from '@/lib/admin-auth'
 import { BASE_URL } from '@/lib/constans'
 import { cn } from '@/lib/utils'
 import DashboardSearchCommand from '../dashboard-search-command'
-import { LogoStudioSidebar } from '../kreasi-logo'
-import { Button } from '../ui/button'
 
 const data = {
   navBottom: [
@@ -114,7 +111,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar
       {...props}
       collapsible="icon"
-      variant="sidebar"
+      variant="inset"
       className="border-muted"
     >
 
@@ -122,11 +119,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <>
           <SidebarHeader>
             <SidebarMenu>
-              {/* <SidebarMenuItem>
-                <SidebarMenuButton>
-                  <LogoStudioSidebar />
-                </SidebarMenuButton>
-              </SidebarMenuItem> */}
               <SidebarMenuItem className="flex gap-3 items-center">
                 <Menu>
                   <MenuTrigger render={<SidebarMenuButton size="default" />}>
@@ -257,12 +249,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-
-              {/* <SidebarMenuIsItem> */}
-              <Button variant='outline' size='icon-sm' className='rounded-full absolute bottom-4 left-4 '>
-                <CircleQuestionMark />
-              </Button>
-              <SidebarMenuItem className='text-center '>
+              <SidebarMenuItem >
                 <Credits />
               </SidebarMenuItem>
             </SidebarMenu>

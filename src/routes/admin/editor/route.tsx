@@ -36,7 +36,7 @@ function EditorLayout() {
       </div>
 
       {/* PREVIEW Section - Shared across all editor routes */}
-      <div className="mb-20 md:mb-0 block border-t lg:border-t-0 lg:border-l lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden bg-zinc-50/50 lg:bg-transparent">
+      <div className="mb-20 sm:mb-0 block border-t lg:border-t-0 lg:border-l lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden bg-zinc-50/50 lg:bg-transparent">
         <div className="lg:h-full flex flex-col items-center py-10 lg:pt-10">
           <div className="flex items-center gap-2 mb-6 shrink-0">
             <Group>

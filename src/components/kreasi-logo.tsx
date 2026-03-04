@@ -77,7 +77,7 @@ const LogoStudioSidebar = ({
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-1 text-xl font-medium",
+        "flex items-center gap-1 text-xl font-heading",
         className,
       )}
     >

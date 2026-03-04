@@ -1,21 +1,12 @@
-import { Link } from '@tanstack/react-router'
 import { ShoppingCart } from 'lucide-react'
 import { useState } from 'react'
-import { LogoType } from './kreasi-logo'
 import UserButton from './user-button'
 import { Button } from './ui/button'
 import { CartDrawer } from './cart-drawer'
 import { useCartStore } from '@/store/cart-store'
 
-type SiteUserProfileHeaderProps = {
-  logoColor?: string
-  backgroundLogoColor?: string
-}
 
-export default function SiteUserProfileHeader({
-  logoColor,
-  backgroundLogoColor,
-}: SiteUserProfileHeaderProps) {
+export default function SiteUserProfileHeader() {
   const [isCartOpen, setIsCartOpen] = useState(false)
   const totalItems = useCartStore((state) => state.getTotalItems())
 
@@ -23,17 +14,7 @@ export default function SiteUserProfileHeader({
     <>
       <header className="z-50 px-2">
         <div className="mx-auto sm:max-w-2xl md:max-w-3xl">
-          <div className="flex h-16 items-center justify-between px-3">
-            <Link
-              to="/"
-              className="relative"
-            >
-              {/* Default: below lg screens - use background color */}
-              <LogoType style={{ color: backgroundLogoColor }} />
-              {/* lg and above: use banner color (absolute positioned header) */}
-              {/* <LogoType className="hidden lg:flex" style={{ color: logoColor }} /> */}
-            </Link>
-
+          <div className="flex h-16 items-center justify-end px-3">
             <div className="ml-auto flex items-center gap-3">
               <UserButton />
               <Button

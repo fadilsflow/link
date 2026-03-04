@@ -74,17 +74,14 @@ export default function DashboardSearchCommand({ children }: { children?: React.
 
     return (
         <CommandDialog onOpenChange={setOpen} open={open} >
-            <SimpleTooltip side="bottom" content={<KbdGroup >search
-                <Kbd>⌘</Kbd>
-                <Kbd>J</Kbd>
-            </KbdGroup>} render={< CommandDialogTrigger render={children || <Button variant="outline" />} />}>
+            < CommandDialogTrigger render={children || <Button variant="outline" />} >
                 {!children && (
                     <>
                         Open Command Palette
 
                     </>
                 )}
-            </SimpleTooltip >
+            </CommandDialogTrigger>
             <CommandDialogPopup>
                 <Command items={groupedItems}>
                     <CommandInput placeholder="Search for apps and commands..." />

@@ -31,10 +31,10 @@ import {
 } from '@/lib/appearance'
 
 import SiteUserProfileHeader from '@/components/site-user-profile-header'
-import PublicMark from '@/components/public-mark'
 import { Button } from '@/components/ui/button'
 import { ShareProfileModal } from '@/components/share-profile-modal'
 import { BASE_URL } from '@/lib/constans'
+import PublicProfileFooter from '@/components/public-profile-footer'
 
 type PublicBlock = PublicProfileBlock
 
@@ -771,10 +771,11 @@ function UserProfile() {
 
         <div className="pb-4 pt-10">
           <div className="mx-auto sm:max-w-2xl md:max-w-3xl">
-            <PublicMark
+            {/* <PublicMark
               textColor={profileTextColor.mutedForeground}
               logoColor={profileTextColor.foreground}
-            />
+            /> */}
+            <PublicProfileFooter />
           </div>
         </div>
       </div>

@@ -197,8 +197,8 @@ function ProductDetailPage() {
           <div className="space-y-6 lg:col-span-1">
             <ProductImage images={productImages} title={product.title} />
 
-            <div className="space-y-4 pb-2 relative pr-28">
-              <h1 className="text-3xl font-bold">{product.title}</h1>
+            <div className="space-y-4 pb-2 relative pr-15">
+              <h1 className="text-xl md:text-3xl font-bold">{product.title}</h1>
 
               <div className="flex absolute top-0 right-0 gap-1">
                 <Button

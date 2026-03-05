@@ -21,6 +21,7 @@ import { SavedDrawer } from '@/components/saved-drawer'
 import { useSavedStore } from '@/store/saved-store'
 import { BASE_URL } from '@/lib/constans'
 import { Separator } from '@/components/ui/separator'
+import PublicProfileFooter from '@/components/public-profile-footer'
 
 export const Route = createFileRoute('/$username/products/$productId/')({
   component: ProductDetailPage,
@@ -283,7 +284,7 @@ function ProductDetailPage() {
               </Field>
               <div className="flex items-center gap-2 w-full">
 
-                <Button 
+                <Button
                   size="lg"
                   type="submit"
                   className="py-6 flex-1"
@@ -297,6 +298,9 @@ function ProductDetailPage() {
         </div>
       </div>
       <SavedDrawer open={isSavedOpen} onClose={() => setIsSavedOpen(false)} />
+      <div className="border-t py-4">
+        <PublicProfileFooter />
+      </div>
     </div >
   )
 }

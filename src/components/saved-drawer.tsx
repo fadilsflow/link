@@ -93,10 +93,6 @@ export function SavedDrawer({ open, onClose }: SavedDrawerProps) {
                               username: item.username,
                               productId: item.productId,
                             }}
-                            search={{
-                              name: '',
-                              email: '',
-                            }}
                           />
                         }
                         onClick={onClose}

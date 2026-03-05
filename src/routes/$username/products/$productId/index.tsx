@@ -113,13 +113,12 @@ function ProductDetailPage() {
   const navigate = useNavigate()
   const [isSavedOpen, setIsSavedOpen] = React.useState(false)
   const [isSubmittingBuy, setIsSubmittingBuy] = React.useState(false)
-  const { toggleItem, isSaved, getTotalItems } = useSavedStore()
+  const { toggleItem, isSaved } = useSavedStore()
 
   const productHref = `${BASE_URL.replace(/\/$/, '')}/${username}/products/${productId}`
   const productImages = product.images || []
   const originalPrice = getOriginalPrice(product)
   const productVideoId = extractYouTubeVideoIdFromText(product.description)
-  const totalSavedItems = getTotalItems()
   const isCurrentProductSaved = isSaved(product.id)
   const creatorName = user.username || user.name || 'creator'
   const creatorInitial = creatorName.charAt(0).toUpperCase()
@@ -182,21 +181,14 @@ function ProductDetailPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setIsSavedOpen(true)}
-                aria-label="Open saved products"
-              >
-                <Bookmark />
-              </Button>
-              {totalSavedItems > 0 ? (
-                <span className="absolute -right-2 -top-2 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-semibold text-primary-foreground">
-                  {totalSavedItems}
-                </span>
-              ) : null}
-            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsSavedOpen(true)}
+              aria-label="Open saved products"
+            >
+              <Bookmark />
+            </Button>
 
             <ShareProfileModal url={productHref}>
               <Button variant="outline" size="icon" aria-label="Share product">

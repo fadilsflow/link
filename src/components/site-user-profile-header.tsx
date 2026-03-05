@@ -3,11 +3,10 @@ import { useState } from 'react'
 import UserButton from './user-button'
 import { Button } from './ui/button'
 import { SavedDrawer } from './saved-drawer'
-import { useSavedStore } from '@/store/saved-store'
+
 
 export default function SiteUserProfileHeader() {
   const [isSavedOpen, setIsSavedOpen] = useState(false)
-  const totalItems = useSavedStore((state) => state.getTotalItems())
 
   return (
     <>
@@ -23,11 +22,6 @@ export default function SiteUserProfileHeader() {
                 onClick={() => setIsSavedOpen(true)}
               >
                 <Bookmark className="h-4 w-4" />
-                {totalItems > 0 ? (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                    {totalItems > 9 ? '9+' : totalItems}
-                  </span>
-                ) : null}
               </Button>
             </div>
           </div>

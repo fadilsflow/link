@@ -19,16 +19,14 @@ interface SavedDrawerProps {
 }
 
 export function SavedDrawer({ open, onClose }: SavedDrawerProps) {
-  const { items, removeItem, clearSaved, getTotalItems } = useSavedStore()
-
-  const totalItems = getTotalItems()
+  const { items, removeItem, clearSaved } = useSavedStore()
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent side="right" className="flex w-full flex-col sm:max-w-lg">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            Saved ({totalItems})
+            Saved
           </SheetTitle>
         </SheetHeader>
 

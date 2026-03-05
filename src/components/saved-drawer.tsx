@@ -1,5 +1,5 @@
 import { Bookmark, Trash2 } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import Emptys from './empty-state'
 import { useSavedStore } from '@/store/saved-store'
 import { formatPrice } from '@/lib/utils'
@@ -20,7 +20,6 @@ interface SavedDrawerProps {
 
 export function SavedDrawer({ open, onClose }: SavedDrawerProps) {
   const { items, removeItem, clearSaved, getTotalItems } = useSavedStore()
-  const navigate = useNavigate()
 
   const totalItems = getTotalItems()
 
@@ -74,31 +73,35 @@ export function SavedDrawer({ open, onClose }: SavedDrawerProps) {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => {
-                          onClose()
-                          navigate({
-                            to: '/$username/products/$productId/',
-                            params: {
+                        render={
+                          <Link
+                            to="/$username/products/$productId"
+                            params={{
                               username: item.username,
                               productId: item.productId,
-                            },
-                          })
-                        }}
+                            }}
+                          />
+                        }
+                        onClick={onClose}
                       >
                         View
                       </Button>
                       <Button
                         size="sm"
-                        onClick={() => {
-                          onClose()
-                          navigate({
-                            to: '/$username/products/$productId/checkout',
-                            params: {
+                        render={
+                          <Link
+                            to="/$username/products/$productId/checkout"
+                            params={{
                               username: item.username,
                               productId: item.productId,
-                            },
-                          })
-                        }}
+                            }}
+                            search={{
+                              name: '',
+                              email: '',
+                            }}
+                          />
+                        }
+                        onClick={onClose}
                       >
                         Beli
                       </Button>
@@ -131,4 +134,3 @@ export function SavedDrawer({ open, onClose }: SavedDrawerProps) {
     </Sheet>
   )
 }
-

@@ -271,19 +271,27 @@ function ProductDetailPage() {
                 />
                 <FieldError>Please enter a valid email.</FieldError>
               </Field>
-              <Button
-                type="button"
-                size="icon"
-                variant={isCurrentProductSaved ? 'default' : 'outline'}
-                onClick={handleToggleSaved}
-                disabled={isSubmittingBuy}
-                aria-label={isCurrentProductSaved ? 'Remove from saved' : 'Save product'}
-              >
-                <Bookmark className={isCurrentProductSaved ? 'fill-current' : ''} />
-              </Button>
-              <Button size='lg' type="submit" className="py-6 w-full" loading={isSubmittingBuy}>
-                Beli
-              </Button>
+              <div className="flex items-center gap-2 w-full">
+                <Button
+                  type="button"
+                  size="icon-lg"
+                  variant={isCurrentProductSaved ? 'default' : 'outline'}
+                  onClick={handleToggleSaved}
+                  disabled={isSubmittingBuy}
+                  aria-label={isCurrentProductSaved ? 'Remove from saved' : 'Save product'}
+                >
+                  <Bookmark className={isCurrentProductSaved ? 'fill-current' : ''} />
+                </Button>
+
+                <Button
+                  size="lg"
+                  type="submit"
+                  className="py-6 flex-1"
+                  loading={isSubmittingBuy}
+                >
+                  Beli
+                </Button>
+              </div>
             </Form>
           </div>
         </div>

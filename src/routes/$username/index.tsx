@@ -600,7 +600,7 @@ function UserProfile() {
       />
     ))
   ) : (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
       {(products as Array<PublicProduct>).map((product) => {
         return (
           <ProductCard

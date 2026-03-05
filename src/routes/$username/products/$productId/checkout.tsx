@@ -22,6 +22,10 @@ import { extractYouTubeVideoIdFromText } from '@/lib/lite-youtube'
 export const Route = createFileRoute('/$username/products/$productId/checkout')(
   {
     component: CheckoutPage,
+    validateSearch: (search: Record<string, unknown>) => ({
+      name: typeof search.name === 'string' ? search.name : '',
+      email: typeof search.email === 'string' ? search.email : '',
+    }),
     loader: async ({ params }) => {
       const data = await getPublicProduct({
         data: {
@@ -93,6 +97,7 @@ function effectiveUnitPrice(product: any, customAmount: number | null) {
 
 function CheckoutPage() {
   const { product, user } = Route.useLoaderData()
+  const search = Route.useSearch()
 
   const questions = React.useMemo(
     () => parseQuestions(product.customerQuestions),
@@ -102,8 +107,8 @@ function CheckoutPage() {
   const hasImage = productImages.length > 0
   const productVideoId = extractYouTubeVideoIdFromText(product.description)
 
-  const [name, setName] = React.useState('')
-  const [email, setEmail] = React.useState('')
+  const [name, setName] = React.useState(search.name)
+  const [email, setEmail] = React.useState(search.email)
   const [customAmount, setCustomAmount] = React.useState('')
   const [answers, setAnswers] = React.useState<Record<string, string>>({})
   const [note, setNote] = React.useState('')

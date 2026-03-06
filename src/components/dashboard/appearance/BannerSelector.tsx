@@ -1,5 +1,4 @@
 import React from 'react'
-import { Check } from 'lucide-react'
 import { LOCAL_BANNER_IMAGES } from './banner-presets'
 import { ImageUploader } from './ImageUploader'
 import type { BannerPreset } from './types'
@@ -60,14 +59,9 @@ export function BannerSelector({
                   alt={preset.label}
                   className={cn(
                     'h-full w-full object-cover transition-opacity',
-                    isSelected ? 'opacity-90' : 'opacity-100',
+                    isSelected ? 'opacity-50' : 'opacity-100',
                   )}
                 />
-                {isSelected ? (
-                  <span className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-background shadow-sm">
-                    <Check className="h-3 w-3" />
-                  </span>
-                ) : null}
               </button>
             )
           })}

@@ -282,11 +282,11 @@ function ProductCard({
 }
 
 function DeferredVideoEmbed({
+  textColor,
   block,
-  cardClass,
   radiusClass,
-  cardStyle,
 }: {
+  textColor: string,
   block: PublicBlock
   cardClass: string
   radiusClass: string
@@ -301,12 +301,10 @@ function DeferredVideoEmbed({
     <div
       className={cn(
         'w-full overflow-hidden space-y-3 mt-6',
-        // cardClass,
         radiusClass,
       )}
-      style={cardStyle}
     >
-      <div className="flex items-center gap-2 text-md font-medium">
+      <div style={{ color: textColor }} className="flex items-center gap-2 text-md font-medium">
         {block.title || 'YouTube Video'}
       </div>
 
@@ -508,11 +506,11 @@ function UserProfile() {
       onTrackClick={trackBlockClick}
       renderVideoBlock={(block) => (
         <DeferredVideoEmbed
+
           key={block.id}
           block={block}
           cardClass={cardBase}
-          radiusClass={radiusClass}
-          cardStyle={blockInlineStyle}
+          text={profileTextColor.foreground}
         />
       )}
       renderProductBlock={(block) => {

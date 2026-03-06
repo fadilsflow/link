@@ -1,4 +1,3 @@
-import { Check } from 'lucide-react'
 import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
 import { cn } from '@/lib/utils'
 import {
@@ -24,7 +23,7 @@ function OptionCard({
   return (
     <div
       className={cn(
-        'relative p-4 transition-all duration-200 rounded-xl',
+        'relative p-4 rounded-xl',
         selected ? 'bg-input/80 ' : 'border hover:bg-input/40',
       )}
     >
@@ -40,11 +39,6 @@ function OptionCard({
           <div className="h-1.5 w-1/3 bg-input rounded-full" />
         </div>
       </div>
-      {selected ? (
-        <span className="absolute right-3 top-3 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-background shadow-sm">
-          <Check className="h-3 w-3" />
-        </span>
-      ) : null}
     </div>
   )
 }

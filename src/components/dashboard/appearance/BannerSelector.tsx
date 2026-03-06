@@ -30,12 +30,18 @@ export function BannerSelector({
       <div className="space-y-3">
         <ImageUploader
           value={isCustomBanner ? currentBannerUrl : undefined}
+          backgroundPreviewUrl={currentBannerUrl}
           onChange={(url) => onBannerSelect(url || '', 'custom')}
           aspectRatio="wide"
           folder="banners"
           placeholder="1440*190px"
+          cropEnabled
+          cropAspect={1440 / 190}
+          cropOutputWidth={1440}
+          cropOutputHeight={190}
+          cropTitle="Crop banner"
         />
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {LOCAL_BANNER_IMAGES.map((preset) => {
             const isSelected =
               currentBannerId === preset.id || currentBannerUrl === preset.image
@@ -46,7 +52,7 @@ export function BannerSelector({
                 type="button"
                 onClick={() => handleLocalImageSelect(preset)}
                 className={cn(
-                  'relative h-[46px] w-[264px] overflow-hidden rounded-lg transition-all',
+                  'relative h-[46px] w-full overflow-hidden rounded-lg transition-all',
                 )}
               >
                 <img

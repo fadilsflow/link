@@ -1,39 +1,124 @@
 import { useState } from 'react'
-import { Upload, X } from 'lucide-react'
+import { ArrowLeft, Upload, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { useFileUpload } from '@/hooks/use-file-upload'
 import { uploadFile } from '@/lib/upload-client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
+import {
+  Cropper,
+  CropperCropArea,
+  CropperDescription,
+  CropperImage,
+} from '@/components/ui/cropper'
+import {
+  Dialog,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Slider } from '@/components/ui/slider'
+
+type CropArea = { x: number; y: number; width: number; height: number }
+
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image()
+    image.addEventListener('load', () => resolve(image))
+    image.addEventListener('error', (error) => reject(error))
+    image.setAttribute('crossOrigin', 'anonymous')
+    image.src = url
+  })
+
+async function getCroppedImageBlob(
+  imageSrc: string,
+  pixelCrop: CropArea,
+  outputWidth: number,
+  outputHeight: number,
+): Promise<Blob | null> {
+  try {
+    const image = await createImage(imageSrc)
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+
+    if (!ctx) return null
+
+    canvas.width = outputWidth
+    canvas.height = outputHeight
+
+    ctx.drawImage(
+      image,
+      pixelCrop.x,
+      pixelCrop.y,
+      pixelCrop.width,
+      pixelCrop.height,
+      0,
+      0,
+      outputWidth,
+      outputHeight,
+    )
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.95)
+    })
+  } catch (error) {
+    console.error('Failed to crop image:', error)
+    return null
+  }
+}
 
 interface ImageUploaderProps {
   value?: string
+  backgroundPreviewUrl?: string
   onChange: (url: string) => void
   folder?: string
   aspectRatio?: 'video' | 'square' | 'wide'
   className?: string
   placeholder?: string
+  cropEnabled?: boolean
+  cropAspect?: number
+  cropOutputWidth?: number
+  cropOutputHeight?: number
+  cropTitle?: string
+  roundedClassName?: string
 }
 
 export function ImageUploader({
   value,
+  backgroundPreviewUrl,
   onChange,
   folder = 'backgrounds',
   aspectRatio = 'video',
   className,
-  placeholder = 'Upload or paste URL',
+  placeholder,
+  cropEnabled = false,
+  cropAspect,
+  cropOutputWidth,
+  cropOutputHeight,
+  cropTitle = 'Crop image',
+  roundedClassName = 'rounded-xl',
 }: ImageUploaderProps) {
-  const [activeTab, setActiveTab] = useState<'upload' | 'url'>('upload')
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isCropOpen, setIsCropOpen] = useState(false)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [cropSource, setCropSource] = useState<string | null>(null)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(
+    null,
+  )
+  const [zoom, setZoom] = useState(1)
 
   const [, { openFileDialog, getInputProps, handleDrop, handleDragOver, handleDragEnter, handleDragLeave }] = useFileUpload({
     accept: 'image/*',
     maxFiles: 1,
     multiple: false,
   })
+
+  const resolvedCropAspect =
+    cropAspect ??
+    (aspectRatio === 'video' ? 16 / 9 : aspectRatio === 'square' ? 1 : 1440 / 190)
 
   // Handle file upload
   const processUpload = async (file: File) => {
@@ -50,11 +135,71 @@ export function ImageUploader({
     }
   }
 
+  const resetCropState = () => {
+    if (cropSource?.startsWith('blob:')) {
+      URL.revokeObjectURL(cropSource)
+    }
+    setCropSource(null)
+    setPendingFile(null)
+    setCroppedAreaPixels(null)
+    setZoom(1)
+    setIsCropOpen(false)
+  }
+
+  const beginFileFlow = (file?: File) => {
+    if (!file) return
+
+    if (!cropEnabled) {
+      void processUpload(file)
+      return
+    }
+
+    const objectUrl = URL.createObjectURL(file)
+    setPendingFile(file)
+    setCropSource(objectUrl)
+    setCroppedAreaPixels(null)
+    setZoom(1)
+    setIsCropOpen(true)
+  }
+
+  const applyCrop = async () => {
+    if (!cropEnabled || !cropSource || !pendingFile || !croppedAreaPixels) {
+      resetCropState()
+      return
+    }
+
+    const targetWidth = cropOutputWidth ?? Math.max(1, Math.round(croppedAreaPixels.width))
+    const targetHeight = cropOutputHeight ?? Math.max(1, Math.round(croppedAreaPixels.height))
+
+    const blob = await getCroppedImageBlob(
+      cropSource,
+      croppedAreaPixels,
+      targetWidth,
+      targetHeight,
+    )
+
+    if (!blob) {
+      setError('Failed to crop image. Please try again.')
+      resetCropState()
+      return
+    }
+
+    const croppedFile = new File(
+      [blob],
+      pendingFile.name.replace(/\.[^.]+$/, '') + '.jpg',
+      { type: 'image/jpeg' },
+    )
+
+    resetCropState()
+    await processUpload(croppedFile)
+  }
+
   // Wrap the hook's change handler to trigger our async upload
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      processUpload(e.target.files[0])
+      beginFileFlow(e.target.files[0])
     }
+    e.currentTarget.value = ''
   }
 
   // We need to bypass the hook's automatic state management effectively for the immediate upload pattern
@@ -63,141 +208,131 @@ export function ImageUploader({
 
   return (
     <div className={cn('space-y-4', className)}>
-      <Tabs
-        value={activeTab}
-        onValueChange={(v) => setActiveTab(v as 'upload' | 'url')}
-        className="w-full"
+      <input
+        type="file"
+        className="hidden"
+        accept="image/*"
+        ref={getInputProps().ref}
+        onChange={onFileChange}
+      />
+
+      <div
+        className={cn(
+          'relative group overflow-hidden border bg-input/50 transition-colors text-center cursor-pointer hover:bg-input/80 hover:border-input flex items-center justify-center',
+          roundedClassName,
+          aspectRatio === 'video'
+            ? 'aspect-video w-full'
+            : aspectRatio === 'square'
+              ? 'aspect-square w-full'
+              : 'w-full h-[93px]',
+          isUploading && 'pointer-events-none opacity-50',
+        )}
+        style={
+          value || backgroundPreviewUrl
+            ? {
+              backgroundImage: `url(${value || backgroundPreviewUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }
+            : undefined
+        }
+        onClick={openFileDialog}
+        onDrop={(e) => {
+          handleDrop(e)
+          beginFileFlow(e.dataTransfer.files[0])
+        }}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
       >
-        <TabsList className="grid w-full grid-cols-2 h-8">
-          <TabsTrigger value="upload" className="text-xs">
-            Upload
-          </TabsTrigger>
-          <TabsTrigger value="url" className="text-xs">
-            URL
-          </TabsTrigger>
-        </TabsList>
+        {value || backgroundPreviewUrl ? (
+          <div className="absolute inset-0 bg-black/20" />
+        ) : null}
 
-        <div className="mt-4">
-          <TabsContent value="upload" className="mt-0 space-y-4">
-            {!value ? (
-              <div
-                className={cn(
-                  ' rounded-xl bg-input/50 transition-colors text-center cursor-pointer hover:bg-input/80 hover:border-input flex items-center justify-center',
-                  aspectRatio === 'video'
-                    ? 'aspect-video w-full'
-                    : aspectRatio === 'square'
-                      ? 'aspect-square w-full'
-                      : 'w-full h-[93px]',
-                  isUploading && 'pointer-events-none opacity-50',
-                )}
-                onClick={openFileDialog}
-                onDrop={(e) => {
-                  handleDrop(e)
-                  processUpload(e.dataTransfer.files[0])
-                }}
-                onDragOver={handleDragOver}
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-              >
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  ref={getInputProps().ref}
-                  onChange={onFileChange}
-                />
-
-                <div className="flex flex-col items-center gap-2">
-                  <div className="p-2 rounded-full">
-                    {isUploading ? (
-                      <Spinner />
-                    ) : (
-                      <Upload className="h-4 w-4 " />
-                    )}
-                  </div>
-                  <div className="text-xs">
-                    {isUploading ? null : placeholder}
-                  </div>
-                </div>
-              </div>
+        <div
+          className={cn(
+            'relative z-10 flex flex-col items-center gap-2',
+            (value || backgroundPreviewUrl) && 'text-white',
+          )}
+        >
+          <div className="p-2 rounded-full">
+            {isUploading ? (
+              <Spinner />
             ) : (
-              <div className="relative group rounded-xl overflow-hidden border">
-                <div
-                  className={cn(
-                    'w-full bg-cover bg-center',
-                    aspectRatio === 'video'
-                      ? 'aspect-video'
-                      : aspectRatio === 'square'
-                        ? 'aspect-square'
-                        : 'w-[712px] h-[93px]',
-                  )}
-                  style={{ backgroundImage: `url(${value})` }}
-                />
-
-                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="h-8 w-8 rounded-full shadow-sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onChange('')
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {/* Reuse button overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-0">
-                  <div
-                    className="bg-black/50 text-white text-xs px-3 py-1.5 rounded-full font-medium pointer-events-auto cursor-pointer z-20 hover:bg-black/70 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onChange('')
-                    }}
-                  >
-                    Change Image
-                  </div>
-                </div>
-              </div>
+              <Upload className="h-4 w-4 " />
             )}
-
-            {error && <p className="text-xs text-red-500">{error}</p>}
-          </TabsContent>
-
-          <TabsContent value="url" className="mt-0">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Input
-                  value={value || ''}
-                  onChange={(e) => onChange(e.target.value)}
-                  placeholder="https://example.com/image.png"
-                />
-              </div>
-              {value && (
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={() => onChange('')}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            {value && (
-              <div className="mt-4 rounded-xl overflow-hidden border border-zinc-200 aspect-video bg-zinc-50">
-                <img
-                  src={value}
-                  className="w-full h-full object-cover"
-                  alt="Preview"
-                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                />
-              </div>
-            )}
-          </TabsContent>
+          </div>
+          {placeholder && !isUploading ? (
+            <div className="text-xs">{placeholder}</div>
+          ) : null}
         </div>
-      </Tabs>
+      </div>
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+
+      <Dialog open={isCropOpen} onOpenChange={(open) => !open && resetCropState()}>
+        <DialogPopup className="p-0 sm:max-w-2xl" showCloseButton={false}>
+          <DialogDescription className="sr-only">
+            Crop uploaded image before applying
+          </DialogDescription>
+          <DialogHeader className="border-b p-4">
+            <DialogTitle className="flex items-center justify-between text-base">
+              <div className="flex items-center gap-2">
+                <Button
+                  aria-label="Cancel crop"
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={resetCropState}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <span>{cropTitle}</span>
+              </div>
+              <Button
+                type="button"
+                onClick={() => void applyCrop()}
+                disabled={!cropSource || !croppedAreaPixels || isUploading}
+              >
+                Apply
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+
+          {cropSource ? (
+            <Cropper
+              className="h-80 sm:h-[28rem]"
+              image={cropSource}
+              aspectRatio={resolvedCropAspect}
+              zoom={zoom}
+              onZoomChange={setZoom}
+              onCropChange={(pixels) => setCroppedAreaPixels(pixels as CropArea | null)}
+            >
+              <CropperDescription />
+              <CropperImage />
+              <CropperCropArea />
+            </Cropper>
+          ) : null}
+
+          <DialogFooter className="border-t px-4 py-5">
+            <div className="mx-auto flex w-full max-w-80 items-center gap-4">
+              <ZoomOut className="h-4 w-4 shrink-0 opacity-60" />
+              <Slider
+                aria-label="Crop zoom"
+                min={1}
+                max={3}
+                step={0.1}
+                value={[zoom]}
+                onValueChange={(value) =>
+                  setZoom((Array.isArray(value) ? value[0] : value) ?? 1)
+                }
+              />
+              <ZoomIn className="h-4 w-4 shrink-0 opacity-60" />
+            </div>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
     </div>
   )
 }

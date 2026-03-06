@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Camera, X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
-import { uploadFile } from '@/lib/upload-client'
-import { useFileUpload } from '@/hooks/use-file-upload'
 
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Form } from '@/components/ui/form'
+import { ImageUploader } from '@/components/dashboard/appearance/ImageUploader'
 
 import {
   Dialog,
@@ -49,36 +47,8 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
     image: user.image || '',
   })
 
-  const [
-    { files: avatarFiles },
-    {
-      openFileDialog,
-      removeFile,
-      getInputProps,
-      handleDrop,
-      handleDragOver,
-      handleDragEnter,
-      handleDragLeave,
-    },
-  ] = useFileUpload({
-    accept: 'image/*',
-    maxFiles: 1,
-    multiple: false,
-    initialFiles: user.image
-      ? [
-        {
-          id: 'current-avatar',
-          name: 'Current Avatar',
-          url: user.image,
-          size: 0,
-          type: 'image/ping',
-        },
-      ]
-      : [],
-  })
-
   // State to track if we are uploading
-  const [isUploading, setIsUploading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // Reset form when user data changes or dialog opens
   useEffect(() => {
@@ -97,49 +67,38 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
     e.preventDefault()
 
     // Check for changes
-    const newFile = avatarFiles[0]?.file
-    const imageRemoved = avatarFiles.length === 0 && user.image !== null
-    const imageChanged = newFile instanceof File || imageRemoved
-
     // Normalize values for comparison
     const currentName = user.name || ''
     const currentTitle = user.title || ''
     const currentBio = user.bio || ''
+    const currentImage = user.image || ''
     const newName = formData.name || ''
     const newTitle = formData.title || ''
     const newBio = formData.bio || ''
+    const newImage = formData.image || ''
 
     const hasChanged =
       newName !== currentName ||
       newTitle !== currentTitle ||
       newBio !== currentBio ||
-      imageChanged
+      newImage !== currentImage
 
     if (!hasChanged) {
       setDialogOpen(false)
       return
     }
 
-    setIsUploading(true)
+    setIsSaving(true)
 
     try {
-      let imageUrl = formData.image
-
-      // If we have a new file selection (File object), upload it
-      if (newFile instanceof File) {
-        imageUrl = await uploadFile(newFile, 'avatars')
-      } else if (imageRemoved) {
-        imageUrl = null
-      }
-
-      await onSave({ ...formData, image: imageUrl })
+      await onSave({ ...formData, image: newImage || null })
       // Close dialog only after save completes successfully
       setDialogOpen(false)
     } catch (error) {
       console.error('Failed to save profile:', error)
       // Keep dialog open on error so user can retry
     } finally {
-      setIsUploading(false)
+      setIsSaving(false)
     }
   }
 
@@ -198,46 +157,21 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
             <DialogPanel className="grid gap-4">
               {/* Avatar Upload in Dialog */}
               <div className="flex justify-center">
-                <div className="relative group">
-                  <div
-                    className="relative h-24 w-24 rounded-full overflow-hidden border cursor-pointer"
-                    onClick={openFileDialog}
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
-                  >
-                    <Avatar className="h-24 w-24">
-                      <AvatarImage
-                        src={avatarFiles[0]?.preview || formData.image || ''}
-                        className="object-cover"
-                      />
-                      <AvatarFallback className="text-2xl font-bold">
-                        {formData.name.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Camera className="h-6 w-6 text-white" />
-                    </div>
-                  </div>
-
-                  {avatarFiles.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        const id = avatarFiles[0].id
-                        removeFile(id)
-                      }}
-                      className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow-sm border border-zinc-200 hover:bg-zinc-100"
-                    >
-                      <X className="h-4 w-4 text-zinc-500" />
-                    </button>
-                  )}
-
-                  <input {...getInputProps()} className="hidden" />
+                <div className="w-24">
+                  <ImageUploader
+                    value={formData.image || undefined}
+                    onChange={(url) => handleFieldChange('image', url)}
+                    folder="avatars"
+                    aspectRatio="square"
+                    roundedClassName="rounded-full"
+                    className="space-y-0"
+                    // placeholder="Upload avatar"
+                    cropEnabled
+                    cropAspect={1}
+                    cropOutputWidth={512}
+                    cropOutputHeight={512}
+                    cropTitle="Crop avatar"
+                  />
                 </div>
               </div>
 
@@ -275,7 +209,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
               <DialogClose render={<Button variant="ghost" />}>
                 Cancel
               </DialogClose>
-              <Button type="submit" loading={isUploading}>
+              <Button type="submit" loading={isSaving}>
                 Save
               </Button>
             </DialogFooter>

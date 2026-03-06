@@ -210,16 +210,16 @@ export function BlockFormDialog({
             type === 'instagram' ||
             type === 'tiktok' ||
             type === 'twitter') && (
-            <Field>
-              <FieldLabel>Title</FieldLabel>
-              <Input
-                value={formValues.title}
-                onChange={(e) => setField('title', e.target.value)}
-                placeholder={type === 'text' ? "What's the heading?" : 'Title'}
-              />
-              {errors.title ? <FieldError>{errors.title}</FieldError> : null}
-            </Field>
-          )}
+              <Field>
+                <FieldLabel>Title</FieldLabel>
+                <Input
+                  value={formValues.title}
+                  onChange={(e) => setField('title', e.target.value)}
+                  placeholder={type === 'text' ? "What's the heading?" : 'Title'}
+                />
+                {errors.title ? <FieldError>{errors.title}</FieldError> : null}
+              </Field>
+            )}
 
           {type === 'link' && (
             <Field>
@@ -362,46 +362,46 @@ export function BlockFormDialog({
             type === 'instagram' ||
             type === 'tiktok' ||
             type === 'twitter') && (
-            <Field>
-              <FieldLabel>Username</FieldLabel>
-              <InputGroup>
-                <InputGroupInput
-                  value={formValues.content || ''}
-                  onChange={(e) =>
-                    setField(
-                      'content',
-                      normalizeSocialUsername(e.target.value, type),
-                    )
-                  }
-                  onBlur={(e) =>
-                    setField(
-                      'content',
-                      normalizeSocialUsername(e.target.value, type),
-                    )
-                  }
-                  placeholder={
-                    type === 'threads' || type === 'instagram'
-                      ? 'username'
-                      : type === 'twitter'
-                        ? 'x_username'
-                        : 'tiktok_username'
-                  }
-                />
-                <InputGroupAddon>
-                  {type === 'threads'
-                    ? 'threads.net/@'
-                    : type === 'instagram'
-                      ? 'instagram.com/'
-                      : type === 'twitter'
-                        ? 'x.com/'
-                        : 'tiktok.com/@'}
-                </InputGroupAddon>
-              </InputGroup>
-              {errors.content ? (
-                <FieldError>{errors.content}</FieldError>
-              ) : null}
-            </Field>
-          )}
+              <Field>
+                <FieldLabel>Username</FieldLabel>
+                <InputGroup>
+                  <InputGroupInput
+                    value={formValues.content || ''}
+                    onChange={(e) =>
+                      setField(
+                        'content',
+                        normalizeSocialUsername(e.target.value, type),
+                      )
+                    }
+                    onBlur={(e) =>
+                      setField(
+                        'content',
+                        normalizeSocialUsername(e.target.value, type),
+                      )
+                    }
+                    placeholder={
+                      type === 'threads' || type === 'instagram'
+                        ? 'username'
+                        : type === 'twitter'
+                          ? 'x_username'
+                          : 'tiktok_username'
+                    }
+                  />
+                  <InputGroupAddon>
+                    {type === 'threads'
+                      ? 'threads.net/@'
+                      : type === 'instagram'
+                        ? 'instagram.com/'
+                        : type === 'twitter'
+                          ? 'x.com/'
+                          : 'tiktok.com/@'}
+                  </InputGroupAddon>
+                </InputGroup>
+                {errors.content ? (
+                  <FieldError>{errors.content}</FieldError>
+                ) : null}
+              </Field>
+            )}
         </DialogPanel>
         <DialogFooter variant="bare">
           {mode === 'edit' ? (

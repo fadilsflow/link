@@ -263,7 +263,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuItem className="flex gap-3 items-center">
               <Popover>
                 <PopoverTrigger render={<SidebarMenuButton size="default" />}>
-                  <Avatar className="h-6 w-6 border rounded-md -ml-1">
+                  <Avatar className="h-6 w-6 border-2 border-background ring ring-border">
                     <AvatarImage src={adminAuth?.image || ''} />
                     <AvatarFallback>
                       {adminAuth?.name?.slice(0, 2).toUpperCase() || 'US'}
@@ -280,7 +280,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </PopoverTrigger>
                 <PopoverPopup align="end" sideOffset={10} className="w-56">
                   <div className="flex items-center gap-3">
-                    <Avatar className="border rounded-md">
+                    <Avatar className="border-2 border-background ring ring-border">
                       <AvatarImage src={adminAuth?.image || ''} />
                       <AvatarFallback>
                         {adminAuth?.name?.slice(0, 2).toUpperCase() || 'US'}

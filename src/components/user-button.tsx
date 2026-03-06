@@ -25,7 +25,7 @@ export default function UserButton() {
         render={<Button variant={'outline'} />}
       >
         {session.user.image ? (
-          <Avatar className="size-5 rounded-md">
+          <Avatar className="size-5 border-2 border-background ring ring-border">
             <AvatarImage
               alt={session.user.name || 'User'}
               src={session.user.image}
@@ -33,7 +33,7 @@ export default function UserButton() {
             <AvatarFallback>{session.user.name.charAt(0)}</AvatarFallback>
           </Avatar>
         ) : (
-          <div className="size-5 rounded-md bg-muted flex items-center justify-center">
+          <div className="size-5 border bg-muted flex items-center justify-center">
             <UserIcon className="size-3 text-muted-foreground" />
           </div>
         )}

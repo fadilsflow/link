@@ -462,7 +462,7 @@ function AppearanceEditor({
 
           <FramePanel>
             {backgroundType === 'flat' ? (
-              <div className="space-y-2">
+              <div className="gap-2 flex flex-col">
                 <Label>Background color</Label>
                 <ColorPicker
                   value={backgroundColor}
@@ -476,7 +476,7 @@ function AppearanceEditor({
 
             {backgroundType === 'gradient' ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+                <div className="gap-2 flex flex-col">
                   <Label>Top color</Label>
                   <ColorPicker
                     value={backgroundGradientTop}
@@ -486,7 +486,7 @@ function AppearanceEditor({
                     }}
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="gap-2 flex flex-col">
                   <Label>Bottom color</Label>
                   <ColorPicker
                     value={backgroundGradientBottom}
@@ -540,8 +540,8 @@ function AppearanceEditor({
           />
         </FramePanel>
         <FramePanel>
-          <div className={cn(blockStyle === 'shadow' && "grid grid-cols-1 gap-4 sm:grid-cols-2")}>
-            <div className="space-y-2">
+          <div className={cn(blockStyle === 'shadow' && "grid grid-cols-1 gap-4 sm:grid-cols-2 ")}>
+            <div className="gap-2 flex flex-col">
               <Label>Block color</Label>
               <ColorPicker
                 value={blockColor}
@@ -553,7 +553,7 @@ function AppearanceEditor({
             </div>
 
             {blockStyle === 'shadow' ? (
-              <div className="space-y-2">
+              <div className="gap-2 flex flex-col">
                 <Label>Shadow color</Label>
                 <ColorPicker
                   value={blockShadowColor}

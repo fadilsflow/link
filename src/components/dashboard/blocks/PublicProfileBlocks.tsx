@@ -33,6 +33,7 @@ interface PublicProfileBlocksProps {
   backgroundType?: AppearanceBackgroundType | null
   backgroundGradientTop?: string | null
   backgroundGradientBottom?: string | null
+  textForegroundColor?: string
   onOpenBlockUrl: (block: PublicProfileBlock) => void
   onTrackClick: (blockId: string) => void
   renderVideoBlock: (block: PublicProfileBlock) => React.ReactNode
@@ -52,6 +53,7 @@ export function PublicProfileBlocks({
   backgroundType,
   backgroundGradientTop,
   backgroundGradientBottom,
+  textForegroundColor,
   onOpenBlockUrl,
   onTrackClick,
   renderVideoBlock,
@@ -147,9 +149,9 @@ export function PublicProfileBlocks({
     if (block.type === 'text') {
       return (
         <div key={block.id} className={cn('text-left w-full')}>
-          <h2 className="text-md font-medium text-foreground mt-6">{block.title}</h2>
+          <h2 className="text-md font-medium mt-6" style={{ color: textForegroundColor }}>{block.title}</h2>
           {block.content && (
-            <p className="text-sm text-foreground/80">{block.content}</p>
+            <p className="text-sm" style={{ color: textForegroundColor, opacity: 0.8 }}>{block.content}</p>
           )}
         </div>
       )

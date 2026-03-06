@@ -286,11 +286,9 @@ function DeferredVideoEmbed({
   block,
   radiusClass,
 }: {
-  textColor: string,
+  textColor: string
   block: PublicBlock
-  cardClass: string
   radiusClass: string
-  cardStyle?: React.CSSProperties
 }) {
   const { youtubeVideoId } = React.useMemo(
     () => getVideoMeta(block.content),
@@ -502,15 +500,15 @@ function UserProfile() {
       backgroundGradientBottom={
         user.appearanceBackgroundGradientBottom || undefined
       }
+      textForegroundColor={profileTextColor.foreground}
       onOpenBlockUrl={openBlockUrl}
       onTrackClick={trackBlockClick}
       renderVideoBlock={(block) => (
         <DeferredVideoEmbed
-
           key={block.id}
           block={block}
-          cardClass={cardBase}
-          text={profileTextColor.foreground}
+          textColor={profileTextColor.foreground}
+          radiusClass={radiusClass}
         />
       )}
       renderProductBlock={(block) => {

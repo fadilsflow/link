@@ -271,11 +271,10 @@ function ProductDetailPage() {
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              size="icon"
               onClick={() => setIsSavedOpen(true)}
               aria-label="Open saved products"
             >
-              <Bookmark />
+              <Bookmark className="h-4 w-4 fill-current" /> Library
             </Button>
           </div>
         </div>

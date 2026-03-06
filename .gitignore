@@ -11,6 +11,6 @@ count.txt
 .output
 .vinxi
 todos.json
-.env.prod
+.env.production
 board.txt
 secrets.json

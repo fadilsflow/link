@@ -156,7 +156,7 @@ function HomePage() {
             <CardPanel className=" flex items-center justify-center h-24">
               <div className="flex justify-between items-center w-full">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-14 w-14 rounded-md border-2 border-background ring-2 ring-primary/10">
+                  <Avatar className="h-14 w-14  border-2 border-background ring-2 ring-primary/10">
                     <AvatarImage src={session?.user.image || ''} />
                     <AvatarFallback className="bg-primary/5 text-lg text-primary">
                       {userInitial}

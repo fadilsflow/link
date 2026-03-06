@@ -141,8 +141,13 @@ export function ShareProfileModal({
             <div className="flex justify-center aspect-square rounded-lg border bg-white p-3">
               <img
                 src={qrImageUrl}
-                alt="QR code for shared profile URL"
-                className="size-52 w-full h-full"
+                alt="QR code"
+                loading="lazy"
+                decoding="async"
+                className="size-52 w-full h-full opacity-0"
+                onLoad={(e) => {
+                  e.currentTarget.style.opacity = '1'
+                }}
               />
             </div>
             <div className="grid grid-cols-2 gap-2">

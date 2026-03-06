@@ -6,6 +6,7 @@ import {
   useNavigate,
 } from '@tanstack/react-router'
 import { Bookmark, ShoppingBag } from 'lucide-react'
+import type { CarouselApi } from '@/components/ui/carousel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -22,6 +23,13 @@ import { useSavedStore } from '@/store/saved-store'
 import { BASE_URL } from '@/lib/constans'
 import { Separator } from '@/components/ui/separator'
 import PublicProfileFooter from '@/components/public-profile-footer'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel'
 
 export const Route = createFileRoute('/$username/products/$productId/')({
   component: ProductDetailPage,
@@ -85,6 +93,26 @@ interface ProductImageProps {
 }
 
 function ProductImage({ images, title }: ProductImageProps) {
+  const [api, setApi] = React.useState<CarouselApi>()
+  const [current, setCurrent] = React.useState(0)
+
+  React.useEffect(() => {
+    if (!api) return
+
+    const onSelect = () => {
+      setCurrent(api.selectedScrollSnap())
+    }
+
+    onSelect()
+    api.on('select', onSelect)
+    api.on('reInit', onSelect)
+
+    return () => {
+      api.off('select', onSelect)
+      api.off('reInit', onSelect)
+    }
+  }, [api])
+
   if (images.length === 0) {
     return (
       <div className="flex aspect-video items-center justify-center rounded-md border bg-muted">
@@ -93,18 +121,76 @@ function ProductImage({ images, title }: ProductImageProps) {
     )
   }
 
+  if (images.length === 1) {
+    return (
+      <div className="flex aspect-video items-center justify-center overflow-hidden rounded-md border">
+        <img
+          src={images[0]}
+          alt={title}
+          width={1200}
+          height={675}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          className="h-full w-full object-contain"
+        />
+      </div>
+    )
+  }
+
   return (
-    <div className="aspect-video overflow-hidden rounded-md border">
-      <img
-        src={images[0]}
-        alt={title}
-        width={1200}
-        height={675}
-        loading="eager"
-        fetchPriority="high"
-        decoding="async"
-        className="h-full w-full object-cover"
-      />
+    <div className="relative overflow-hidden rounded-md border">
+      <Carousel
+        setApi={setApi}
+        className="group aspect-video"
+        opts={{
+          loop: true,
+        }}
+      >
+        <CarouselContent className="-ml-0">
+          {images.map((image, index) => (
+            <CarouselItem key={`${image}-${index}`} className="pl-0">
+              <div className="flex aspect-video items-center justify-center">
+                <img
+                  src={image}
+                  alt={`${title} image ${index + 1}`}
+                  width={1200}
+                  height={675}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  fetchPriority={index === 0 ? 'high' : 'auto'}
+                  decoding="async"
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious
+          size={'icon-lg'}
+          className="pointer-events-none left-2 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100"
+        />
+        <CarouselNext
+          size={'icon-lg'}
+          className="pointer-events-none right-2 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100"
+        />
+      </Carousel>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-3 flex items-center justify-center gap-1.5">
+        {images.map((_, index) => {
+          const isCurrent = index === current
+          return (
+            <span
+              key={index}
+              aria-hidden="true"
+              className={
+                isCurrent
+                  ? 'h-2 w-2 rounded-full transition-colors bg-muted-foreground'
+                  : 'h-2 w-2 rounded-full transition-colors bg-background'
+              }
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }

@@ -2,7 +2,6 @@ import { LogOut, UserIcon } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter } from '@tanstack/react-router'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { toastManager } from './ui/toast'
 import { authClient } from '@/lib/auth-client'
 import { adminAuthQueryKey } from '@/lib/admin-auth'
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
@@ -17,7 +16,6 @@ export default function UserButton() {
 
   const username =
     (session.user as { username?: string | null }).username ?? ''
-  const publicUrl = `${window.location.origin}/${username}`re
 
   return (
     <Popover>

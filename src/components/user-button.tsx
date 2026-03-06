@@ -1,19 +1,11 @@
 import { UserIcon } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter } from '@tanstack/react-router'
-import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { toastManager } from './ui/toast'
 import { authClient } from '@/lib/auth-client'
 import { adminAuthQueryKey } from '@/lib/admin-auth'
-import {
-  Menu,
-  MenuGroup,
-  MenuItem,
-  MenuPopup,
-  MenuSeparator,
-  MenuTrigger,
-} from '@/components/ui/menu'
+import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
 
 export default function UserButton() {
   const { data: session } = authClient.useSession()
@@ -35,15 +27,10 @@ export default function UserButton() {
   }
 
   return (
-    <Menu>
-      <MenuTrigger
-        render={
-          <Button
-            className="hover:bg-background/80 px-1.5 gap-2"
-            variant={'outline'}
-            size={'default'}
-          />
-        }
+    <Popover>
+      <PopoverTrigger
+        type="button"
+        className="hover:bg-background/80 px-1.5 gap-2 flex items-center rounded-md border border-input bg-background shadow-sm"
       >
         {session.user.image ? (
           <Avatar className="size-5 rounded-md">
@@ -61,8 +48,8 @@ export default function UserButton() {
         <span className="text-sm font-medium">
           {username || session.user.name.split(' ')[0]}
         </span>
-      </MenuTrigger>
-      <MenuPopup align="end" sideOffset={8} className="w-56">
+      </PopoverTrigger>
+      <PopoverContent align="end" sideOffset={8} className="w-56">
         <div className="flex items-center gap-2 p-2 px-3">
           <div className="flex flex-col space-y-0.5">
             <p className="text-sm font-medium leading-none">
@@ -73,20 +60,22 @@ export default function UserButton() {
             </p>
           </div>
         </div>
-        <MenuGroup>
-          <MenuItem
-            render={
-              <Link to="/admin" />
-            }
+        <div className="my-1">
+          <Link
+            to="/admin"
+            className="flex w-full items-center rounded-md px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer"
           >
             Dashboard
-          </MenuItem>
-          <MenuItem onClick={copyProfileLink} className="cursor-pointer">
+          </Link>
+          <button
+            onClick={copyProfileLink}
+            className="flex w-full items-center rounded-md px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer"
+          >
             Copy Page Link
-          </MenuItem>
-        </MenuGroup>
-        <MenuSeparator />
-        <MenuItem
+          </button>
+        </div>
+        <div className="my-1 border-t" />
+        <button
           onClick={async () => {
             await authClient.signOut({
               fetchOptions: {
@@ -97,10 +86,11 @@ export default function UserButton() {
               },
             })
           }}
+          className="flex w-full items-center rounded-md px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer"
         >
           Sign Out
-        </MenuItem>
-      </MenuPopup>
-    </Menu>
+        </button>
+      </PopoverContent>
+    </Popover>
   )
 }

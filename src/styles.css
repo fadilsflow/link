@@ -288,6 +288,26 @@ code {
   @apply font-medium underline underline-offset-4;
 }
 
+@utility font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+@utility font-roboto-mono {
+  font-family: 'Roboto Mono', monospace;
+}
+
+@utility font-urbanist {
+  font-family: 'Urbanist', sans-serif;
+}
+
+@utility font-pixelify-sans {
+  font-family: 'Pixelify Sans', monospace;
+}
+
+@utility font-cormorant-garamond {
+  font-family: 'Cormorant Garamond', serif;
+}
+
 @utility screen-line-before {
   @apply relative before:absolute before:top-0 before:-left-[100vw] before:-z-1 before:h-px before:w-[200vw] before:bg-edge;
 }

@@ -8,7 +8,14 @@ export type AppearanceBackgroundType =
   | 'avatar-blur'
   | 'image'
 
-export type AppearanceTextFont = 'sans' | 'heading' | 'mono'
+export type AppearanceTextFont =
+  | 'sans'
+  | 'mono'
+  | 'inter'
+  | 'roboto-mono'
+  | 'urbanist'
+  | 'pixelify-sans'
+  | 'cormorant-garamond'
 export const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
 export const APPEARANCE_DEFAULTS = {
@@ -29,8 +36,16 @@ export const APPEARANCE_FONT_OPTIONS: Array<{
   family: string
 }> = [
   { value: 'sans', label: 'Sans', family: 'Cal Sans UI' },
-  { value: 'heading', label: 'Heading', family: 'Cal Sans SemiBold' },
   { value: 'mono', label: 'Mono', family: 'Paper Mono' },
+  { value: 'inter', label: 'Inter', family: 'Inter' },
+  { value: 'roboto-mono', label: 'Roboto Mono', family: 'Roboto Mono' },
+  { value: 'urbanist', label: 'Urbanist', family: 'Urbanist' },
+  { value: 'pixelify-sans', label: 'Pixelify Sans', family: 'Pixelify Sans' },
+  {
+    value: 'cormorant-garamond',
+    label: 'Cormorant Garamond',
+    family: 'Cormorant Garamond',
+  },
 ]
 
 const DARK_SURFACE_FOREGROUND = '#f8fafc'
@@ -116,10 +131,18 @@ export function getReadableTextTokensForBackground(
 
 export function getAppearanceFontClass(font?: AppearanceTextFont | null) {
   switch (font) {
-    case 'heading':
-      return 'font-heading'
     case 'mono':
       return 'font-mono'
+    case 'inter':
+      return 'font-inter'
+    case 'roboto-mono':
+      return 'font-roboto-mono'
+    case 'urbanist':
+      return 'font-urbanist'
+    case 'pixelify-sans':
+      return 'font-pixelify-sans'
+    case 'cormorant-garamond':
+      return 'font-cormorant-garamond'
     case 'sans':
     default:
       return 'font-sans'
@@ -254,7 +277,6 @@ export function getAppearanceTextColor(options: {
     backgroundType,
     backgroundColor,
     backgroundGradientTop,
-    backgroundGradientBottom,
     backgroundImageUrl,
     userImage,
   } = options
@@ -317,7 +339,6 @@ export function isDarkBackground(options: {
     backgroundType,
     backgroundColor,
     backgroundGradientTop,
-    backgroundGradientBottom,
     backgroundImageUrl,
     userImage,
   } = options

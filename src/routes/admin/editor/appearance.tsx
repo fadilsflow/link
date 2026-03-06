@@ -6,6 +6,7 @@ import type { AppearanceBackgroundType, AppearanceTextFont } from '@/lib/appeara
 import {
   APPEARANCE_DEFAULTS,
   APPEARANCE_FONT_OPTIONS,
+  getAppearanceFontClass,
   isValidAppearanceHexColor,
 } from '@/lib/appearance'
 import { Button } from '@/components/ui/button'
@@ -210,6 +211,10 @@ function AppearanceEditor({
 
   const [textFont, setTextFont] = React.useState<AppearanceTextFont>(
     user.appearanceTextFont ?? APPEARANCE_DEFAULTS.textFont,
+  )
+  const selectedFontOption = React.useMemo(
+    () => APPEARANCE_FONT_OPTIONS.find((option) => option.value === textFont),
+    [textFont],
   )
 
   const flushPendingPatch = useCallback(() => {
@@ -586,13 +591,21 @@ function AppearanceEditor({
               save({ appearanceTextFont: next })
             }}
           >
-            <SelectTrigger>
-              <SelectValue />
+            <SelectTrigger className={getAppearanceFontClass(textFont)}>
+              <SelectValue>
+                {selectedFontOption
+                  ? `${selectedFontOption.family}`
+                  : undefined}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {APPEARANCE_FONT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label} ({option.family})
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  className={getAppearanceFontClass(option.value)}
+                >
+                  {option.family}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -86,7 +86,9 @@ const usernameSchema = z
 
 const onboardingDetailsSchema = z.object({
   displayName: z.string().trim().min(1).max(80),
-  bio: nullableTrimmedStringSchema.pipe(z.string().max(300).nullable()).optional(),
+  bio: nullableTrimmedStringSchema
+    .pipe(z.string().max(300).nullable())
+    .optional(),
   avatarUrl: nullableUrlSchema.optional(),
 })
 
@@ -280,7 +282,17 @@ const userRouter = {
         appearanceBlockColor: nullableHexColorSchema.optional(),
         appearanceBlockShadowColor: nullableHexColorSchema.optional(),
         appearanceTextColor: nullableHexColorSchema.optional(),
-        appearanceTextFont: z.enum(['sans', 'heading', 'mono']).optional(),
+        appearanceTextFont: z
+          .enum([
+            'sans',
+            'mono',
+            'inter',
+            'roboto-mono',
+            'urbanist',
+            'pixelify-sans',
+            'cormorant-garamond',
+          ])
+          .optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -289,8 +301,8 @@ const userRouter = {
         .update(user)
         .set({
           ...(input.name !== undefined ? { name: input.name } : {}),
-          ...(input.title !== undefined ? { title: input.title || null } : {}),
-          ...(input.bio !== undefined ? { bio: input.bio || null } : {}),
+          ...(input.title !== undefined ? { title: input.title ?? null } : {}),
+          ...(input.bio !== undefined ? { bio: input.bio ?? null } : {}),
           ...(input.image !== undefined ? { image: input.image } : {}),
           ...(input.appearanceBannerEnabled !== undefined
             ? { appearanceBannerEnabled: input.appearanceBannerEnabled }

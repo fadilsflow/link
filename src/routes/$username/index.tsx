@@ -232,7 +232,7 @@ function ProductCard({
       style={cardStyle}
       render={
         <Link
-          to="/$username/products/$productId"
+          to="/$username/$productId"
           params={{
             username,
             productId: product.id,

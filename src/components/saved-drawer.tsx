@@ -72,7 +72,7 @@ export function SavedDrawer({ open, onClose }: SavedDrawerProps) {
                         variant="secondary"
                         render={
                           <Link
-                            to="/$username/products/$productId"
+                            to="/$username/$productId"
                             params={{
                               username: item.username,
                               productId: item.productId,
@@ -87,7 +87,7 @@ export function SavedDrawer({ open, onClose }: SavedDrawerProps) {
                         size="xs"
                         render={
                           <Link
-                            to="/$username/products/$productId/checkout"
+                            to="/$username/$productId/checkout"
                             params={{
                               username: item.username,
                               productId: item.productId,

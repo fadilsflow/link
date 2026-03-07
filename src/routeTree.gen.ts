@@ -27,14 +27,14 @@ import { Route as AdminProductsIndexRouteImport } from './routes/admin/products/
 import { Route as AdminOrdersIndexRouteImport } from './routes/admin/orders/index'
 import { Route as AdminBalanceIndexRouteImport } from './routes/admin/balance/index'
 import { Route as AdminAnalyticsIndexRouteImport } from './routes/admin/analytics/index'
+import { Route as UsernameProductIdIndexRouteImport } from './routes/$username/$productId/index'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AdminProductsNewRouteImport } from './routes/admin/products/new'
 import { Route as AdminProductsProductIdRouteImport } from './routes/admin/products/$productId'
 import { Route as AdminEditorProfilesRouteImport } from './routes/admin/editor/profiles'
 import { Route as AdminEditorAppearanceRouteImport } from './routes/admin/editor/appearance'
-import { Route as UsernameProductsProductIdIndexRouteImport } from './routes/$username/products/$productId/index'
-import { Route as UsernameProductsProductIdCheckoutRouteImport } from './routes/$username/products/$productId/checkout'
+import { Route as UsernameProductIdCheckoutRouteImport } from './routes/$username/$productId/checkout'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -126,6 +126,11 @@ const AdminAnalyticsIndexRoute = AdminAnalyticsIndexRouteImport.update({
   path: '/analytics/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const UsernameProductIdIndexRoute = UsernameProductIdIndexRouteImport.update({
+  id: '/$username/$productId/',
+  path: '/$username/$productId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
   path: '/api/trpc/$',
@@ -156,16 +161,10 @@ const AdminEditorAppearanceRoute = AdminEditorAppearanceRouteImport.update({
   path: '/appearance',
   getParentRoute: () => AdminEditorRouteRoute,
 } as any)
-const UsernameProductsProductIdIndexRoute =
-  UsernameProductsProductIdIndexRouteImport.update({
-    id: '/$username/products/$productId/',
-    path: '/$username/products/$productId/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const UsernameProductsProductIdCheckoutRoute =
-  UsernameProductsProductIdCheckoutRouteImport.update({
-    id: '/$username/products/$productId/checkout',
-    path: '/$username/products/$productId/checkout',
+const UsernameProductIdCheckoutRoute =
+  UsernameProductIdCheckoutRouteImport.update({
+    id: '/$username/$productId/checkout',
+    path: '/$username/$productId/checkout',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -184,18 +183,18 @@ export interface FileRoutesByFullPath {
   '/d/$token': typeof DTokenRoute
   '/$username/': typeof UsernameIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/$username/$productId/checkout': typeof UsernameProductIdCheckoutRoute
   '/admin/editor/appearance': typeof AdminEditorAppearanceRoute
   '/admin/editor/profiles': typeof AdminEditorProfilesRoute
   '/admin/products/$productId': typeof AdminProductsProductIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/$username/$productId/': typeof UsernameProductIdIndexRoute
   '/admin/analytics/': typeof AdminAnalyticsIndexRoute
   '/admin/balance/': typeof AdminBalanceIndexRoute
   '/admin/orders/': typeof AdminOrdersIndexRoute
   '/admin/products/': typeof AdminProductsIndexRoute
-  '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
-  '/$username/products/$productId/': typeof UsernameProductsProductIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -208,18 +207,18 @@ export interface FileRoutesByTo {
   '/d/$token': typeof DTokenRoute
   '/$username': typeof UsernameIndexRoute
   '/admin': typeof AdminIndexRoute
+  '/$username/$productId/checkout': typeof UsernameProductIdCheckoutRoute
   '/admin/editor/appearance': typeof AdminEditorAppearanceRoute
   '/admin/editor/profiles': typeof AdminEditorProfilesRoute
   '/admin/products/$productId': typeof AdminProductsProductIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/$username/$productId': typeof UsernameProductIdIndexRoute
   '/admin/analytics': typeof AdminAnalyticsIndexRoute
   '/admin/balance': typeof AdminBalanceIndexRoute
   '/admin/orders': typeof AdminOrdersIndexRoute
   '/admin/products': typeof AdminProductsIndexRoute
-  '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
-  '/$username/products/$productId': typeof UsernameProductsProductIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -237,18 +236,18 @@ export interface FileRoutesById {
   '/d/$token': typeof DTokenRoute
   '/$username/': typeof UsernameIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/$username/$productId/checkout': typeof UsernameProductIdCheckoutRoute
   '/admin/editor/appearance': typeof AdminEditorAppearanceRoute
   '/admin/editor/profiles': typeof AdminEditorProfilesRoute
   '/admin/products/$productId': typeof AdminProductsProductIdRoute
   '/admin/products/new': typeof AdminProductsNewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/$username/$productId/': typeof UsernameProductIdIndexRoute
   '/admin/analytics/': typeof AdminAnalyticsIndexRoute
   '/admin/balance/': typeof AdminBalanceIndexRoute
   '/admin/orders/': typeof AdminOrdersIndexRoute
   '/admin/products/': typeof AdminProductsIndexRoute
-  '/$username/products/$productId/checkout': typeof UsernameProductsProductIdCheckoutRoute
-  '/$username/products/$productId/': typeof UsernameProductsProductIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -267,18 +266,18 @@ export interface FileRouteTypes {
     | '/d/$token'
     | '/$username/'
     | '/admin/'
+    | '/$username/$productId/checkout'
     | '/admin/editor/appearance'
     | '/admin/editor/profiles'
     | '/admin/products/$productId'
     | '/admin/products/new'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/$username/$productId/'
     | '/admin/analytics/'
     | '/admin/balance/'
     | '/admin/orders/'
     | '/admin/products/'
-    | '/$username/products/$productId/checkout'
-    | '/$username/products/$productId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -291,18 +290,18 @@ export interface FileRouteTypes {
     | '/d/$token'
     | '/$username'
     | '/admin'
+    | '/$username/$productId/checkout'
     | '/admin/editor/appearance'
     | '/admin/editor/profiles'
     | '/admin/products/$productId'
     | '/admin/products/new'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/$username/$productId'
     | '/admin/analytics'
     | '/admin/balance'
     | '/admin/orders'
     | '/admin/products'
-    | '/$username/products/$productId/checkout'
-    | '/$username/products/$productId'
   id:
     | '__root__'
     | '/'
@@ -319,18 +318,18 @@ export interface FileRouteTypes {
     | '/d/$token'
     | '/$username/'
     | '/admin/'
+    | '/$username/$productId/checkout'
     | '/admin/editor/appearance'
     | '/admin/editor/profiles'
     | '/admin/products/$productId'
     | '/admin/products/new'
     | '/api/auth/$'
     | '/api/trpc/$'
+    | '/$username/$productId/'
     | '/admin/analytics/'
     | '/admin/balance/'
     | '/admin/orders/'
     | '/admin/products/'
-    | '/$username/products/$productId/checkout'
-    | '/$username/products/$productId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -342,10 +341,10 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   DTokenRoute: typeof DTokenRoute
   UsernameIndexRoute: typeof UsernameIndexRoute
+  UsernameProductIdCheckoutRoute: typeof UsernameProductIdCheckoutRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
-  UsernameProductsProductIdCheckoutRoute: typeof UsernameProductsProductIdCheckoutRoute
-  UsernameProductsProductIdIndexRoute: typeof UsernameProductsProductIdIndexRoute
+  UsernameProductIdIndexRoute: typeof UsernameProductIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -476,6 +475,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/$username/$productId/': {
+      id: '/$username/$productId/'
+      path: '/$username/$productId'
+      fullPath: '/$username/$productId/'
+      preLoaderRoute: typeof UsernameProductIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/trpc/$': {
       id: '/api/trpc/$'
       path: '/api/trpc/$'
@@ -518,18 +524,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEditorAppearanceRouteImport
       parentRoute: typeof AdminEditorRouteRoute
     }
-    '/$username/products/$productId/': {
-      id: '/$username/products/$productId/'
-      path: '/$username/products/$productId'
-      fullPath: '/$username/products/$productId/'
-      preLoaderRoute: typeof UsernameProductsProductIdIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/$username/products/$productId/checkout': {
-      id: '/$username/products/$productId/checkout'
-      path: '/$username/products/$productId/checkout'
-      fullPath: '/$username/products/$productId/checkout'
-      preLoaderRoute: typeof UsernameProductsProductIdCheckoutRouteImport
+    '/$username/$productId/checkout': {
+      id: '/$username/$productId/checkout'
+      path: '/$username/$productId/checkout'
+      fullPath: '/$username/$productId/checkout'
+      preLoaderRoute: typeof UsernameProductIdCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -618,11 +617,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   DTokenRoute: DTokenRoute,
   UsernameIndexRoute: UsernameIndexRoute,
+  UsernameProductIdCheckoutRoute: UsernameProductIdCheckoutRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
-  UsernameProductsProductIdCheckoutRoute:
-    UsernameProductsProductIdCheckoutRoute,
-  UsernameProductsProductIdIndexRoute: UsernameProductsProductIdIndexRoute,
+  UsernameProductIdIndexRoute: UsernameProductIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

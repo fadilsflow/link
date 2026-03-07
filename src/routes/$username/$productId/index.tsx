@@ -30,6 +30,7 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel'
 import { SimpleTooltip } from '@/components/ui/tooltip'
+import { MetaPixel, trackMetaPixelEvent } from '@/lib/meta-pixel'
 
 export const Route = createFileRoute('/$username/$productId/')({
   component: ProductDetailPage,
@@ -48,12 +49,12 @@ export const Route = createFileRoute('/$username/$productId/')({
     return {
       links: heroImage
         ? [
-          {
-            rel: 'preload',
-            as: 'image',
-            href: heroImage,
-          },
-        ]
+            {
+              rel: 'preload',
+              as: 'image',
+              href: heroImage,
+            },
+          ]
         : [],
     }
   },
@@ -197,7 +198,7 @@ function ProductImage({ images, title }: ProductImageProps) {
 
 function ProductDetailPage() {
   const { username, productId } = Route.useParams()
-  const { user, product } = Route.useLoaderData()
+  const { user, product, metaPixelConfig } = Route.useLoaderData()
   const navigate = useNavigate()
   const [isSavedOpen, setIsSavedOpen] = React.useState(false)
   const [isSubmittingBuy, setIsSubmittingBuy] = React.useState(false)
@@ -211,10 +212,28 @@ function ProductDetailPage() {
   const creatorName = user.username || user.name || 'creator'
   const creatorInitial = creatorName.charAt(0).toUpperCase()
 
+  React.useEffect(() => {
+    if (!metaPixelConfig?.pixelId) return
+
+    trackMetaPixelEvent('ViewContent', {
+      content_ids: [product.id],
+      content_name: product.title,
+      content_type: 'product',
+      currency: 'IDR',
+      value: product.salePrice ?? product.price ?? 0,
+    })
+  }, [
+    metaPixelConfig?.pixelId,
+    product.id,
+    product.price,
+    product.salePrice,
+    product.title,
+  ])
+
   const handleToggleSaved = () => {
     const savedPrice = product.payWhatYouWant
-      ? product.suggestedPrice ?? product.minimumPrice ?? 0
-      : product.salePrice ?? product.price ?? 0
+      ? (product.suggestedPrice ?? product.minimumPrice ?? 0)
+      : (product.salePrice ?? product.price ?? 0)
 
     toggleItem({
       productId: product.id,
@@ -225,7 +244,9 @@ function ProductDetailPage() {
     })
   }
 
-  const handleBuyNowSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
+  const handleBuyNowSubmit: React.FormEventHandler<HTMLFormElement> = async (
+    e,
+  ) => {
     e.preventDefault()
     if (isSubmittingBuy) return
     const formData = new FormData(e.currentTarget)
@@ -251,6 +272,7 @@ function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <MetaPixel pixelId={metaPixelConfig?.pixelId} />
       <div className="mx-auto w-full space-y-4 ">
         <div className="flex items-center justify-between px-4 py-4 border-b">
           <Link
@@ -287,16 +309,26 @@ function ProductDetailPage() {
               <h1 className="text-xl md:text-3xl font-bold">{product.title}</h1>
 
               <div className="flex absolute top-0 right-0 gap-1">
-                <SimpleTooltip content='Save Product'>
+                <SimpleTooltip content="Save Product">
                   <Button
                     type="button"
                     size="icon-sm"
                     variant={'ghost'}
                     onClick={handleToggleSaved}
                     disabled={isSubmittingBuy}
-                    aria-label={isCurrentProductSaved ? 'Remove from saved' : 'Save product'}
+                    aria-label={
+                      isCurrentProductSaved
+                        ? 'Remove from saved'
+                        : 'Save product'
+                    }
                   >
-                    <Bookmark className={isCurrentProductSaved ? 'fill-primary text-foreground' : ''} />
+                    <Bookmark
+                      className={
+                        isCurrentProductSaved
+                          ? 'fill-primary text-foreground'
+                          : ''
+                      }
+                    />
                   </Button>
                 </SimpleTooltip>
               </div>
@@ -324,7 +356,18 @@ function ProductDetailPage() {
             ) : null}
           </div>
           <div className="sticky md:hidden bg-background flex bottom-0 py-2">
-            <Button className='w-full' size='lg' render={<Link to='/$username/$productId/checkout' params={{ username, productId }} />}>Beli</Button >
+            <Button
+              className="w-full"
+              size="lg"
+              render={
+                <Link
+                  to="/$username/$productId/checkout"
+                  params={{ username, productId }}
+                />
+              }
+            >
+              Beli
+            </Button>
           </div>
 
           <div className="md:sticky md:top-6 hidden md:block">
@@ -364,7 +407,6 @@ function ProductDetailPage() {
                 <FieldError>Please enter a valid email.</FieldError>
               </Field>
               <div className="flex items-center gap-2 w-full">
-
                 <Button
                   size="lg"
                   type="submit"
@@ -382,6 +424,6 @@ function ProductDetailPage() {
       <div className="border-t py-4">
         <PublicProfileFooter />
       </div>
-    </div >
+    </div>
   )
 }

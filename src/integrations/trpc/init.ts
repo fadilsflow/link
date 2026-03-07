@@ -5,8 +5,19 @@ import { getSessionFromHeaders } from '@/lib/auth-server'
 export async function createTRPCContext({ req }: { req: Request }) {
   const session = await getSessionFromHeaders(req.headers)
 
+  const forwardedFor = req.headers.get('x-forwarded-for')
+  const clientIp =
+    req.headers.get('cf-connecting-ip') ??
+    req.headers.get('x-real-ip') ??
+    (forwardedFor ? forwardedFor.split(',')[0]?.trim() : null)
+  const userAgent = req.headers.get('user-agent')
+
   return {
     session,
+    requestMeta: {
+      clientIp: clientIp ?? null,
+      userAgent: userAgent ?? null,
+    },
   }
 }
 

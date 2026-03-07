@@ -19,10 +19,7 @@ import {
   AlertDialogPopup,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import {
-  AppHeader,
-  AppHeaderContent,
-} from '@/components/app-header'
+import { AppHeader, AppHeaderContent } from '@/components/app-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -106,7 +103,9 @@ const bankAccountSchema = z.object({
 
 type BankAccountFormValues = z.infer<typeof bankAccountSchema>
 
-type BankAccountFieldErrors = Partial<Record<keyof BankAccountFormValues, string>>
+type BankAccountFieldErrors = Partial<
+  Record<keyof BankAccountFormValues, string>
+>
 
 type BankAccountRecord = {
   id: string
@@ -114,16 +113,6 @@ type BankAccountRecord = {
   bankName: string
   accountName: string
   accountNumber: string
-}
-
-type TrackingProvider = 'google-analytics' | 'facebook-pixel'
-
-type TrackingIntegrationDefinition = {
-  provider: TrackingProvider
-  name: string
-  description: string
-  placeholder: string
-  helperText: string
 }
 
 type UsernameFormValues = {
@@ -140,7 +129,8 @@ const DEFAULT_FORM_VALUES: BankAccountFormValues = {
 }
 
 const trackingIntegrationSchema = z.object({
-  value: z.string().trim().min(1, 'Tracking ID is required.'),
+  pixelId: z.string().trim().min(1, 'Pixel ID is required.'),
+  accessToken: z.string().trim().min(1, 'Pixel Access Token is required.'),
 })
 
 type TrackingIntegrationFormValues = z.infer<typeof trackingIntegrationSchema>
@@ -150,29 +140,13 @@ type TrackingIntegrationFieldErrors = Partial<
 >
 
 const DEFAULT_TRACKING_FORM_VALUES: TrackingIntegrationFormValues = {
-  value: '',
+  pixelId: '',
+  accessToken: '',
 }
 
 const DEFAULT_USERNAME_FORM_VALUES: UsernameFormValues = {
   username: '',
 }
-
-const TRACKING_INTEGRATIONS: Array<TrackingIntegrationDefinition> = [
-  {
-    provider: 'google-analytics',
-    name: 'Google Analytics',
-    description: 'Track visitors, page views, and conversions from Google Analytics.',
-    placeholder: 'G-XXXXXXXXXX',
-    helperText: 'Use your Measurement ID from Google Analytics.',
-  },
-  {
-    provider: 'facebook-pixel',
-    name: 'Facebook Pixel',
-    description: 'Send events to Meta Ads for retargeting and campaign measurement.',
-    placeholder: '123456789012345',
-    helperText: 'Use your Pixel ID from Meta Events Manager.',
-  },
-]
 
 const PUBLIC_BASE_HOST = new URL(BASE_URL).host
 
@@ -225,17 +199,16 @@ function SettingsPage() {
   const queryClient = useQueryClient()
   const { data: adminAuth } = useAdminAuthContext()
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
-  const [deleteTargetId, setDeleteTargetId] = React.useState<string | null>(null)
+  const [deleteTargetId, setDeleteTargetId] = React.useState<string | null>(
+    null,
+  )
   const [editingAccountId, setEditingAccountId] = React.useState<string | null>(
     null,
   )
-  const [formValues, setFormValues] = React.useState<BankAccountFormValues>(
-    DEFAULT_FORM_VALUES,
-  )
+  const [formValues, setFormValues] =
+    React.useState<BankAccountFormValues>(DEFAULT_FORM_VALUES)
   const [formErrors, setFormErrors] = React.useState<BankAccountFieldErrors>({})
   const [isTrackingDialogOpen, setIsTrackingDialogOpen] = React.useState(false)
-  const [editingTrackingProvider, setEditingTrackingProvider] =
-    React.useState<TrackingProvider | null>(null)
   const [trackingFormValues, setTrackingFormValues] =
     React.useState<TrackingIntegrationFormValues>(DEFAULT_TRACKING_FORM_VALUES)
   const [trackingFormErrors, setTrackingFormErrors] =
@@ -248,7 +221,6 @@ function SettingsPage() {
   const [debouncedUsername, setDebouncedUsername] = React.useState('')
   const usernameInputRef = React.useRef<HTMLInputElement>(null)
   const bankDialogModeRef = React.useRef<'create' | 'edit'>('create')
-  const trackingDialogProviderRef = React.useRef<TrackingProvider | null>(null)
   const bankAccountsQuery = useQuery({
     queryKey: ['bank-accounts'],
     queryFn: async () => {
@@ -272,44 +244,20 @@ function SettingsPage() {
   })
   const accounts = bankAccountsQuery.data ?? []
   const connectedAccounts = connectedAccountsQuery.data ?? []
-  const trackingIntegrations = React.useMemo(() => {
-    const integrationMap = new Map(
-      (trackingIntegrationsQuery.data ?? []).map((integration) => [
-        integration.provider,
-        integration,
-      ]),
-    )
-
-    return TRACKING_INTEGRATIONS.map((definition) => ({
-      ...definition,
-      value: integrationMap.get(definition.provider)?.trackingId ?? '',
-    }))
-  }, [trackingIntegrationsQuery.data])
+  const trackingConfig = trackingIntegrationsQuery.data ?? null
 
   const editingAccount = React.useMemo(
     () => accounts.find((account) => account.id === editingAccountId) ?? null,
     [accounts, editingAccountId],
-  )
-  const activeTrackingProvider =
-    editingTrackingProvider ?? trackingDialogProviderRef.current
-  const activeTrackingIntegration = React.useMemo(
-    () =>
-      trackingIntegrations.find(
-        (integration) => integration.provider === activeTrackingProvider,
-      ) ?? null,
-    [activeTrackingProvider, trackingIntegrations],
   )
 
   const dialogTitle =
     bankDialogModeRef.current === 'edit'
       ? 'Edit bank account'
       : 'Add bank account'
-  const trackingDialogTitle = activeTrackingIntegration
-    ? `Setup ${activeTrackingIntegration.name}`
-    : 'Setup tracking'
-  const trackingDialogDescription = activeTrackingIntegration
-    ? activeTrackingIntegration.description
-    : 'Connect your analytics and marketing tools.'
+  const trackingDialogTitle = 'Setup Facebook Pixel'
+  const trackingDialogDescription =
+    'Send ViewContent, InitiateCheckout, and Purchase events to Meta Ads.'
   const profileUrl = adminAuth?.username
     ? `${BASE_URL.replace(/\/$/, '')}/${adminAuth.username}`
     : `${BASE_URL.replace(/\/$/, '')}/username`
@@ -335,9 +283,9 @@ function SettingsPage() {
         (previous: typeof adminAuth | undefined) =>
           previous
             ? {
-              ...previous,
-              username,
-            }
+                ...previous,
+                username,
+              }
             : previous,
       )
       toastManager.add({
@@ -428,42 +376,46 @@ function SettingsPage() {
   })
   const upsertTrackingIntegrationMutation = useMutation({
     mutationFn: async ({
-      provider,
-      trackingId,
+      pixelId,
+      accessToken,
     }: {
-      provider: TrackingProvider
-      trackingId: string
+      pixelId: string
+      accessToken: string
     }) => {
       return await trpcClient.trackingIntegration.upsert.mutate({
-        provider,
-        trackingId,
+        pixelId,
+        accessToken,
       })
     },
-    onSuccess: (_, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ['tracking-integrations'] })
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ['tracking-integrations'],
+      })
       toastManager.add({
         title: 'Tracking updated',
-        description: `${TRACKING_INTEGRATIONS.find((item) => item.provider === variables.provider)?.name ?? 'Tracking integration'} has been saved.`,
+        description: 'Facebook Pixel configuration has been saved.',
       })
       handleTrackingDialogChange(false)
     },
     onError: () => {
       toastManager.add({
         title: 'Unable to save tracking',
-        description: 'Please check the tracking ID and try again.',
+        description: 'Please check Pixel ID and Access Token then try again.',
         type: 'error',
       })
     },
   })
   const removeTrackingIntegrationMutation = useMutation({
-    mutationFn: async (provider: TrackingProvider) => {
-      return await trpcClient.trackingIntegration.remove.mutate({ provider })
+    mutationFn: async () => {
+      return await trpcClient.trackingIntegration.remove.mutate()
     },
-    onSuccess: (_, provider) => {
-      void queryClient.invalidateQueries({ queryKey: ['tracking-integrations'] })
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ['tracking-integrations'],
+      })
       toastManager.add({
         title: 'Tracking removed',
-        description: `${TRACKING_INTEGRATIONS.find((item) => item.provider === provider)?.name ?? 'Tracking integration'} has been disconnected.`,
+        description: 'Facebook Pixel has been disconnected.',
       })
     },
     onError: () => {
@@ -517,8 +469,6 @@ function SettingsPage() {
   }, [adminAuth?.username])
 
   const resetTrackingDialogState = React.useCallback(() => {
-    setEditingTrackingProvider(null)
-    trackingDialogProviderRef.current = null
     setTrackingFormValues(DEFAULT_TRACKING_FORM_VALUES)
     setTrackingFormErrors({})
   }, [])
@@ -536,23 +486,14 @@ function SettingsPage() {
     setIsDialogOpen(true)
   }, [])
 
-  const openTrackingDialog = React.useCallback(
-    (provider: TrackingProvider) => {
-      const integration = trackingIntegrations.find(
-        (item) => item.provider === provider,
-      )
-      if (!integration) return
-
-      trackingDialogProviderRef.current = provider
-      setEditingTrackingProvider(provider)
-      setTrackingFormValues({
-        value: integration.value,
-      })
-      setTrackingFormErrors({})
-      setIsTrackingDialogOpen(true)
-    },
-    [trackingIntegrations],
-  )
+  const openTrackingDialog = React.useCallback(() => {
+    setTrackingFormValues({
+      pixelId: trackingConfig?.pixelId ?? '',
+      accessToken: trackingConfig?.accessToken ?? '',
+    })
+    setTrackingFormErrors({})
+    setIsTrackingDialogOpen(true)
+  }, [trackingConfig?.accessToken, trackingConfig?.pixelId])
 
   const handleDialogChange = React.useCallback(
     (open: boolean) => {
@@ -598,7 +539,8 @@ function SettingsPage() {
   )
 
   const selectedBank = React.useMemo<BankOption | null>(
-    () => BANK_OPTIONS.find((bank) => bank.value === formValues.bankCode) ?? null,
+    () =>
+      BANK_OPTIONS.find((bank) => bank.value === formValues.bankCode) ?? null,
     [formValues.bankCode],
   )
 
@@ -660,38 +602,44 @@ function SettingsPage() {
 
       const parsed = trackingIntegrationSchema.safeParse(trackingFormValues)
       if (!parsed.success) {
-        setTrackingFormErrors({
-          value: parsed.error.issues[0]?.message ?? 'Tracking ID is required.',
-        })
+        const issuePath = parsed.error.issues[0]?.path[0]
+        const message = parsed.error.issues[0]?.message ?? 'Field is required.'
+        setTrackingFormErrors(
+          issuePath === 'accessToken'
+            ? { accessToken: message }
+            : { pixelId: message },
+        )
         toastManager.add({
           title: 'Check tracking details',
-          description: 'Complete the tracking ID before saving.',
+          description: 'Complete Pixel ID and Access Token before saving.',
           type: 'error',
         })
         return
       }
 
-      if (!editingTrackingProvider) return
-
       upsertTrackingIntegrationMutation.mutate({
-        provider: editingTrackingProvider,
-        trackingId: parsed.data.value,
+        pixelId: parsed.data.pixelId,
+        accessToken: parsed.data.accessToken,
       })
     },
-    [
-      editingTrackingProvider,
-      trackingFormValues,
-      upsertTrackingIntegrationMutation,
-    ],
+    [trackingFormValues, upsertTrackingIntegrationMutation],
   )
 
-  const handleTrackingValueChange = React.useCallback((value: string) => {
-    setTrackingFormValues({ value })
-    setTrackingFormErrors((previous) => {
-      if (!previous.value) return previous
-      return {}
-    })
-  }, [])
+  const handleTrackingValueChange = React.useCallback(
+    (field: 'pixelId' | 'accessToken', value: string) => {
+      setTrackingFormValues((previous) => ({
+        ...previous,
+        [field]: value,
+      }))
+      setTrackingFormErrors((previous) => {
+        if (!previous[field]) return previous
+        const next = { ...previous }
+        delete next[field]
+        return next
+      })
+    },
+    [],
+  )
 
   const handleUsernameValueChange = React.useCallback((value: string) => {
     setUsernameFormValues({
@@ -742,7 +690,9 @@ function SettingsPage() {
         return
       }
 
-      if (normalizedUsername === (adminAuth?.username ?? '').trim().toLowerCase()) {
+      if (
+        normalizedUsername === (adminAuth?.username ?? '').trim().toLowerCase()
+      ) {
         setIsUsernameDialogOpen(false)
         return
       }
@@ -774,17 +724,18 @@ function SettingsPage() {
       : usernameAvailability?.isAvailable === true
   const isUsernameUnavailable = usernameAvailability?.isAvailable === false
   const isUsernameDebouncing =
-    needsUsernameAvailabilityCheck &&
-    debouncedUsername !== normalizedUsername
+    needsUsernameAvailabilityCheck && debouncedUsername !== normalizedUsername
   const isUsernameLoading =
-    needsUsernameAvailabilityCheck && (isUsernameDebouncing || isCheckingUsername)
-  const usernameFailedMessage = usernameFormatError
-    ?? (!isUsernameLoading
-      ? (isUsernameUnavailable
+    needsUsernameAvailabilityCheck &&
+    (isUsernameDebouncing || isCheckingUsername)
+  const usernameFailedMessage =
+    usernameFormatError ??
+    (!isUsernameLoading
+      ? isUsernameUnavailable
         ? 'Username sudah ada, pakai username lain.'
         : isUsernameCheckError
           ? 'Gagal mengecek username. Coba lagi.'
-          : null)
+          : null
       : null)
   const usernameStatus: 'idle' | 'loading' | 'success' | 'failed' =
     normalizedUsername.length === 0
@@ -831,7 +782,11 @@ function SettingsPage() {
                     Manage the username used for your public page.
                   </FrameDescription>
                 </div>
-                <Button size="sm" variant="outline" onClick={openUsernameDialog}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={openUsernameDialog}
+                >
                   Edit username
                 </Button>
               </FrameHeader>
@@ -846,7 +801,9 @@ function SettingsPage() {
                         @{adminAuth?.username ?? 'username'}
                       </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{profileUrl}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {profileUrl}
+                    </p>
                   </div>
                 </div>
               </FramePanel>
@@ -864,14 +821,19 @@ function SettingsPage() {
                   <div className="h-24 w-full rounded-xl bg-muted/32" />
                 ) : connectedAccounts.length === 0 ? (
                   <div className="rounded-xl border border-dashed bg-muted/32 p-5">
-                    <p className="font-medium text-sm">No connected provider found</p>
+                    <p className="font-medium text-sm">
+                      No connected provider found
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       This account has no linked sign-in provider record yet.
                     </p>
                   </div>
                 ) : (
                   connectedAccounts.map((item) => (
-                    <div key={item.id} className="rounded-xl border bg-muted/28 p-4">
+                    <div
+                      key={item.id}
+                      className="rounded-xl border bg-muted/28 p-4"
+                    >
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
@@ -883,7 +845,9 @@ function SettingsPage() {
                             </Badge>
                           </div>
                           <div className="space-y-1 text-sm">
-                            <p className="text-foreground">{adminAuth?.email}</p>
+                            <p className="text-foreground">
+                              {adminAuth?.email}
+                            </p>
                             <p className="text-muted-foreground">
                               Account ID: {item.accountId}
                             </p>
@@ -904,7 +868,9 @@ function SettingsPage() {
             <Frame>
               <FrameHeader className="flex flex-row items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <FrameTitle className="text-lg">Payout Bank Accounts</FrameTitle>
+                  <FrameTitle className="text-lg">
+                    Payout Bank Accounts
+                  </FrameTitle>
                   <FrameDescription>
                     Save one or more bank accounts for withdrawals.
                   </FrameDescription>
@@ -924,10 +890,12 @@ function SettingsPage() {
                         <Landmark className="size-4" />
                       </div>
                       <div className="space-y-1">
-                        <p className="font-medium text-sm">No bank account yet</p>
+                        <p className="font-medium text-sm">
+                          No bank account yet
+                        </p>
                         <p className="text-sm text-muted-foreground">
-                          Add at least one account so payout setup is ready when you
-                          want to withdraw balance.
+                          Add at least one account so payout setup is ready when
+                          you want to withdraw balance.
                         </p>
                       </div>
                     </div>
@@ -940,9 +908,13 @@ function SettingsPage() {
                     >
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="space-y-3">
-                          <p className="font-medium text-sm">{account.bankName}</p>
+                          <p className="font-medium text-sm">
+                            {account.bankName}
+                          </p>
                           <div className="space-y-1 text-sm">
-                            <p className="text-foreground">{account.accountName}</p>
+                            <p className="text-foreground">
+                              {account.accountName}
+                            </p>
                             <p className="text-muted-foreground">
                               {maskAccountNumber(account.accountNumber)}
                             </p>
@@ -977,26 +949,27 @@ function SettingsPage() {
               <FrameHeader>
                 <FrameTitle className="text-lg">Growth & Tracking</FrameTitle>
                 <FrameDescription>
-                  Connect analytics and ads tracking IDs to measure traffic and
-                  campaign performance.
+                  Connect Facebook Pixel to measure product views, checkout
+                  starts, and purchases.
                 </FrameDescription>
               </FrameHeader>
               <FramePanel className="space-y-3 min-h-40">
                 {trackingIntegrationsQuery.isLoading ? (
                   <div className="h-30 w-full rounded-xl bg-muted/32" />
                 ) : (
-                  trackingIntegrations.map((integration) => {
-                    const isConnected = integration.value.trim().length > 0
+                  (() => {
+                    const isConnected = Boolean(
+                      trackingConfig?.pixelId && trackingConfig?.accessToken,
+                    )
 
                     return (
-                      <div
-                        key={integration.provider}
-                        className="rounded-xl border bg-muted/28 p-4"
-                      >
+                      <div className="rounded-xl border bg-muted/28 p-4">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                           <div className="space-y-2">
                             <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-medium text-sm">{integration.name}</p>
+                              <p className="font-medium text-sm">
+                                Facebook Pixel
+                              </p>
                               <Badge
                                 size="sm"
                                 variant={isConnected ? 'success' : 'outline'}
@@ -1004,16 +977,21 @@ function SettingsPage() {
                                 {isConnected ? 'Connected' : 'Not connected'}
                               </Badge>
                             </div>
-                            <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground">
-                                {integration.description}
+                            <div className="space-y-1 text-sm text-muted-foreground">
+                              <p>
+                                ViewContent and InitiateCheckout events are sent
+                                from browser pixel.
                               </p>
-                              <p className="text-sm text-foreground">
-                                {isConnected
-                                  ? integration.value
-                                  : 'No tracking ID added yet.'}
+                              <p>
+                                Purchase is sent from browser + Meta Conversions
+                                API with shared event_id.
                               </p>
                             </div>
+                            <p className="text-sm text-foreground">
+                              {trackingConfig?.pixelId
+                                ? `Pixel ID: ${trackingConfig.pixelId}`
+                                : 'No Pixel ID configured.'}
+                            </p>
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2">
@@ -1025,9 +1003,7 @@ function SettingsPage() {
                                   removeTrackingIntegrationMutation.isPending
                                 }
                                 onClick={() =>
-                                  removeTrackingIntegrationMutation.mutate(
-                                    integration.provider,
-                                  )
+                                  removeTrackingIntegrationMutation.mutate()
                                 }
                               >
                                 Remove
@@ -1036,7 +1012,7 @@ function SettingsPage() {
                             <Button
                               size="sm"
                               variant={isConnected ? 'outline' : 'default'}
-                              onClick={() => openTrackingDialog(integration.provider)}
+                              onClick={openTrackingDialog}
                             >
                               {isConnected ? 'Edit setup' : 'Setup'}
                             </Button>
@@ -1044,7 +1020,7 @@ function SettingsPage() {
                         </div>
                       </div>
                     )
-                  })
+                  })()
                 )}
               </FramePanel>
             </Frame>
@@ -1104,9 +1080,12 @@ function SettingsPage() {
                   </InputGroupAddon>
                 </InputGroup>
                 <FieldDescription>
-                  Preview: {BASE_URL.replace(/\/$/, '')}/{usernameFormValues.username || 'username'}
+                  Preview: {BASE_URL.replace(/\/$/, '')}/
+                  {usernameFormValues.username || 'username'}
                 </FieldDescription>
-                <FieldError>{usernameFailedMessage || usernameFormErrors.username}</FieldError>
+                <FieldError>
+                  {usernameFailedMessage || usernameFormErrors.username}
+                </FieldError>
               </Field>
             </DialogPanel>
 
@@ -1276,20 +1255,32 @@ function SettingsPage() {
             </DialogHeader>
 
             <DialogPanel className="space-y-4">
-              <Field name="value">
-                <FieldLabel>Tracking ID</FieldLabel>
+              <Field name="pixelId">
+                <FieldLabel>Pixel ID</FieldLabel>
                 <Input
-                  value={trackingFormValues.value}
+                  value={trackingFormValues.pixelId}
                   onChange={(event) =>
-                    handleTrackingValueChange(event.target.value)
+                    handleTrackingValueChange('pixelId', event.target.value)
                   }
-                  placeholder={
-                    activeTrackingIntegration?.placeholder ?? 'Enter tracking ID'
-                  }
+                  placeholder="123456789012345"
                 />
                 <FieldDescription>
-                  {activeTrackingIntegration?.helperText ??
-                    'Enter the tracking ID from your analytics provider.'}
+                  Use your Pixel ID from Meta Events Manager.
+                </FieldDescription>
+                <FieldError />
+              </Field>
+
+              <Field name="accessToken">
+                <FieldLabel>Pixel Access Token</FieldLabel>
+                <Input
+                  value={trackingFormValues.accessToken}
+                  onChange={(event) =>
+                    handleTrackingValueChange('accessToken', event.target.value)
+                  }
+                  placeholder="EAA..."
+                />
+                <FieldDescription>
+                  Used for Purchase events sent through Meta Conversions API.
                 </FieldDescription>
                 <FieldError />
               </Field>
@@ -1309,7 +1300,6 @@ function SettingsPage() {
           </Form>
         </DialogPopup>
       </Dialog>
-
     </div>
   )
 }

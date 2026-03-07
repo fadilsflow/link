@@ -15,6 +15,13 @@
       "when": 1772888679451,
       "tag": "0001_tracking_integrations",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772899197634,
+      "tag": "0002_meta_pixel_config",
+      "breakpoints": true
     }
   ]
 }

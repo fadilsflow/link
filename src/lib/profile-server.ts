@@ -58,7 +58,8 @@ export const getDashboardData = createServerFn({ method: 'GET' }).handler(
         },
         products: {
           // Show all non-deleted products in dashboard (including inactive)
-          where: (products, { eq: equals }) => equals(products.isDeleted, false),
+          where: (products, { eq: equals }) =>
+            equals(products.isDeleted, false),
           orderBy: (products, { desc }) => [desc(products.createdAt)],
         },
         socialLinks: {
@@ -91,6 +92,7 @@ export const getPublicProduct = createServerFn({ method: 'GET' })
     const dbUser = await db.query.user.findFirst({
       where: eq(user.username, data.username),
       with: {
+        metaPixelConfigs: true,
         products: {
           where: (product, { and, eq: equals }) =>
             and(
@@ -109,6 +111,7 @@ export const getPublicProduct = createServerFn({ method: 'GET' })
     return {
       user: dbUser,
       product: dbUser.products[0],
+      metaPixelConfig: dbUser.metaPixelConfigs[0] ?? null,
     }
   })
 

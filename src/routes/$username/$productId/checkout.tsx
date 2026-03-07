@@ -3,12 +3,7 @@ import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { ShoppingBag } from 'lucide-react'
 import type { CheckoutPaymentMethod } from '@/components/checkout/checkout-form'
 import { CheckoutForm } from '@/components/checkout/checkout-form'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
@@ -18,42 +13,45 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
 import LiteYouTube from '@/components/LiteYouTube'
 import { extractYouTubeVideoIdFromText } from '@/lib/lite-youtube'
+import {
+  createMetaEventId,
+  MetaPixel,
+  trackMetaPixelEvent,
+} from '@/lib/meta-pixel'
 
-export const Route = createFileRoute('/$username/$productId/checkout')(
-  {
-    component: CheckoutPage,
-    validateSearch: (
-      search: Record<string, unknown>,
-    ): { name?: string; email?: string } => ({
-      name: typeof search.name === 'string' ? search.name : undefined,
-      email: typeof search.email === 'string' ? search.email : undefined,
-    }),
-    loader: async ({ params }) => {
-      const data = await getPublicProduct({
-        data: {
-          username: params.username,
-          productId: params.productId,
-        },
-      })
-      if (!data) throw notFound()
-      return data
-    },
-    head: ({ loaderData }) => {
-      const lcpImage = loaderData?.product.images?.[0]
-      return {
-        links: lcpImage
-          ? [
+export const Route = createFileRoute('/$username/$productId/checkout')({
+  component: CheckoutPage,
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { name?: string; email?: string } => ({
+    name: typeof search.name === 'string' ? search.name : undefined,
+    email: typeof search.email === 'string' ? search.email : undefined,
+  }),
+  loader: async ({ params }) => {
+    const data = await getPublicProduct({
+      data: {
+        username: params.username,
+        productId: params.productId,
+      },
+    })
+    if (!data) throw notFound()
+    return data
+  },
+  head: ({ loaderData }) => {
+    const lcpImage = loaderData?.product.images?.[0]
+    return {
+      links: lcpImage
+        ? [
             {
               rel: 'preload',
               as: 'image',
               href: lcpImage,
             },
           ]
-          : [],
-      }
-    },
+        : [],
+    }
   },
-)
+})
 
 type Question = {
   id: string
@@ -98,7 +96,7 @@ function effectiveUnitPrice(product: any, customAmount: number | null) {
 }
 
 function CheckoutPage() {
-  const { product, user } = Route.useLoaderData()
+  const { product, user, metaPixelConfig } = Route.useLoaderData()
   const search = Route.useSearch()
 
   const questions = React.useMemo(
@@ -114,7 +112,8 @@ function CheckoutPage() {
   const [customAmount, setCustomAmount] = React.useState('')
   const [answers, setAnswers] = React.useState<Record<string, string>>({})
   const [note, setNote] = React.useState('')
-  const [paymentMethod, setPaymentMethod] = React.useState<CheckoutPaymentMethod>('qris')
+  const [paymentMethod, setPaymentMethod] =
+    React.useState<CheckoutPaymentMethod>('qris')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isRedirecting, setIsRedirecting] = React.useState(false)
 
@@ -157,11 +156,36 @@ function CheckoutPage() {
       amountPaid: unitPrice,
       answers,
       note,
+      purchaseEventId: createMetaEventId('purchase'),
     }
 
     try {
       setIsSubmitting(true)
+      if (metaPixelConfig?.pixelId) {
+        trackMetaPixelEvent('InitiateCheckout', {
+          content_ids: [product.id],
+          content_name: product.title,
+          currency: 'IDR',
+          value: unitPrice,
+          payment_method: paymentMethod,
+        })
+      }
+
       const data = await trpcClient.order.create.mutate(payload)
+
+      if (metaPixelConfig?.pixelId) {
+        trackMetaPixelEvent(
+          'Purchase',
+          {
+            content_ids: [product.id],
+            content_name: product.title,
+            currency: 'IDR',
+            value: unitPrice,
+          },
+          payload.purchaseEventId,
+        )
+      }
+
       setIsRedirecting(true)
       window.location.href = data.deliveryUrl
     } catch (error: any) {
@@ -187,173 +211,176 @@ function CheckoutPage() {
   }
 
   return (
-    <CheckoutForm
-      email={email}
-      name={name}
-      note={note}
-      onEmailChange={setEmail}
-      onNameChange={setName}
-      onNoteChange={setNote}
-      additionalContactFields={
-        <>
-          {product.payWhatYouWant && (
-            <div className="space-y-2 pt-2">
-              <Label
-                htmlFor="amount"
-                className="text-xs font-medium text-slate-600"
-              >
-                Your Price
-              </Label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
-                  Rp
-                </span>
-                <Input
-                  id="amount"
-                  inputMode="numeric"
-                  placeholder={
-                    product.suggestedPrice
-                      ? formatPriceInput(product.suggestedPrice)
-                      : '0'
-                  }
-                  value={customAmount}
-                  onChange={(e) => setCustomAmount(e.target.value)}
-                  className="h-11 pl-8"
-                />
-              </div>
-              <p className="text-xs text-slate-400">
-                {product.minimumPrice
-                  ? `Minimum ${formatPrice(product.minimumPrice)}`
-                  : 'No minimum — pay what you feel is fair'}
-              </p>
-            </div>
-          )}
-
-          {questions.length > 0 && (
-            <div className="space-y-4 pt-2">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Additional Questions
-              </h2>
-              {questions.map((q) => (
-                <div key={q.id} className="space-y-2">
-                  <Label
-                    htmlFor={`q-${q.id}`}
-                    className="text-xs font-medium text-slate-600"
-                  >
-                    {q.label} {q.required && <span className="text-rose-500">*</span>}
-                  </Label>
-                  <Input
-                    id={`q-${q.id}`}
-                    value={answers[q.id] ?? ''}
-                    onChange={(e) =>
-                      setAnswers((prev) => ({
-                        ...prev,
-                        [q.id]: e.target.value,
-                      }))
-                    }
-                    required={q.required}
-                    className="h-11"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      }
-      purchasedProducts={
-        <Card>
-          <CardHeader>
-            <CardTitle>Purchased product</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-4">
-              {hasImage ? (
-                <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
-                  <img
-                    src={productImages[0]}
-                    alt={product.title}
-                    width={80}
-                    height={80}
-                    loading="eager"
-                    fetchPriority="high"
-                    decoding="async"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <ShoppingBag className="h-8 w-8 text-slate-300" />
-                </div>
-              )}
-
-              <div className="flex-1 min-w-0">
-                <h1 className="text-lg font-bold text-slate-900 leading-tight">
-                  {product.title}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Price: {formatPrice(unitPrice)}
-                </p>
-                <p className="text-sm text-muted-foreground">Qty: 1</p>
-                <Link
-                  to="/$username"
-                  params={{ username: user.username || '' }}
-                  className="text-xs underline"
+    <>
+      <MetaPixel pixelId={metaPixelConfig?.pixelId} />
+      <CheckoutForm
+        email={email}
+        name={name}
+        note={note}
+        onEmailChange={setEmail}
+        onNameChange={setName}
+        onNoteChange={setNote}
+        additionalContactFields={
+          <>
+            {product.payWhatYouWant && (
+              <div className="space-y-2 pt-2">
+                <Label
+                  htmlFor="amount"
+                  className="text-xs font-medium text-slate-600"
                 >
-                  {user.name} (Store)
-                </Link>
+                  Your Price
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+                    Rp
+                  </span>
+                  <Input
+                    id="amount"
+                    inputMode="numeric"
+                    placeholder={
+                      product.suggestedPrice
+                        ? formatPriceInput(product.suggestedPrice)
+                        : '0'
+                    }
+                    value={customAmount}
+                    onChange={(e) => setCustomAmount(e.target.value)}
+                    className="h-11 pl-8"
+                  />
+                </div>
+                <p className="text-xs text-slate-400">
+                  {product.minimumPrice
+                    ? `Minimum ${formatPrice(product.minimumPrice)}`
+                    : 'No minimum — pay what you feel is fair'}
+                </p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      }
-      paymentDetail={
-        <Card>
-          <CardHeader>
-            <CardTitle>PAYMENT DETAIL</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>Subtotal</span>
-                <span>{formatPrice(unitPrice)}</span>
-              </div>
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>Fees</span>
-                <span>{formatPrice(0)}</span>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between text-base font-semibold">
-                <span>Total</span>
-                <span>{formatPrice(unitPrice)}</span>
-              </div>
-            </div>
+            )}
 
-          </CardContent>
-        </Card>
-      }
-      rightTopSection={
-        productVideoId ? (
+            {questions.length > 0 && (
+              <div className="space-y-4 pt-2">
+                <h2 className="text-sm font-semibold text-slate-900">
+                  Additional Questions
+                </h2>
+                {questions.map((q) => (
+                  <div key={q.id} className="space-y-2">
+                    <Label
+                      htmlFor={`q-${q.id}`}
+                      className="text-xs font-medium text-slate-600"
+                    >
+                      {q.label}{' '}
+                      {q.required && <span className="text-rose-500">*</span>}
+                    </Label>
+                    <Input
+                      id={`q-${q.id}`}
+                      value={answers[q.id] ?? ''}
+                      onChange={(e) =>
+                        setAnswers((prev) => ({
+                          ...prev,
+                          [q.id]: e.target.value,
+                        }))
+                      }
+                      required={q.required}
+                      className="h-11"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        }
+        purchasedProducts={
           <Card>
             <CardHeader>
-              <CardTitle>Product preview</CardTitle>
+              <CardTitle>Purchased product</CardTitle>
             </CardHeader>
-            <CardContent>
-              <LiteYouTube
-                videoId={productVideoId}
-                title={`${product.title} video preview`}
-                className="rounded-xl border border-slate-200"
-                playLabel="Play product video"
-              />
+            <CardContent className="space-y-4">
+              <div className="flex items-start gap-4">
+                {hasImage ? (
+                  <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
+                    <img
+                      src={productImages[0]}
+                      alt={product.title}
+                      width={80}
+                      height={80}
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <ShoppingBag className="h-8 w-8 text-slate-300" />
+                  </div>
+                )}
+
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-lg font-bold text-slate-900 leading-tight">
+                    {product.title}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Price: {formatPrice(unitPrice)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Qty: 1</p>
+                  <Link
+                    to="/$username"
+                    params={{ username: user.username || '' }}
+                    className="text-xs underline"
+                  >
+                    {user.name} (Store)
+                  </Link>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        ) : null
-      }
-      payLabel={'Pay'}
-      isSubmitting={isSubmitting}
-      onSubmit={handleSubmit}
-      paymentMethod={paymentMethod}
-      onPaymentMethodChange={setPaymentMethod}
-      paymentOptionsName="product-checkout-payment"
-    />
+        }
+        paymentDetail={
+          <Card>
+            <CardHeader>
+              <CardTitle>PAYMENT DETAIL</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Subtotal</span>
+                  <span>{formatPrice(unitPrice)}</span>
+                </div>
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Fees</span>
+                  <span>{formatPrice(0)}</span>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between text-base font-semibold">
+                  <span>Total</span>
+                  <span>{formatPrice(unitPrice)}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        }
+        rightTopSection={
+          productVideoId ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Product preview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <LiteYouTube
+                  videoId={productVideoId}
+                  title={`${product.title} video preview`}
+                  className="rounded-xl border border-slate-200"
+                  playLabel="Play product video"
+                />
+              </CardContent>
+            </Card>
+          ) : null
+        }
+        payLabel={'Pay'}
+        isSubmitting={isSubmitting}
+        onSubmit={handleSubmit}
+        paymentMethod={paymentMethod}
+        onPaymentMethodChange={setPaymentMethod}
+        paymentOptionsName="product-checkout-payment"
+      />
+    </>
   )
 }

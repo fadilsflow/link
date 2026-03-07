@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { and, asc, desc, eq, gte, inArray, lte, or, sql } from 'drizzle-orm'
+import { createHash } from 'node:crypto'
 import { TRPCError } from '@trpc/server'
 import { createTRPCRouter, protectedProcedure, publicProcedure } from './init'
 import type { TRPCRouterRecord } from '@trpc/server'
@@ -16,7 +17,7 @@ import {
   products,
   profileViews,
   socialLinks,
-  trackingIntegrations,
+  metaPixelConfigs,
   transactions,
   user,
 } from '@/db/schema'
@@ -134,12 +135,72 @@ const bankAccountInputSchema = z.object({
     .regex(/^[0-9 ]+$/, 'Account number must contain digits only.'),
 })
 
-const trackingProviderSchema = z.enum(['google-analytics', 'facebook-pixel'])
-
-const trackingIntegrationInputSchema = z.object({
-  provider: trackingProviderSchema,
-  trackingId: z.string().trim().min(1).max(120),
+const metaPixelConfigInputSchema = z.object({
+  pixelId: z.string().trim().min(1).max(120),
+  accessToken: z.string().trim().min(1).max(500),
 })
+
+async function sendMetaPurchaseEvent(params: {
+  pixelId: string
+  accessToken: string
+  eventId: string
+  deliveryToken: string
+  value: number
+  currency?: string
+  buyerEmail?: string
+  productId?: string | null
+  productTitle?: string
+  clientIpAddress?: string | null
+  clientUserAgent?: string | null
+}): Promise<void> {
+  const normalizedEmail = params.buyerEmail?.trim().toLowerCase()
+  const userData: Record<string, unknown> = normalizedEmail
+    ? {
+        em: [createHash('sha256').update(normalizedEmail).digest('hex')],
+      }
+    : {}
+
+  if (params.clientIpAddress) {
+    userData.client_ip_address = params.clientIpAddress
+  }
+
+  if (params.clientUserAgent) {
+    userData.client_user_agent = params.clientUserAgent
+  }
+
+  const response = await fetch(
+    `https://graph.facebook.com/v21.0/${encodeURIComponent(params.pixelId)}/events?access_token=${encodeURIComponent(params.accessToken)}`,
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        data: [
+          {
+            event_name: 'Purchase',
+            event_time: Math.floor(Date.now() / 1000),
+            action_source: 'website',
+            event_id: params.eventId,
+            event_source_url: `${BASE_URL}/d/${params.deliveryToken}`,
+            user_data: userData,
+            custom_data: {
+              currency: params.currency ?? 'IDR',
+              value: params.value,
+              content_name: params.productTitle ?? 'Product',
+              content_ids: params.productId ? [params.productId] : undefined,
+            },
+          },
+        ],
+      }),
+    },
+  )
+
+  if (!response.ok) {
+    const text = await response.text()
+    console.error('Meta CAPI purchase event failed', text)
+  }
+}
 
 function calculateFee(amount: number): {
   feeAmount: number
@@ -266,7 +327,7 @@ const userRouter = {
     }),
   trackView: publicProcedure
     .input(z.object({ username: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const existingUser = await db.query.user.findFirst({
         where: eq(user.username, input.username),
         columns: { id: true },
@@ -614,71 +675,63 @@ const trackingIntegrationRouter = {
   list: protectedProcedure.query(async ({ ctx }) => {
     const actorUserId = ctx.session.user.id
 
-    return await db.query.trackingIntegrations.findMany({
-      where: eq(trackingIntegrations.userId, actorUserId),
-      orderBy: [asc(trackingIntegrations.createdAt)],
+    return await db.query.metaPixelConfigs.findFirst({
+      where: eq(metaPixelConfigs.userId, actorUserId),
     })
   }),
   upsert: protectedProcedure
-    .input(trackingIntegrationInputSchema)
+    .input(metaPixelConfigInputSchema)
     .mutation(async ({ ctx, input }) => {
       const actorUserId = ctx.session.user.id
-      const existing = await db.query.trackingIntegrations.findFirst({
-        where: and(
-          eq(trackingIntegrations.userId, actorUserId),
-          eq(trackingIntegrations.provider, input.provider),
-        ),
+      const existing = await db.query.metaPixelConfigs.findFirst({
+        where: eq(metaPixelConfigs.userId, actorUserId),
       })
 
       if (existing) {
         const [updatedIntegration] = await db
-          .update(trackingIntegrations)
+          .update(metaPixelConfigs)
           .set({
-            trackingId: input.trackingId,
+            pixelId: input.pixelId,
+            accessToken: input.accessToken,
           })
-          .where(eq(trackingIntegrations.id, existing.id))
+          .where(eq(metaPixelConfigs.id, existing.id))
           .returning()
 
         return updatedIntegration
       }
 
       const [createdIntegration] = await db
-        .insert(trackingIntegrations)
+        .insert(metaPixelConfigs)
         .values({
           id: crypto.randomUUID(),
           userId: actorUserId,
-          provider: input.provider,
-          trackingId: input.trackingId,
+          pixelId: input.pixelId,
+          accessToken: input.accessToken,
         })
         .returning()
 
       return createdIntegration
     }),
-  remove: protectedProcedure
-    .input(z.object({ provider: trackingProviderSchema }))
-    .mutation(async ({ ctx, input }) => {
-      const actorUserId = ctx.session.user.id
+  remove: protectedProcedure.mutation(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
 
-      const existing = await db.query.trackingIntegrations.findFirst({
-        where: and(
-          eq(trackingIntegrations.userId, actorUserId),
-          eq(trackingIntegrations.provider, input.provider),
-        ),
+    const existing = await db.query.metaPixelConfigs.findFirst({
+      where: eq(metaPixelConfigs.userId, actorUserId),
+    })
+
+    if (!existing) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Tracking integration not found',
       })
+    }
 
-      if (!existing) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Tracking integration not found',
-        })
-      }
+    await db
+      .delete(metaPixelConfigs)
+      .where(eq(metaPixelConfigs.id, existing.id))
 
-      await db
-        .delete(trackingIntegrations)
-        .where(eq(trackingIntegrations.id, existing.id))
-
-      return { success: true }
-    }),
+    return { success: true }
+  }),
 } satisfies TRPCRouterRecord
 
 // ─── Block Router ────────────────────────────────────────────────────────────
@@ -686,7 +739,7 @@ const trackingIntegrationRouter = {
 const blockRouter = {
   trackClick: publicProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       // Get block to find the userId
       const block = await db.query.blocks.findFirst({
         where: eq(blocks.id, input.id),
@@ -1167,7 +1220,7 @@ const socialLinkRouter = {
 export const storageRouter = {
   getUploadUrl: protectedProcedure
     .input(z.object({ key: z.string(), contentType: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       return await StorageService.getUploadUrl(input.key, input.contentType)
     }),
 } satisfies TRPCRouterRecord
@@ -1190,9 +1243,10 @@ const orderRouter = {
         amountPaid: z.number().int().nonnegative(),
         answers: z.any().optional(),
         note: z.string().optional(),
+        purchaseEventId: z.string().trim().min(1).max(120).optional(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       // 1. Get product and creator
       const product = await db.query.products.findFirst({
         where: and(
@@ -1314,6 +1368,26 @@ const orderRouter = {
           newOrder.id,
           emailResult.error,
         )
+      }
+
+      const metaPixelConfig = await db.query.metaPixelConfigs.findFirst({
+        where: eq(metaPixelConfigs.userId, creator.id),
+      })
+
+      if (metaPixelConfig && newOrder.status === 'completed') {
+        await sendMetaPurchaseEvent({
+          pixelId: metaPixelConfig.pixelId,
+          accessToken: metaPixelConfig.accessToken,
+          eventId: input.purchaseEventId ?? orderId,
+          deliveryToken,
+          value: input.amountPaid,
+          currency: 'IDR',
+          buyerEmail: input.buyerEmail,
+          productId: product.id,
+          productTitle: product.title,
+          clientIpAddress: ctx.requestMeta.clientIp,
+          clientUserAgent: ctx.requestMeta.userAgent,
+        })
       }
 
       return {

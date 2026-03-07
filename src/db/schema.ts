@@ -251,15 +251,15 @@ export const bankAccounts = pgTable(
   ],
 )
 
-export const trackingIntegrations = pgTable(
-  'tracking_integration',
+export const metaPixelConfigs = pgTable(
+  'meta_pixel_config',
   {
     id: text('id').primaryKey(),
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
-    provider: text('provider').notNull(),
-    trackingId: text('tracking_id').notNull(),
+    pixelId: text('pixel_id').notNull(),
+    accessToken: text('access_token').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at')
       .defaultNow()
@@ -267,11 +267,8 @@ export const trackingIntegrations = pgTable(
       .notNull(),
   },
   (table) => [
-    index('tracking_integration_user_id_idx').on(table.userId),
-    uniqueIndex('tracking_integration_user_provider_idx').on(
-      table.userId,
-      table.provider,
-    ),
+    index('meta_pixel_config_user_id_idx').on(table.userId),
+    uniqueIndex('meta_pixel_config_user_id_idx_unique').on(table.userId),
   ],
 )
 
@@ -517,7 +514,7 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   blocks: many(blocks),
   bankAccounts: many(bankAccounts),
-  trackingIntegrations: many(trackingIntegrations),
+  metaPixelConfigs: many(metaPixelConfigs),
   products: many(products),
   socialLinks: many(socialLinks),
   orders: many(orders, { relationName: 'creatorOrders' }),
@@ -570,11 +567,11 @@ export const bankAccountsRelations = relations(bankAccounts, ({ one }) => ({
   }),
 }))
 
-export const trackingIntegrationsRelations = relations(
-  trackingIntegrations,
+export const metaPixelConfigsRelations = relations(
+  metaPixelConfigs,
   ({ one }) => ({
     user: one(user, {
-      fields: [trackingIntegrations.userId],
+      fields: [metaPixelConfigs.userId],
       references: [user.id],
     }),
   }),

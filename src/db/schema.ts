@@ -9,7 +9,7 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
-import type {BlockRadius, BlockStyle} from '@/lib/block-styles';
+import type { BlockRadius, BlockStyle } from '@/lib/block-styles'
 import type {
   AppearanceBackgroundType,
   AppearanceTextFont,
@@ -75,7 +75,9 @@ export const user = pgTable('user', {
     .notNull(),
   appearanceBackgroundColor: text('appearance_background_color'),
   appearanceBackgroundGradientTop: text('appearance_background_gradient_top'),
-  appearanceBackgroundGradientBottom: text('appearance_background_gradient_bottom'),
+  appearanceBackgroundGradientBottom: text(
+    'appearance_background_gradient_bottom',
+  ),
   appearanceBackgroundImageUrl: text('appearance_background_image_url'),
   appearanceBlockColor: text('appearance_block_color'),
   appearanceBlockShadowColor: text('appearance_block_shadow_color'),

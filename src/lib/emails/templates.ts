@@ -141,6 +141,11 @@ export type OrderEmailProps = {
   }>
 }
 
+type DeleteAccountVerificationEmailProps = {
+  name?: string | null
+  token: string
+}
+
 export const getOrderConfirmationEmailHtml = ({
   buyerName,
   orderId,
@@ -225,6 +230,45 @@ export const getOrderConfirmationEmailHtml = ({
 
   return BaseEmail({
     previewText: `Your order is confirmed!`,
+    children: content,
+  })
+}
+
+export const getDeleteAccountVerificationEmailHtml = ({
+  name,
+  token,
+}: DeleteAccountVerificationEmailProps) => {
+  const content = `
+    <h2 style="margin-top: 0; font-size: 24px; font-weight: 700; color: #18181b;">
+      Confirm account deletion
+    </h2>
+    <p class="text-sm">
+      Hi ${name?.trim() || 'there'}, we received a request to permanently delete your Link App account.
+    </p>
+    <p class="text-sm">
+      This action is irreversible. Your account access and related data will be removed after you confirm.
+    </p>
+
+    <div style="margin: 32px 0; border-radius: 12px; border: 1px solid #e4e4e7; background-color: #fafafa; padding: 20px; text-align: center;">
+      <p class="text-sm text-muted" style="margin: 0 0 8px;">Verification token</p>
+      <p style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 0.18em; color: #18181b;">
+        ${token}
+      </p>
+    </div>
+
+    <div class="divider"></div>
+
+    <p class="text-sm text-muted">
+      Paste this token into the delete account dialog in your settings page to finish the deletion.
+    </p>
+
+    <p class="text-sm text-muted">
+      If you did not request this, you can safely ignore this email and your account will remain unchanged.
+    </p>
+  `
+
+  return BaseEmail({
+    previewText: 'Confirm your account deletion request',
     children: content,
   })
 }

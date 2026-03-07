@@ -1,5 +1,8 @@
 import { Resend } from 'resend'
-import { getOrderConfirmationEmailHtml } from './emails/templates'
+import {
+  getDeleteAccountVerificationEmailHtml,
+  getOrderConfirmationEmailHtml,
+} from './emails/templates'
 import { generateInvoicePdf } from './invoice'
 import { BASE_URL } from '@/lib/constans'
 
@@ -37,6 +40,12 @@ type SendConsolidatedCheckoutEmailParams = {
       productPrice?: number
     }>
   }>
+}
+
+type SendDeleteAccountVerificationEmailParams = {
+  to: string
+  name?: string | null
+  token: string
 }
 
 function getLineItems(order: any) {
@@ -184,6 +193,31 @@ export async function sendConsolidatedCheckoutEmail({
     return { success: true, id: data.data?.id }
   } catch (error) {
     console.error('Failed to send email:', error)
+    return { success: false, error }
+  }
+}
+
+export async function sendDeleteAccountVerificationEmail({
+  to,
+  name,
+  token,
+}: SendDeleteAccountVerificationEmailParams) {
+  const from = 'onboarding@webtron.biz.id'
+  const html = getDeleteAccountVerificationEmailHtml({
+    name,
+    token,
+  })
+
+  try {
+    const data = await resend.emails.send({
+      from,
+      to,
+      subject: 'Confirm your account deletion',
+      html,
+    })
+    return { success: true, id: data.data?.id }
+  } catch (error) {
+    console.error('Failed to send delete account verification email:', error)
     return { success: false, error }
   }
 }

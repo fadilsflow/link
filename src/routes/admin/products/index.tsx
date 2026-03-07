@@ -36,7 +36,6 @@ import {
   AppHeader,
   AppHeaderActions,
   AppHeaderContent,
-  AppHeaderDescription,
 } from '@/components/app-header'
 import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table'
 import { Spinner } from '@/components/ui/spinner'
@@ -74,7 +73,7 @@ function productPriceLabel(product: ProductRow): string {
     return formatPrice(product.salePrice)
   }
   if (product.price) return formatPrice(product.price)
-  return 'No price'
+  return 'Free'
 }
 
 function ProductActions({
@@ -227,10 +226,6 @@ function getColumns(username: string | null): Array<ColumnDef<ProductRow>> {
       cell: ({ row }) => {
         const imageUrl = row.original.images?.[0]
         const href = `/admin/products/${row.original.id}`
-        const publicUrl = username
-          ? `${PUBLIC_BASE_ORIGIN}/${username}/products/${row.original.id}`
-          : `${PUBLIC_BASE_ORIGIN}/products/${row.original.id}`
-
         return (
           <div className="relative flex items-center gap-4 p-2 group">
             <Link to={href} className="absolute inset-0 z-10" />
@@ -247,20 +242,9 @@ function getColumns(username: string | null): Array<ColumnDef<ProductRow>> {
                 </div>
               )}
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-bold text-sm truncate max-w-[200px] sm:max-w-[300px]">
-                {row.original.title || 'Untitled Product'}
-              </span>
-              <a
-                className="text-xs max-w-[200px] sm:max-w-[300px] line-clamp-1 hover:underline relative z-20 w-fit"
-                href={publicUrl}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {publicUrl.replace(/^https?:\/\//, '')}
-              </a>
-            </div>
+            <span className="font-medium text-sm truncate max-w-[220px]">
+              {row.original.title || 'Untitled Product'}
+            </span>
           </div>
         )
       },
@@ -424,12 +408,9 @@ function ProductsIndexPage() {
     <div className="space-y-6 p-4 md:p-10 mb-20 md:mb-0">
       <AppHeader>
         <AppHeaderContent title="Products">
-          <AppHeaderDescription>
-            Manage and track the performance of your digital products.
-          </AppHeaderDescription>
         </AppHeaderContent>
         <AppHeaderActions>
-          <Button size="sm" render={<Link to="/admin/products/new" />}>
+          <Button size="lg" render={<Link to="/admin/products/new" />}>
             <Plus className="h-4 w-4 mr-1.5" />
             New product
           </Button>
@@ -459,7 +440,7 @@ function ProductsIndexPage() {
           columns={columns}
           data={products}
           searchKey="title"
-          filterPlaceholder="Search products by name..."
+          filterPlaceholder="Search Products"
         />
       )}
     </div>

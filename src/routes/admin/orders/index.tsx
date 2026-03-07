@@ -12,7 +12,6 @@ import type { ColumnDef } from '@tanstack/react-table'
 import {
   AppHeader,
   AppHeaderContent,
-  AppHeaderDescription,
 } from '@/components/app-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -161,14 +160,9 @@ function OrdersPage() {
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               )}
             </div>
-            <div className="min-w-0 flex flex-col">
-              <span className="font-medium text-sm truncate max-w-[220px]">
-                {title}
-              </span>
-              <span className="text-xs text-muted-foreground truncate">
-                {itemCount > 1 ? `${itemCount} items` : 'Single item order'}
-              </span>
-            </div>
+            <span className="font-medium text-sm truncate max-w-[220px]">
+              {title}
+            </span>
           </button>
         )
       },
@@ -288,17 +282,17 @@ function OrdersPage() {
     ? selectedOrder.items.length > 0
       ? selectedOrder.items
       : [
-          {
-            id: selectedOrder.id,
-            productTitle: selectedOrder.productTitle,
-            productImage: selectedOrder.productImage,
-            quantity: selectedOrder.quantity,
-            amountPaid: selectedOrder.amountPaid,
-            productPrice: selectedOrder.productPrice,
-            checkoutAnswers: selectedOrder.checkoutAnswers ?? {},
-            creator: selectedOrder.creator,
-          },
-        ]
+        {
+          id: selectedOrder.id,
+          productTitle: selectedOrder.productTitle,
+          productImage: selectedOrder.productImage,
+          quantity: selectedOrder.quantity,
+          amountPaid: selectedOrder.amountPaid,
+          productPrice: selectedOrder.productPrice,
+          checkoutAnswers: selectedOrder.checkoutAnswers ?? {},
+          creator: selectedOrder.creator,
+        },
+      ]
     : []
 
   return (
@@ -306,9 +300,6 @@ function OrdersPage() {
       <div className="space-y-6">
         <AppHeader>
           <AppHeaderContent title="Orders">
-            <AppHeaderDescription>
-              Manage your digital product sales and delivery
-            </AppHeaderDescription>
           </AppHeaderContent>
         </AppHeader>
 

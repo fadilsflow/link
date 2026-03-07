@@ -145,7 +145,7 @@ function ProductEditRoute() {
           form={formId}
           variant="default"
           disabled={!form || isLoading}
-          loading={!form || isLoading}
+          loading={isLoading}
         >
           Update Product
         </Button>

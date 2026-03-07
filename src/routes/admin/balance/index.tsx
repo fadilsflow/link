@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { XCircle, Eye, EyeOff } from 'lucide-react'
+import { XCircle, Eye, EyeOff, InfoIcon } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { AppHeader, AppHeaderContent } from '@/components/app-header'
@@ -33,6 +33,7 @@ import { toastManager } from '@/components/ui/toast'
 import { authClient } from '@/lib/auth-client'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { cn, formatPrice, formatPriceInput, parsePriceInput } from '@/lib/utils'
+import { Alert, AlertTitle } from '@/components/ui/alert'
 
 function getFinanceUiError(message: string): string {
   const lower = message.toLowerCase()
@@ -334,7 +335,13 @@ function BalancePage() {
         <AppHeaderContent title="Balance">
         </AppHeaderContent>
       </AppHeader>
-
+      {hasPendingPayout && (
+        <Alert variant={'info'} className="border-none bg-muted text-xs">
+          <InfoIcon />
+          <AlertTitle>You already have a pending payout request. Only one pending payout is allowed.
+          </AlertTitle>
+        </Alert>
+      )}
       {/* Balance Cards */}
       <div className="grid gap-0 sm:grid-cols-2 gap-4 ">
         <BalanceCard
@@ -364,16 +371,7 @@ function BalancePage() {
           onAction={handleRefreshBalance}
         />
       </div>
-      <p className="text-sm text-muted-foreground">
-        Available = funds ready to withdraw. Pending = funds still in hold (
-        {summary?.holdPeriodDays ?? 7} days).
-      </p>
-      {hasPendingPayout && (
-        <p className="text-xs text-muted-foreground -mt-3">
-          You already have a pending payout request. Only one pending payout is
-          allowed.
-        </p>
-      )}
+
 
       <Dialog
         open={payoutDialogOpen}
@@ -537,9 +535,6 @@ function BalanceCard({
     <Card
       className={cn(
         'p-4',
-        activeBalance
-          ? ''
-          : 'bg-muted',
       )}
     >
       <CardHeader className="pb-2">

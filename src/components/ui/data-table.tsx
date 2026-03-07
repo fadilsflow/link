@@ -19,6 +19,7 @@ import {
   ChevronUp,
   ChevronsLeft,
   ChevronsRight,
+  Search,
 } from 'lucide-react'
 import type {
   Column,
@@ -49,6 +50,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
 import { Frame } from './frame'
+import { InputGroup, InputGroupAddon, InputGroupInput } from './input-group'
 
 interface DataTableProps<TData, TValue> {
   columns: Array<ColumnDef<TData, TValue>>
@@ -108,18 +110,24 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center justify-between">
         <div className="flex flex-1 items-center space-x-2">
           {searchKey && (
-            <Input
-              placeholder={filterPlaceholder}
-              value={
-                (table.getColumn(searchKey)?.getFilterValue() as
-                  | string
-                  | undefined) ?? ''
-              }
-              onChange={(event) =>
-                table.getColumn(searchKey)?.setFilterValue(event.target.value)
-              }
-              className="h-8 w-[150px] lg:w-[250px]"
-            />
+            <InputGroup className="w-[150px] lg:w-[250px]">
+              <InputGroupAddon>
+                <Search />
+              </InputGroupAddon>
+              <InputGroupInput
+                placeholder={filterPlaceholder}
+                size={'lg'}
+                value={
+                  (table.getColumn(searchKey)?.getFilterValue() as
+                    | string
+                    | undefined) ?? ''
+                }
+                onChange={(event) =>
+                  table.getColumn(searchKey)?.setFilterValue(event.target.value)
+                }
+
+              />
+            </InputGroup>
           )}
         </div>
         <div className="flex items-center space-x-2">

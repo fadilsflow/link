@@ -126,8 +126,8 @@ function ProductActions({
   }
 
   const publicUrl = username
-    ? `${PUBLIC_BASE_ORIGIN}/${username}/products/${product.id}`
-    : `${PUBLIC_BASE_ORIGIN}/products/${product.id}`
+    ? `${PUBLIC_BASE_ORIGIN}/${username}/${product.id}`
+    : `${PUBLIC_BASE_ORIGIN}/${product.id}`
   const checkoutUrl = `${publicUrl}/checkout`
   const href = `/admin/products/${product.id}`
 

@@ -81,12 +81,7 @@ export default function DashboardSearchCommand({
       adminCommandRouteItems.map((item) => ({
         id: `route:${item.url}`,
         label: item.title,
-        section:
-          item.section === 'main'
-            ? 'Navigation'
-            : item.section === 'monetize'
-              ? 'Monetize'
-              : 'Settings',
+        section: 'Go To',
         icon: item.icon,
         keywords: item.keywords,
         to: item.url,
@@ -101,7 +96,7 @@ export default function DashboardSearchCommand({
           {
             id: 'action:open-public-page',
             label: adminUtilityItems.openPublicPage.title,
-            section: 'Actions',
+            section: 'Quick Action',
             icon: adminUtilityItems.openPublicPage.icon,
             keywords: adminUtilityItems.openPublicPage.keywords,
             onSelect: () => {
@@ -111,7 +106,7 @@ export default function DashboardSearchCommand({
           {
             id: 'action:copy-public-page',
             label: adminUtilityItems.copyPageLink.title,
-            section: 'Actions',
+            section: 'Quick Action',
             icon: ClipboardCopy,
             keywords: adminUtilityItems.copyPageLink.keywords,
             onSelect: async () => {
@@ -127,7 +122,7 @@ export default function DashboardSearchCommand({
       {
         id: 'action:logout',
         label: 'Log out',
-        section: 'Actions',
+        section: 'Quick Action',
         icon: LogOut,
         keywords: ['sign out', 'logout', 'exit account'],
         onSelect: async () => {
@@ -201,7 +196,9 @@ export default function DashboardSearchCommand({
               {(group: CommandGroupItem, index: number) => (
                 <React.Fragment key={group.value}>
                   <CommandGroup items={group.items}>
-                    <CommandGroupLabel>{group.value}</CommandGroupLabel>
+                    <CommandGroupLabel className="uppercase">
+                      {group.value}
+                    </CommandGroupLabel>
                     <CommandCollection>
                       {(item: CommandDefinition) => (
                         <CommandItem
@@ -209,8 +206,8 @@ export default function DashboardSearchCommand({
                           onClick={() => handleItemClick(item)}
                           value={buildSearchValue(item)}
                         >
-                          <item.icon className="mr-3 h-4 w-4 shrink-0 text-muted-foreground" />
-                          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          <item.icon className="mr-3 h-4 w-4 shrink-0 text-foreground/80" />
+                          <span className="min-w-0 flex-1 truncate text-md text-foreground/80">
                             {item.label}
                           </span>
                           {item.shortcut ? (

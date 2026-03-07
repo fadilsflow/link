@@ -24,16 +24,22 @@ import {
   blockCreateInputSchema,
   blockUpdateInputSchema,
 } from '@/lib/block-form'
+import { isReservedUsername } from '@/lib/reserved-usernames'
 
 // ─── Hold period for funds (in days) ─────────────────────────────────────────
 const HOLD_PERIOD_DAYS = 7
 const PLATFORM_FEE_PERCENT = 5 // 5% fee
 const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
+const PRODUCT_ID_LENGTH = 8
 
 function getAvailableAt(): Date {
   const d = new Date()
   d.setDate(d.getDate() + HOLD_PERIOD_DAYS)
   return d
+}
+
+function generateProductId(): string {
+  return crypto.randomUUID().replace(/-/g, '').slice(0, PRODUCT_ID_LENGTH)
 }
 
 function isSafeUrlValue(value: string): boolean {
@@ -83,6 +89,9 @@ const usernameSchema = z
     /^[a-z0-9._]+$/,
     'Username can only contain letters, numbers, periods, and underscores',
   )
+  .refine((value) => !isReservedUsername(value), {
+    message: 'Username is reserved',
+  })
 
 const onboardingDetailsSchema = z.object({
   displayName: z.string().trim().min(1).max(80),
@@ -688,7 +697,7 @@ const productRouter = {
     .input(productMutationInput)
     .mutation(async ({ input, ctx }) => {
       const actorUserId = ctx.session.user.id
-      const id = crypto.randomUUID()
+      const id = generateProductId()
       const price = input.priceSettings.payWhatYouWant
         ? null
         : (input.priceSettings.price ?? null)
@@ -780,7 +789,7 @@ const productRouter = {
         throw new Error('Product not found')
       }
 
-      const newId = crypto.randomUUID()
+      const newId = generateProductId()
       const [newProduct] = await db
         .insert(products)
         .values({

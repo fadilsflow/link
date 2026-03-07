@@ -148,7 +148,7 @@ function OrdersPage() {
           <button
             type="button"
             onClick={() => openOrderSheet(order.id)}
-            className="flex items-center gap-3 text-left hover:opacity-80"
+            className="flex items-center gap-3 p-2 text-left hover:opacity-80"
           >
             <div className="h-9 w-9 rounded-md flex items-center justify-center overflow-hidden shrink-0 bg-secondary/50 border">
               {image ? (

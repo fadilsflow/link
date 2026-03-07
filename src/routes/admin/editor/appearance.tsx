@@ -448,8 +448,8 @@ function AppearanceEditor({
             />
             <SectionOptionCard
               selected={backgroundType === 'image'}
-              title="Image Upload"
-              description="Upload a full-page background image."
+              title="Image"
+              description="a full-page background image."
               onClick={() => {
                 setBackgroundType('image')
                 save({ appearanceBackgroundType: 'image' })

@@ -224,6 +224,57 @@ export const socialLinks = pgTable('social_link', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+export const bankAccounts = pgTable(
+  'bank_account',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    bankCode: text('bank_code').notNull(),
+    bankName: text('bank_name').notNull(),
+    accountName: text('account_name').notNull(),
+    accountNumber: text('account_number').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('bank_account_user_id_idx').on(table.userId),
+    uniqueIndex('bank_account_user_bank_number_idx').on(
+      table.userId,
+      table.bankCode,
+      table.accountNumber,
+    ),
+  ],
+)
+
+export const trackingIntegrations = pgTable(
+  'tracking_integration',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull(),
+    trackingId: text('tracking_id').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('tracking_integration_user_id_idx').on(table.userId),
+    uniqueIndex('tracking_integration_user_provider_idx').on(
+      table.userId,
+      table.provider,
+    ),
+  ],
+)
+
 // ─── Commerce / Financial Tables ─────────────────────────────────────────────
 
 /**
@@ -465,6 +516,8 @@ export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   blocks: many(blocks),
+  bankAccounts: many(bankAccounts),
+  trackingIntegrations: many(trackingIntegrations),
   products: many(products),
   socialLinks: many(socialLinks),
   orders: many(orders, { relationName: 'creatorOrders' }),
@@ -509,6 +562,23 @@ export const socialLinksRelations = relations(socialLinks, ({ one }) => ({
     references: [user.id],
   }),
 }))
+
+export const bankAccountsRelations = relations(bankAccounts, ({ one }) => ({
+  user: one(user, {
+    fields: [bankAccounts.userId],
+    references: [user.id],
+  }),
+}))
+
+export const trackingIntegrationsRelations = relations(
+  trackingIntegrations,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [trackingIntegrations.userId],
+      references: [user.id],
+    }),
+  }),
+)
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
   creator: one(user, {

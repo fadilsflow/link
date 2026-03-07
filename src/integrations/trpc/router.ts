@@ -6,6 +6,8 @@ import type { TRPCRouterRecord } from '@trpc/server'
 import { db } from '@/db'
 import {
   TRANSACTION_TYPE,
+  account,
+  bankAccounts,
   blockClicks,
   blocks,
   orderItems,
@@ -14,6 +16,7 @@ import {
   products,
   profileViews,
   socialLinks,
+  trackingIntegrations,
   transactions,
   user,
 } from '@/db/schema'
@@ -118,6 +121,25 @@ const onboardingStepSchema = z.discriminatedUnion('step', [
     step: z.literal('finish'),
   }),
 ])
+
+const bankAccountInputSchema = z.object({
+  bankCode: z.string().trim().min(1),
+  bankName: z.string().trim().min(1).max(120),
+  accountName: z.string().trim().min(1).max(120),
+  accountNumber: z
+    .string()
+    .trim()
+    .min(1)
+    .max(50)
+    .regex(/^[0-9 ]+$/, 'Account number must contain digits only.'),
+})
+
+const trackingProviderSchema = z.enum(['google-analytics', 'facebook-pixel'])
+
+const trackingIntegrationInputSchema = z.object({
+  provider: trackingProviderSchema,
+  trackingId: z.string().trim().min(1).max(120),
+})
 
 function calculateFee(amount: number): {
   feeAmount: number
@@ -479,6 +501,183 @@ const onboardingRouter = {
         })
 
       return updatedUser
+    }),
+} satisfies TRPCRouterRecord
+
+const bankAccountRouter = {
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
+    return await db.query.bankAccounts.findMany({
+      where: eq(bankAccounts.userId, actorUserId),
+      orderBy: [asc(bankAccounts.createdAt)],
+    })
+  }),
+  create: protectedProcedure
+    .input(bankAccountInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const actorUserId = ctx.session.user.id
+      const id = crypto.randomUUID()
+
+      const [createdAccount] = await db
+        .insert(bankAccounts)
+        .values({
+          id,
+          userId: actorUserId,
+          bankCode: input.bankCode,
+          bankName: input.bankName,
+          accountName: input.accountName,
+          accountNumber: input.accountNumber,
+        })
+        .returning()
+
+      return createdAccount
+    }),
+  update: protectedProcedure
+    .input(z.object({ id: z.string(), data: bankAccountInputSchema }))
+    .mutation(async ({ ctx, input }) => {
+      const actorUserId = ctx.session.user.id
+      const [updatedAccount] = await db
+        .update(bankAccounts)
+        .set({
+          bankCode: input.data.bankCode,
+          bankName: input.data.bankName,
+          accountName: input.data.accountName,
+          accountNumber: input.data.accountNumber,
+        })
+        .where(
+          and(
+            eq(bankAccounts.id, input.id),
+            eq(bankAccounts.userId, actorUserId),
+          ),
+        )
+        .returning()
+
+      if (!updatedAccount) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Bank account not found',
+        })
+      }
+
+      return updatedAccount
+    }),
+  remove: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const actorUserId = ctx.session.user.id
+      const targetAccount = await db.query.bankAccounts.findFirst({
+        where: and(
+          eq(bankAccounts.id, input.id),
+          eq(bankAccounts.userId, actorUserId),
+        ),
+      })
+
+      if (!targetAccount) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Bank account not found',
+        })
+      }
+
+      await db
+        .delete(bankAccounts)
+        .where(
+          and(
+            eq(bankAccounts.id, input.id),
+            eq(bankAccounts.userId, actorUserId),
+          ),
+        )
+
+      return { success: true }
+    }),
+} satisfies TRPCRouterRecord
+
+const connectedAccountRouter = {
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
+
+    return await db.query.account.findMany({
+      where: eq(account.userId, actorUserId),
+      orderBy: [asc(account.createdAt)],
+      columns: {
+        id: true,
+        providerId: true,
+        accountId: true,
+        scope: true,
+        createdAt: true,
+      },
+    })
+  }),
+} satisfies TRPCRouterRecord
+
+const trackingIntegrationRouter = {
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const actorUserId = ctx.session.user.id
+
+    return await db.query.trackingIntegrations.findMany({
+      where: eq(trackingIntegrations.userId, actorUserId),
+      orderBy: [asc(trackingIntegrations.createdAt)],
+    })
+  }),
+  upsert: protectedProcedure
+    .input(trackingIntegrationInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const actorUserId = ctx.session.user.id
+      const existing = await db.query.trackingIntegrations.findFirst({
+        where: and(
+          eq(trackingIntegrations.userId, actorUserId),
+          eq(trackingIntegrations.provider, input.provider),
+        ),
+      })
+
+      if (existing) {
+        const [updatedIntegration] = await db
+          .update(trackingIntegrations)
+          .set({
+            trackingId: input.trackingId,
+          })
+          .where(eq(trackingIntegrations.id, existing.id))
+          .returning()
+
+        return updatedIntegration
+      }
+
+      const [createdIntegration] = await db
+        .insert(trackingIntegrations)
+        .values({
+          id: crypto.randomUUID(),
+          userId: actorUserId,
+          provider: input.provider,
+          trackingId: input.trackingId,
+        })
+        .returning()
+
+      return createdIntegration
+    }),
+  remove: protectedProcedure
+    .input(z.object({ provider: trackingProviderSchema }))
+    .mutation(async ({ ctx, input }) => {
+      const actorUserId = ctx.session.user.id
+
+      const existing = await db.query.trackingIntegrations.findFirst({
+        where: and(
+          eq(trackingIntegrations.userId, actorUserId),
+          eq(trackingIntegrations.provider, input.provider),
+        ),
+      })
+
+      if (!existing) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Tracking integration not found',
+        })
+      }
+
+      await db
+        .delete(trackingIntegrations)
+        .where(eq(trackingIntegrations.id, existing.id))
+
+      return { success: true }
     }),
 } satisfies TRPCRouterRecord
 
@@ -2107,6 +2306,9 @@ const adminRouter = {
 export const trpcRouter = createTRPCRouter({
   user: userRouter,
   onboarding: onboardingRouter,
+  bankAccount: bankAccountRouter,
+  connectedAccount: connectedAccountRouter,
+  trackingIntegration: trackingIntegrationRouter,
   block: blockRouter,
   product: productRouter,
   socialLink: socialLinkRouter,

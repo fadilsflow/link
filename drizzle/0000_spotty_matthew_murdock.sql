@@ -14,6 +14,17 @@ CREATE TABLE "account" (
 	"updated_at" timestamp NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "bank_account" (
+	"id" text PRIMARY KEY NOT NULL,
+	"user_id" text NOT NULL,
+	"bank_code" text NOT NULL,
+	"bank_name" text NOT NULL,
+	"account_name" text NOT NULL,
+	"account_number" text NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "block_click" (
 	"id" text PRIMARY KEY NOT NULL,
 	"block_id" text NOT NULL,
@@ -36,6 +47,21 @@ CREATE TABLE "block" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "order_item" (
+	"id" text PRIMARY KEY NOT NULL,
+	"order_id" text NOT NULL,
+	"creator_id" text,
+	"product_id" text,
+	"product_title" text NOT NULL,
+	"product_price" integer NOT NULL,
+	"product_image" text,
+	"quantity" integer DEFAULT 1 NOT NULL,
+	"amount_paid" integer DEFAULT 0 NOT NULL,
+	"checkout_answers" json,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "order" (
 	"id" text PRIMARY KEY NOT NULL,
 	"creator_id" text,
@@ -53,6 +79,7 @@ CREATE TABLE "order" (
 	"delivery_token" text NOT NULL,
 	"email_sent" boolean DEFAULT false NOT NULL,
 	"email_sent_at" timestamp,
+	"checkout_group_id" text,
 	"idempotency_key" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
@@ -157,7 +184,16 @@ CREATE TABLE "user" (
 	"appearance_bg_image_url" text,
 	"appearance_block_style" text DEFAULT 'basic' NOT NULL,
 	"appearance_block_radius" text DEFAULT 'rounded' NOT NULL,
-	"public_theme" text DEFAULT 'system' NOT NULL,
+	"appearance_banner_enabled" boolean DEFAULT true NOT NULL,
+	"appearance_background_type" text DEFAULT 'none' NOT NULL,
+	"appearance_background_color" text,
+	"appearance_background_gradient_top" text,
+	"appearance_background_gradient_bottom" text,
+	"appearance_background_image_url" text,
+	"appearance_block_color" text,
+	"appearance_block_shadow_color" text,
+	"appearance_text_color" text,
+	"appearance_text_font" text,
 	"total_revenue" integer DEFAULT 0 NOT NULL,
 	"total_sales_count" integer DEFAULT 0 NOT NULL,
 	"total_views" integer DEFAULT 0 NOT NULL,
@@ -177,9 +213,13 @@ CREATE TABLE "verification" (
 );
 --> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "bank_account" ADD CONSTRAINT "bank_account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "block_click" ADD CONSTRAINT "block_click_block_id_block_id_fk" FOREIGN KEY ("block_id") REFERENCES "public"."block"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "block_click" ADD CONSTRAINT "block_click_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "block" ADD CONSTRAINT "block_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "order_item" ADD CONSTRAINT "order_item_order_id_order_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."order"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "order_item" ADD CONSTRAINT "order_item_creator_id_user_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "order_item" ADD CONSTRAINT "order_item_product_id_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."product"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "order" ADD CONSTRAINT "order_creator_id_user_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "order" ADD CONSTRAINT "order_product_id_product_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."product"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payout" ADD CONSTRAINT "payout_creator_id_user_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."user"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
@@ -191,14 +231,20 @@ ALTER TABLE "transaction" ADD CONSTRAINT "transaction_creator_id_user_id_fk" FOR
 ALTER TABLE "transaction" ADD CONSTRAINT "transaction_order_id_order_id_fk" FOREIGN KEY ("order_id") REFERENCES "public"."order"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transaction" ADD CONSTRAINT "transaction_payout_id_payout_id_fk" FOREIGN KEY ("payout_id") REFERENCES "public"."payout"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "bank_account_user_id_idx" ON "bank_account" USING btree ("user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "bank_account_user_bank_number_idx" ON "bank_account" USING btree ("user_id","bank_code","account_number");--> statement-breakpoint
 CREATE INDEX "block_click_block_id_idx" ON "block_click" USING btree ("block_id");--> statement-breakpoint
 CREATE INDEX "block_click_user_id_idx" ON "block_click" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "block_click_created_at_idx" ON "block_click" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "order_item_order_id_idx" ON "order_item" USING btree ("order_id");--> statement-breakpoint
+CREATE INDEX "order_item_creator_id_idx" ON "order_item" USING btree ("creator_id");--> statement-breakpoint
+CREATE INDEX "order_item_product_id_idx" ON "order_item" USING btree ("product_id");--> statement-breakpoint
 CREATE INDEX "order_creator_id_idx" ON "order" USING btree ("creator_id");--> statement-breakpoint
 CREATE INDEX "order_product_id_idx" ON "order" USING btree ("product_id");--> statement-breakpoint
 CREATE INDEX "order_buyer_email_idx" ON "order" USING btree ("buyer_email");--> statement-breakpoint
 CREATE INDEX "order_delivery_token_idx" ON "order" USING btree ("delivery_token");--> statement-breakpoint
 CREATE INDEX "order_status_idx" ON "order" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "order_checkout_group_id_idx" ON "order" USING btree ("checkout_group_id");--> statement-breakpoint
 CREATE INDEX "payout_creator_id_idx" ON "payout" USING btree ("creator_id");--> statement-breakpoint
 CREATE INDEX "payout_status_idx" ON "payout" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "payout_created_at_idx" ON "payout" USING btree ("created_at");--> statement-breakpoint

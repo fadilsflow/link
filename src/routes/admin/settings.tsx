@@ -6,10 +6,8 @@ import {
   CircleCheck,
   CircleX,
   Landmark,
-  PencilLine,
   Plus,
-  ShieldCheck,
-  Trash2,
+  SearchIcon,
 } from 'lucide-react'
 import { z } from 'zod'
 import {
@@ -27,6 +25,16 @@ import {
 } from '@/components/app-header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Combobox,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxPopup,
+  ComboboxTrigger,
+  ComboboxValue,
+} from '@/components/ui/combobox'
 import {
   Dialog,
   DialogClose,
@@ -57,13 +65,7 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs'
 import { Spinner } from '@/components/ui/spinner'
 import { toastManager } from '@/components/ui/toast'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
@@ -75,7 +77,12 @@ export const Route = createFileRoute('/admin/settings')({
   component: SettingsPage,
 })
 
-const BANK_OPTIONS = [
+type BankOption = {
+  value: string
+  label: string
+}
+
+const BANK_OPTIONS: BankOption[] = [
   { value: 'bca', label: 'Bank Central Asia (BCA)' },
   { value: 'bni', label: 'Bank Negara Indonesia (BNI)' },
   { value: 'bri', label: 'Bank Rakyat Indonesia (BRI)' },
@@ -84,10 +91,11 @@ const BANK_OPTIONS = [
   { value: 'permata', label: 'Bank Permata' },
   { value: 'danamon', label: 'Bank Danamon' },
   { value: 'jago', label: 'Bank Jago' },
-] as const
+]
 
 const bankAccountSchema = z.object({
   bankCode: z.string().min(1, 'Please select a bank.'),
+  bankName: z.string().trim().min(1, 'Please select a bank.'),
   accountName: z.string().trim().min(1, 'Account name is required.'),
   accountNumber: z
     .string()
@@ -106,17 +114,16 @@ type BankAccountRecord = {
   bankName: string
   accountName: string
   accountNumber: string
-  isPrimary: boolean
 }
 
 type TrackingProvider = 'google-analytics' | 'facebook-pixel'
 
-type TrackingIntegration = {
+type TrackingIntegrationDefinition = {
   provider: TrackingProvider
   name: string
   description: string
   placeholder: string
-  value: string
+  helperText: string
 }
 
 type UsernameFormValues = {
@@ -127,6 +134,7 @@ type UsernameFieldErrors = Partial<Record<keyof UsernameFormValues, string>>
 
 const DEFAULT_FORM_VALUES: BankAccountFormValues = {
   bankCode: '',
+  bankName: '',
   accountName: '',
   accountNumber: '',
 }
@@ -149,28 +157,24 @@ const DEFAULT_USERNAME_FORM_VALUES: UsernameFormValues = {
   username: '',
 }
 
-const DEFAULT_TRACKING_INTEGRATIONS: Array<TrackingIntegration> = [
+const TRACKING_INTEGRATIONS: Array<TrackingIntegrationDefinition> = [
   {
     provider: 'google-analytics',
     name: 'Google Analytics',
     description: 'Track visitors, page views, and conversions from Google Analytics.',
     placeholder: 'G-XXXXXXXXXX',
-    value: '',
+    helperText: 'Use your Measurement ID from Google Analytics.',
   },
   {
     provider: 'facebook-pixel',
     name: 'Facebook Pixel',
     description: 'Send events to Meta Ads for retargeting and campaign measurement.',
     placeholder: '123456789012345',
-    value: '',
+    helperText: 'Use your Pixel ID from Meta Events Manager.',
   },
 ]
 
 const PUBLIC_BASE_HOST = new URL(BASE_URL).host
-
-function getBankLabel(bankCode: string): string {
-  return BANK_OPTIONS.find((bank) => bank.value === bankCode)?.label ?? bankCode
-}
 
 function normalizeAccountNumber(value: string): string {
   return value.replace(/\s+/g, ' ').trim()
@@ -192,6 +196,7 @@ function mapZodIssuesToFieldErrors(
     if (
       typeof field === 'string' &&
       (field === 'bankCode' ||
+        field === 'bankName' ||
         field === 'accountName' ||
         field === 'accountNumber') &&
       !nextErrors[field]
@@ -219,10 +224,6 @@ function validateUsername(value: string): string | null {
 function SettingsPage() {
   const queryClient = useQueryClient()
   const { data: adminAuth } = useAdminAuthContext()
-  const [accounts, setAccounts] = React.useState<Array<BankAccountRecord>>([])
-  const [trackingIntegrations, setTrackingIntegrations] = React.useState<
-    Array<TrackingIntegration>
-  >(DEFAULT_TRACKING_INTEGRATIONS)
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [deleteTargetId, setDeleteTargetId] = React.useState<string | null>(null)
   const [editingAccountId, setEditingAccountId] = React.useState<string | null>(
@@ -246,28 +247,68 @@ function SettingsPage() {
     React.useState<UsernameFieldErrors>({})
   const [debouncedUsername, setDebouncedUsername] = React.useState('')
   const usernameInputRef = React.useRef<HTMLInputElement>(null)
+  const bankDialogModeRef = React.useRef<'create' | 'edit'>('create')
+  const trackingDialogProviderRef = React.useRef<TrackingProvider | null>(null)
+  const bankAccountsQuery = useQuery({
+    queryKey: ['bank-accounts'],
+    queryFn: async () => {
+      return await trpcClient.bankAccount.list.query()
+    },
+    staleTime: 1000 * 30,
+  })
+  const connectedAccountsQuery = useQuery({
+    queryKey: ['connected-accounts'],
+    queryFn: async () => {
+      return await trpcClient.connectedAccount.list.query()
+    },
+    staleTime: 1000 * 60 * 5,
+  })
+  const trackingIntegrationsQuery = useQuery({
+    queryKey: ['tracking-integrations'],
+    queryFn: async () => {
+      return await trpcClient.trackingIntegration.list.query()
+    },
+    staleTime: 1000 * 30,
+  })
+  const accounts = bankAccountsQuery.data ?? []
+  const connectedAccounts = connectedAccountsQuery.data ?? []
+  const trackingIntegrations = React.useMemo(() => {
+    const integrationMap = new Map(
+      (trackingIntegrationsQuery.data ?? []).map((integration) => [
+        integration.provider,
+        integration,
+      ]),
+    )
+
+    return TRACKING_INTEGRATIONS.map((definition) => ({
+      ...definition,
+      value: integrationMap.get(definition.provider)?.trackingId ?? '',
+    }))
+  }, [trackingIntegrationsQuery.data])
 
   const editingAccount = React.useMemo(
     () => accounts.find((account) => account.id === editingAccountId) ?? null,
     [accounts, editingAccountId],
   )
-  const editingTrackingIntegration = React.useMemo(
+  const activeTrackingProvider =
+    editingTrackingProvider ?? trackingDialogProviderRef.current
+  const activeTrackingIntegration = React.useMemo(
     () =>
       trackingIntegrations.find(
-        (integration) => integration.provider === editingTrackingProvider,
+        (integration) => integration.provider === activeTrackingProvider,
       ) ?? null,
-    [editingTrackingProvider, trackingIntegrations],
+    [activeTrackingProvider, trackingIntegrations],
   )
 
-  const dialogTitle = editingAccount ? 'Edit bank account' : 'Add bank account'
-  const dialogDescription = editingAccount
-    ? 'Update the account details used for future payouts.'
-    : 'Add a payout destination. You can save more than one bank account.'
-  const trackingDialogTitle = editingTrackingIntegration
-    ? `Setup ${editingTrackingIntegration.name}`
+  const dialogTitle =
+    bankDialogModeRef.current === 'edit'
+      ? 'Edit bank account'
+      : 'Add bank account'
+  const trackingDialogTitle = activeTrackingIntegration
+    ? `Setup ${activeTrackingIntegration.name}`
     : 'Setup tracking'
-  const trackingDialogDescription = editingTrackingIntegration
-    ? editingTrackingIntegration.description
+  const trackingDialogDescription = activeTrackingIntegration
+    ? activeTrackingIntegration.description
     : 'Connect your analytics and marketing tools.'
   const profileUrl = adminAuth?.username
     ? `${BASE_URL.replace(/\/$/, '')}/${adminAuth.username}`
@@ -319,6 +360,120 @@ function SettingsPage() {
       })
     },
   })
+  const createBankAccountMutation = useMutation({
+    mutationFn: async (data: BankAccountFormValues) => {
+      return await trpcClient.bankAccount.create.mutate(data)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
+      toastManager.add({
+        title: 'Bank account added',
+        description: 'New payout account is ready to use.',
+      })
+      handleDialogChange(false)
+    },
+    onError: () => {
+      toastManager.add({
+        title: 'Unable to add bank account',
+        description: 'Please check the details and try again.',
+        type: 'error',
+      })
+    },
+  })
+  const updateBankAccountMutation = useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string
+      data: BankAccountFormValues
+    }) => {
+      return await trpcClient.bankAccount.update.mutate({ id, data })
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
+      toastManager.add({
+        title: 'Bank account updated',
+        description: 'Payout account details have been updated.',
+      })
+      handleDialogChange(false)
+    },
+    onError: () => {
+      toastManager.add({
+        title: 'Unable to update bank account',
+        description: 'Please check the details and try again.',
+        type: 'error',
+      })
+    },
+  })
+  const deleteBankAccountMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await trpcClient.bankAccount.remove.mutate({ id })
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['bank-accounts'] })
+      setDeleteTargetId(null)
+      toastManager.add({
+        title: 'Bank account removed',
+        description: 'This payout account has been deleted.',
+      })
+    },
+    onError: () => {
+      toastManager.add({
+        title: 'Unable to remove bank account',
+        description: 'Please try again in a moment.',
+        type: 'error',
+      })
+    },
+  })
+  const upsertTrackingIntegrationMutation = useMutation({
+    mutationFn: async ({
+      provider,
+      trackingId,
+    }: {
+      provider: TrackingProvider
+      trackingId: string
+    }) => {
+      return await trpcClient.trackingIntegration.upsert.mutate({
+        provider,
+        trackingId,
+      })
+    },
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['tracking-integrations'] })
+      toastManager.add({
+        title: 'Tracking updated',
+        description: `${TRACKING_INTEGRATIONS.find((item) => item.provider === variables.provider)?.name ?? 'Tracking integration'} has been saved.`,
+      })
+      handleTrackingDialogChange(false)
+    },
+    onError: () => {
+      toastManager.add({
+        title: 'Unable to save tracking',
+        description: 'Please check the tracking ID and try again.',
+        type: 'error',
+      })
+    },
+  })
+  const removeTrackingIntegrationMutation = useMutation({
+    mutationFn: async (provider: TrackingProvider) => {
+      return await trpcClient.trackingIntegration.remove.mutate({ provider })
+    },
+    onSuccess: (_, provider) => {
+      void queryClient.invalidateQueries({ queryKey: ['tracking-integrations'] })
+      toastManager.add({
+        title: 'Tracking removed',
+        description: `${TRACKING_INTEGRATIONS.find((item) => item.provider === provider)?.name ?? 'Tracking integration'} has been disconnected.`,
+      })
+    },
+    onError: () => {
+      toastManager.add({
+        title: 'Unable to remove tracking',
+        description: 'Please try again in a moment.',
+        type: 'error',
+      })
+    },
+  })
   const {
     data: usernameAvailability,
     isFetching: isCheckingUsername,
@@ -348,6 +503,7 @@ function SettingsPage() {
 
   const openCreateDialog = React.useCallback(() => {
     resetDialogState()
+    bankDialogModeRef.current = 'create'
     setIsDialogOpen(true)
   }, [resetDialogState])
 
@@ -362,14 +518,17 @@ function SettingsPage() {
 
   const resetTrackingDialogState = React.useCallback(() => {
     setEditingTrackingProvider(null)
+    trackingDialogProviderRef.current = null
     setTrackingFormValues(DEFAULT_TRACKING_FORM_VALUES)
     setTrackingFormErrors({})
   }, [])
 
   const openEditDialog = React.useCallback((account: BankAccountRecord) => {
+    bankDialogModeRef.current = 'edit'
     setEditingAccountId(account.id)
     setFormValues({
       bankCode: account.bankCode,
+      bankName: account.bankName,
       accountName: account.accountName,
       accountNumber: account.accountNumber,
     })
@@ -384,6 +543,7 @@ function SettingsPage() {
       )
       if (!integration) return
 
+      trackingDialogProviderRef.current = provider
       setEditingTrackingProvider(provider)
       setTrackingFormValues({
         value: integration.value,
@@ -437,6 +597,26 @@ function SettingsPage() {
     [],
   )
 
+  const selectedBank = React.useMemo<BankOption | null>(
+    () => BANK_OPTIONS.find((bank) => bank.value === formValues.bankCode) ?? null,
+    [formValues.bankCode],
+  )
+
+  const handleBankSelection = React.useCallback((bank: BankOption | null) => {
+    setFormValues((previous) => ({
+      ...previous,
+      bankCode: bank?.value ?? '',
+      bankName: bank?.label ?? '',
+    }))
+    setFormErrors((previous) => {
+      if (!previous.bankCode && !previous.bankName) return previous
+      const next = { ...previous }
+      delete next.bankCode
+      delete next.bankName
+      return next
+    })
+  }, [])
+
   const handleSubmitBankAccount = React.useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault()
@@ -456,35 +636,22 @@ function SettingsPage() {
         return
       }
 
-      const nextAccount: BankAccountRecord = {
-        id: editingAccount?.id ?? crypto.randomUUID(),
-        bankCode: parsed.data.bankCode,
-        bankName: getBankLabel(parsed.data.bankCode),
-        accountName: parsed.data.accountName,
-        accountNumber: parsed.data.accountNumber,
-        isPrimary: editingAccount?.isPrimary ?? accounts.length === 0,
+      if (editingAccount) {
+        updateBankAccountMutation.mutate({
+          id: editingAccount.id,
+          data: parsed.data,
+        })
+        return
       }
 
-      setAccounts((previous) => {
-        if (editingAccount) {
-          return previous.map((account) =>
-            account.id === editingAccount.id ? nextAccount : account,
-          )
-        }
-
-        return [...previous, nextAccount]
-      })
-
-      toastManager.add({
-        title: editingAccount ? 'Bank account updated' : 'Bank account added',
-        description: editingAccount
-          ? 'Payout account details have been updated.'
-          : 'New payout account is ready to use.',
-      })
-
-      handleDialogChange(false)
+      createBankAccountMutation.mutate(parsed.data)
     },
-    [accounts.length, editingAccount, formValues, handleDialogChange],
+    [
+      createBankAccountMutation,
+      editingAccount,
+      formValues,
+      updateBankAccountMutation,
+    ],
   )
 
   const handleSubmitTrackingIntegration = React.useCallback(
@@ -506,65 +673,17 @@ function SettingsPage() {
 
       if (!editingTrackingProvider) return
 
-      setTrackingIntegrations((previous) =>
-        previous.map((integration) =>
-          integration.provider === editingTrackingProvider
-            ? {
-              ...integration,
-              value: parsed.data.value,
-            }
-            : integration,
-        ),
-      )
-
-      toastManager.add({
-        title: 'Tracking updated',
-        description: 'Your tracking integration has been saved.',
+      upsertTrackingIntegrationMutation.mutate({
+        provider: editingTrackingProvider,
+        trackingId: parsed.data.value,
       })
-
-      handleTrackingDialogChange(false)
     },
     [
       editingTrackingProvider,
-      handleTrackingDialogChange,
       trackingFormValues,
+      upsertTrackingIntegrationMutation,
     ],
   )
-
-  const handleDeleteAccount = React.useCallback((accountId: string) => {
-    setAccounts((previous) => {
-      const target = previous.find((account) => account.id === accountId)
-      const remaining = previous.filter((account) => account.id !== accountId)
-
-      if (target?.isPrimary && remaining.length > 0) {
-        return remaining.map((account, index) => ({
-          ...account,
-          isPrimary: index === 0,
-        }))
-      }
-
-      return remaining
-    })
-
-    toastManager.add({
-      title: 'Bank account removed',
-      description: 'This payout account has been deleted.',
-    })
-  }, [])
-
-  const handleMakePrimary = React.useCallback((accountId: string) => {
-    setAccounts((previous) =>
-      previous.map((account) => ({
-        ...account,
-        isPrimary: account.id === accountId,
-      })),
-    )
-
-    toastManager.add({
-      title: 'Primary account updated',
-      description: 'Future payouts will use this bank account by default.',
-    })
-  }, [])
 
   const handleTrackingValueChange = React.useCallback((value: string) => {
     setTrackingFormValues({ value })
@@ -692,186 +811,245 @@ function SettingsPage() {
   }, [usernameFailedMessage])
 
   return (
-    <div className="px-6 py-20">
-      <div className="mx-auto max-w-2xl space-y-6">
+    <div className="p-4 md:p-10 pb-20 pd:mb-0">
+      <div className=" space-y-6">
         <AppHeader>
           <AppHeaderContent title="Settings" />
         </AppHeader>
-
-        <Frame>
-          <FrameHeader className="flex flex-row items-start justify-between gap-4">
-            <div className="space-y-1">
-              <FrameTitle className="text-lg">Profile</FrameTitle>
-              <FrameDescription>
-                Manage the username used for your public page.
-              </FrameDescription>
-            </div>
-            <Button size="sm" variant="outline" onClick={openUsernameDialog}>
-              <PencilLine />
-              Edit username
-            </Button>
-          </FrameHeader>
-          <FramePanel>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div className="rounded-lg border bg-muted/48 p-2 text-muted-foreground">
-                    <AtSign className="size-4" />
-                  </div>
-                  <p className="font-medium text-sm">
-                    @{adminAuth?.username ?? 'username'}
-                  </p>
+        <Tabs defaultValue="tab-1">
+          <TabsList>
+            <TabsTab value="tab-1">Accounts</TabsTab>
+            <TabsTab value="tab-2">Payment</TabsTab>
+            <TabsTab value="tab-3">Integrations</TabsTab>
+          </TabsList>
+          <TabsPanel value="tab-1" className="space-y-6">
+            <Frame>
+              <FrameHeader className="flex flex-row items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <FrameTitle className="text-lg">Profile</FrameTitle>
+                  <FrameDescription>
+                    Manage the username used for your public page.
+                  </FrameDescription>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {profileUrl}
-                </p>
-              </div>
-            </div>
-          </FramePanel>
-        </Frame>
-
-        <Frame>
-          <FrameHeader className="flex flex-row items-start justify-between gap-4">
-            <div className="space-y-1">
-              <FrameTitle className="text-lg">Payout Bank Accounts</FrameTitle>
-              <FrameDescription>
-                Save one or more bank accounts for withdrawals and choose which
-                one should be the default payout destination.
-              </FrameDescription>
-            </div>
-            <Button size="sm" onClick={openCreateDialog}>
-              <Plus />
-              Add account
-            </Button>
-          </FrameHeader>
-          <FramePanel className="space-y-3">
-            {accounts.length === 0 ? (
-              <div className="rounded-xl border border-dashed bg-muted/32 p-5">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-lg border bg-background p-2 text-muted-foreground">
-                    <Landmark className="size-4" />
-                  </div>
+                <Button size="sm" variant="outline" onClick={openUsernameDialog}>
+                  Edit username
+                </Button>
+              </FrameHeader>
+              <FramePanel>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
-                    <p className="font-medium text-sm">No bank account yet</p>
+                    <div className="flex items-center gap-2">
+                      <div className="rounded-lg border bg-muted/48 p-2 text-muted-foreground">
+                        <AtSign className="size-4" />
+                      </div>
+                      <p className="font-medium text-sm">
+                        @{adminAuth?.username ?? 'username'}
+                      </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{profileUrl}</p>
+                  </div>
+                </div>
+              </FramePanel>
+            </Frame>
+
+            <Frame>
+              <FrameHeader>
+                <FrameTitle className="text-lg">Connected Account</FrameTitle>
+                <FrameDescription>
+                  Your sign-in provider connected to this account.
+                </FrameDescription>
+              </FrameHeader>
+              <FramePanel className="space-y-3 min-h-32">
+                {connectedAccountsQuery.isLoading ? (
+                  <div className="h-24 w-full rounded-xl bg-muted/32" />
+                ) : connectedAccounts.length === 0 ? (
+                  <div className="rounded-xl border border-dashed bg-muted/32 p-5">
+                    <p className="font-medium text-sm">No connected provider found</p>
                     <p className="text-sm text-muted-foreground">
-                      Add at least one account so payout setup is ready when you
-                      want to withdraw balance.
+                      This account has no linked sign-in provider record yet.
                     </p>
                   </div>
-                </div>
-              </div>
-            ) : (
-              accounts.map((account) => (
-                <div
-                  key={account.id}
-                  className="rounded-xl border bg-muted/28 p-4"
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium text-sm">{account.bankName}</p>
-                        {account.isPrimary ? (
-                          <Badge size="sm" variant="info">
-                            <ShieldCheck className="size-3" />
-                            Primary
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <div className="space-y-1 text-sm">
-                        <p className="text-foreground">{account.accountName}</p>
-                        <p className="text-muted-foreground">
-                          {maskAccountNumber(account.accountNumber)}
-                        </p>
+                ) : (
+                  connectedAccounts.map((item) => (
+                    <div key={item.id} className="rounded-xl border bg-muted/28 p-4">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium text-sm capitalize">
+                              {item.providerId}
+                            </p>
+                            <Badge size="sm" variant="success">
+                              Connected
+                            </Badge>
+                          </div>
+                          <div className="space-y-1 text-sm">
+                            <p className="text-foreground">{adminAuth?.email}</p>
+                            <p className="text-muted-foreground">
+                              Account ID: {item.accountId}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-lg border bg-background px-3 py-2 text-right text-xs text-muted-foreground">
+                          Sign in with {item.providerId}
+                        </div>
                       </div>
                     </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {!account.isPrimary ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleMakePrimary(account.id)}
-                        >
-                          Set primary
-                        </Button>
-                      ) : null}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => openEditDialog(account)}
-                      >
-                        <PencilLine />
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setDeleteTargetId(account.id)}
-                      >
-                        <Trash2 />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
+                  ))
+                )}
+              </FramePanel>
+            </Frame>
+          </TabsPanel>
+          <TabsPanel value="tab-2" className="space-y-6">
+            <Frame>
+              <FrameHeader className="flex flex-row items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <FrameTitle className="text-lg">Payout Bank Accounts</FrameTitle>
+                  <FrameDescription>
+                    Save one or more bank accounts for withdrawals.
+                  </FrameDescription>
                 </div>
-              ))
-            )}
-          </FramePanel>
-        </Frame>
-
-        <Frame>
-          <FrameHeader>
-            <FrameTitle className="text-lg">Growth & Tracking</FrameTitle>
-            <FrameDescription>
-              Connect analytics and ads tracking IDs to measure traffic and
-              campaign performance.
-            </FrameDescription>
-          </FrameHeader>
-          <FramePanel className="space-y-3">
-            {trackingIntegrations.map((integration) => {
-              const isConnected = integration.value.trim().length > 0
-
-              return (
-                <div
-                  key={integration.provider}
-                  className="rounded-xl border bg-muted/28 p-4"
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium text-sm">{integration.name}</p>
-                        <Badge
-                          size="sm"
-                          variant={isConnected ? 'success' : 'outline'}
-                        >
-                          {isConnected ? 'Connected' : 'Not connected'}
-                        </Badge>
+                <Button size="sm" onClick={openCreateDialog}>
+                  <Plus />
+                  Add account
+                </Button>
+              </FrameHeader>
+              <FramePanel className="min-h-40 space-y-3">
+                {bankAccountsQuery.isLoading ? (
+                  <div className="h-30 w-full rounded-xl bg-muted/32" />
+                ) : accounts.length === 0 ? (
+                  <div className="rounded-xl border border-dashed bg-muted/32 p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-lg border bg-background p-2 text-muted-foreground">
+                        <Landmark className="size-4" />
                       </div>
                       <div className="space-y-1">
+                        <p className="font-medium text-sm">No bank account yet</p>
                         <p className="text-sm text-muted-foreground">
-                          {integration.description}
-                        </p>
-                        <p className="text-sm text-foreground">
-                          {isConnected ? integration.value : 'No tracking ID added yet.'}
+                          Add at least one account so payout setup is ready when you
+                          want to withdraw balance.
                         </p>
                       </div>
                     </div>
-
-                    <Button
-                      size="sm"
-                      variant={isConnected ? 'outline' : 'default'}
-                      onClick={() => openTrackingDialog(integration.provider)}
-                    >
-                      <PencilLine />
-                      {isConnected ? 'Edit setup' : 'Setup'}
-                    </Button>
                   </div>
-                </div>
-              )
-            })}
-          </FramePanel>
-        </Frame>
+                ) : (
+                  accounts.map((account) => (
+                    <div
+                      key={account.id}
+                      className="rounded-xl border bg-muted/28 p-4"
+                    >
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-3">
+                          <p className="font-medium text-sm">{account.bankName}</p>
+                          <div className="space-y-1 text-sm">
+                            <p className="text-foreground">{account.accountName}</p>
+                            <p className="text-muted-foreground">
+                              {maskAccountNumber(account.accountNumber)}
+                            </p>
+                          </div>
+                        </div>
 
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openEditDialog(account)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setDeleteTargetId(account.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </FramePanel>
+            </Frame>
+          </TabsPanel>
+          <TabsPanel value="tab-3" className="space-y-6">
+            <Frame>
+              <FrameHeader>
+                <FrameTitle className="text-lg">Growth & Tracking</FrameTitle>
+                <FrameDescription>
+                  Connect analytics and ads tracking IDs to measure traffic and
+                  campaign performance.
+                </FrameDescription>
+              </FrameHeader>
+              <FramePanel className="space-y-3 min-h-40">
+                {trackingIntegrationsQuery.isLoading ? (
+                  <div className="h-30 w-full rounded-xl bg-muted/32" />
+                ) : (
+                  trackingIntegrations.map((integration) => {
+                    const isConnected = integration.value.trim().length > 0
+
+                    return (
+                      <div
+                        key={integration.provider}
+                        className="rounded-xl border bg-muted/28 p-4"
+                      >
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-medium text-sm">{integration.name}</p>
+                              <Badge
+                                size="sm"
+                                variant={isConnected ? 'success' : 'outline'}
+                              >
+                                {isConnected ? 'Connected' : 'Not connected'}
+                              </Badge>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm text-muted-foreground">
+                                {integration.description}
+                              </p>
+                              <p className="text-sm text-foreground">
+                                {isConnected
+                                  ? integration.value
+                                  : 'No tracking ID added yet.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            {isConnected ? (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                loading={
+                                  removeTrackingIntegrationMutation.isPending
+                                }
+                                onClick={() =>
+                                  removeTrackingIntegrationMutation.mutate(
+                                    integration.provider,
+                                  )
+                                }
+                              >
+                                Remove
+                              </Button>
+                            ) : null}
+                            <Button
+                              size="sm"
+                              variant={isConnected ? 'outline' : 'default'}
+                              onClick={() => openTrackingDialog(integration.provider)}
+                            >
+                              {isConnected ? 'Edit setup' : 'Setup'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </FramePanel>
+            </Frame>
+          </TabsPanel>
+        </Tabs>
       </div>
 
       <Dialog
@@ -957,29 +1135,48 @@ function SettingsPage() {
           >
             <DialogHeader>
               <DialogTitle>{dialogTitle}</DialogTitle>
-              <DialogDescription>{dialogDescription}</DialogDescription>
             </DialogHeader>
 
             <DialogPanel className="space-y-4">
               <Field name="bankCode">
                 <FieldLabel>Bank</FieldLabel>
-                <Select
-                  value={formValues.bankCode}
+                <Combobox
+                  autoHighlight
+                  items={BANK_OPTIONS}
+                  value={selectedBank}
                   onValueChange={(value) =>
-                    handleFieldChange('bankCode', value || '')
+                    handleBankSelection((value as BankOption | null) ?? null)
                   }
                 >
-                  <SelectTrigger aria-invalid={formErrors.bankCode ? true : undefined}>
-                    <SelectValue placeholder="Select bank" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BANK_OPTIONS.map((bank) => (
-                      <SelectItem key={bank.value} value={bank.value}>
-                        {bank.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <ComboboxTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between font-normal"
+                      />
+                    }
+                  >
+                    <ComboboxValue placeholder="Select bank" />
+                  </ComboboxTrigger>
+                  <ComboboxPopup aria-label="Select bank">
+                    <div className="border-b p-2">
+                      <ComboboxInput
+                        className="rounded-md before:rounded-[calc(var(--radius-md)-1px)]"
+                        placeholder="Search bank"
+                        showTrigger={false}
+                        startAddon={<SearchIcon />}
+                      />
+                    </div>
+                    <ComboboxEmpty>No banks found.</ComboboxEmpty>
+                    <ComboboxList>
+                      {(item: BankOption) => (
+                        <ComboboxItem key={item.value} value={item}>
+                          {item.label}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                  </ComboboxPopup>
+                </Combobox>
                 <FieldError />
               </Field>
 
@@ -1005,9 +1202,7 @@ function SettingsPage() {
                   }
                   placeholder="0123456789"
                 />
-                <FieldDescription>
-                  Enter the destination account number for payouts.
-                </FieldDescription>
+
                 <FieldError />
               </Field>
             </DialogPanel>
@@ -1016,8 +1211,16 @@ function SettingsPage() {
               <DialogClose render={<Button variant="ghost" />}>
                 Cancel
               </DialogClose>
-              <Button type="submit">
-                {editingAccount ? 'Save changes' : 'Add account'}
+              <Button
+                type="submit"
+                loading={
+                  createBankAccountMutation.isPending ||
+                  updateBankAccountMutation.isPending
+                }
+              >
+                {bankDialogModeRef.current === 'edit'
+                  ? 'Save changes'
+                  : 'Add account'}
               </Button>
             </DialogFooter>
           </Form>
@@ -1045,10 +1248,10 @@ function SettingsPage() {
             </AlertDialogClose>
             <Button
               variant="destructive"
+              loading={deleteBankAccountMutation.isPending}
               onClick={() => {
                 if (!deleteTargetId) return
-                handleDeleteAccount(deleteTargetId)
-                setDeleteTargetId(null)
+                deleteBankAccountMutation.mutate(deleteTargetId)
               }}
             >
               Delete
@@ -1081,13 +1284,12 @@ function SettingsPage() {
                     handleTrackingValueChange(event.target.value)
                   }
                   placeholder={
-                    editingTrackingIntegration?.placeholder ?? 'Enter tracking ID'
+                    activeTrackingIntegration?.placeholder ?? 'Enter tracking ID'
                   }
                 />
                 <FieldDescription>
-                  {editingTrackingIntegration?.provider === 'google-analytics'
-                    ? 'Use your Measurement ID from Google Analytics.'
-                    : 'Use your Pixel ID from Meta Events Manager.'}
+                  {activeTrackingIntegration?.helperText ??
+                    'Enter the tracking ID from your analytics provider.'}
                 </FieldDescription>
                 <FieldError />
               </Field>
@@ -1097,7 +1299,12 @@ function SettingsPage() {
               <DialogClose render={<Button variant="ghost" />}>
                 Cancel
               </DialogClose>
-              <Button type="submit">Save setup</Button>
+              <Button
+                type="submit"
+                loading={upsertTrackingIntegrationMutation.isPending}
+              >
+                Save setup
+              </Button>
             </DialogFooter>
           </Form>
         </DialogPopup>

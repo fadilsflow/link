@@ -135,11 +135,11 @@ function HomePage() {
 
   return (
     <>
-      <AppHeader className="px-6 pt-6 mb-20 sm:mb-0">
+      <AppHeader className="px-4 md:px-10 pt-4 md:pt-10 pb-4 md:pb-8 mb-2 sm:mb-0">
         <AppHeaderContent title="Home">
         </AppHeaderContent>
       </AppHeader>
-      <div className="p-6 space-y-6">
+      <div className="px-4 md:px-10 pb-4 md:pb-10 space-y-6">
         <Alert variant={'info'} className="border-none bg-muted">
           <InfoIcon />
           <AlertTitle>Payment processing is not yet available</AlertTitle>
@@ -149,7 +149,7 @@ function HomePage() {
         </Alert>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card>
+          <Card className='p-2'>
             <CardHeader >
               <CardTitle>Profile</CardTitle>
             </CardHeader>
@@ -188,7 +188,7 @@ function HomePage() {
             </CardPanel>
           </Card>
 
-          <Card >
+          <Card className='p-2'>
             <CardHeader>
               <CardTitle className='flex items-center'>
                 Earnings

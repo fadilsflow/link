@@ -421,7 +421,7 @@ function ProductsIndexPage() {
   if (!session?.user) return null
 
   return (
-    <div className="space-y-6 p-6 mb-20 md:mb-0">
+    <div className="space-y-6 p-4 md:p-10 mb-20 md:mb-0">
       <AppHeader>
         <AppHeaderContent title="Products">
           <AppHeaderDescription>

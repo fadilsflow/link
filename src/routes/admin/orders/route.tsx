@@ -6,7 +6,7 @@ export const Route = createFileRoute('/admin/orders')({
 
 function RouteComponent() {
   return (
-    <div className="p-6 pb-20 pd:mb-0">
+    <div className="p-4 md:p-10 pb-20 pd:mb-0">
       <Outlet />
     </div>
   )

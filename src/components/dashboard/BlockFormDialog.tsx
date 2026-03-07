@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import type { FormEvent } from 'react'
 import type {
   BlockFieldErrors,
   BlockFormValues,
@@ -26,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
+import { Form } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
   InputGroup,
@@ -187,7 +189,8 @@ export function BlockFormDialog({
     }
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault()
     const nextErrors = getBlockFieldErrors(formValues)
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
@@ -200,7 +203,8 @@ export function BlockFormDialog({
         <DialogHeader>
           <DialogTitle>{getDialogTitle(titleMode, titleType)}</DialogTitle>
         </DialogHeader>
-        <DialogPanel className="space-y-4">
+        <Form errors={errors} onSubmit={handleSubmit}>
+          <DialogPanel className="space-y-4">
           {(type === 'link' ||
             type === 'text' ||
             type === 'video' ||
@@ -210,19 +214,19 @@ export function BlockFormDialog({
             type === 'instagram' ||
             type === 'tiktok' ||
             type === 'twitter') && (
-              <Field>
+              <Field name="title">
                 <FieldLabel>Title</FieldLabel>
                 <Input
                   value={formValues.title}
                   onChange={(e) => setField('title', e.target.value)}
                   placeholder={type === 'text' ? "What's the heading?" : 'Title'}
                 />
-                {errors.title ? <FieldError>{errors.title}</FieldError> : null}
+                <FieldError />
               </Field>
             )}
 
           {type === 'link' && (
-            <Field>
+            <Field name="url">
               <FieldLabel>URL</FieldLabel>
               <Input
                 value={formValues.url}
@@ -230,7 +234,7 @@ export function BlockFormDialog({
                 type="url"
                 placeholder="https://example.com"
               />
-              {errors.url ? <FieldError>{errors.url}</FieldError> : null}
+              <FieldError />
             </Field>
           )}
 
@@ -247,7 +251,7 @@ export function BlockFormDialog({
 
           {type === 'image' && (
             <>
-              <Field>
+              <Field name="content">
                 <FieldLabel>Image</FieldLabel>
                 <div className="space-y-3">
                   {formValues.content ? (
@@ -273,11 +277,9 @@ export function BlockFormDialog({
                     {isUploading ? <Spinner className="h-4 w-4" /> : null}
                   </div>
                 </div>
-                {errors.content ? (
-                  <FieldError>{errors.content}</FieldError>
-                ) : null}
+                <FieldError />
               </Field>
-              <Field>
+              <Field name="url">
                 <FieldLabel>Optional Link</FieldLabel>
                 <Input
                   value={formValues.url}
@@ -285,13 +287,13 @@ export function BlockFormDialog({
                   type="url"
                   placeholder="https://example.com"
                 />
-                {errors.url ? <FieldError>{errors.url}</FieldError> : null}
+                <FieldError />
               </Field>
             </>
           )}
 
           {type === 'video' && (
-            <Field>
+            <Field name="content">
               <FieldLabel>Video URL</FieldLabel>
               <Input
                 value={formValues.content || ''}
@@ -299,14 +301,12 @@ export function BlockFormDialog({
                 type="url"
                 placeholder="https://youtube.com/watch?v=..."
               />
-              {errors.content ? (
-                <FieldError>{errors.content}</FieldError>
-              ) : null}
+              <FieldError />
             </Field>
           )}
 
           {type === 'product' && (
-            <Field>
+            <Field name="content">
               <FieldLabel>Product</FieldLabel>
               <Select
                 value={formValues.content || ''}
@@ -323,14 +323,12 @@ export function BlockFormDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.content ? (
-                <FieldError>{errors.content}</FieldError>
-              ) : null}
+              <FieldError />
             </Field>
           )}
 
           {type === 'discord' && (
-            <Field>
+            <Field name="url">
               <FieldLabel>Discord Invite URL</FieldLabel>
               <Input
                 value={formValues.url}
@@ -338,12 +336,12 @@ export function BlockFormDialog({
                 type="url"
                 placeholder="https://discord.gg/..."
               />
-              {errors.url ? <FieldError>{errors.url}</FieldError> : null}
+              <FieldError />
             </Field>
           )}
 
           {type === 'telegram' && (
-            <Field>
+            <Field name="content">
               <FieldLabel>Telegram Username</FieldLabel>
               <Input
                 value={formValues.content || ''}
@@ -352,9 +350,7 @@ export function BlockFormDialog({
                 }
                 placeholder="username"
               />
-              {errors.content ? (
-                <FieldError>{errors.content}</FieldError>
-              ) : null}
+              <FieldError />
             </Field>
           )}
 
@@ -362,7 +358,7 @@ export function BlockFormDialog({
             type === 'instagram' ||
             type === 'tiktok' ||
             type === 'twitter') && (
-              <Field>
+              <Field name="content">
                 <FieldLabel>Username</FieldLabel>
                 <InputGroup>
                   <InputGroupInput
@@ -393,17 +389,15 @@ export function BlockFormDialog({
                       : type === 'instagram'
                         ? 'instagram.com/'
                         : type === 'twitter'
-                          ? 'x.com/'
-                          : 'tiktok.com/@'}
+                      ? 'x.com/'
+                      : 'tiktok.com/@'}
                   </InputGroupAddon>
                 </InputGroup>
-                {errors.content ? (
-                  <FieldError>{errors.content}</FieldError>
-                ) : null}
+                <FieldError />
               </Field>
             )}
-        </DialogPanel>
-        <DialogFooter variant="bare">
+          </DialogPanel>
+          <DialogFooter variant="bare">
           {mode === 'edit' ? (
             <AlertDialog
               open={deleteDialogOpen}
@@ -412,6 +406,7 @@ export function BlockFormDialog({
               <AlertDialogTrigger
                 render={
                   <Button
+                    type="button"
                     variant="ghost"
                     className="sm:mr-auto text-destructive hover:text-destructive hover:bg-destructive/10"
                     disabled={submitting || deleting || isUploading}
@@ -433,6 +428,7 @@ export function BlockFormDialog({
                     Cancel
                   </AlertDialogClose>
                   <Button
+                    type="button"
                     onClick={() => onDelete?.()}
                     variant="destructive"
                     loading={!!deleting}
@@ -443,15 +439,16 @@ export function BlockFormDialog({
               </AlertDialogPopup>
             </AlertDialog>
           ) : null}
-          <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
+          <DialogClose render={<Button type="button" variant="ghost" />}>Cancel</DialogClose>
           <Button
-            onClick={handleSubmit}
+            type="submit"
             disabled={submitting || deleting || isUploading}
             loading={!!submitting}
           >
             {titleMode === 'create' ? 'Add Block' : 'Save Changes'}
           </Button>
-        </DialogFooter>
+          </DialogFooter>
+        </Form>
       </DialogPopup>
     </Dialog>
   )

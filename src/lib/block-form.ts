@@ -48,7 +48,9 @@ export const blockCreateInputSchema = z
         }> = []
         if (!input.title.trim())
           errors.push({ path: 'title', message: 'Title is required' })
-        if (input.url && !z.string().url().safeParse(input.url).success) {
+        if (!input.url.trim()) {
+          errors.push({ path: 'url', message: 'URL is required' })
+        } else if (!z.string().url().safeParse(input.url).success) {
           errors.push({ path: 'url', message: 'Invalid URL' })
         }
         return errors
@@ -103,7 +105,9 @@ export const blockCreateInputSchema = z
         }> = []
         if (!input.title.trim())
           errors.push({ path: 'title', message: 'Title is required' })
-        if (!input.url || !z.string().url().safeParse(input.url).success) {
+        if (!input.url.trim()) {
+          errors.push({ path: 'url', message: 'URL is required' })
+        } else if (!z.string().url().safeParse(input.url).success) {
           errors.push({ path: 'url', message: 'Invalid URL' })
         }
         return errors

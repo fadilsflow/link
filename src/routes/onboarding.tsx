@@ -10,6 +10,7 @@ import { LogoMark } from '@/components/kreasi-logo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
+import { Form } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Spinner } from '@/components/ui/spinner'
@@ -231,14 +232,6 @@ function AnimatedField({ index, children }: { index: number; children: React.Rea
   )
 }
 
-const shakeVariants = {
-  idle: { x: 0 },
-  shake: {
-    x: [0, -8, 8, -6, 6, -3, 3, 0],
-    transition: { duration: 0.38, ease: 'easeInOut' as const },
-  },
-}
-
 function OnboardingPage() {
   const navigate = Route.useNavigate()
   const search = Route.useSearch()
@@ -252,7 +245,8 @@ function OnboardingPage() {
   const [avatarUrl, setAvatarUrl] = React.useState('')
   const [avatarFile, setAvatarFile] = React.useState<File | null>(null)
   const [avatarPreviewUrl, setAvatarPreviewUrl] = React.useState('')
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
+  const [avatarError, setAvatarError] = React.useState<string | null>(null)
+  const usernameInputRef = React.useRef<HTMLInputElement>(null)
   const [direction, setDirection] = React.useState<'forward' | 'backward'>('forward')
   const [currentPage, setCurrentPage] = React.useState<OnboardingPage>(search.page ?? 'welcome')
   const [debouncedUsername, setDebouncedUsername] = React.useState('')
@@ -406,19 +400,24 @@ function OnboardingPage() {
   const isUsernameDebouncing =
     needsUsernameAvailabilityCheck &&
     debouncedUsername !== normalizedUsername
+  const isUsernameLoading =
+    needsUsernameAvailabilityCheck && (isUsernameDebouncing || isCheckingUsername)
   const usernameFailedMessage = usernameFormatError
-    ?? (isUsernameUnavailable
-      ? 'Username sudah ada, pakai username lain.'
-      : isUsernameCheckError
-        ? 'Gagal mengecek username. Coba lagi.'
-        : null)
+    ?? (!isUsernameLoading
+      ? (isUsernameUnavailable
+        ? 'Username sudah ada, pakai username lain.'
+        : isUsernameCheckError
+          ? 'Gagal mengecek username. Coba lagi.'
+          : null)
+      : null)
+  const usernameFieldError = usernameFailedMessage
   const usernameStatus: 'idle' | 'loading' | 'success' | 'failed' =
     normalizedUsername.length === 0
       ? 'idle'
-      : usernameFailedMessage
-        ? 'failed'
-        : needsUsernameAvailabilityCheck && (isUsernameDebouncing || isCheckingUsername)
-          ? 'loading'
+      : isUsernameLoading
+        ? 'loading'
+        : usernameFieldError
+          ? 'failed'
           : isUsernameAvailable
             ? 'success'
             : 'idle'
@@ -431,6 +430,11 @@ function OnboardingPage() {
       isUsernameCheckError ||
       isUsernameUnavailable ||
       (!isUsernameAvailable && needsUsernameAvailabilityCheck))
+
+  React.useEffect(() => {
+    if (!usernameInputRef.current) return
+    usernameInputRef.current.setCustomValidity(usernameFailedMessage ?? '')
+  }, [usernameFailedMessage])
 
   React.useEffect(() => {
     if (currentPageIndex <= maxAllowedPageIndex) return
@@ -462,17 +466,17 @@ function OnboardingPage() {
     const file = event.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      setErrorMessage('File avatar harus berupa gambar')
+      setAvatarError('File avatar harus berupa gambar')
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      setErrorMessage('Ukuran avatar maksimal 5MB')
+      setAvatarError('Ukuran avatar maksimal 5MB')
       return
     }
     if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl)
     setAvatarFile(file)
     setAvatarPreviewUrl(URL.createObjectURL(file))
-    setErrorMessage(null)
+    setAvatarError(null)
   }
 
   const clearAvatarSelection = () => {
@@ -480,43 +484,16 @@ function OnboardingPage() {
     setAvatarFile(null)
     setAvatarPreviewUrl('')
     setAvatarUrl('')
+    setAvatarError(null)
   }
 
   const handleNext = () => {
-    setErrorMessage(null)
-
     if (currentPage === 'welcome') {
       goToPage(nextPage)
       return
     }
 
     if (currentPage === 'username') {
-      if (!normalizedUsername) {
-        setErrorMessage('Username wajib diisi')
-        return
-      }
-      if (usernameFormatError) {
-        setErrorMessage(usernameFormatError)
-        return
-      }
-      if (isUsernameStepBlocked) {
-        if (isUsernameUnavailable) {
-          setErrorMessage('Username sudah dipakai, gunakan username lain')
-          return
-        }
-        if (isUsernameDebouncing || isCheckingUsername) {
-          setErrorMessage('Sedang mengecek ketersediaan username...')
-          return
-        }
-        if (isUsernameCheckError) {
-          setErrorMessage('Gagal mengecek username, coba lagi')
-          return
-        }
-        if (!isUsernameAvailable) {
-          setErrorMessage('Username belum valid')
-          return
-        }
-      }
       goToPage(nextPage)
       persistStepInBackground({ step: 'username', username: normalizedUsername })
       return
@@ -524,10 +501,6 @@ function OnboardingPage() {
 
     if (currentPage === 'role') {
       const nextTitle = title.trim()
-      if (!nextTitle) {
-        setErrorMessage('Role wajib diisi')
-        return
-      }
       goToPage(nextPage)
       persistStepInBackground({ step: 'role', title: nextTitle })
       return
@@ -535,10 +508,6 @@ function OnboardingPage() {
 
     if (currentPage === 'details') {
       const nextDisplayName = displayName.trim()
-      if (!nextDisplayName) {
-        setErrorMessage('Display name wajib diisi')
-        return
-      }
       goToPage(nextPage)
       const saveDetails = async () => {
         let nextAvatarUrl = avatarUrl.trim()
@@ -563,6 +532,14 @@ function OnboardingPage() {
       persistStepInBackground({ step: 'finish' })
       void queryClient.invalidateQueries({ queryKey: adminAuthQueryKey() })
     }
+  }
+
+  const handleStepSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    if (!form.reportValidity()) return
+    if (avatarError && currentPage === 'details') return
+    handleNext()
   }
 
   return (
@@ -614,22 +591,27 @@ function OnboardingPage() {
                 </AnimatedField>
               </div>
 
-              <div className="mt-8 space-y-4">
+              <Form id="onboarding-step-form" className="mt-8 space-y-4" onSubmit={handleStepSubmit}>
                 {currentPage === 'username' && (
                   <AnimatedField index={2}>
-                    <Field>
+                    <Field name="username">
                       <FieldLabel className={"sr-only"}>Username</FieldLabel>
                       <InputGroup>
                         <InputGroupInput
+                          ref={usernameInputRef}
+                          name="username"
                           value={username}
                           onChange={(e) => {
                             setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))
-                            if (errorMessage) setErrorMessage(null)
                           }}
+                          required
+                          minLength={4}
+                          maxLength={25}
+                          pattern="^[a-z0-9._]+$"
                           className="*:[input]:ps-0!"
                           placeholder="yourname"
                           autoFocus
-                          aria-invalid={usernameFailedMessage ? true : undefined}
+                          aria-invalid={usernameFieldError ? true : undefined}
                         />
                         <InputGroupAddon>{PUBLIC_BASE_HOST}/</InputGroupAddon>
                         <InputGroupAddon align="inline-end">
@@ -645,29 +627,24 @@ function OnboardingPage() {
                         </InputGroupAddon>
                       </InputGroup>
                       {/* <FieldDescription>Preview: {profileUrl}</FieldDescription> */}
-                      {usernameFailedMessage ? (
-                        <p role="alert" className="text-xs text-destructive">
-                          {usernameFailedMessage}
-                        </p>
-                      ) : null}
+                      <FieldError />
                     </Field>
                   </AnimatedField>
                 )}
 
                 {currentPage === 'role' && (
                   <AnimatedField index={2}>
-                    <Field>
+                    <Field name="title">
                       <FieldLabel>Title / Role</FieldLabel>
                       <Input
+                        name="title"
                         value={title}
-                        onChange={(e) => {
-                          setTitle(e.target.value)
-                          if (errorMessage) setErrorMessage(null)
-                        }}
+                        onChange={(e) => setTitle(e.target.value)}
                         placeholder="Designer, Creator, Product Manager"
                         autoFocus
-                        aria-invalid={!!errorMessage}
+                        required
                       />
+                      <FieldError />
                     </Field>
                   </AnimatedField>
                 )}
@@ -711,22 +688,22 @@ function OnboardingPage() {
                           </div>
                         </div>
                         <FieldDescription>JPG, PNG, WEBP. Maksimal 5MB.</FieldDescription>
+                        {avatarError ? <p className="text-destructive text-xs">{avatarError}</p> : null}
                       </Field>
                     </AnimatedField>
 
                     <AnimatedField index={3}>
-                      <Field>
+                      <Field name="displayName">
                         <FieldLabel>Display Name</FieldLabel>
                         <Input
+                          name="displayName"
                           value={displayName}
-                          onChange={(e) => {
-                            setDisplayName(e.target.value)
-                            if (errorMessage) setErrorMessage(null)
-                          }}
+                          onChange={(e) => setDisplayName(e.target.value)}
                           placeholder="Nama yang akan tampil di profil"
                           autoFocus
-                          aria-invalid={!!errorMessage}
+                          required
                         />
+                        <FieldError />
                       </Field>
                     </AnimatedField>
 
@@ -737,10 +714,8 @@ function OnboardingPage() {
                           value={bio}
                           onChange={(e) => {
                             setBio(e.target.value)
-                            if (errorMessage) setErrorMessage(null)
                           }}
                           placeholder="Ceritakan secara singkat tentang kamu"
-                          aria-invalid={!!errorMessage}
                           maxLength={300}
                         />
                         <FieldDescription>{bio.length}/300 karakter</FieldDescription>
@@ -760,26 +735,14 @@ function OnboardingPage() {
                     </div>
                   </AnimatedField>
                 )}
-
-                <AnimatePresence mode="wait">
-                  {errorMessage && (
-                    <motion.div
-                      key={errorMessage}
-                      variants={shakeVariants}
-                      initial="idle"
-                      animate="shake"
-                    >
-                      <FieldError>{errorMessage}</FieldError>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              </Form>
 
               <AnimatedField index={currentPage === 'details' ? 5 : 3}>
                 <div className="mt-10">
                   <Button
-                    onClick={handleNext}
-                    disabled={isUsernameStepBlocked}
+                    type="submit"
+                    form="onboarding-step-form"
+                    disabled={currentPage === 'username' && isUsernameLoading}
                     className="w-full text-xl py-6 opacity-90"
                   >
                     {currentPage === 'welcome'

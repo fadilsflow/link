@@ -17,6 +17,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { checkOnboardingStatus } from '@/lib/onboarding-server'
+import { getReservedUsernameError } from '@/lib/reserved-usernames'
 import { uploadFile } from '@/lib/upload-client'
 import { cn } from '@/lib/utils'
 import { BASE_URL } from '@/lib/constans'
@@ -108,6 +109,8 @@ function validateUsername(value: string): string | null {
   if (!/^[a-z0-9._]+$/.test(value)) {
     return 'Username can only contain letters, numbers, periods, and underscores.'
   }
+  const reservedError = getReservedUsernameError(value)
+  if (reservedError) return reservedError
   return null
 }
 
@@ -494,6 +497,7 @@ function OnboardingPage() {
     }
 
     if (currentPage === 'username') {
+      if (isUsernameStepBlocked) return
       goToPage(nextPage)
       persistStepInBackground({ step: 'username', username: normalizedUsername })
       return
@@ -538,6 +542,7 @@ function OnboardingPage() {
     event.preventDefault()
     const form = event.currentTarget
     if (!form.reportValidity()) return
+    if (currentPage === 'username' && isUsernameStepBlocked) return
     if (avatarError && currentPage === 'details') return
     handleNext()
   }
@@ -742,7 +747,10 @@ function OnboardingPage() {
                   <Button
                     type="submit"
                     form="onboarding-step-form"
-                    disabled={currentPage === 'username' && isUsernameLoading}
+                    disabled={
+                      (currentPage === 'username' && isUsernameStepBlocked) ||
+                      (currentPage === 'details' && !!avatarError)
+                    }
                     className="w-full text-xl py-6 opacity-90"
                   >
                     {currentPage === 'welcome'

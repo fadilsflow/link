@@ -25,6 +25,19 @@ export const ORDER_STATUS = {
 
 export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS]
 
+export const PAYMENT_STATUS = {
+  PENDING: 'pending',
+  AWAITING_PAYMENT: 'awaiting_payment',
+  PROCESSING: 'processing',
+  PAID: 'paid',
+  FAILED: 'failed',
+  EXPIRED: 'expired',
+  CANCELLED: 'cancelled',
+} as const
+
+export type PaymentStatus =
+  (typeof PAYMENT_STATUS)[keyof typeof PAYMENT_STATUS]
+
 export const TRANSACTION_TYPE = {
   SALE: 'sale',
   PAYOUT: 'payout',
@@ -311,7 +324,10 @@ export const orders = pgTable(
     // Note to seller
     note: text('note'),
     // Order status
-    status: text('status').notNull().default('completed'),
+    status: text('status').notNull().default('pending'),
+    paymentMethod: text('payment_method'),
+    paidAt: timestamp('paid_at'),
+    cancelledAt: timestamp('cancelled_at'),
     // Delivery token for secure access
     deliveryToken: text('delivery_token').notNull().unique(),
     // Email tracking
@@ -416,6 +432,7 @@ export const transactions = pgTable(
     description: text('description').notNull(),
     // Metadata (extensible JSON for extra context)
     metadata: json('metadata').$type<Record<string, any>>(),
+    idempotencyKey: text('idempotency_key'),
     // When funds become available for payout (hold period)
     availableAt: timestamp('available_at').notNull().defaultNow(),
     // Immutable timestamp — do NOT use $onUpdate
@@ -427,6 +444,70 @@ export const transactions = pgTable(
     index('transaction_type_idx').on(table.type),
     index('transaction_available_at_idx').on(table.availableAt),
     index('transaction_created_at_idx').on(table.createdAt),
+    uniqueIndex('transaction_idempotency_key_unique').on(table.idempotencyKey),
+  ],
+)
+
+export const paymentSessions = pgTable(
+  'payment_session',
+  {
+    id: text('id').primaryKey(),
+    checkoutGroupId: text('checkout_group_id').notNull(),
+    provider: text('provider').notNull().default('midtrans'),
+    providerOrderId: text('provider_order_id').notNull(),
+    providerTransactionId: text('provider_transaction_id'),
+    status: text('status').notNull().default('pending'),
+    requestedPaymentMethod: text('requested_payment_method').notNull(),
+    paymentType: text('payment_type'),
+    transactionStatus: text('transaction_status'),
+    fraudStatus: text('fraud_status'),
+    currency: text('currency').notNull().default('IDR'),
+    grossAmount: integer('gross_amount').notNull(),
+    buyerEmail: text('buyer_email').notNull(),
+    buyerName: text('buyer_name'),
+    expiresAt: timestamp('expires_at'),
+    paidAt: timestamp('paid_at'),
+    lastNotifiedAt: timestamp('last_notified_at'),
+    lastWebhookEventKey: text('last_webhook_event_key'),
+    lastWebhookPayload: json('last_webhook_payload').$type<Record<string, any>>(),
+    chargeRequest: json('charge_request').$type<Record<string, any>>(),
+    chargeResponse: json('charge_response').$type<Record<string, any>>(),
+    metadata: json('metadata').$type<Record<string, any>>(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('payment_session_checkout_group_id_idx').on(table.checkoutGroupId),
+    uniqueIndex('payment_session_provider_order_id_unique').on(
+      table.provider,
+      table.providerOrderId,
+    ),
+    index('payment_session_status_idx').on(table.status),
+    index('payment_session_provider_transaction_id_idx').on(
+      table.providerTransactionId,
+    ),
+  ],
+)
+
+export const paymentWebhookEvents = pgTable(
+  'payment_webhook_event',
+  {
+    id: text('id').primaryKey(),
+    provider: text('provider').notNull().default('midtrans'),
+    providerOrderId: text('provider_order_id').notNull(),
+    eventKey: text('event_key').notNull(),
+    eventType: text('event_type'),
+    payload: json('payload').$type<Record<string, any>>().notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('payment_webhook_event_provider_key_unique').on(
+      table.provider,
+      table.eventKey,
+    ),
+    index('payment_webhook_event_provider_order_id_idx').on(
+      table.providerOrderId,
+    ),
   ],
 )
 

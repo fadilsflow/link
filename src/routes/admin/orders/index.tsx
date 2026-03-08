@@ -58,6 +58,15 @@ function getStatusBadge(status: string) {
           Cancelled
         </Badge>
       )
+    case 'pending':
+      return (
+        <Badge
+          variant="outline"
+          className="border-amber-500/30 text-amber-700 bg-amber-50/70"
+        >
+          Pending payment
+        </Badge>
+      )
     default:
       return (
         <Badge

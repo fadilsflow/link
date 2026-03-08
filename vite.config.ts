@@ -17,6 +17,9 @@ const config = defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+    server: {
+      allowedHosts: ['cletus-silicic-kaya.ngrok-free.dev'],
+    },
     plugins: [
       isProd &&
         cloudflare({

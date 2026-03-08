@@ -18,7 +18,7 @@ export default function NotFound() {
         </div>
 
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Oops! Something went wrong!
+          404 | This page could not be found.
         </h1>
 
         <div className="flex items-center gap-3 w-full justify-center mt-2">

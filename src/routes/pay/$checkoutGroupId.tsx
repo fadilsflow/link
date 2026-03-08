@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, notFound } from '@tanstack/react-router'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   CheckCircle2,
@@ -24,11 +24,19 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { toastManager } from '@/components/ui/toast'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
+import { getPaymentByCheckoutGroup } from '@/lib/payment-server'
 import { formatPrice } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
 
 export const Route = createFileRoute('/pay/$checkoutGroupId')({
   component: PaymentPage,
+  loader: async ({ params }) => {
+    const data = await getPaymentByCheckoutGroup({
+      data: { checkoutGroupId: params.checkoutGroupId },
+    })
+    if (!data) throw notFound()
+    return data
+  },
 })
 
 async function copyToClipboard(value: string) {

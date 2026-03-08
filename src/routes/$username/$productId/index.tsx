@@ -37,6 +37,7 @@ import {
   trackMetaPixelEvent,
 } from '@/lib/meta-pixel'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
+import NotFound from '@/components/not-found'
 
 export const Route = createFileRoute('/$username/$productId/')({
   component: ProductDetailPage,
@@ -55,15 +56,16 @@ export const Route = createFileRoute('/$username/$productId/')({
     return {
       links: heroImage
         ? [
-            {
-              rel: 'preload',
-              as: 'image',
-              href: heroImage,
-            },
-          ]
+          {
+            rel: 'preload',
+            as: 'image',
+            href: heroImage,
+          },
+        ]
         : [],
     }
   },
+  notFoundComponent: NotFound
 })
 
 function priceLabel(product: any): string {

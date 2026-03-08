@@ -25,6 +25,7 @@ import {
   trackMetaPixelEvent,
 } from '@/lib/meta-pixel'
 import { Spinner } from '@/components/ui/spinner'
+import NotFound from '@/components/not-found'
 
 export const Route = createFileRoute('/$username/$productId/checkout')({
   component: CheckoutPage,
@@ -58,6 +59,7 @@ export const Route = createFileRoute('/$username/$productId/checkout')({
         : [],
     }
   },
+  notFoundComponent: NotFound
 })
 
 type Question = {

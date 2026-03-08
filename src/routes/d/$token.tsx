@@ -26,6 +26,7 @@ import {
   trackMetaPixelEvent,
 } from '@/lib/meta-pixel'
 import { formatPrice } from '@/lib/utils'
+import NotFound from '@/components/not-found'
 
 type DeliveredFile = {
   name: string
@@ -40,6 +41,7 @@ export const Route = createFileRoute('/d/$token')({
     if (!data) throw notFound()
     return data
   },
+  notFoundComponent: NotFound,
 })
 
 function OrderDeliveryPage() {

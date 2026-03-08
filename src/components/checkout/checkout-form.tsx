@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-
-export type CheckoutPaymentMethod = 'qris' | 'bank_transfer' | 'virtual_account'
+import {
+  PAYMENT_METHOD_CATALOG,
+  type CheckoutPaymentMethod,
+} from '@/lib/payment-methods'
 
 type CheckoutFormProps = {
   email: string
@@ -26,28 +28,6 @@ type CheckoutFormProps = {
   onPaymentMethodChange: (value: CheckoutPaymentMethod) => void
   paymentOptionsName?: string
 }
-
-const paymentOptions: Array<{
-  value: CheckoutPaymentMethod
-  title: string
-  subtitle: string
-}> = [
-    {
-      value: 'qris',
-      title: 'QRIS',
-      subtitle: 'Scan QR code untuk bayar',
-    },
-    {
-      value: 'bank_transfer',
-      title: 'Bank Transfer',
-      subtitle: 'Transfer manual (dummy)',
-    },
-    {
-      value: 'virtual_account',
-      title: 'Virtual Account',
-      subtitle: 'VA otomatis (dummy)',
-    },
-  ]
 
 export function CheckoutForm({
   email,
@@ -152,13 +132,13 @@ export function CheckoutForm({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {paymentOptions.map((option) => {
-                      const id = `${paymentOptionsName}-${option.value}`
-                      const isActive = paymentMethod === option.value
+                    {PAYMENT_METHOD_CATALOG.map((option) => {
+                      const id = `${paymentOptionsName}-${option.id}`
+                      const isActive = paymentMethod === option.id
 
                       return (
                         <label
-                          key={option.value}
+                          key={option.id}
                           htmlFor={id}
                           className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-3"
                         >
@@ -168,7 +148,7 @@ export function CheckoutForm({
                             name={paymentOptionsName}
                             className="mt-1"
                             checked={isActive}
-                            onChange={() => onPaymentMethodChange(option.value)}
+                            onChange={() => onPaymentMethodChange(option.id)}
                           />
                           <div className="flex-1">
                             <Label

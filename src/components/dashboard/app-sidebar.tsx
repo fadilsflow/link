@@ -64,7 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem className='ml-1' >
-                    <LogoStudioSidebar text='Studio' />
+                    <LogoStudioSidebar text='Studio' className='text-primary' />
                   </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
@@ -151,7 +151,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   {data.navBottom.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
-                        size={'default'} 
+                        size={'default'}
                         render={<Link to={item.url as any} />}
                         isActive={location.pathname === item.url}
                         className="text-foreground"

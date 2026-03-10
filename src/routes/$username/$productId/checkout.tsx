@@ -3,10 +3,14 @@ import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ShoppingBag } from 'lucide-react'
 import { CheckoutForm } from '@/components/checkout/checkout-form'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
+import {
+  Accordion,
+  AccordionItem,
+  AccordionPanel,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import { getPublicProduct } from '@/lib/profile-server'
 import {
   CHECKOUT_PAYMENT_METHOD,
@@ -24,7 +28,6 @@ import {
   savePendingMetaPurchase,
   trackMetaPixelEvent,
 } from '@/lib/meta-pixel'
-import { Spinner } from '@/components/ui/spinner'
 import NotFound from '@/components/not-found'
 
 export const Route = createFileRoute('/$username/$productId/checkout')({
@@ -107,6 +110,7 @@ function effectiveUnitPrice(product: any, customAmount: number | null) {
 function CheckoutPage() {
   const { product, user, metaPixelConfig } = Route.useLoaderData()
   const search = Route.useSearch()
+  const navigate = Route.useNavigate()
 
   const questions = React.useMemo(
     () => parseQuestions(product.customerQuestions),
@@ -225,7 +229,11 @@ function CheckoutPage() {
         value: unitPrice,
       })
       setIsRedirecting(true)
-      window.location.href = `/pay/${data.payment.checkoutGroupId}`
+      await navigate({
+        to: '/pay/$checkoutGroupId',
+        params: { checkoutGroupId: data.payment.checkoutGroupId },
+        replace: true,
+      })
     } catch (error: any) {
       toastManager.add({
         title: 'Checkout Failed',
@@ -238,14 +246,7 @@ function CheckoutPage() {
   }
 
   if (isRedirecting) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center space-y-4">
-          <Spinner />
-          <p className="text-slate-500">Redirecting to your order...</p>
-        </div>
-      </div>
-    )
+    null
   }
 
   return (
@@ -264,12 +265,12 @@ function CheckoutPage() {
               <div className="space-y-2 pt-2">
                 <Label
                   htmlFor="amount"
-                  className="text-xs font-medium text-slate-600"
+                  className="text-sm"
                 >
                   Your Price
                 </Label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2">
                     Rp
                   </span>
                   <Input
@@ -285,7 +286,7 @@ function CheckoutPage() {
                     className="h-11 pl-8"
                   />
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-sm">
                   {product.minimumPrice
                     ? `Minimum ${formatPrice(product.minimumPrice)}`
                     : 'No minimum — pay what you feel is fair'}
@@ -295,14 +296,14 @@ function CheckoutPage() {
 
             {questions.length > 0 && (
               <div className="space-y-4 pt-2">
-                <h2 className="text-sm font-semibold text-slate-900">
+                <h2 className="text-md font-medium">
                   Additional Questions
                 </h2>
                 {questions.map((q) => (
                   <div key={q.id} className="space-y-2">
                     <Label
                       htmlFor={`q-${q.id}`}
-                      className="text-xs font-medium text-slate-600"
+                      className="text-sm"
                     >
                       {q.label}{' '}
                       {q.required && <span className="text-rose-500">*</span>}
@@ -317,7 +318,7 @@ function CheckoutPage() {
                         }))
                       }
                       required={q.required}
-                      className="h-11"
+                      size={'lg'}
                     />
                   </div>
                 ))}
@@ -326,106 +327,109 @@ function CheckoutPage() {
           </>
         }
         purchasedProducts={
-          <Card>
-            <CardHeader>
-              <CardTitle>Purchased product</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start gap-4">
-                {hasImage ? (
-                  <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
-                    <img
-                      src={productImages[0]}
-                      alt={product.title}
-                      width={80}
-                      height={80}
-                      loading="eager"
-                      fetchPriority="high"
-                      decoding="async"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <ShoppingBag className="h-8 w-8 text-slate-300" />
-                  </div>
-                )}
-
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-lg font-bold text-slate-900 leading-tight">
-                    {product.title}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    Price: {formatPrice(unitPrice)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Qty: 1</p>
-                  <Link
-                    to="/$username"
-                    params={{ username: user.username || '' }}
-                    className="text-xs underline"
-                  >
-                    {user.name} (Store)
-                  </Link>
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              {hasImage ? (
+                <div className="w-30 h-30 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
+                  <img
+                    src={productImages[0]}
+                    alt={product.title}
+                    width={80}
+                    height={80}
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
+              ) : (
+                <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <ShoppingBag className="h-8 w-8 text-slate-300" />
+                </div>
+              )}
+
+              <div className="flex-1 min-w-0 space-y-1">
+                <h1 className="text-lg font-semibold text-foreground leading-tight">
+                  {product.title}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Price: {formatPrice(unitPrice)}
+                </p>
+                <Link
+                  to="/$username"
+                  params={{ username: user.username || '' }}
+                  className="text-xs underline text-muted-foreground"
+                >
+                  {user.name}
+                </Link>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         }
         paymentDetail={
-          <Card>
-            <CardHeader>
-              <CardTitle>PAYMENT DETAIL</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Product Price</span>
-                  <span>
-                    {formatPrice(
-                      paymentQuoteQuery.data?.subtotalAmount ?? unitPrice,
-                    )}
-                  </span>
+          <Accordion defaultValue={['transactions']} className="w-full">
+            <AccordionItem value="transactions" className="border-none">
+              <AccordionTrigger className="text-md font-medium">
+                Detail Transactions
+              </AccordionTrigger>
+              <AccordionPanel>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <p>{product.title}</p>
+                    <span>
+                      {formatPrice(
+                        paymentQuoteQuery.data?.subtotalAmount ?? unitPrice,
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center font-medium text-foreground justify-between">
+                    <span>Subtotal</span>
+                    <span>
+                      {formatPrice(
+                        paymentQuoteQuery.data?.subtotalAmount ?? unitPrice,
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Transaction Fee</span>
+                    <span>
+                      {formatPrice(
+                        paymentQuoteQuery.data?.serviceFeeAmount ?? 0,
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Payment Gateway Fee</span>
+                    <span>
+                      {formatPrice(
+                        paymentQuoteQuery.data?.gatewayFeeAmount ?? 0,
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-base font-medium text-foreground">
+                    <span>Total</span>
+                    <span>
+                      {formatPrice(
+                        paymentQuoteQuery.data?.totalAmount ?? unitPrice,
+                      )}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Transaction Fee (Service Fee)</span>
-                  <span>
-                    {formatPrice(paymentQuoteQuery.data?.serviceFeeAmount ?? 0)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Payment Gateway Fee</span>
-                  <span>
-                    {formatPrice(paymentQuoteQuery.data?.gatewayFeeAmount ?? 0)}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between text-base font-semibold">
-                  <span>Total Payment</span>
-                  <span>
-                    {formatPrice(
-                      paymentQuoteQuery.data?.totalAmount ?? unitPrice,
-                    )}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </AccordionPanel>
+            </AccordionItem>
+          </Accordion>
         }
         rightTopSection={
           productVideoId ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Product preview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <LiteYouTube
-                  videoId={productVideoId}
-                  title={`${product.title} video preview`}
-                  className="rounded-xl border border-slate-200"
-                  playLabel="Play product video"
-                />
-              </CardContent>
-            </Card>
+            <div className="space-y-3">
+              <h4 className="text-md font-medium">Product preview</h4>
+              <LiteYouTube
+                videoId={productVideoId}
+                title={`${product.title} video preview`}
+                className="rounded-xl border border-slate-200"
+                playLabel="Play product video"
+              />
+            </div>
           ) : null
         }
         payLabel={'Pay'}

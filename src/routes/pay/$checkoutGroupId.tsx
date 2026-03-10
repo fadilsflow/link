@@ -541,7 +541,7 @@ function PaymentPage() {
 
             </Card>
 
-            <Card className='p-3'>
+            <Card className='p-3 h-fit'>
               <CardPanel className='flex flex-col gap-4'>
                 <h4 className="text-md font-medium">
                   Payment Method

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { ShoppingBag } from 'lucide-react'
+import { Minus, Plus, ShoppingBag } from 'lucide-react'
 import { CheckoutForm } from '@/components/checkout/checkout-form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,6 +19,7 @@ import {
 import { formatPrice, formatPriceInput, parsePriceInput } from '@/lib/utils'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
+import { Button } from '@/components/ui/button'
 import LiteYouTube from '@/components/LiteYouTube'
 import { extractYouTubeVideoIdFromText } from '@/lib/lite-youtube'
 import {
@@ -34,9 +35,17 @@ export const Route = createFileRoute('/$username/$productId/checkout')({
   component: CheckoutPage,
   validateSearch: (
     search: Record<string, unknown>,
-  ): { name?: string; email?: string } => ({
+  ): { name?: string; email?: string; quantity?: number } => ({
     name: typeof search.name === 'string' ? search.name : undefined,
     email: typeof search.email === 'string' ? search.email : undefined,
+    quantity:
+      typeof search.quantity === 'string'
+        ? Number.isFinite(Number(search.quantity))
+          ? Number(search.quantity)
+          : undefined
+        : typeof search.quantity === 'number'
+          ? search.quantity
+          : undefined,
   }),
   loader: async ({ params }) => {
     const data = await getPublicProduct({
@@ -132,15 +141,29 @@ function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [isRedirecting, setIsRedirecting] = React.useState(false)
 
+  const limitPerCheckout = product.limitPerCheckout ?? 1
+  const maxQuantity = Math.max(
+    1,
+    product.totalQuantity != null
+      ? Math.min(limitPerCheckout, product.totalQuantity)
+      : limitPerCheckout,
+  )
+  const canAdjustQuantity = maxQuantity > 1
+  const initialQuantity = Math.min(
+    maxQuantity,
+    Math.max(1, search.quantity ?? 1),
+  )
+  const [quantity, setQuantity] = React.useState(initialQuantity)
   const unitPrice = effectiveUnitPrice(
     product,
     customAmount ? parsePriceInput(customAmount) : null,
   )
+  const subtotalAmount = unitPrice * quantity
   const paymentQuoteQuery = useQuery({
-    queryKey: ['payment-quote', product.id, unitPrice, paymentMethod],
+    queryKey: ['payment-quote', product.id, unitPrice, paymentMethod, quantity],
     queryFn: () =>
       trpcClient.order.quotePayment.query({
-        subtotalAmount: unitPrice,
+        subtotalAmount,
         paymentMethod,
       }),
     staleTime: 30_000,
@@ -178,6 +201,7 @@ function CheckoutPage() {
       buyerEmail: email,
       buyerName: name,
       amountPaid: unitPrice,
+      quantity,
       paymentMethod,
       answers,
       note,
@@ -198,7 +222,7 @@ function CheckoutPage() {
             content_type: 'product',
             content_name: product.title,
             currency: 'IDR',
-            value: unitPrice,
+            value: subtotalAmount,
             payment_method: paymentMethod,
           },
           eventId,
@@ -212,7 +236,7 @@ function CheckoutPage() {
           fbp: attribution.fbp,
           fbc: attribution.fbc,
           buyerEmail: email || undefined,
-          value: unitPrice,
+          value: subtotalAmount,
           currency: 'IDR',
           paymentMethod: paymentMethod,
         })
@@ -226,7 +250,7 @@ function CheckoutPage() {
         contentIds: [product.id],
         contentName: product.title,
         currency: 'IDR',
-        value: unitPrice,
+        value: subtotalAmount,
       })
       setIsRedirecting(true)
       await navigate({
@@ -245,8 +269,14 @@ function CheckoutPage() {
     }
   }
 
+  React.useEffect(() => {
+    if (quantity > maxQuantity) {
+      setQuantity(maxQuantity)
+    }
+  }, [maxQuantity, quantity])
+
   if (isRedirecting) {
-    null
+    return null
   }
 
   return (
@@ -355,6 +385,12 @@ function CheckoutPage() {
                 <p className="text-sm text-muted-foreground">
                   Price: {formatPrice(unitPrice)}
                 </p>
+                <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                  <span>Qty: {quantity}</span>
+                  {quantity > 1 ? (
+                    <span>Total: {formatPrice(subtotalAmount)}</span>
+                  ) : null}
+                </div>
                 <Link
                   to="/$username"
                   params={{ username: user.username || '' }}
@@ -364,6 +400,40 @@ function CheckoutPage() {
                 </Link>
               </div>
             </div>
+            {canAdjustQuantity ? (
+              <div className="flex items-center gap-3 pt-2">
+                <span className="text-sm font-medium">Quantity</span>
+                <div className="flex items-center gap-2 rounded-full border border-input bg-background px-2 py-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 rounded-full"
+                    onClick={() =>
+                      setQuantity((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="min-w-6 text-center text-sm font-medium">
+                    {quantity}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 rounded-full"
+                    onClick={() =>
+                      setQuantity((prev) => Math.min(maxQuantity, prev + 1))
+                    }
+                    disabled={quantity >= maxQuantity}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </div>
         }
         paymentDetail={
@@ -375,10 +445,14 @@ function CheckoutPage() {
               <AccordionPanel>
                 <div className="space-y-3 text-sm">
                   <div className="flex items-start justify-between gap-4">
-                    <p>{product.title}</p>
+                    <div>
+                      <p>{product.title}</p>
+                      <p className="mt-1 text-muted-foreground">x {quantity}</p>
+                    </div>
                     <span>
                       {formatPrice(
-                        paymentQuoteQuery.data?.subtotalAmount ?? unitPrice,
+                        paymentQuoteQuery.data?.subtotalAmount ??
+                          subtotalAmount,
                       )}
                     </span>
                   </div>
@@ -386,7 +460,8 @@ function CheckoutPage() {
                     <span>Subtotal</span>
                     <span>
                       {formatPrice(
-                        paymentQuoteQuery.data?.subtotalAmount ?? unitPrice,
+                        paymentQuoteQuery.data?.subtotalAmount ??
+                          subtotalAmount,
                       )}
                     </span>
                   </div>
@@ -410,7 +485,7 @@ function CheckoutPage() {
                     <span>Total</span>
                     <span>
                       {formatPrice(
-                        paymentQuoteQuery.data?.totalAmount ?? unitPrice,
+                        paymentQuoteQuery.data?.totalAmount ?? subtotalAmount,
                       )}
                     </span>
                   </div>
@@ -437,7 +512,7 @@ function CheckoutPage() {
         onSubmit={handleSubmit}
         paymentMethod={paymentMethod}
         onPaymentMethodChange={setPaymentMethod}
-        subtotalAmount={unitPrice}
+        subtotalAmount={subtotalAmount}
         paymentOptionsName="product-checkout-payment"
       />
     </>

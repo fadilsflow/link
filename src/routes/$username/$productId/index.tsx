@@ -5,7 +5,7 @@ import {
   notFound,
   useNavigate,
 } from '@tanstack/react-router'
-import { Bookmark, ShoppingBag } from 'lucide-react'
+import { Bookmark, Minus, Plus, ShoppingBag } from 'lucide-react'
 import type { CarouselApi } from '@/components/ui/carousel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -220,6 +220,21 @@ function ProductDetailPage() {
   const isCurrentProductSaved = isSaved(product.id)
   const creatorName = user.username || user.name || 'creator'
   const creatorInitial = creatorName.charAt(0).toUpperCase()
+  const limitPerCheckout = product.limitPerCheckout ?? 1
+  const maxQuantity = Math.max(
+    1,
+    product.totalQuantity != null
+      ? Math.min(limitPerCheckout, product.totalQuantity)
+      : limitPerCheckout,
+  )
+  const canAdjustQuantity = maxQuantity > 1
+  const [quantity, setQuantity] = React.useState(1)
+
+  React.useEffect(() => {
+    if (quantity > maxQuantity) {
+      setQuantity(maxQuantity)
+    }
+  }, [maxQuantity, quantity])
 
   React.useEffect(() => {
     if (!metaPixelConfig?.pixelId || hasTrackedViewContent.current) return
@@ -290,6 +305,7 @@ function ProductDetailPage() {
           search: {
             name: trimmedName,
             email: trimmedEmail,
+            quantity,
           },
         }),
       )
@@ -391,6 +407,7 @@ function ProductDetailPage() {
                 <Link
                   to="/$username/$productId/checkout"
                   params={{ username, productId }}
+                  search={{ quantity }}
                 />
               }
             >
@@ -409,6 +426,40 @@ function ProductDetailPage() {
                 )}
               </div>
               <Separator />
+              {canAdjustQuantity ? (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-medium">Quantity</div>
+                  <div className="flex items-center gap-2 rounded-full border border-input bg-background px-2 py-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() =>
+                        setQuantity((prev) => Math.max(1, prev - 1))
+                      }
+                      disabled={quantity <= 1 || isSubmittingBuy}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="min-w-6 text-center text-sm font-medium">
+                      {quantity}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() =>
+                        setQuantity((prev) => Math.min(maxQuantity, prev + 1))
+                      }
+                      disabled={quantity >= maxQuantity || isSubmittingBuy}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
               <Field name="name">
                 <FieldLabel>Name</FieldLabel>
                 <Input

@@ -112,7 +112,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           isActive={isActive}
                           className={cn(
                             'text-foreground',
-                            isActive ? 'bg-white! shadow-sm' : ''
+                            isActive ? 'bg-background! shadow-sm' : ''
                           )}
                         >
                           <item.icon className={cn('h-4 w-4 mr-1', 'text-foreground', isActive ? 'text-primary' : '')} />
@@ -139,7 +139,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           isActive={isActive}
                           className={cn(
                             'text-foreground',
-                            isActive ? 'bg-white! shadow-sm' : ''
+                            isActive ? 'bg-background! shadow-sm' : ''
                           )}
                         >
                           <item.icon className={cn('h-4 w-4 mr-1', 'text-foreground', isActive ? 'text-primary' : '')} />
@@ -151,7 +151,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   {data.navBottom.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
-                        size={'default'}
+                        size={'default'} 
                         render={<Link to={item.url as any} />}
                         isActive={location.pathname === item.url}
                         className="text-foreground"

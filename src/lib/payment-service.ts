@@ -41,6 +41,7 @@ type CreateSingleProductPaymentParams = {
   buyerEmail: string
   buyerName?: string
   amountPaid: number
+  quantity: number
   answers?: Record<string, string>
   note?: string
   paymentMethod: MidtransRequestedPaymentMethod
@@ -533,6 +534,18 @@ export async function createSingleProductPayment(
   if (product.totalQuantity !== null && product.totalQuantity <= 0) {
     throw new Error('Product sold out')
   }
+  if (
+    product.totalQuantity !== null &&
+    product.totalQuantity < params.quantity
+  ) {
+    throw new Error('Product sold out or not enough stock')
+  }
+  if (
+    product.limitPerCheckout !== null &&
+    params.quantity > product.limitPerCheckout
+  ) {
+    throw new Error('Product exceeds per-checkout limit')
+  }
 
   const questions = parseCustomerQuestions(product.customerQuestions)
   for (const question of questions) {
@@ -556,8 +569,9 @@ export async function createSingleProductPayment(
   const providerOrderId = createMidtransOrderId(checkoutGroupId)
   const deliveryToken = crypto.randomUUID()
   const orderId = crypto.randomUUID()
+  const subtotalAmount = params.amountPaid * params.quantity
   const totals = calculateCheckoutTotalAmount(
-    params.amountPaid,
+    subtotalAmount,
     params.paymentMethod,
   )
 
@@ -572,7 +586,8 @@ export async function createSingleProductPayment(
       productImage: product.images?.[0] ?? null,
       buyerEmail: params.buyerEmail,
       buyerName: params.buyerName ?? '',
-      amountPaid: params.amountPaid,
+      quantity: params.quantity,
+      amountPaid: subtotalAmount,
       checkoutAnswers: params.answers ?? {},
       note: params.note ?? null,
       status: ORDER_STATUS.PENDING,
@@ -609,7 +624,7 @@ export async function createSingleProductPayment(
     })
     .returning()
 
-const chargeRequest = buildMidtransChargeRequest({
+  const chargeRequest = buildMidtransChargeRequest({
     providerOrderId,
     requestedMethod: params.paymentMethod,
     grossAmount: totals.totalAmount,
@@ -621,7 +636,7 @@ const chargeRequest = buildMidtransChargeRequest({
       {
         id: product.id,
         price: params.amountPaid,
-        quantity: 1,
+        quantity: params.quantity,
         name: product.title,
       },
     ],

@@ -13,10 +13,23 @@ import { ButtonEditBlock } from "./button-edit-block"
 
 interface ButtonEditPopoverProps extends VariantProps<typeof toggleVariants> {
   editor: Editor
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  triggerClassName?: string
 }
 
-const ButtonEditPopover = ({ editor, size, variant }: ButtonEditPopoverProps) => {
-  const [open, setOpen] = React.useState(false)
+const ButtonEditPopover = ({
+  editor,
+  size,
+  variant,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
+  triggerClassName,
+}: ButtonEditPopoverProps) => {
+  const [internalOpen, setInternalOpen] = React.useState(false)
+  const isControlled = externalOpen !== undefined
+  const open = isControlled ? externalOpen : internalOpen
+  const setOpen = isControlled ? externalOnOpenChange! : setInternalOpen
 
   const { from, to } = editor.state.selection
   const text = editor.state.doc.textBetween(from, to, " ")
@@ -39,12 +52,13 @@ const ButtonEditPopover = ({ editor, size, variant }: ButtonEditPopoverProps) =>
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger render={<div />}>
+      <PopoverTrigger asChild>
         <ToolbarButton
           isActive={editor.isActive("button")}
           tooltip="Button"
           aria-label="Insert button"
           disabled={editor.isActive("codeBlock")}
+          className={triggerClassName}
           size={size}
           variant={variant}
         >

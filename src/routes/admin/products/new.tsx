@@ -47,7 +47,7 @@ function ProductNewRoute() {
 
   const user = dashboardData?.user
   const [form, setForm] = React.useState<ProductFormValues | null>(null)
-  const [isUploading, setIsUploading] = React.useState(false)
+  const [isUploading, setIsUploading] = React.useState<boolean>(false)
 
   React.useEffect(() => {
     if (user && !form) {

@@ -7,52 +7,25 @@ import {
   CaretDownIcon,
   CodeIcon,
   DividerHorizontalIcon,
-  PlusIcon,
+  ImageIcon,
   QuoteIcon,
 } from "@radix-ui/react-icons"
+import { BoxIcon, Plus } from "lucide-react"
 import { LinkEditPopover } from "../link/link-edit-popover"
-import { ImageEditDialog } from "../image/image-edit-dialog"
 import { ButtonEditPopover } from "../button/button-edit-popover"
 import { FileInsertDialog } from "../file/file-insert-dialog"
 import { ToolbarSection } from "../toolbar-section"
+import { Separator } from "@/components/ui/separator"
 
-type InsertElementAction = "codeBlock" | "blockquote" | "horizontalRule"
+type InsertElementAction =
+  | "codeBlock"
+  | "blockquote"
+  | "horizontalRule"
+  | "imageBlock"
+  | "buttonBlock"
 interface InsertElement extends FormatAction {
   value: InsertElementAction
 }
-
-const formatActions: InsertElement[] = [
-  {
-    value: "codeBlock",
-    label: "Code block",
-    icon: <CodeIcon className="size-5" />,
-    action: (editor) => editor.chain().focus().toggleCodeBlock().run(),
-    isActive: (editor) => editor.isActive("codeBlock"),
-    canExecute: (editor) =>
-      editor.can().chain().focus().toggleCodeBlock().run(),
-    shortcuts: ["mod", "alt", "C"],
-  },
-  {
-    value: "blockquote",
-    label: "Blockquote",
-    icon: <QuoteIcon className="size-5" />,
-    action: (editor) => editor.chain().focus().toggleBlockquote().run(),
-    isActive: (editor) => editor.isActive("blockquote"),
-    canExecute: (editor) =>
-      editor.can().chain().focus().toggleBlockquote().run(),
-    shortcuts: ["mod", "shift", "B"],
-  },
-  {
-    value: "horizontalRule",
-    label: "Divider",
-    icon: <DividerHorizontalIcon className="size-5" />,
-    action: (editor) => editor.chain().focus().setHorizontalRule().run(),
-    isActive: () => false,
-    canExecute: (editor) =>
-      editor.can().chain().focus().setHorizontalRule().run(),
-    shortcuts: ["mod", "alt", "-"],
-  },
-]
 
 interface SectionFiveProps extends VariantProps<typeof toggleVariants> {
   editor: Editor
@@ -62,25 +35,102 @@ interface SectionFiveProps extends VariantProps<typeof toggleVariants> {
 
 export const SectionFive: React.FC<SectionFiveProps> = ({
   editor,
-  activeActions = formatActions.map((action) => action.value),
+  activeActions,
   mainActionCount = 0,
   size,
   variant,
 }) => {
+  const imageInputRef = React.useRef<HTMLInputElement>(null)
+  const [buttonPopoverOpen, setButtonPopoverOpen] = React.useState(false)
+
+  const handleImageFiles = React.useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files
+      if (!files?.length) return
+
+      const contentBucket = []
+      const filesArray = Array.from(files)
+
+      for (const file of filesArray) {
+        contentBucket.push({ src: file })
+      }
+
+      editor.commands.setImages(contentBucket)
+      e.target.value = ""
+    },
+    [editor]
+  )
+
+  const formatActions: InsertElement[] = [
+    {
+      value: "imageBlock",
+      label: "Image",
+      icon: <ImageIcon className="size-5" />,
+      action: () => imageInputRef.current?.click(),
+      isActive: (editorInstance) => editorInstance.isActive("image"),
+      canExecute: () => true,
+      shortcuts: [],
+    },
+    {
+      value: "buttonBlock",
+      label: "Button",
+      icon: <BoxIcon className="size-5" />,
+      action: () => setButtonPopoverOpen(true),
+      isActive: (editorInstance) => editorInstance.isActive("button"),
+      canExecute: (editorInstance) => !editorInstance.isActive("codeBlock"),
+      shortcuts: [],
+    },
+    {
+      value: "codeBlock",
+      label: "Code block",
+      icon: <CodeIcon className="size-5" />,
+      action: (editorInstance) =>
+        editorInstance.chain().focus().toggleCodeBlock().run(),
+      isActive: (editorInstance) => editorInstance.isActive("codeBlock"),
+      canExecute: (editorInstance) =>
+        editorInstance.can().chain().focus().toggleCodeBlock().run(),
+      shortcuts: ["mod", "alt", "C"],
+    },
+    {
+      value: "blockquote",
+      label: "Blockquote",
+      icon: <QuoteIcon className="size-5" />,
+      action: (editorInstance) =>
+        editorInstance.chain().focus().toggleBlockquote().run(),
+      isActive: (editorInstance) => editorInstance.isActive("blockquote"),
+      canExecute: (editorInstance) =>
+        editorInstance.can().chain().focus().toggleBlockquote().run(),
+      shortcuts: ["mod", "shift", "B"],
+    },
+    {
+      value: "horizontalRule",
+      label: "Divider",
+      icon: <DividerHorizontalIcon className="size-5" />,
+      action: (editorInstance) =>
+        editorInstance.chain().focus().setHorizontalRule().run(),
+      isActive: () => false,
+      canExecute: (editorInstance) =>
+        editorInstance.can().chain().focus().setHorizontalRule().run(),
+      shortcuts: ["mod", "alt", "-"],
+    },
+  ]
+
+  const resolvedActiveActions =
+    activeActions ?? formatActions.map((action) => action.value)
+
   return (
     <>
       <LinkEditPopover editor={editor} size={size} variant={variant} />
-      <ImageEditDialog editor={editor} size={size} variant={variant} />
-      <ButtonEditPopover editor={editor} size={size} variant={variant} />
       <FileInsertDialog editor={editor} size={size} variant={variant} />
+      <Separator orientation="vertical" className="mx-2" />
       <ToolbarSection
         editor={editor}
         actions={formatActions}
-        activeActions={activeActions}
+        activeActions={resolvedActiveActions}
         mainActionCount={mainActionCount}
         dropdownIcon={
           <>
-            <PlusIcon className="size-5" />
+            <Plus className="size-5" />
             <CaretDownIcon className="size-5" />
           </>
         }

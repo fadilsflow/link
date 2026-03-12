@@ -7,7 +7,6 @@ import { ProductForm, parseCustomerQuestions } from '@/components/dashboard/Prod
 import { getDashboardData } from '@/lib/profile-server'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
-import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/admin/products/$productId')({
   component: ProductEditRoute,
@@ -78,7 +77,7 @@ function ProductEditRoute() {
 
   const [form, setForm] = React.useState<ProductFormValues | null>(null)
   const [initialForm, setInitialForm] = React.useState<ProductFormValues | null>(null)
-  const [isUploading, setIsUploading] = React.useState(false)
+  const [isUploading, setIsUploading] = React.useState<boolean>(false)
   const formId = 'product-edit-form'
 
   React.useEffect(() => {
@@ -136,17 +135,8 @@ function ProductEditRoute() {
 
   return (
     <div className="mb-20 w-full max-w-3xl self-center space-y-6 p-6 md:mb-0 mt-2">
-      <div className="flex justify-between">
+      <div className="sm:sticky sm:top-0 z-10 flex justify-between items-center mb-4 bg-white py-2">
         <h4 className='text-2xl font-medium whitespace-nowrap'>Update Product</h4>
-        <Button
-          type="submit"
-          form={formId}
-          variant="default"
-          disabled={!form || isLoading}
-          loading={isLoading}
-        >
-          Update Product
-        </Button>
       </div>
       {form ? (
         <ProductForm

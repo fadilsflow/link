@@ -98,6 +98,7 @@ export function parseCustomerQuestions(raw: unknown): CustomerQuestion[] {
 
 type FormErrors = Record<string, string>
 type PricingType = 'fixed' | 'pay-what-you-want' | 'free'
+type TabValue = 'product' | 'content'
 
 function validate(
   value: ProductFormValues,
@@ -143,8 +144,8 @@ function SectionHeader({ title, description }: {
   return (
     <div className="flex flex-col items-start gap-3">
       <div>
-        <p className="text-lg font-sans">{title}</p>
-        {description && <p className="text-sm leading-snug text-muted-foreground mt-0.5">{description}</p>}
+        <p className="text-lg font-sans ">{title}</p>
+        {description && <p className="te  xt-sm leading-snug text-muted-foreground mt-0.5">{description}</p>}
       </div>
     </div>
   )
@@ -216,6 +217,7 @@ export function ProductForm({
   const [pricingType, setPricingType] = React.useState<PricingType>('fixed')
   const [enableQuantityChoice, setEnableQuantityChoice] = React.useState(false)
   const [enableSalesLimit, setEnableSalesLimit] = React.useState(false)
+  const [activeTab, setActiveTab] = React.useState<TabValue>('product')
 
   const setUploading = (val: boolean) => {
     setIsUploading(val)
@@ -275,6 +277,10 @@ export function ProductForm({
 
   const handleSubmit: React.FormEventHandler = async (e) => {
     e.preventDefault()
+    if (!value.id && activeTab === 'product') {
+      setActiveTab('content')
+      return
+    }
     const nextErrors = validate(value, imageFiles.length, pricingType, enableQuantityChoice, enableSalesLimit)
 
     if (Object.keys(nextErrors).length > 0) {
@@ -348,362 +354,381 @@ export function ProductForm({
   return (
     <>
       <form id={formId} onSubmit={handleSubmit} className="w-full min-w-0">
-        <Tabs defaultValue="product" className="w-full min-w-0">
-          <TabsList className="mb-4">
-            <TabsTab value="product">Product</TabsTab>
-            <TabsTab value="content">Content</TabsTab>
-          </TabsList>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as TabValue)}
+          className="w-full min-w-0 flex flex-col min-h-0"
+        >
+          <div className="flex justify-between items-center sticky top-0 z-50 bg-background py-3 -mt-3 mb-4">
+            <TabsList>
+              <TabsTab value="product">1. Product</TabsTab>
+              <TabsTab value="content">2. Content</TabsTab>
+            </TabsList>
+            <Button
+              type="submit"
+              size="lg"
+              className="min-w-[124px] justify-center px-5"
+              disabled={submitting || isUploading}
+              loading={submitting || isUploading}
+            >
+              {submitting || isUploading
+                ? 'Saving…'
+                : value.id
+                  ? 'Update Product'
+                  : activeTab === 'product'
+                    ? 'Continue'
+                    : 'Create product'}
+            </Button>
+          </div>
+
 
           <TabsPanel value="product">
-            <div className="rounded-4xl border">
+            <div className="rounded-xl border">
+              {/* ── Basic Info ─────────────────────────────────────────────── */}
+              <section className="space-y-5 p-4 md:p-10">
+                <SectionHeader title="Product" description="Basic product information" />
 
-          {/* ── Basic Info ─────────────────────────────────────────────── */}
-          <section className="space-y-5 p-4 md:p-10">
-            <SectionHeader title="Product" description="Basic product information" />
+                <FieldWrapper label="Name" error={errors.title} required>
+                  <Input
+                    value={value.title}
+                    onChange={(e) => { update({ title: e.target.value }); clearError('title') }}
+                    placeholder="e.g. Notion template, e-book, Figma kit..."
+                  />
+                </FieldWrapper>
 
-            <FieldWrapper label="Name" error={errors.title} required>
-              <Input
-                value={value.title}
-                onChange={(e) => { update({ title: e.target.value }); clearError('title') }}
-                placeholder="e.g. Notion template, e-book, Figma kit..."
-              />
-            </FieldWrapper>
+                <FieldWrapper label="Description" >
+                  <Textarea
+                    value={value.description}
+                    onChange={(e) => update({ description: e.target.value })}
+                    placeholder="Describe what the customer will get..."
+                    rows={3}
+                    className="resize-none"
+                  />
+                </FieldWrapper>
+              </section>
 
-            <FieldWrapper label="Description" >
-              <Textarea
-                value={value.description}
-                onChange={(e) => update({ description: e.target.value })}
-                placeholder="Describe what the customer will get..."
-                rows={3}
-                className="resize-none"
-              />
-            </FieldWrapper>
-          </section>
+              <Separator />
 
-          <Separator />
+              {/* ── Pricing ────────────────────────────────────────────────── */}
+              <section className="space-y-5 p-4 md:p-10">
+                <SectionHeader title="Pricing" description="Choose pricing mode and set one price value." />
 
-          {/* ── Pricing ────────────────────────────────────────────────── */}
-          <section className="space-y-5 p-4 md:p-10">
-            <SectionHeader title="Pricing" description="Choose pricing mode and set one price value." />
+                <FieldWrapper label="Pricing type">
+                  <select
+                    value={pricingType}
+                    onChange={(e) => {
+                      const nextType = e.target.value as PricingType
+                      setPricingType(nextType)
+                      clearError('priceSettings.price', 'priceSettings.minimumPrice')
 
-            <FieldWrapper label="Pricing type">
-              <select
-                value={pricingType}
-                onChange={(e) => {
-                  const nextType = e.target.value as PricingType
-                  setPricingType(nextType)
-                  clearError('priceSettings.price', 'priceSettings.minimumPrice')
-
-                  if (nextType === 'fixed') {
-                    updatePrice({
-                      payWhatYouWant: false,
-                      price: value.priceSettings.price ?? value.priceSettings.minimumPrice,
-                    })
-                  } else if (nextType === 'pay-what-you-want') {
-                    updatePrice({
-                      payWhatYouWant: true,
-                      price: undefined,
-                      minimumPrice: value.priceSettings.minimumPrice ?? value.priceSettings.price,
-                    })
-                  } else {
-                    updatePrice({
-                      payWhatYouWant: false,
-                      price: 0,
-                      salePrice: undefined,
-                      minimumPrice: undefined,
-                      suggestedPrice: undefined,
-                    })
-                  }
-                }}
-                className={cn(
-                  'flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs',
-                  'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-                )}
-              >
-                <option value="fixed">Fixed price</option>
-                <option value="pay-what-you-want">Pay what you want</option>
-                <option value="free">Free</option>
-              </select>
-            </FieldWrapper>
-
-            {pricingType !== 'free' && (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <FieldWrapper
-                  label={pricingType === 'fixed' ? 'Price' : 'Minimum price'}
-                  error={pricingType === 'fixed' ? errors['priceSettings.price'] : errors['priceSettings.minimumPrice']}
-                  required
-                >
-                  <PriceInput
-                    id={pricingType === 'fixed' ? 'price' : 'min-price'}
-                    placeholder={pricingType === 'fixed' ? '10,000' : '0'}
-                    value={pricingType === 'fixed' ? value.priceSettings.price : value.priceSettings.minimumPrice}
-                    onChange={(v) => {
-                      if (pricingType === 'fixed') {
-                        updatePrice({ price: v })
-                        clearError('priceSettings.price')
+                      if (nextType === 'fixed') {
+                        updatePrice({
+                          payWhatYouWant: false,
+                          price: value.priceSettings.price ?? value.priceSettings.minimumPrice,
+                        })
+                      } else if (nextType === 'pay-what-you-want') {
+                        updatePrice({
+                          payWhatYouWant: true,
+                          price: undefined,
+                          minimumPrice: value.priceSettings.minimumPrice ?? value.priceSettings.price,
+                        })
                       } else {
-                        updatePrice({ minimumPrice: v })
-                        clearError('priceSettings.minimumPrice')
-                      }
-                    }}
-                  />
-                </FieldWrapper>
-
-                {pricingType === 'fixed' ? (
-                  <FieldWrapper label="Sale price" hint="Optional discounted price.">
-                    <PriceInput
-                      id="sale-price"
-                      placeholder="7,000"
-                      value={value.priceSettings.salePrice}
-                      onChange={(v) => updatePrice({ salePrice: v })}
-                    />
-                  </FieldWrapper>
-                ) : (
-                  <FieldWrapper label="Suggested price" hint="Shown as default.">
-                    <PriceInput
-                      id="suggested-price"
-                      placeholder="10,000"
-                      value={value.priceSettings.suggestedPrice}
-                      onChange={(v) => updatePrice({ suggestedPrice: v })}
-                    />
-                  </FieldWrapper>
-                )}
-              </div>
-            )}
-          </section>
-
-          <Separator />
-
-          {/* ── Images ─────────────────────────────────────────────────── */}
-          <section className="space-y-5 p-4 md:p-10">
-            <SectionHeader title="Images" description="First image is the cover" />
-
-            <div
-              className="grid w-full min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
-              onDrop={handleImageDrop}
-              onDragOver={handleImageDragOver}
-              onDragEnter={handleImageDragEnter}
-              onDragLeave={handleImageDragLeave}
-            >
-              {imageFiles.map((file, i) => (
-                <div
-                  key={file.id}
-                  className="relative aspect-square w-full min-w-0 rounded-lg overflow-hidden border group"
-                >
-                  <img
-                    src={file.preview}
-                    alt="Product"
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-
-                  {i === 0 && (
-                    <Badge className="absolute bottom-1 left-1 text-[9px] px-1.5 py-0 h-4">
-                      Cover
-                    </Badge>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => removeImage(file.id)}
-                    className="absolute top-1 right-1 h-5 w-5 bg-background/80 backdrop-blur rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-
-              <div className="aspect-square w-full min-w-0">
-                <button
-                  type="button"
-                  onClick={openImageDialog}
-                  className="w-full h-full flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/40 hover:bg-muted/70 transition-colors text-muted-foreground gap-1.5"
-                >
-                  <ImageIcon className="h-5 w-5" />
-                  <span className="text-[10px] font-medium">Add image</span>
-                  <input {...getImageInputProps()} className="hidden" />
-                </button>
-              </div>
-            </div>
-
-            {errors.images && (
-              <p className="text-[11px] text-destructive font-medium">{errors.images}</p>
-            )}
-          </section>
-
-          <Separator />
-
-          {/* ── Inventory & Limits ─────────────────────────────────────── */}
-          <section className="space-y-5 p-4 md:p-10">
-            <SectionHeader title="Inventory & Limits" description="Control quantity and stock" />
-
-            <div className="space-y-2 ">
-              {/* Quantity choice */}
-              <div className="flex items-center gap-4 pb-3">
-                <Switch
-                  checked={enableQuantityChoice}
-                  onCheckedChange={(checked) => {
-                    setEnableQuantityChoice(checked)
-                    clearError('limitPerCheckout')
-                    update({ limitPerCheckout: checked ? (value.limitPerCheckout && value.limitPerCheckout > 1 ? value.limitPerCheckout : 10) : 1 })
-                  }}
-                />
-                <p className="text-sm font-medium">Customer chooses quantity</p>
-              </div>
-              {enableQuantityChoice && (
-                <FieldWrapper error={errors.limitPerCheckout}>
-                  <Input
-                    inputMode="numeric"
-                    placeholder="10000"
-                    className="w-full"
-                    value={value.limitPerCheckout?.toString() ?? ''}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      update({ limitPerCheckout: v ? Number(v) : null })
-                      clearError('limitPerCheckout')
-                    }}
-                  />
-                </FieldWrapper>
-              )}
-
-              <div className="border-t border-dashed border-input my-6" />
-              {/* Sales limit */}
-
-              <div className="flex items-center gap-4 pb-3">
-                <Switch
-                  checked={enableSalesLimit}
-                  onCheckedChange={(checked) => {
-                    setEnableSalesLimit(checked)
-                    clearError('totalQuantity')
-                    update({ totalQuantity: checked ? (value.totalQuantity && value.totalQuantity > 0 ? value.totalQuantity : 100) : null })
-                  }}
-                />
-                <p className="text-sm font-medium">Limit Product Sales</p>
-              </div>
-              {enableSalesLimit && (
-                <FieldWrapper error={errors.totalQuantity}>
-                  <Input
-                    inputMode="numeric"
-                    placeholder="100"
-                    className="w-full"
-                    value={value.totalQuantity?.toString() ?? ''}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      update({ totalQuantity: v ? Number(v) : null })
-                      clearError('totalQuantity')
-                    }}
-                  />
-                </FieldWrapper>
-              )}
-            </div>
-          </section>
-
-          <Separator />
-
-          {/* ── Checkout Questions ─────────────────────────────────────── */}
-          <section className="space-y-5 p-4 md:p-10">
-            <div className="flex  pb-4 justify-between">
-              <SectionHeader title="Buyer form" description="Collect extra info after name & email." />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 shrink-0 text-xs gap-1.5"
-                onClick={() => update({
-                  customerQuestions: [
-                    ...value.customerQuestions,
-                    { id: crypto.randomUUID(), label: '', required: false },
-                  ],
-                })}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add question
-              </Button>
-            </div>
-            <div >
-              <div className="flex gap-2">
-                <p className='text-sm'>Your Name</p>
-                <Badge variant={'secondary'}>Mandatory</Badge>
-              </div>
-              <span className='text-xs text-muted-foreground'>Name</span>
-            </div>
-            <div >
-              <div className="flex gap-2">
-                <p className='text-sm'>Email</p>
-                <Badge variant={'secondary'}>Mandatory</Badge>
-              </div>
-              <span className='text-xs text-muted-foreground'>Name</span>
-            </div>
-            {value.customerQuestions.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-2">
-                No questions added. Customers only enter name and email.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {value.customerQuestions.map((q, i) => (
-                  <div key={q.id} className="flex items-start gap-3 rounded-lg border p-3">
-                    <div className="flex-1 space-y-2">
-                      <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                        Question {i + 1}
-                      </p>
-                      <Input
-                        value={q.label}
-                        onChange={(e) => {
-                          update({
-                            customerQuestions: value.customerQuestions.map((cq) =>
-                              cq.id === q.id ? { ...cq, label: e.target.value } : cq,
-                            ),
-                          })
-                          clearError(`question.${i}`)
-                        }}
-                        placeholder="e.g. What name should we print on the certificate?"
-                      />
-                      {errors[`question.${i}`] && (
-                        <p className="text-[11px] text-destructive">{errors[`question.${i}`]}</p>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={q.required}
-                          onCheckedChange={(checked) =>
-                            update({
-                              customerQuestions: value.customerQuestions.map((cq) =>
-                                cq.id === q.id ? { ...cq, required: checked } : cq,
-                              ),
-                            })
-                          }
-                        />
-                        <span className="text-xs text-muted-foreground">Required</span>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
-                      onClick={() =>
-                        update({
-                          customerQuestions: value.customerQuestions.filter((cq) => cq.id !== q.id),
+                        updatePrice({
+                          payWhatYouWant: false,
+                          price: 0,
+                          salePrice: undefined,
+                          minimumPrice: undefined,
+                          suggestedPrice: undefined,
                         })
                       }
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-      </TabsPanel>
+                    }}
+                    className={cn(
+                      'flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs',
+                      'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                    )}
+                  >
+                    <option value="fixed">Fixed price</option>
+                    <option value="pay-what-you-want">Pay what you want</option>
+                    <option value="free">Free</option>
+                  </select>
+                </FieldWrapper>
 
-      <TabsPanel value="content">
-        <div className="rounded-4xl border p-4 md:p-10">
-          <ProductContentEditor
-            value={value.productContent ?? null}
-            onChange={(content) => update({ productContent: content })}
-            onUploadingChange={setUploading}
-          />
-        </div>
-      </TabsPanel>
+                {pricingType !== 'free' && (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <FieldWrapper
+                      label={pricingType === 'fixed' ? 'Price' : 'Minimum price'}
+                      error={pricingType === 'fixed' ? errors['priceSettings.price'] : errors['priceSettings.minimumPrice']}
+                      required
+                    >
+                      <PriceInput
+                        id={pricingType === 'fixed' ? 'price' : 'min-price'}
+                        placeholder={pricingType === 'fixed' ? '10,000' : '0'}
+                        value={pricingType === 'fixed' ? value.priceSettings.price : value.priceSettings.minimumPrice}
+                        onChange={(v) => {
+                          if (pricingType === 'fixed') {
+                            updatePrice({ price: v })
+                            clearError('priceSettings.price')
+                          } else {
+                            updatePrice({ minimumPrice: v })
+                            clearError('priceSettings.minimumPrice')
+                          }
+                        }}
+                      />
+                    </FieldWrapper>
+
+                    {pricingType === 'fixed' ? (
+                      <FieldWrapper label="Sale price" hint="Optional discounted price.">
+                        <PriceInput
+                          id="sale-price"
+                          placeholder="7,000"
+                          value={value.priceSettings.salePrice}
+                          onChange={(v) => updatePrice({ salePrice: v })}
+                        />
+                      </FieldWrapper>
+                    ) : (
+                      <FieldWrapper label="Suggested price" hint="Shown as default.">
+                        <PriceInput
+                          id="suggested-price"
+                          placeholder="10,000"
+                          value={value.priceSettings.suggestedPrice}
+                          onChange={(v) => updatePrice({ suggestedPrice: v })}
+                        />
+                      </FieldWrapper>
+                    )}
+                  </div>
+                )}
+              </section>
+
+              <Separator />
+
+              {/* ── Images ─────────────────────────────────────────────────── */}
+              <section className="space-y-5 p-4 md:p-10">
+                <SectionHeader title="Images" description="First image is the cover" />
+
+                <div
+                  className="grid w-full min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
+                  onDrop={handleImageDrop}
+                  onDragOver={handleImageDragOver}
+                  onDragEnter={handleImageDragEnter}
+                  onDragLeave={handleImageDragLeave}
+                >
+                  {imageFiles.map((file, i) => (
+                    <div
+                      key={file.id}
+                      className="relative aspect-square w-full min-w-0 rounded-lg overflow-hidden border group"
+                    >
+                      <img
+                        src={file.preview}
+                        alt="Product"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+
+                      {i === 0 && (
+                        <Badge className="absolute bottom-1 left-1 text-[9px] px-1.5 py-0 h-4">
+                          Cover
+                        </Badge>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => removeImage(file.id)}
+                        className="absolute top-1 right-1 h-5 w-5 bg-background/80 backdrop-blur rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity border"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+
+                  <div className="aspect-square w-full min-w-0">
+                    <button
+                      type="button"
+                      onClick={openImageDialog}
+                      className="w-full h-full flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/40 hover:bg-muted/70 transition-colors text-muted-foreground gap-1.5"
+                    >
+                      <ImageIcon className="h-5 w-5" />
+                      <span className="text-[10px] font-medium">Add image</span>
+                      <input {...getImageInputProps()} className="hidden" />
+                    </button>
+                  </div>
+                </div>
+
+                {errors.images && (
+                  <p className="text-[11px] text-destructive font-medium">{errors.images}</p>
+                )}
+              </section>
+
+              <Separator />
+
+              {/* ── Inventory & Limits ─────────────────────────────────────── */}
+              <section className="space-y-5 p-4 md:p-10">
+                <SectionHeader title="Inventory & Limits" description="Control quantity and stock" />
+
+                <div className="space-y-2 ">
+                  {/* Quantity choice */}
+                  <div className="flex items-center gap-4 pb-3">
+                    <Switch
+                      checked={enableQuantityChoice}
+                      onCheckedChange={(checked) => {
+                        setEnableQuantityChoice(checked)
+                        clearError('limitPerCheckout')
+                        update({ limitPerCheckout: checked ? (value.limitPerCheckout && value.limitPerCheckout > 1 ? value.limitPerCheckout : 10) : 1 })
+                      }}
+                    />
+                    <p className="text-sm font-medium">Customer chooses quantity</p>
+                  </div>
+                  {enableQuantityChoice && (
+                    <FieldWrapper error={errors.limitPerCheckout}>
+                      <Input
+                        inputMode="numeric"
+                        placeholder="10000"
+                        className="w-full"
+                        value={value.limitPerCheckout?.toString() ?? ''}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          update({ limitPerCheckout: v ? Number(v) : null })
+                          clearError('limitPerCheckout')
+                        }}
+                      />
+                    </FieldWrapper>
+                  )}
+
+                  <div className="border-t border-dashed border-input my-6" />
+                  {/* Sales limit */}
+
+                  <div className="flex items-center gap-4 pb-3">
+                    <Switch
+                      checked={enableSalesLimit}
+                      onCheckedChange={(checked) => {
+                        setEnableSalesLimit(checked)
+                        clearError('totalQuantity')
+                        update({ totalQuantity: checked ? (value.totalQuantity && value.totalQuantity > 0 ? value.totalQuantity : 100) : null })
+                      }}
+                    />
+                    <p className="text-sm font-medium">Limit Product Sales</p>
+                  </div>
+                  {enableSalesLimit && (
+                    <FieldWrapper error={errors.totalQuantity}>
+                      <Input
+                        inputMode="numeric"
+                        placeholder="100"
+                        className="w-full"
+                        value={value.totalQuantity?.toString() ?? ''}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          update({ totalQuantity: v ? Number(v) : null })
+                          clearError('totalQuantity')
+                        }}
+                      />
+                    </FieldWrapper>
+                  )}
+                </div>
+              </section>
+
+              <Separator />
+
+              {/* ── Checkout Questions ─────────────────────────────────────── */}
+              <section className="space-y-5 p-4 md:p-10">
+                <div className="flex  pb-4 justify-between">
+                  <SectionHeader title="Buyer form" description="Collect extra info after name & email." />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 shrink-0 text-xs gap-1.5"
+                    onClick={() => update({
+                      customerQuestions: [
+                        ...value.customerQuestions,
+                        { id: crypto.randomUUID(), label: '', required: false },
+                      ],
+                    })}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add question
+                  </Button>
+                </div>
+                <div >
+                  <div className="flex gap-2">
+                    <p className='text-sm'>Your Name</p>
+                    <Badge variant={'secondary'}>Mandatory</Badge>
+                  </div>
+                  <span className='text-xs text-muted-foreground'>Name</span>
+                </div>
+                <div >
+                  <div className="flex gap-2">
+                    <p className='text-sm'>Email</p>
+                    <Badge variant={'secondary'}>Mandatory</Badge>
+                  </div>
+                  <span className='text-xs text-muted-foreground'>Name</span>
+                </div>
+                {value.customerQuestions.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-2">
+                    No questions added. Customers only enter name and email.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {value.customerQuestions.map((q, i) => (
+                      <div key={q.id} className="flex items-start gap-3 rounded-lg border p-3">
+                        <div className="flex-1 space-y-2">
+                          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                            Question {i + 1}
+                          </p>
+                          <Input
+                            value={q.label}
+                            onChange={(e) => {
+                              update({
+                                customerQuestions: value.customerQuestions.map((cq) =>
+                                  cq.id === q.id ? { ...cq, label: e.target.value } : cq,
+                                ),
+                              })
+                              clearError(`question.${i}`)
+                            }}
+                            placeholder="e.g. What name should we print on the certificate?"
+                          />
+                          {errors[`question.${i}`] && (
+                            <p className="text-[11px] text-destructive">{errors[`question.${i}`]}</p>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={q.required}
+                              onCheckedChange={(checked) =>
+                                update({
+                                  customerQuestions: value.customerQuestions.map((cq) =>
+                                    cq.id === q.id ? { ...cq, required: checked } : cq,
+                                  ),
+                                })
+                              }
+                            />
+                            <span className="text-xs text-muted-foreground">Required</span>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                          onClick={() =>
+                            update({
+                              customerQuestions: value.customerQuestions.filter((cq) => cq.id !== q.id),
+                            })
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            </div>
+          </TabsPanel>
+
+          <TabsPanel value="content">
+            <ProductContentEditor
+              value={value.productContent ?? null}
+              onChange={(content) => update({ productContent: content })}
+              onUploadingChange={setUploading}
+            />
+          </TabsPanel>
         </Tabs>
 
         {/* ── Footer ─────────────────────────────────────────────────── */}
@@ -731,6 +756,7 @@ export function ProductForm({
                 onClick={() => {
                   if (value.id && onDelete) onDelete(value.id)
                 }}
+
               >
                 Delete product
               </Button>
@@ -741,7 +767,13 @@ export function ProductForm({
                 disabled={submitting || isUploading}
                 loading={submitting || isUploading}
               >
-                {submitting || isUploading ? 'Saving…' : value.id ? 'Update Product' : 'Create product'}
+                {submitting || isUploading
+                  ? 'Saving…'
+                  : value.id
+                    ? 'Update Product'
+                    : activeTab === 'product'
+                      ? 'Continue'
+                      : 'Create product'}
               </Button>
             </div>
           </div>

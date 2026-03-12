@@ -1,49 +1,66 @@
+import * as React from "react"
 import type { Editor } from "@tiptap/react"
 import type { VariantProps } from "class-variance-authority"
 import type { toggleVariants } from "@/components/ui/toggle"
-import { useState } from "react"
-import { FilePlus } from "lucide-react"
+import { Upload } from "lucide-react"
 import { ToolbarButton } from "../toolbar-button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { FileInsertBlock } from "./file-insert-block"
 
 interface FileInsertDialogProps extends VariantProps<typeof toggleVariants> {
   editor: Editor
 }
 
 const FileInsertDialog = ({ editor, size, variant }: FileInsertDialogProps) => {
-  const [open, setOpen] = useState(false)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
+
+  const handleFile = React.useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files
+      if (!files?.length) return
+
+      for (const file of Array.from(files)) {
+        const blobUrl = URL.createObjectURL(file)
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: "file",
+            attrs: {
+              url: blobUrl,
+              name: file.name,
+              type: file.type || file.name.split(".").pop() || "",
+              size: file.size,
+            },
+          })
+          .run()
+      }
+
+      e.target.value = ""
+    },
+    [editor]
+  )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<div />}>
-        <ToolbarButton
-          isActive={editor.isActive("file")}
-          tooltip="Upload File"
-          aria-label="Upload File"
-          size={size}
-          variant={variant}
-        >
-          <FilePlus className="size-5" />
-        </ToolbarButton>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Upload File</DialogTitle>
-          <DialogDescription className="sr-only">
-            Upload files from your computer to your document
-          </DialogDescription>
-        </DialogHeader>
-        <FileInsertBlock editor={editor} close={() => setOpen(false)} />
-      </DialogContent>
-    </Dialog>
+    <>
+      <ToolbarButton
+        isActive={editor.isActive("file")}
+        tooltip="Upload File"
+        aria-label="Upload File"
+        size={size}
+        variant={variant}
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <Upload className="size-5" />
+        Upload files
+      </ToolbarButton>
+      <input
+        type="file"
+        ref={fileInputRef}
+        multiple
+        className="hidden"
+        onChange={handleFile}
+      />
+    </>
   )
 }
 

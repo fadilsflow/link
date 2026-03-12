@@ -1,49 +1,57 @@
+import * as React from "react"
 import type { Editor } from "@tiptap/react"
 import type { VariantProps } from "class-variance-authority"
 import type { toggleVariants } from "@/components/ui/toggle"
-import { useState } from "react"
 import { ImageIcon } from "@radix-ui/react-icons"
 import { ToolbarButton } from "../toolbar-button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { ImageEditBlock } from "./image-edit-block"
 
 interface ImageEditDialogProps extends VariantProps<typeof toggleVariants> {
   editor: Editor
 }
 
 const ImageEditDialog = ({ editor, size, variant }: ImageEditDialogProps) => {
-  const [open, setOpen] = useState(false)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
+
+  const handleFile = React.useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files
+      if (!files?.length) return
+
+      const contentBucket = []
+      const filesArray = Array.from(files)
+
+      for (const file of filesArray) {
+        contentBucket.push({ src: file })
+      }
+
+      editor.commands.setImages(contentBucket)
+      e.target.value = ""
+    },
+    [editor]
+  )
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <ToolbarButton
-          isActive={editor.isActive("image")}
-          tooltip="Image"
-          aria-label="Image"
-          size={size}
-          variant={variant}
-        >
-          <ImageIcon className="size-5" />
-        </ToolbarButton>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Select image</DialogTitle>
-          <DialogDescription className="sr-only">
-            Upload an image from your computer
-          </DialogDescription>
-        </DialogHeader>
-        <ImageEditBlock editor={editor} close={() => setOpen(false)} />
-      </DialogContent>
-    </Dialog>
+    <>
+      <ToolbarButton
+        isActive={editor.isActive("image")}
+        tooltip="Image"
+        aria-label="Insert image"
+        size={size}
+        variant={variant}
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <ImageIcon className="size-5" />
+      </ToolbarButton>
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        multiple
+        className="hidden"
+        onChange={handleFile}
+      />
+    </>
   )
 }
 

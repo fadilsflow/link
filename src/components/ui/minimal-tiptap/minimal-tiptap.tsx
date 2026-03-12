@@ -63,7 +63,13 @@ const Toolbar = ({ editor }: { editor: Editor }) => (
 
       <SectionFive
         editor={editor}
-        activeActions={["codeBlock", "blockquote", "horizontalRule"]}
+        activeActions={[
+          "imageBlock",
+          "buttonBlock",
+          "codeBlock",
+          "blockquote",
+          "horizontalRule",
+        ]}
         mainActionCount={0}
       />
     </div>
@@ -119,7 +125,7 @@ export const MainMinimalTiptapEditor = ({
       name="editor"
       className={cn(
         "border-input min-data-[orientation=vertical]:h-72 flex h-auto w-full flex-col rounded-md border shadow-xs",
-        "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
+        "focus-within:border-ring focus-within:ring-input focus-within:ring-[1px]",
         className
       )}
     >

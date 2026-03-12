@@ -23,6 +23,7 @@ interface ToolbarSectionProps extends VariantProps<typeof toggleVariants> {
   dropdownIcon?: React.ReactNode
   dropdownTooltip?: string
   dropdownClassName?: string
+  onValueChange?: (value: string) => void
 }
 
 export const ToolbarSection: React.FC<ToolbarSectionProps> = ({
@@ -35,6 +36,7 @@ export const ToolbarSection: React.FC<ToolbarSectionProps> = ({
   dropdownClassName = "w-12",
   size,
   variant,
+  onValueChange,
 }) => {
   const { mainActions, dropdownActions } = React.useMemo(() => {
     const sortedActions = actions
@@ -61,8 +63,7 @@ export const ToolbarSection: React.FC<ToolbarSectionProps> = ({
         aria-label={action.label}
         size={size}
         variant={variant}
-      >
-        {action.icon}
+      >{action.icon}
       </ToolbarButton>
     ),
     [editor, size, variant]
@@ -72,7 +73,10 @@ export const ToolbarSection: React.FC<ToolbarSectionProps> = ({
     (action: FormatAction) => (
       <DropdownMenuItem
         key={action.label}
-        onClick={() => action.action(editor)}
+        onClick={() => {
+          action.action(editor)
+          onValueChange?.(action.value)
+        }}
         disabled={!action.canExecute(editor)}
         className={cn("flex flex-row items-center justify-between gap-4", {
           "bg-accent": action.isActive(editor),
@@ -83,7 +87,7 @@ export const ToolbarSection: React.FC<ToolbarSectionProps> = ({
         <ShortcutKey keys={action.shortcuts} />
       </DropdownMenuItem>
     ),
-    [editor]
+    [editor, onValueChange]
   )
 
   const isDropdownActive = dropdownActions.some((action) =>

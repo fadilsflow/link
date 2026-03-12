@@ -37,13 +37,6 @@ export function ProductContentEditor({
 
   return (
     <div className={cn('space-y-4', className)}>
-      <div>
-        <Label className="text-sm font-medium">Delivery content</Label>
-        <p className="text-xs text-muted-foreground">
-          Build the exact content buyers see after checkout.
-        </p>
-      </div>
-
       <MainMinimalTiptapEditor
         editor={editor}
         className="min-h-[420px]"

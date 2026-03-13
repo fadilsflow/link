@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { SidebarTrigger } from './ui/sidebar'
 
 function AppHeader({ className, ...props }: React.ComponentProps<'header'>) {
   return (
@@ -17,11 +18,14 @@ function AppHeaderContent({
 }: React.ComponentProps<'div'> & { title: string }) {
   return (
     <div className={cn('flex flex-col gap-1', className)} {...props}>
-      <h1 className="font-medium text-foreground text-2xl leading-none">
-        {title}
-      </h1>
+      <div className="flex items-center gap-3">
+        <SidebarTrigger className='flex md:hidden' />
+        <h1 className="font-medium text-foreground text-2xl leading-none">
+          {title}
+        </h1>
+      </div>
       {children}
-    </div>
+    </div >
   )
 }
 

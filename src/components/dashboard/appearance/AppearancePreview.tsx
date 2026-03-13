@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Package2, PlayCircle } from 'lucide-react'
-import type { PreviewSocialLink } from '@/lib/preview-context'
+import type { PreviewSocialLink, PreviewProduct } from '@/lib/preview-context'
 import type {
   AppearanceBackgroundType,
   AppearanceTextFont,
@@ -10,6 +10,9 @@ import { SocialProfileBlocks } from '@/components/SocialProfileBlocks'
 import { PublicProfileBlocks } from '@/components/dashboard/blocks/PublicProfileBlocks'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs'
+import VerifiedIcon from '@/components/icon/verified-badge'
+import PublicProfileFooter from '@/components/public-profile-footer'
+import { SimpleTooltip } from '@/components/ui/tooltip'
 import {
   getAppearanceBlockStyle,
   getAppearanceFontClass,
@@ -24,7 +27,103 @@ import {
   getBlockCardBase,
   getBlockRadius,
 } from '@/lib/block-styles'
-import { cn } from '@/lib/utils'
+import { cn, formatPrice } from '@/lib/utils'
+
+function getProductPriceLabel(product: PreviewProduct) {
+  if (product.payWhatYouWant) {
+    return product.minimumPrice
+      ? `From ${formatPrice(product.minimumPrice)}`
+      : 'Pay what you want'
+  }
+
+  if (product.salePrice && product.price) {
+    return formatPrice(product.salePrice)
+  }
+
+  return product.price ? formatPrice(product.price) : 'Free'
+}
+
+function PreviewProductCard({
+  product,
+  username,
+  cardBase,
+  radiusClass,
+  cardStyle,
+  horizontalOnMd = false,
+}: {
+  product: PreviewProduct
+  username: string
+  cardBase: string
+  radiusClass: string
+  cardStyle?: React.CSSProperties
+  horizontalOnMd?: boolean
+}) {
+  const hasDiscount = !!(product.salePrice && product.price)
+  const price = hasDiscount
+    ? formatPrice(product.salePrice as number)
+    : getProductPriceLabel(product)
+  const originalPrice = hasDiscount
+    ? formatPrice(product.price as number)
+    : null
+  const productImages = product.images
+  const hasImage = !!productImages?.length
+
+  return (
+    <div
+      className={cn(
+        'group w-full overflow-hidden border border-border bg-background shadow-sm hover:scale-101 cursor-pointer',
+        cardBase,
+        radiusClass,
+      )}
+      style={cardStyle}
+      onClick={() =>
+        window.open(
+          `/${username}/${product.id}`,
+          '_blank',
+          'noopener,noreferrer',
+        )
+      }
+    >
+      <div className={cn('p-0', horizontalOnMd && ' flex flex-col')}>
+        <div
+          className={cn(
+            'aspect-video w-full overflow-hidden bg-muted',
+            horizontalOnMd && 'shrink-0',
+          )}
+        >
+          {hasImage ? (
+            <img
+              loading="lazy"
+              decoding="async"
+              width={640}
+              height={640}
+              src={productImages[0]}
+              alt={product.title}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="h-full w-full bg-muted" />
+          )}
+        </div>
+
+        <div className={cn('space-y-2 p-4')}>
+          <h3 className="line-clamp-2 text-lg font-medium">{product.title}</h3>
+          <p className="text-sm line-clamp-2 text-foreground/70">
+            {product.description}
+          </p>
+          <div className="flex items-center gap-1">
+            <p className="text-foreground text-sm">{price}</p>
+            {originalPrice ? (
+              <p className="text-foreground/80 text-[10px] line-through">
+                {originalPrice}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 interface AppearancePreviewProps {
   user: {
@@ -56,9 +155,15 @@ interface AppearancePreviewProps {
     isEnabled: boolean
   }>
   socialLinks?: Array<PreviewSocialLink>
+  products?: Array<PreviewProduct>
 }
 
-export function AppearancePreview({ user, blocks, socialLinks = [] }: AppearancePreviewProps) {
+export function AppearancePreview({
+  user,
+  blocks,
+  socialLinks = [],
+  products = [],
+}: AppearancePreviewProps) {
   const [tab, setTab] = React.useState<'profile' | 'products'>('profile')
 
   const blockStyle = user.appearanceBlockStyle || 'basic'
@@ -107,25 +212,90 @@ export function AppearancePreview({ user, blocks, socialLinks = [] }: Appearance
       : user.appearanceBackgroundType
   const hasBanner =
     user.appearanceBannerEnabled !== false && !!user.appearanceBgImageUrl
+  const divideClass = isDarkBg ? 'divide-white/10' : 'divide-border'
 
   const enabledBlocks = React.useMemo(
     () => blocks.filter((block) => block.isEnabled),
     [blocks],
   )
-  const nonProductBlocks = React.useMemo(
-    () => enabledBlocks.filter((block) => block.type !== 'product'),
-    [enabledBlocks],
+
+  const productMap = React.useMemo(
+    () => new Map(products.map((p) => [p.id, p])),
+    [products],
   )
-  const productBlocks = React.useMemo(
-    () => enabledBlocks.filter((block) => block.type === 'product'),
-    [enabledBlocks],
+
+  const hasActiveProducts = products.length > 0
+
+  const profileBlocksSection = (
+    <PublicProfileBlocks
+      areBlocksReady
+      blocks={enabledBlocks}
+      cardBase={cardBase}
+      cardBaseWithHover={cardBaseWithHover}
+      radiusClass={radiusClass}
+      actionRadiusClass={actionRadiusClass}
+      isInteractive={true}
+      cardStyle={blockInlineStyle}
+      iconBackgroundColor={iconBackgroundColor}
+      backgroundType={iconBackgroundType}
+      backgroundGradientTop={user.appearanceBackgroundGradientTop || undefined}
+      backgroundGradientBottom={
+        user.appearanceBackgroundGradientBottom || undefined
+      }
+      textForegroundColor={profileTextColor.foreground}
+      onOpenBlockUrl={() => {}}
+      onTrackClick={() => {}}
+      renderVideoBlock={(block) => (
+        <div
+          key={block.id}
+          className={cn('w-full overflow-hidden space-y-3 mt-6', radiusClass)}
+        >
+          <div
+            style={{ color: profileTextColor.foreground }}
+            className="flex items-center gap-2 text-md font-medium"
+          >
+            {block.title || 'YouTube Video'}
+          </div>
+          <div
+            className={cn(
+              'w-full rounded-lg border aspect-video',
+              isDarkBg
+                ? 'bg-white/10 border-white/20'
+                : 'bg-muted border-border',
+            )}
+          >
+            <div className="w-full h-full flex items-center justify-center">
+              <PlayCircle className="h-10 w-10 text-muted-foreground/50" />
+            </div>
+          </div>
+        </div>
+      )}
+      renderProductBlock={(block) => {
+        const selectedProduct = block.content
+          ? productMap.get(block.content)
+          : null
+        if (!selectedProduct) return null
+
+        return (
+          <PreviewProductCard
+            key={block.id}
+            product={selectedProduct}
+            username={user.username || ''}
+            cardBase={cardBase}
+            radiusClass={radiusClass}
+            cardStyle={blockInlineStyle}
+            horizontalOnMd
+          />
+        )
+      }}
+    />
   )
 
   return (
     <div className="w-full h-full flex items-center justify-center p-2">
       <div
         className={cn(
-          'aspect-9/18 w-full max-w-[300px] overflow-hidden rounded-[32px] border-3 border-border bg-muted relative',
+          'aspect-9/18 w-full max-w-[310px] overflow-hidden rounded-[32px] border-3 border-border bg-background relative',
           textFontClass,
         )}
       >
@@ -144,172 +314,202 @@ export function AppearancePreview({ user, blocks, socialLinks = [] }: Appearance
             className={cn('relative min-h-full text-foreground', textFontClass)}
             style={{ ...pageBackgroundStyle, ...textStyle }}
           >
-            {hasBanner ? (
-              <div className="h-[160px] w-full overflow-hidden">
-                <img
-                  src={user.appearanceBgImageUrl || ''}
-                  alt={`${user.name} banner`}
-                  width={800}
-                  height={160}
-                  loading="eager"
-                  decoding="async"
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            ) : (
-              <div className="h-[160px] w-full" />
-            )}
-
-            <section className="relative px-2 pt-14 pb-6">
-              <Avatar className="absolute -top-14 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full ring-2 ring-primary/10">
-                <AvatarImage src={user.image || '/avatar-placeholder.png'} />
-                <AvatarFallback className="text-lg font-bold">
-                  {user.name.slice(0, 2).toUpperCase() || '?'}
-                </AvatarFallback>
-              </Avatar>
-
-              <h1
-                className="pt-4 text-center text-xl font-heading"
-                style={{ color: profileTextColor.foreground }}
-              >
-                {user.name}
-              </h1>
-              {user.title ? (
-                <p
-                  className="mt-1 text-center text-sm"
-                  style={{ color: profileTextColor.mutedForeground }}
-                >
-                  {user.title}
-                </p>
-              ) : null}
-              {user.bio ? (
-                <p
-                  className="mt-1 text-center text-sm leading-relaxed line-clamp-3"
-                  style={{ color: profileTextColor.mutedForeground }}
-                >
-                  {user.bio}
-                </p>
-              ) : null}
-
-              {socialLinks.length > 0 ? (
-                <SocialProfileBlocks
-                  links={socialLinks}
-                  iconColor={profileTextColor.foreground}
-                  className="mt-5 justify-center"
-                />
-              ) : null}
-
-              <div className="mt-6">
-                <Tabs
-                  value={tab}
-                  onValueChange={(val) => setTab(val as 'profile' | 'products')}
-                  className="w-full"
-                >
-                  <TabsList
-                    variant='underline'
-                    className="grid w-full grid-cols-2 border-b-0"
-                    style={{
-                      color: profileTextColor.foreground,
-                      '--tabs-indicator-color': profileTextColor.foreground,
-                    } as React.CSSProperties}
-                  >
-                    <TabsTab
-                      value="profile"
-                      style={{ color: profileTextColor.foreground }}
-                    >
-                      Profile
-                    </TabsTab>
-                    <TabsTab
-                      value="products"
-                      style={{ color: profileTextColor.foreground }}
-                    >
-                      Products
-                    </TabsTab>
-                  </TabsList>
-
-                  <TabsPanel value="profile" className="mt-4 space-y-3 outline-none">
-                    <PublicProfileBlocks
-                      areBlocksReady
-                      blocks={nonProductBlocks}
-                      cardBase={cardBase}
-                      cardBaseWithHover={cardBaseWithHover}
-                      radiusClass={radiusClass}
-                      actionRadiusClass={actionRadiusClass}
-                      isInteractive={false}
-                      cardStyle={blockInlineStyle}
-                      iconBackgroundColor={iconBackgroundColor}
-                      backgroundType={iconBackgroundType}
-                      backgroundGradientTop={
-                        user.appearanceBackgroundGradientTop || undefined
-                      }
-                      backgroundGradientBottom={
-                        user.appearanceBackgroundGradientBottom || undefined
-                      }
-                      onOpenBlockUrl={() => { }}
-                      onTrackClick={() => { }}
-                      renderVideoBlock={(block) => (
-                        <div
-                          key={block.id}
-                          className={cn(
-                            'w-full overflow-hidden p-3 space-y-3',
-                            cardBase,
-                            radiusClass,
-                          )}
-                          style={blockInlineStyle}
-                        >
-                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                            <PlayCircle className="h-4 w-4 text-foreground" />
-                            {block.title || 'Video'}
-                          </div>
-                          <div className={cn('w-full rounded-lg border aspect-video', isDarkBg ? 'bg-white/10 border-white/20' : 'bg-muted border-border')} />
-                        </div>
-                      )}
-                      renderProductBlock={() => null}
-                    />
-                  </TabsPanel>
-
-                  <TabsPanel value="products" className="mt-4 space-y-3 outline-none">
-                    {productBlocks.length > 0 ? (
-                      <div className="grid grid-cols-2 gap-4">
-                        {productBlocks.map((productBlock) => (
-                          <div
-                            key={productBlock.id}
-                            className={cn(
-                              'w-full overflow-hidden border border-border bg-background shadow-sm',
-                              cardBase,
-                              radiusClass,
-                            )}
-                            style={blockInlineStyle}
-                          >
-                            <div className="p-2">
-                              <div className={cn('aspect-square w-full overflow-hidden bg-muted', radiusClass)} />
-                              <div className="space-y-1 mt-2">
-                                <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
-                                  {productBlock.title || 'Product'}
-                                </h3>
-                                <p className="text-sm font-semibold text-foreground">$0.00</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div
-                        className={cn(
-                          'w-full p-4 text-sm flex items-center gap-2 justify-center',
-                          cardBase,
-                          actionRadiusClass,
-                        )}
-                        style={blockInlineStyle}
+            {/* Dummy Header */}
+            <header
+              className={cn(
+                'z-50 px-2',
+                isDarkBg ? 'border-white/10' : 'border-border',
+              )}
+            >
+              <div className="mx-auto">
+                <div className="flex h-12 items-center justify-end px-3">
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-4 w-4"
+                        style={{ color: profileTextColor.foreground }}
                       >
-                        <Package2 className="size-4" />
-                        <span>No products yet</span>
-                      </div>
-                    )}
-                  </TabsPanel>
-                </Tabs>
+                        <circle cx="12" cy="12" r="1" />
+                        <circle cx="19" cy="12" r="1" />
+                        <circle cx="5" cy="12" r="1" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </section>
+            </header>
+
+            <div
+              className={cn(
+                'relative z-10 min-h-screen w-full',
+                isDarkBg ? 'border-white/10' : 'border-border/70',
+              )}
+            >
+              {hasBanner ? (
+                <div className="h-[60px] overflow-hidden">
+                  <img
+                    src={user.appearanceBgImageUrl || ''}
+                    alt={`${user.name} banner`}
+                    width={800}
+                    height={160}
+                    loading="eager"
+                    decoding="async"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : null}
+
+              <div className={cn(divideClass, 'mx-auto grid grid-cols-1 px-5')}>
+                <section
+                  className={cn(
+                    'relative pt-6',
+                    isDarkBg ? 'border-white/10' : 'border-border',
+                  )}
+                >
+                  <div className="flex gap-4">
+                    <div className="relative w-11 h-11">
+                      <Avatar className="absolute top-0 w-11 h-11 border-2 border-background ring-1 ring-foreground/10">
+                        <AvatarImage
+                          src={user.image || '/avatar-placeholder.png'}
+                        />
+                        <AvatarFallback className="text-lg font-bold">
+                          {user.name.slice(0, 2).toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    <div className="flex flex-col justify-end">
+                      <h1
+                        id="profile-name"
+                        className="text-xl font-bold flex items-center gap-2"
+                        style={{ color: profileTextColor.foreground }}
+                      >
+                        {user.name}
+                        <SimpleTooltip content="Verified">
+                          <VerifiedIcon className="size-4 text-blue-500" />
+                        </SimpleTooltip>
+                      </h1>
+                      {user.title ? (
+                        <p
+                          className="text-xs"
+                          style={{ color: profileTextColor.mutedForeground }}
+                        >
+                          {user.title}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  {user.bio ? (
+                    <p
+                      className="mt-3 mx-auto text-sm leading-relaxed"
+                      style={{ color: profileTextColor.mutedForeground }}
+                    >
+                      {user.bio}
+                    </p>
+                  ) : null}
+
+                  {socialLinks.length > 0 ? (
+                    <SocialProfileBlocks
+                      links={socialLinks}
+                      iconColor={profileTextColor.foreground}
+                      className="flex mt-4"
+                    />
+                  ) : null}
+
+                  {hasActiveProducts ? (
+                    <div className="mt-6">
+                      <Tabs
+                        value={tab}
+                        onValueChange={(val) =>
+                          setTab(val as 'profile' | 'products')
+                        }
+                        className="w-full"
+                      >
+                        <TabsList
+                          variant="underline"
+                          className="grid w-full grid-cols-2"
+                          style={
+                            {
+                              color: profileTextColor.foreground,
+                              '--tabs-indicator-color':
+                                profileTextColor.foreground,
+                            } as React.CSSProperties
+                          }
+                        >
+                          <TabsTab
+                            value="profile"
+                            style={{ color: profileTextColor.foreground }}
+                          >
+                            Beranda
+                          </TabsTab>
+                          <TabsTab
+                            value="products"
+                            style={{ color: profileTextColor.foreground }}
+                          >
+                            Toko
+                          </TabsTab>
+                        </TabsList>
+
+                        <TabsPanel
+                          value="profile"
+                          className="mt-4 space-y-3 outline-none"
+                        >
+                          {profileBlocksSection}
+                        </TabsPanel>
+
+                        <TabsPanel
+                          value="products"
+                          className="mt-4 space-y-3 outline-none"
+                        >
+                          {products.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-4">
+                              {products.map((product) => (
+                                <PreviewProductCard
+                                  key={product.id}
+                                  product={product}
+                                  username={user.username || ''}
+                                  cardBase={cardBase}
+                                  radiusClass={radiusClass}
+                                  cardStyle={blockInlineStyle}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div
+                              className={cn(
+                                'w-full p-4 text-sm flex items-center gap-2 justify-center',
+                                cardBase,
+                                actionRadiusClass,
+                              )}
+                              style={blockInlineStyle}
+                            >
+                              <Package2 className="size-4" />
+                              <span>No products yet</span>
+                            </div>
+                          )}
+                        </TabsPanel>
+                      </Tabs>
+                    </div>
+                  ) : (
+                    <div className="mt-6">{profileBlocksSection}</div>
+                  )}
+                </section>
+              </div>
+
+              <div className="pb-4 pt-10 scale-75 origin-top">
+                <div className="mx-auto">
+                  <PublicProfileFooter />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

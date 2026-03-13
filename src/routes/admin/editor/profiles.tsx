@@ -71,6 +71,7 @@ function AdminDashboard() {
     setUser,
     setBlocks,
     setSocialLinks,
+    setProducts,
     updateUser,
   } = usePreview()
 
@@ -143,6 +144,12 @@ function AdminDashboard() {
       return { ...old, blocks: localBlocks }
     })
   }, [localBlocks, queryClient])
+
+  useEffect(() => {
+    if (dashboardData?.products) {
+      setProducts(dashboardData.products as any)
+    }
+  }, [dashboardData?.products, setProducts])
 
   useEffect(() => {
     if (isAddBlockOpen || !pendingCreateType) return

@@ -24,7 +24,7 @@ function RouteComponent() {
 }
 
 function EditorLayout() {
-  const { user, blocks, socialLinks, status } = usePreview()
+  const { user, blocks, socialLinks, products, status } = usePreview()
 
   return (
     <main className="grid grid-cols-1 lg:grid-cols-[2.2fr_1.4fr] min-h-screen lg:h-screen lg:overflow-hidden text-zinc-900">
@@ -68,7 +68,7 @@ function EditorLayout() {
           </div>
           <div className="pt-5 relative flex-1 w-full min-h-0 ">
             {user ? (
-              <AppearancePreview user={user} blocks={blocks} socialLinks={socialLinks} />
+              <AppearancePreview user={user} blocks={blocks} socialLinks={socialLinks} products={products} />
             ) : (
               <div className="w-full h-full flex items-center justify-center p-2">
                 <div className="aspect-9/18 w-full max-w-[280px] overflow-hidden rounded-[32px] border-3 bg-muted relative">

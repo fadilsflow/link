@@ -54,6 +54,7 @@ function AppearanceRouteComponent() {
   const user = dashboardData?.user
   const blocks = dashboardData?.blocks
   const socialLinks = dashboardData?.socialLinks
+  const products = dashboardData?.products
   if (!user) return null
 
   return (
@@ -61,6 +62,7 @@ function AppearanceRouteComponent() {
       user={user}
       blocks={blocks || []}
       socialLinks={socialLinks || []}
+      products={products || []}
     />
   )
 }
@@ -111,10 +113,12 @@ function AppearanceEditor({
   user,
   blocks,
   socialLinks,
+  products,
 }: {
   user: any
   blocks: Array<any>
   socialLinks: Array<any>
+  products: Array<any>
 }) {
   const queryClient = useQueryClient()
   const {
@@ -123,6 +127,7 @@ function AppearanceEditor({
     setUser,
     setBlocks,
     setSocialLinks,
+    setProducts,
     updateUser,
     setStatus,
   } = usePreview()
@@ -133,6 +138,7 @@ function AppearanceEditor({
       setUser(user)
       setBlocks(blocks)
       setSocialLinks(socialLinks)
+      setProducts(products)
       return
     }
 
@@ -152,7 +158,8 @@ function AppearanceEditor({
       appearanceTextFont: user.appearanceTextFont,
     })
     setSocialLinks(socialLinks)
-  }, [user, blocks, socialLinks, previewUser, previewBlocks, setUser, setBlocks, setSocialLinks, updateUser])
+    setProducts(products)
+  }, [user, blocks, socialLinks, products, previewUser, previewBlocks, setUser, setBlocks, setSocialLinks, setProducts, updateUser])
 
   const updateAppearance = useMutation({
     mutationKey: ['updateProfile'],

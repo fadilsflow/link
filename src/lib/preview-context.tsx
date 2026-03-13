@@ -44,14 +44,29 @@ interface PreviewStatus {
   isSaved?: boolean
 }
 
+export interface PreviewProduct {
+  id: string
+  title: string
+  description: string
+  images?: Array<string> | null
+  payWhatYouWant?: boolean | null
+  minimumPrice?: number | null
+  salePrice?: number | null
+  price?: number | null
+  totalQuantity?: number | null
+  limitPerCheckout?: number | null
+}
+
 interface PreviewContextValue {
   user: PreviewUser | null
   blocks: Array<PreviewBlock>
   socialLinks: Array<PreviewSocialLink>
+  products: Array<PreviewProduct>
   status: PreviewStatus
   setUser: (user: PreviewUser | null) => void
   setBlocks: (blocks: Array<PreviewBlock>) => void
   setSocialLinks: (socialLinks: Array<PreviewSocialLink>) => void
+  setProducts: (products: Array<PreviewProduct>) => void
   updateUser: (updates: Partial<PreviewUser>) => void
   setStatus: (status: PreviewStatus) => void
 }
@@ -62,6 +77,7 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<PreviewUser | null>(null)
   const [blocks, setBlocks] = useState<Array<PreviewBlock>>([])
   const [socialLinks, setSocialLinks] = useState<Array<PreviewSocialLink>>([])
+  const [products, setProducts] = useState<Array<PreviewProduct>>([])
   const [status, setStatus] = useState<PreviewStatus>({})
 
   const updateUser = (updates: Partial<PreviewUser>) => {
@@ -73,14 +89,16 @@ export function PreviewProvider({ children }: { children: React.ReactNode }) {
       user,
       blocks,
       socialLinks,
+      products,
       status,
       setUser,
       setBlocks,
       setSocialLinks,
+      setProducts,
       updateUser,
       setStatus,
     }),
-    [user, blocks, socialLinks, status],
+    [user, blocks, socialLinks, products, status],
   )
 
   return (

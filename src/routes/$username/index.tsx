@@ -652,7 +652,7 @@ function UserProfile() {
                 className="flex mt-4"
               />
             ) : null}
-            {hasActiveProducts && (
+            {hasActiveProducts ? (
               <div className="mt-6">
                 <Tabs
                   value={tab}
@@ -695,6 +695,10 @@ function UserProfile() {
                     {productsSection}
                   </TabsPanel>
                 </Tabs>
+              </div>
+            ) : (
+              <div className="mt-6">
+                {profileBlocksSection}
               </div>
             )}
           </section>

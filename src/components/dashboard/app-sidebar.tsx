@@ -52,7 +52,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
       {...props}
-      collapsible="icon"
+      collapsible="offcanvas"
       variant="inset"
       className="border-muted"
     >
@@ -64,7 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem className='ml-1' >
-                    <LogoStudioSidebar text='Studio' className='text-primary' />
+                    <LogoStudioSidebar text='Studio' />
                   </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>

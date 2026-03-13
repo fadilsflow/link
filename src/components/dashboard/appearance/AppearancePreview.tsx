@@ -11,7 +11,6 @@ import { PublicProfileBlocks } from '@/components/dashboard/blocks/PublicProfile
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs'
 import VerifiedIcon from '@/components/icon/verified-badge'
-import PublicProfileFooter from '@/components/public-profile-footer'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import {
   getAppearanceBlockStyle,
@@ -314,39 +313,6 @@ export function AppearancePreview({
             className={cn('relative min-h-full text-foreground', textFontClass)}
             style={{ ...pageBackgroundStyle, ...textStyle }}
           >
-            {/* Dummy Header */}
-            <header
-              className={cn(
-                'z-50 px-2',
-                isDarkBg ? 'border-white/10' : 'border-border',
-              )}
-            >
-              <div className="mx-auto">
-                <div className="flex h-12 items-center justify-end px-3">
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="h-4 w-4"
-                        style={{ color: profileTextColor.foreground }}
-                      >
-                        <circle cx="12" cy="12" r="1" />
-                        <circle cx="19" cy="12" r="1" />
-                        <circle cx="5" cy="12" r="1" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </header>
 
             <div
               className={cn(
@@ -368,7 +334,7 @@ export function AppearancePreview({
                 </div>
               ) : null}
 
-              <div className={cn(divideClass, 'mx-auto grid grid-cols-1 px-5')}>
+              <div className={cn(divideClass, 'mx-auto grid grid-cols-1 px-5 pb-5')}>
                 <section
                   className={cn(
                     'relative pt-6',
@@ -502,12 +468,6 @@ export function AppearancePreview({
                     <div className="mt-6">{profileBlocksSection}</div>
                   )}
                 </section>
-              </div>
-
-              <div className="pb-4 pt-10 scale-75 origin-top">
-                <div className="mx-auto">
-                  <PublicProfileFooter />
-                </div>
               </div>
             </div>
           </div>

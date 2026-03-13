@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import { BadgeCheck, Package2, PlayCircle } from 'lucide-react'
 import type { PublicSocialLink } from '@/components/SocialProfileBlocks'
 import type { PublicProfileBlock } from '@/components/dashboard/blocks/PublicProfileBlocks'
 import { PublicProfileBlocks } from '@/components/dashboard/blocks/PublicProfileBlocks'
@@ -31,9 +30,6 @@ import {
 } from '@/lib/appearance'
 
 import SiteUserProfileHeader from '@/components/site-user-profile-header'
-import { Button } from '@/components/ui/button'
-import { ShareProfileModal } from '@/components/share-profile-modal'
-import { BASE_URL } from '@/lib/constans'
 import PublicProfileFooter from '@/components/public-profile-footer'
 import VerifiedIcon from '@/components/icon/verified-badge'
 import { SimpleTooltip } from '@/components/ui/tooltip'
@@ -571,7 +567,7 @@ function UserProfile() {
           <div className="absolute inset-0 bg-background/45" />
         </div>
       ) : null}
-      <SiteUserProfileHeader />
+      <SiteUserProfileHeader textColor={profileTextColor.foreground} className={isDarkBg ? 'border-white/10' : 'border-border'} />
 
       <div
         className={cn(
@@ -580,7 +576,7 @@ function UserProfile() {
         )}
       >
         {isBanner && lcpBannerSrc ? (
-          <div className="h-[60px] sm:h-[120px] overflow-hidden  sm:max-w-2xl md:max-w-3xl sm:mx-auto px-3">
+          <div className="h-[60px] sm:h-[120px] overflow-hidden  sm:max-w-2xl md:max-w-3xl sm:mx-auto sm:px-3">
             <img
               src={lcpBannerSrc}
               alt={`${user.name} banner`}
@@ -589,7 +585,7 @@ function UserProfile() {
               loading="eager"
               fetchPriority="high"
               decoding="async"
-              className="h-full w-full object-cover rounded-lg"
+              className="h-full w-full object-cover sm:rounded-lg"
             />
           </div>
         ) : (
@@ -610,11 +606,6 @@ function UserProfile() {
               isDarkBg ? 'border-white/10' : 'border-border',
             )}
           >
-            <div className="absolute  top-6 right-0">
-              <ShareProfileModal url={user.username ? `${BASE_URL}/${user.username}` : BASE_URL}>
-                <Button variant='link' className='hover:opacity-80' style={{ color: profileTextColor.foreground }}><svg className='size-4' viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.6875 6.8752H10.625V12.5393C10.625 12.705 10.5592 12.864 10.4419 12.9812C10.3247 13.0984 10.1658 13.1643 10 13.1643C9.83424 13.1643 9.67527 13.0984 9.55806 12.9812C9.44085 12.864 9.375 12.705 9.375 12.5393V6.8752H5.3125C4.73253 6.87582 4.17649 7.10649 3.76639 7.51659C3.35629 7.92669 3.12562 8.48273 3.125 9.0627V16.5627C3.12562 17.1427 3.35629 17.6987 3.76639 18.1088C4.17649 18.5189 4.73253 18.7496 5.3125 18.7502H14.6875C15.2675 18.7496 15.8235 18.5189 16.2336 18.1088C16.6437 17.6987 16.8744 17.1427 16.875 16.5627V9.0627C16.8744 8.48273 16.6437 7.92669 16.2336 7.51659C15.8235 7.10649 15.2675 6.87582 14.6875 6.8752ZM10.625 3.38418L12.6832 5.442C12.8014 5.55426 12.9587 5.61592 13.1217 5.61383C13.2847 5.61175 13.4404 5.54608 13.5556 5.43083C13.6709 5.31557 13.7365 5.15986 13.7386 4.99689C13.7407 4.83391 13.6791 4.67657 13.5668 4.5584L10.4418 1.4334C10.3246 1.31628 10.1657 1.25049 10 1.25049C9.83431 1.25049 9.6754 1.31628 9.5582 1.4334L6.4332 4.5584C6.32094 4.67657 6.25928 4.83391 6.26137 4.99689C6.26345 5.15986 6.32912 5.31557 6.44437 5.43083C6.55962 5.54608 6.71534 5.61175 6.87831 5.61383C7.04129 5.61592 7.19863 5.55426 7.3168 5.442L9.375 3.38418V6.8752H10.625V3.38418Z" fill="currentColor"></path></svg></Button>
-              </ShareProfileModal>
-            </div>
             <div className="flex gap-4">
               <div className="relative w-11 h-11 sm:h-24 sm:w-24">
                 <Avatar className="absolute top-0 w-11 h-11 sm:h-24 sm:w-24 border-2 border-background ring-1 ring-foreground/10">
@@ -644,14 +635,6 @@ function UserProfile() {
                     {user.title}
                   </p>
                 ) : null}
-
-                {/* {socialItems.length > 0 ? (
-                  <SocialProfileBlocks
-                    links={socialItems}
-                    iconColor={profileTextColor.foreground}
-                    className="flex mt-4"
-                  />
-                ) : null} */}
               </div>
             </div>
             {user.bio ? (
@@ -669,8 +652,6 @@ function UserProfile() {
                 className="flex mt-4"
               />
             ) : null}
-            {/* TODO: MAKE USER CAN SET THIS CTA ON  admin/editor/profiles.tsx */}
-            {/* <Button variant='neutral' className='mt-7 w-full py-6' size='lg'>Join Discord Sekarang!</Button> */}
             {hasActiveProducts && (
               <div className="mt-6">
                 <Tabs

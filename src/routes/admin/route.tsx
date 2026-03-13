@@ -1,7 +1,6 @@
 import { Outlet, createFileRoute, useRouter } from '@tanstack/react-router'
 import React from 'react'
 import { AppSidebar } from '@/components/dashboard/app-sidebar'
-import { MobileAdminNav } from '@/components/dashboard/mobile-admin-nav'
 import { Spinner } from '@/components/ui/spinner'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { authClient } from '@/lib/auth-client'
@@ -42,7 +41,6 @@ function AdminLayout() {
         )}
       </SidebarInset>
 
-      <MobileAdminNav />
     </SidebarProvider>
   )
 }

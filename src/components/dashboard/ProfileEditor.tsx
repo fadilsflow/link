@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog'
 
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
+import { SquarePen } from 'lucide-react'
 
 interface ProfileData {
   name: string
@@ -142,7 +143,7 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
           )}
         </div>
         <Button className='absolute right-0 top-0' variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
-          Edit Profile
+          <span className='hidden sm:block'>Edit Profile</span><SquarePen className='block sm:hidden  ' />
         </Button>
 
       </div>
@@ -178,7 +179,6 @@ export function ProfileEditor({ user, onSave }: ProfileEditorProps) {
               <Field>
                 <FieldLabel>Display Name</FieldLabel>
                 <Input
-                  className="font-heading text-2xl"
                   value={formData.name}
                   onChange={(e) => handleFieldChange('name', e.target.value)}
                   required

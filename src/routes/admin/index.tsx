@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { CalendarIcon, Eye, EyeOff, InfoIcon } from 'lucide-react'
+import { CalendarIcon, Eye, EyeOff, InfoIcon, Share2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   Area,
@@ -153,7 +153,7 @@ function HomePage() {
             <CardHeader >
               <CardTitle>Profile</CardTitle>
             </CardHeader>
-            <CardPanel className=" flex items-center justify-center h-24">
+            <CardPanel className="flex items-center justify-center h-24">
               <div className="flex justify-between items-center w-full">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-14 w-14  border-2 border-background ring-2 ring-primary/10">
@@ -181,7 +181,7 @@ function HomePage() {
 
                 <ShareProfileModal url={username ? `${BASE_URL}/${username}` : BASE_URL}>
                   <Button size="lg" variant="default">
-                    Share
+                    <span className='hidden sm:block'>Share</span><Share2 className='block sm:hidden' />
                   </Button>
                 </ShareProfileModal>
               </div>
@@ -221,7 +221,7 @@ function HomePage() {
                         animate={{ y: "0%" }}
                         exit={{ y: "-50%" }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="text-4xl tracking-tight"
+                        className="text-2xl sm:text-4xl tracking-tight"
                       >
                         {isBalanceHidden
                           ? "•••••"

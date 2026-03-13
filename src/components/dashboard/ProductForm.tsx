@@ -367,7 +367,6 @@ export function ProductForm({
             <Button
               type="submit"
               size="lg"
-              className="min-w-[124px] justify-center px-5"
               disabled={submitting || isUploading}
               loading={submitting || isUploading}
             >
@@ -733,7 +732,7 @@ export function ProductForm({
 
         {/* ── Footer ─────────────────────────────────────────────────── */}
         {!hideFooter && (
-          <div className="grid w-full min-w-0 gap-3 py-20 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div className="flex justify-between items-center pt-5">
             <div className="flex min-w-0 items-center gap-2">
               <Switch
                 checked={value.isActive}
@@ -744,38 +743,23 @@ export function ProductForm({
               </span>
             </div>
 
-            <div className="flex shrink-0 items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="destructive-outline"
-                size="lg"
-                className={cn(
-                  ' text-xs  hover:text-destructive',
-                  !(value.id && onDelete) && 'pointer-events-none invisible',
-                )}
-                onClick={() => {
-                  if (value.id && onDelete) onDelete(value.id)
-                }}
 
-              >
-                Delete product
-              </Button>
-              <Button
-                type="submit"
-                size="lg"
-                className="min-w-[124px] justify-center px-5"
-                disabled={submitting || isUploading}
-                loading={submitting || isUploading}
-              >
-                {submitting || isUploading
-                  ? 'Saving…'
-                  : value.id
-                    ? 'Update Product'
-                    : activeTab === 'product'
-                      ? 'Continue'
-                      : 'Create product'}
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="destructive-outline"
+              size="lg"
+              className={cn(
+                ' text-xs  hover:text-destructive',
+                !(value.id && onDelete) && 'pointer-events-none invisible',
+              )}
+              onClick={() => {
+                if (value.id && onDelete) onDelete(value.id)
+              }}
+              disabled={submitting || isUploading}
+
+            >
+              Delete product
+            </Button>
           </div>
         )}
       </form>

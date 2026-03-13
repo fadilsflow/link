@@ -1,11 +1,13 @@
 import { CircleCheck, Copy, QrCodeIcon, Share } from 'lucide-react'
 import { useState } from 'react'
 import {
-  Popover,
-  PopoverPopup,
-  PopoverTitle,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+  Dialog,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import {
   InputGroup,
@@ -80,8 +82,8 @@ export function ShareProfileModal({
   }
 
   return (
-    <Popover>
-      <PopoverTrigger
+    <Dialog>
+      <DialogTrigger
         render={
           children || (
             <Button
@@ -100,15 +102,17 @@ export function ShareProfileModal({
             <Share className="ml-2 h-4 w-4" />
           </>
         )}
-      </PopoverTrigger>
-      <PopoverPopup
-        className="w-80"
-        align="end"
+      </DialogTrigger>
+      <DialogPopup
+        className="w-120"
+      // align="end"
       >
-        <div className="space-y-4">
-          <PopoverTitle >
+        <DialogHeader>
+          <DialogTitle >
             Share
-          </PopoverTitle>
+          </DialogTitle>
+        </DialogHeader>
+        <DialogPanel className="space-y-4">
 
           <InputGroup className="px-0.5 py-1">
             <InputGroupInput
@@ -168,8 +172,8 @@ export function ShareProfileModal({
             </div>
           </div>
 
-        </div>
-      </PopoverPopup>
-    </Popover>
+        </DialogPanel>
+      </DialogPopup>
+    </Dialog>
   )
 }

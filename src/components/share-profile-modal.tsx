@@ -1,4 +1,4 @@
-import { CircleCheck, Copy, QrCodeIcon, Share } from 'lucide-react'
+import { CircleCheck, Download, Link2Icon, Share } from 'lucide-react'
 import { useState } from 'react'
 import {
   Dialog,
@@ -9,11 +9,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group'
+
+import { Group, GroupSeparator } from './ui/group'
 
 export function ShareProfileModal({
   url,
@@ -23,14 +20,12 @@ export function ShareProfileModal({
   children?: React.ReactElement
 }) {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle')
-  const [copyImageStatus, setCopyImageStatus] = useState<'idle' | 'copied'>(
-    'idle',
-  )
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(url)
       setCopyStatus('copied')
+
       setTimeout(() => {
         setCopyStatus('idle')
       }, 2000)
@@ -39,57 +34,50 @@ export function ShareProfileModal({
     }
   }
 
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(url)}`
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(
+    url,
+  )}`
 
   const getQrBlob = async () => {
     const response = await fetch(qrImageUrl)
+
     if (!response.ok) {
       throw new Error('Failed to fetch QR image')
     }
+
     return response.blob()
   }
 
   const handleDownloadQr = async () => {
     try {
       const blob = await getQrBlob()
+
       const objectUrl = URL.createObjectURL(blob)
+
       const a = document.createElement('a')
       a.href = objectUrl
       a.download = 'profile-qr.png'
+
       document.body.appendChild(a)
       a.click()
       a.remove()
+
       URL.revokeObjectURL(objectUrl)
     } catch {
       window.open(qrImageUrl, '_blank', 'noopener,noreferrer')
     }
   }
 
-  const handleCopyQrImage = async () => {
-    try {
-      const blob = await getQrBlob()
-      if (typeof ClipboardItem === 'undefined' || !navigator.clipboard?.write) {
-        throw new Error('Clipboard image API is not supported')
-      }
-
-      const blobType = blob.type || 'image/png'
-      await navigator.clipboard.write([new ClipboardItem({ [blobType]: blob })])
-      setCopyImageStatus('copied')
-      setTimeout(() => setCopyImageStatus('idle'), 2000)
-    } catch (err) {
-      console.error('Failed to copy QR image: ', err)
-    }
-  }
-
   return (
     <Dialog>
+
       <DialogTrigger
         render={
           children || (
             <Button
               className="py-6 px-6 font-semibold"
-              variant={'outline'}
-              size={'lg'}
+              variant="outline"
+              size="lg"
             />
           )
         }
@@ -103,75 +91,55 @@ export function ShareProfileModal({
           </>
         )}
       </DialogTrigger>
-      <DialogPopup
-        className="w-120"
-      // align="end"
-      >
+
+      <DialogPopup className="w-full max-w-xs">
         <DialogHeader>
-          <DialogTitle >
+          <DialogTitle className={'text-center'} >
             Share
           </DialogTitle>
         </DialogHeader>
         <DialogPanel className="space-y-4">
-
-          <InputGroup className="px-0.5 py-1">
-            <InputGroupInput
-              readOnly
-              value={url.replace(/^https?:\/\//, '')}
-              className="text-sm font-medium"
-            />
-
-            <InputGroupAddon align="inline-end">
-              <Button
-                size="icon-sm"
-                className="rounded-full"
-                variant="link"
-                onClick={handleCopyLink}
-                aria-label={copyStatus === 'copied' ? 'Copied' : 'Copy link'}
-              >
-                {copyStatus === 'copied' ? (
-                  <CircleCheck className="size-4 fill-emerald-600 text-white dark:fill-emerald-400" />
-                ) : (
-                  <Copy className="h-4 w-4 " />
-                )}
-              </Button>
-            </InputGroupAddon>
-          </InputGroup>
-
-          <div className="space-y-3  ">
-            <div className="flex gap-2 justify-start items-center">
-              <span className='text-sm font-medium'>QR Code</span>
-            </div>
-            <div className="flex justify-center aspect-square rounded-lg border bg-white p-3">
+          <div className="space-y-3">
+            <div className="flex justify-center">
               <img
                 src={qrImageUrl}
                 alt="QR code"
                 loading="lazy"
                 decoding="async"
-                className="size-52 w-full h-full opacity-0"
+                className="w-full max-w-[180px] sm:max-w-[220px] aspect-square opacity-0"
                 onLoad={(e) => {
                   e.currentTarget.style.opacity = '1'
                 }}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+
+            <Group orientation="vertical" className="w-full">
               <Button
                 variant="outline"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full justify-between"
                 onClick={handleDownloadQr}
               >
                 Download PNG
+                <Download className="h-5 w-5" />
               </Button>
+
+              <GroupSeparator orientation="horizontal" />
+
               <Button
                 variant="outline"
-                className="flex items-center gap-2"
-                onClick={handleCopyQrImage}
+                className="flex items-center gap-2 w-full justify-between"
+                onClick={handleCopyLink}
               >
-                {copyImageStatus === 'copied' ? <CircleCheck className="size-4 fill-emerald-600 text-white dark:fill-emerald-400" /> : 'Copy PNG'}
-              </Button>
-            </div>
-          </div>
+                Copy Link
 
+                {copyStatus === 'copied' ? (
+                  <CircleCheck className="size-5 fill-emerald-600 text-white dark:fill-emerald-400" />
+                ) : (
+                  <Link2Icon className="h-5 w-5 -rotate-45 text-foreground" />
+                )}
+              </Button>
+            </Group>
+          </div>
         </DialogPanel>
       </DialogPopup>
     </Dialog>

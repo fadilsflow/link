@@ -107,9 +107,9 @@ function PreviewProductCard({
 
         <div className={cn('space-y-2 p-4')}>
           <h3 className="line-clamp-2 text-lg font-medium">{product.title}</h3>
-          <p className="text-sm line-clamp-2 text-foreground/70">
+          {/* <p className="text-sm line-clamp-2 text-foreground/70">
             {product.description}
-          </p>
+          </p> */}
           <div className="flex items-center gap-1">
             <p className="text-foreground text-sm">{price}</p>
             {originalPrice ? (
@@ -242,8 +242,8 @@ export function AppearancePreview({
         user.appearanceBackgroundGradientBottom || undefined
       }
       textForegroundColor={profileTextColor.foreground}
-      onOpenBlockUrl={() => { }}
-      onTrackClick={() => { }}
+      onOpenBlockUrl={() => {}}
+      onTrackClick={() => {}}
       renderVideoBlock={(block) => (
         <div
           key={block.id}
@@ -313,7 +313,6 @@ export function AppearancePreview({
             className={cn('relative min-h-full text-foreground', textFontClass)}
             style={{ ...pageBackgroundStyle, ...textStyle }}
           >
-
             <div
               className={cn(
                 'relative z-10 min-h-screen w-full',
@@ -334,7 +333,12 @@ export function AppearancePreview({
                 </div>
               ) : null}
 
-              <div className={cn(divideClass, 'mx-auto grid grid-cols-1 px-5 pb-5')}>
+              <div
+                className={cn(
+                  divideClass,
+                  'mx-auto grid grid-cols-1 px-5 pb-5',
+                )}
+              >
                 <section
                   className={cn(
                     'relative pt-6',
@@ -343,7 +347,12 @@ export function AppearancePreview({
                 >
                   <div className="flex gap-4">
                     <div className="relative w-11 h-11">
-                      <Avatar className={cn("absolute top-0 w-11 h-11 b border-background ring-3 ring-foreground/10", isDarkBg ? ' ring-white/10' : 'ring-border')}>
+                      <Avatar
+                        className={cn(
+                          'absolute top-0 w-11 h-11 b border-background ring-3 ring-foreground/10',
+                          isDarkBg ? ' ring-white/10' : 'ring-border',
+                        )}
+                      >
                         <AvatarImage
                           src={user.image || '/avatar-placeholder.png'}
                         />
@@ -471,8 +480,8 @@ export function AppearancePreview({
               </div>
             </div>
           </div>
-        </div >
-      </div >
-    </div >
+        </div>
+      </div>
+    </div>
   )
 }

@@ -237,7 +237,9 @@ function ProductCard({
         />
       }
     >
-      <CardContent className={cn('p-0', horizontalOnMd && 'md:flex md:items-start')}>
+      <CardContent
+        className={cn('p-0', horizontalOnMd && 'md:flex md:items-start')}
+      >
         <div
           className={cn(
             'aspect-video w-full overflow-hidden bg-muted',
@@ -259,11 +261,18 @@ function ProductCard({
           )}
         </div>
 
-        <div className={cn('space-y-2 p-4', horizontalOnMd && 'md:basis-1/2 md:w-1/2')}>
-          <h3 className="line-clamp-2 text-xl font-medium">
-            {product.title}
-          </h3>
-          <p className='text-sm line-clamp-2 text-foreground/70   '>{product.description}</p>
+        <div
+          className={cn(
+            'space-y-2 p-4',
+            horizontalOnMd && 'md:basis-1/2 md:w-1/2',
+          )}
+        >
+          <h3 className="line-clamp-2 text-xl font-medium">{product.title}</h3>
+          {horizontalOnMd && (
+            <p className="text-sm line-clamp-2 text-foreground/70   ">
+              {product.description}
+            </p>
+          )}
           <div className="flex items-center gap-1">
             <p className="text-foreground  text-sm">{price}</p>
             {originalPrice ? (
@@ -293,13 +302,11 @@ function DeferredVideoEmbed({
   )
 
   return (
-    <div
-      className={cn(
-        'w-full overflow-hidden space-y-3 mt-6',
-        radiusClass,
-      )}
-    >
-      <div style={{ color: textColor }} className="flex items-center gap-2 text-md font-medium">
+    <div className={cn('w-full overflow-hidden space-y-3 mt-6', radiusClass)}>
+      <div
+        style={{ color: textColor }}
+        className="flex items-center gap-2 text-md font-medium"
+      >
         {block.title || 'YouTube Video'}
       </div>
 
@@ -337,12 +344,12 @@ export const Route = createFileRoute('/$username/')({
     return {
       links: lcpHref
         ? [
-          {
-            rel: 'preload',
-            as: 'image',
-            href: lcpHref,
-          },
-        ]
+            {
+              rel: 'preload',
+              as: 'image',
+              href: lcpHref,
+            },
+          ]
         : [],
     }
   },
@@ -396,9 +403,9 @@ function UserProfile() {
   })
   const defaultHeaderLogoColor = isBanner
     ? getAppearanceTextColor({
-      backgroundType: 'image',
-      backgroundImageUrl: user.appearanceBgImageUrl,
-    }).foreground
+        backgroundType: 'image',
+        backgroundImageUrl: user.appearanceBgImageUrl,
+      }).foreground
     : profileTextColor.foreground
   const [headerLogoColor, setHeaderLogoColor] = React.useState(
     defaultHeaderLogoColor,
@@ -568,7 +575,10 @@ function UserProfile() {
           <div className="absolute inset-0 bg-background/45" />
         </div>
       ) : null}
-      <SiteUserProfileHeader textColor={profileTextColor.foreground} className={isDarkBg ? 'border-white/10' : 'border-border'} />
+      <SiteUserProfileHeader
+        textColor={profileTextColor.foreground}
+        className={isDarkBg ? 'border-white/10' : 'border-border'}
+      />
 
       <div
         className={cn(
@@ -589,9 +599,7 @@ function UserProfile() {
               className="h-full w-full object-cover sm:rounded-lg"
             />
           </div>
-        ) : (
-          null
-        )}
+        ) : null}
 
         <div
           className={cn(
@@ -609,15 +617,19 @@ function UserProfile() {
           >
             <div className="flex gap-4">
               <div className="relative w-11 h-11 sm:h-24 sm:w-24">
-                <Avatar className={cn("absolute top-0 w-11 h-11 sm:h-24 sm:w-24 ring-3 ring-foreground/10", isDarkBg ? ' ring-white/10' : 'ring-border',)}>
-                  <AvatarImage src={user.image || "/avatar-placeholder.png"} />
+                <Avatar
+                  className={cn(
+                    'absolute top-0 w-11 h-11 sm:h-24 sm:w-24 ring-3 ring-foreground/10',
+                    isDarkBg ? ' ring-white/10' : 'ring-border',
+                  )}
+                >
+                  <AvatarImage src={user.image || '/avatar-placeholder.png'} />
                   <AvatarFallback className="text-lg font-bold">
                     {user.name}
                   </AvatarFallback>
                 </Avatar>
               </div>
               <div className="flex flex-col justify-end">
-
                 <h1
                   id="profile-name"
                   className=" text-xl sm:text-3xl font-bold flex items-center gap-2"
@@ -698,9 +710,7 @@ function UserProfile() {
                 </Tabs>
               </div>
             ) : (
-              <div className="mt-6">
-                {profileBlocksSection}
-              </div>
+              <div className="mt-6">{profileBlocksSection}</div>
             )}
           </section>
         </div>
@@ -715,6 +725,6 @@ function UserProfile() {
           </div>
         </div>
       </div>
-    </div >
+    </div>
   )
 }

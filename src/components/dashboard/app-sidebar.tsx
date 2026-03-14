@@ -1,9 +1,4 @@
-import {
-  ChevronDown,
-  Search,
-  ExternalLink,
-  Copy
-} from 'lucide-react'
+import { ChevronDown, Search, ExternalLink, Copy } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter, useRouterState } from '@tanstack/react-router'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -17,6 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { authClient } from '@/lib/auth-client'
 import { adminAuthQueryKey, useAdminAuthContext } from '@/lib/admin-auth'
@@ -31,7 +27,9 @@ import { Button } from '../ui/button'
 const data = {
   navBottom: adminNavigationItems.filter((item) => item.section === 'other'),
   navMain: adminNavigationItems.filter((item) => item.section === 'main'),
-  navMonetize: adminNavigationItems.filter((item) => item.section === 'monetize'),
+  navMonetize: adminNavigationItems.filter(
+    (item) => item.section === 'monetize',
+  ),
 }
 
 const isAdminPage = (path: string, currentPath: string) => {
@@ -45,6 +43,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const location = useRouterState({ select: (s) => s.location })
+  const { setOpenMobile } = useSidebar()
 
   const { data: adminAuth, isPending } = useAdminAuthContext()
   const username = adminAuth?.username ?? ''
@@ -56,32 +55,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       variant="sidebar"
       className="border-muted"
     >
-
-      {isPending ? (null) : (
+      {isPending ? null : (
         <>
-          <SidebarHeader className=' px-4'>
+          <SidebarHeader className=" px-4">
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <SidebarMenuItem className='ml-1' >
-                    <LogoStudioSidebar text='Studio' />
+                  <SidebarMenuItem className="ml-1">
+                    <LogoStudioSidebar text="Studio" />
                   </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarHeader>
 
-          <SidebarContent className='px-4' >
-
+          <SidebarContent className="px-4">
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <DashboardSearchCommand >
-                      <SidebarMenuButton variant={'outline'} className='flex justify-between'>
+                    <DashboardSearchCommand>
+                      <SidebarMenuButton
+                        variant={'outline'}
+                        className="flex justify-between"
+                      >
                         <Search />
                         <span> Search...</span>
-                        <KbdGroup  >
+                        <KbdGroup>
                           <Kbd>⌘</Kbd>
                           <Kbd>J</Kbd>
                         </KbdGroup>
@@ -107,15 +107,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               activeOptions={{
                                 exact: item.url === '/admin',
                               }}
+                              onClick={() => setOpenMobile(false)}
                             />
                           }
                           isActive={isActive}
                           className={cn(
                             'text-foreground',
-                            isActive ? 'bg-background! shadow-sm' : ''
+                            isActive ? 'bg-background! shadow-sm' : '',
                           )}
                         >
-                          <item.icon className={cn('h-4 w-4 mr-1', 'text-foreground', isActive ? 'text-primary' : '')} />
+                          <item.icon
+                            className={cn(
+                              'h-4 w-4 mr-1',
+                              'text-foreground',
+                              isActive ? 'text-primary' : '',
+                            )}
+                          />
                           <span> {item.title}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -134,33 +141,57 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               activeOptions={{
                                 exact: item.url === '/admin',
                               }}
+                              onClick={() => setOpenMobile(false)}
                             />
                           }
                           isActive={isActive}
                           className={cn(
                             'text-foreground',
-                            isActive ? 'bg-background! shadow-sm' : ''
+                            isActive ? 'bg-background! shadow-sm' : '',
                           )}
                         >
-                          <item.icon className={cn('h-4 w-4 mr-1', 'text-foreground', isActive ? 'text-primary' : '')} />
+                          <item.icon
+                            className={cn(
+                              'h-4 w-4 mr-1',
+                              'text-foreground',
+                              isActive ? 'text-primary' : '',
+                            )}
+                          />
                           <span> {item.title}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     )
                   })}
-                  {data.navBottom.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        size={'default'}
-                        render={<Link to={item.url as any} />}
-                        isActive={location.pathname === item.url}
-                        className="text-foreground"
-                      >
-                        <item.icon className=" h-4 w-4" />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {data.navBottom.map((item) => {
+                    const isActive = isAdminPage(item.url, location.pathname)
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          size={'default'}
+                          render={
+                            <Link
+                              to={item.url as any}
+                              onClick={() => setOpenMobile(false)}
+                            />
+                          }
+                          isActive={isActive}
+                          className={cn(
+                            'text-foreground',
+                            isActive ? 'bg-background! shadow-sm' : '',
+                          )}
+                        >
+                          <item.icon
+                            className={cn(
+                              'h-4 w-4 mr-1',
+                              'text-foreground',
+                              isActive ? 'text-primary' : '',
+                            )}
+                          />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
                   {username ? (
                     <SidebarMenuItem>
                       <SidebarMenuButton
@@ -168,6 +199,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           <Link
                             to={'/$username'}
                             params={{ username }}
+                            onClick={() => setOpenMobile(false)}
                           />
                         }
                         className="text-foreground"
@@ -182,7 +214,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className='p-4'>
+          <SidebarFooter className="p-4">
             <SidebarMenuItem className="flex gap-3 items-center">
               <Popover>
                 <PopoverTrigger render={<SidebarMenuButton size="default" />}>
@@ -210,7 +242,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <h4 className="truncate font-medium text-sm">{username || adminAuth?.name}</h4>
+                      <h4 className="truncate font-medium text-sm">
+                        {username || adminAuth?.name}
+                      </h4>
                       <div className="truncate text-muted-foreground text-xs">
                         {adminAuth?.email}
                       </div>
@@ -219,7 +253,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Button
                     variant={'outline'}
                     className="mt-3 w-full"
-                    size='sm'
+                    size="sm"
                     onClick={async () => {
                       await authClient.signOut({
                         fetchOptions: {
@@ -233,7 +267,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         },
                       })
                     }}
-
                   >
                     Log out
                   </Button>
@@ -242,9 +275,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuItem>
           </SidebarFooter>
         </>
-      )
-      }
-    </Sidebar >
-
+      )}
+    </Sidebar>
   )
 }

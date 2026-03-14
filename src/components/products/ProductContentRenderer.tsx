@@ -1,4 +1,3 @@
-import * as React from 'react'
 import type { Content } from '@tiptap/react'
 import { EditorContent } from '@tiptap/react'
 import '@/components/ui/minimal-tiptap/styles/index.css'

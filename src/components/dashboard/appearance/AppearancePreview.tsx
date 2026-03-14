@@ -343,7 +343,7 @@ export function AppearancePreview({
                 >
                   <div className="flex gap-4">
                     <div className="relative w-11 h-11">
-                      <Avatar className="absolute top-0 w-11 h-11 border-2 border-background ring-1 ring-foreground/10">
+                      <Avatar className={cn("absolute top-0 w-11 h-11 b border-background ring-3 ring-foreground/10", isDarkBg ? ' ring-white/10' : 'ring-border')}>
                         <AvatarImage
                           src={user.image || '/avatar-placeholder.png'}
                         />
@@ -471,8 +471,8 @@ export function AppearancePreview({
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </div >
+      </div >
+    </div >
   )
 }

@@ -33,6 +33,7 @@ import SiteUserProfileHeader from '@/components/site-user-profile-header'
 import PublicProfileFooter from '@/components/public-profile-footer'
 import VerifiedIcon from '@/components/icon/verified-badge'
 import { SimpleTooltip } from '@/components/ui/tooltip'
+import PublicMark from '@/components/public-mark'
 
 type PublicBlock = PublicProfileBlock
 
@@ -608,7 +609,7 @@ function UserProfile() {
           >
             <div className="flex gap-4">
               <div className="relative w-11 h-11 sm:h-24 sm:w-24">
-                <Avatar className="absolute top-0 w-11 h-11 sm:h-24 sm:w-24 border-2 border-background ring-1 ring-foreground/10">
+                <Avatar className={cn("absolute top-0 w-11 h-11 sm:h-24 sm:w-24 ring-3 ring-foreground/10", isDarkBg ? ' ring-white/10' : 'ring-border',)}>
                   <AvatarImage src={user.image || "/avatar-placeholder.png"} />
                   <AvatarFallback className="text-lg font-bold">
                     {user.name}
@@ -639,7 +640,7 @@ function UserProfile() {
             </div>
             {user.bio ? (
               <p
-                className="mt-3 mx-auto text-md leading-relaxed "
+                className="mt-3 mx-auto text-md sm:text-lg leading-relaxed "
                 style={{ color: profileTextColor.mutedForeground }}
               >
                 {user.bio}
@@ -706,11 +707,11 @@ function UserProfile() {
 
         <div className="pb-4 pt-10">
           <div className="mx-auto sm:max-w-2xl md:max-w-3xl">
-            {/* <PublicMark
+            <PublicMark
               textColor={profileTextColor.mutedForeground}
               logoColor={profileTextColor.foreground}
-            /> */}
-            <PublicProfileFooter />
+            />
+            {/* <PublicProfileFooter /> */}
           </div>
         </div>
       </div>

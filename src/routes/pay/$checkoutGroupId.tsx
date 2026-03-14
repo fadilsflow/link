@@ -29,7 +29,6 @@ import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { getPaymentByCheckoutGroup } from '@/lib/payment-server'
 import { formatPrice } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
-import { Card, CardHeader, CardPanel, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { LogoType } from '@/components/kreasi-logo'
 
@@ -301,230 +300,228 @@ function PaymentPage() {
         </DialogPopup>
       </Dialog>
 
-      <div className="relative min-h-screen bg-muted">
-        <header className="sticky top-0 z-40 px-2 bg-primary">
-          <div className="flex h-14 items-center justify-between px-3">
-            <div className="-mt-0.5 flex shrink-0 items-center ">
-              <LogoType className='text-white' />
-            </div>
+      <div className="relative overflow-x-hidden">
+        <header className="sticky top-0 z-40 bg-background screen-line-after">
+          <div className="mx-auto flex max-w-6xl items-center justify-start px-4 py-4 sm:px-6 lg:px-10">
+            <LogoType className="text-foreground" text="Payment" />
           </div>
-        </header >
+        </header>
 
-        <div className="hidden md:block absolute inset-x-0 top-0 h-[420px] bg-primary" />
-        <div className="hidden md:block absolute inset-x-0 top-[300px] h-[240px] bg-muted [clip-path:polygon(0_28%,100%_0,100%_100%,0_100%)]" />
-
-
-        <div className="relative flex w-full max-w-6xl mx-auto flex-col px-4 pb-40 pt-5 sm:px-6 lg:px-10 lg:pb-8">
-          <div className="grid flex-1 gap-6 md:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)] xl:mt-8 xl:gap-8">
-            <Card className="p-3">
-              <CardHeader className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-                <div className="flex flex-col gap-5 w-full">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <CardTitle className="text-2xl font-heading">
-                        Product Purchase
-                      </CardTitle>
-                      <p className="text-2xl font-heading">
-                        {formatPrice(payment.amountBreakdown.totalAmount)}
-                      </p>
-                    </div>
-
-                    <Badge
-                      size="lg"
-                      variant={
-                        isPaid
-                          ? "success"
-                          : isFailedState
-                            ? "error"
-                            : "warning"
-                      }
-                      className="rounded-full px-5 py-3 text-lg font-semibold"
-                    >
-                      {paymentStatusLabel}
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    {paymentDeadline && (
-                      <div className="space-y-1">
-                        <p className="text-base font-medium">
-                          Pay Before
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {paymentDeadline}
-                        </p>
-                      </div>
-                    )}
-
-                    {showPaymentTiming && (
-                      <div
-                        className={`inline-flex items-center rounded-full px-5 py-2 text-sm font-semibold ${countdown.isExpired
-                          ? "bg-rose-100 text-rose-700"
-                          : "bg-muted text-foreground"
-                          }`}
-                      >
-                        <span className="font-mono">
-                          {countdown.label}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-              </CardHeader>
-
-              <CardPanel className="mt-3 flex flex-col items-center">
-                {isPaid ? (
-                  <div className="flex w-full max-w-xl flex-col items-center rounded-[2rem] border border-success/20 bg-gradient-to-b from-background to-success/5 px-6 py-12 text-center">
-                    <div className="flex size-28 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-[0_0_0_18px_rgba(16,185,129,0.10)]">
-                      <CheckCircle2 className="size-16" />
-                    </div>
-                    <h2 className="mt-8 text-3xl font-black tracking-tight text-emerald-700">
-                      Purchase successful
-                    </h2>
-                    <p className="mt-3 max-w-md text-base leading-7 text-emerald-900/70">
-                      Payment kamu sudah berhasil dikonfirmasi. Product siap
-                      diakses sekarang.
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
+          <div className="grid min-h-screen flex-1 gap-8 md:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)] md:divide-x">
+            <div className="space-y-6 pt-12 md:pr-8 screen-line-after">
+              <div className="flex flex-col gap-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <h1 className="text-2xl font-heading">
+                      Product Purchase
+                    </h1>
+                    <p className="text-2xl font-heading">
+                      {formatPrice(payment.amountBreakdown.totalAmount)}
                     </p>
-                    {payment.deliveryUrl ? (
-                      <Button
-                        className="mt-8 rounded-full px-8"
-                        size="lg"
-                        render={<a href={payment.deliveryUrl} />}
-                      >
-                        Access product
-                      </Button>
-                    ) : null}
                   </div>
-                ) : (
-                  <div className="w-full space-y-6">
-                    <div className="mx-auto flex w-full max-w-[250px] flex-col items-center">
-                      <div className="flex w-full  items-center justify-center rounded-md border border-input sm:min-h-[250px]">
-                        {qrCodeUrl ? (
-                          <img
-                            src={qrCodeUrl}
-                            alt="Payment QR"
-                            className="aspect-square w-full  rounded-md object-contain w-full h-full"
-                          />
-                        ) : showQrFallback ? (
-                          <div className="flex aspect-square w-full flex-col items-center justify-center rounded-xl border border-dashed border-input bg-background px-6 text-center">
-                            <QrCode className="size-14 text-muted-foreground" />
-                            <p className="mt-4 text-sm text-muted-foreground">
-                              QR code is generated by the provider. Open your
-                              payment app if it does not appear automatically.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="flex aspect-square w-full flex-col items-center justify-center rounded-xl border border-dashed border-input bg-background px-6 text-center">
-                            <QrCode className="size-14 text-muted-foreground" />
-                            <p className="mt-4 text-sm text-muted-foreground">
-                              Payment details are shown below. Complete the
-                              transfer and refresh the status afterwards.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-center gap-3">
-                        {qrCodeUrl ? (
-                          <Button
-                            variant="outline"
-                            className="rounded-full border-input bg-background px-5 shadow-none hover:bg-background"
-                            render={<a href={qrCodeUrl} download />}
-                          >
-                            <Download className="size-4" />
-                            Download QR
-                          </Button>
-
-                        ) : null}
-                        {payment.instructions.deeplinkUrl ? (
-                          <Button
-                            variant="outline"
-                            className="rounded-full border-input bg-background px-5 shadow-none hover:bg-background"
-                            render={
-                              <a
-                                href={payment.instructions.deeplinkUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                              />
-                            }
-                          >
-                            <ExternalLink className="size-4" />
-                            Open payment app
-                          </Button>
-                        ) : null}
-
-                      </div>
-                    </div>
-
-                    {instructionBlocks.length > 0 ? (
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {instructionBlocks.map((item) => (
-                          <div
-                            key={`${item.label}-${item.value}`}
-                            className="rounded-[1.2rem] border border-input bg-background px-4 py-4"
-                          >
-                            <p className="text-sm font-semibold text-foreground">
-                              {item.label}
-                            </p>
-                            <div className="mt-3 flex items-center justify-between gap-3">
-                              <code className="truncate text-sm font-semibold text-foreground">
-                                {item.value}
-                              </code>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                className="rounded-full border-input bg-background shadow-none hover:bg-background"
-                                onClick={() => copyToClipboard(item.value)}
-                              >
-                                <Copy className="size-4" />
-                                Copy
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : null}
-
-                    {showInstructionFallback ? (
-                      <p className="text-center text-sm text-muted-foreground">
-                        Use the selected payment method to complete payment,
-                        then refresh the status on this page.
-                      </p>
-                    ) : null}
-                  </div>
-                )}
-                <div className="mt-4 border-t border-dashed w-full">
-                  <Accordion className="w-full">
-                    <AccordionItem value="product-detail" className="border-none">
-                      <AccordionTrigger className="text-md font-medium">
-                        Product Detail
-                      </AccordionTrigger>
-                      <AccordionPanel className="space-y-4 pb-2">
-                        {payment.orders.map((order) => (
-                          <div
-                            key={order.id}
-                            className="flex items-start justify-between gap-4 rounded-[1.2rem] border border-input bg-background px-4 py-4"
-                          >
-                            <div>
-                              <p className="font-semibold text-foreground">
-                                {order.productTitle}
-                              </p>
-                              <p className="mt-1 text-sm text-muted-foreground">
-                                Qty {order.quantity}
-                              </p>
-                            </div>
-                            <span className="text-sm font-semibold text-foreground">
-                              {formatPrice(order.amountPaid)}
-                            </span>
-                          </div>
-                        ))}
-                      </AccordionPanel>
-                    </AccordionItem>
-                  </Accordion>
+                  <Badge
+                    size="default"
+                    variant={
+                      isPaid
+                        ? "success"
+                        : isFailedState
+                          ? "error"
+                          : "warning"
+                    }
+                    className="rounded-full px-5 py-3"
+                  >
+                    {paymentStatusLabel}
+                  </Badge>
                 </div>
 
+                <div className="border-t border-dashed" />
+
+                <div className="flex items-center justify-between">
+                  {paymentDeadline && (
+                    <div className="space-y-1">
+                      <p className="text-base font-medium">Pay Before</p>
+                      <p className="text-sm text-muted-foreground">
+                        {paymentDeadline}
+                      </p>
+                    </div>
+                  )}
+
+                  {showPaymentTiming && (
+                    <div
+                      className={`inline-flex items-center rounded-full px-5 py-2 text-sm font-semibold ${countdown.isExpired
+                        ? "bg-rose-100 text-rose-700"
+                        : "bg-muted text-foreground"
+                        }`}
+                    >
+                      <span className="font-mono">
+                        {countdown.label}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {isPaid ? (
+                <div className="flex w-full max-w-xl flex-col items-center rounded-[2rem] border border-success/20 bg-gradient-to-b from-background to-success/5 px-6 py-12 text-center">
+                  <div className="flex size-28 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-[0_0_0_18px_rgba(16,185,129,0.10)]">
+                    <CheckCircle2 className="size-16" />
+                  </div>
+                  <h2 className="mt-8 text-3xl font-black tracking-tight text-emerald-700">
+                    Purchase successful
+                  </h2>
+                  <p className="mt-3 max-w-md text-base leading-7 text-emerald-900/70">
+                    Payment kamu sudah berhasil dikonfirmasi. Product siap
+                    diakses sekarang.
+                  </p>
+                  {payment.deliveryUrl ? (
+                    <Button
+                      className="mt-8 rounded-full px-8"
+                      size="lg"
+                      render={<a href={payment.deliveryUrl} />}
+                    >
+                      Access product
+                    </Button>
+                  ) : null}
+                </div>
+              ) : isFailedState ? (
+                <div className="flex w-full max-w-xl flex-col items-center rounded-[2rem] border border-rose-500/20 bg-gradient-to-b from-background to-rose-500/5 px-6 py-12 text-center">
+                  <div className="flex size-28 items-center justify-center rounded-full bg-rose-100 text-rose-600 shadow-[0_0_0_18px_rgba(244,63,94,0.10)]">
+                    <XCircle className="size-16" />
+                  </div>
+                  <h2 className="mt-8 text-3xl font-black tracking-tight text-rose-700">
+                    {statusDialogCopy.title}
+                  </h2>
+                  <p className="mt-3 max-w-md text-base leading-7 text-rose-900/70">
+                    {statusDialogCopy.description}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="mx-auto flex w-full max-w-[250px] flex-col items-center">
+                    <div className="flex w-full items-center justify-center rounded-md border border-input sm:min-h-[250px]">
+                      {qrCodeUrl ? (
+                        <img
+                          src={qrCodeUrl}
+                          alt="Payment QR"
+                          className="aspect-square h-full w-full rounded-md object-contain"
+                        />
+                      ) : showQrFallback ? (
+                        <div className="flex aspect-square w-full flex-col items-center justify-center rounded-xl border border-dashed border-input bg-background px-6 text-center">
+                          <QrCode className="size-14 text-muted-foreground" />
+                          <p className="mt-4 text-sm text-muted-foreground">
+                            QR code is generated by the provider. Open your
+                            payment app if it does not appear automatically.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex aspect-square w-full flex-col items-center justify-center rounded-xl border border-dashed border-input bg-background px-6 text-center">
+                          <QrCode className="size-14 text-muted-foreground" />
+                          <p className="mt-4 text-sm text-muted-foreground">
+                            Payment details are shown below. Complete the
+                            transfer and refresh the status afterwards.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-center gap-3">
+                      {qrCodeUrl ? (
+                        <Button
+                          variant="outline"
+                          className="rounded-full border-input bg-background px-5 shadow-none hover:bg-background"
+                          render={<a href={qrCodeUrl} download />}
+                        >
+                          <Download className="size-4" />
+                          Download QR
+                        </Button>
+                      ) : null}
+                      {payment.instructions.deeplinkUrl ? (
+                        <Button
+                          variant="outline"
+                          className="rounded-full border-input bg-background px-5 shadow-none hover:bg-background"
+                          render={
+                            <a
+                              href={payment.instructions.deeplinkUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            />
+                          }
+                        >
+                          <ExternalLink className="size-4" />
+                          Open payment app
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {instructionBlocks.length > 0 ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {instructionBlocks.map((item) => (
+                        <div
+                          key={`${item.label}-${item.value}`}
+                          className="rounded-[1.2rem] border border-input bg-background px-4 py-4"
+                        >
+                          <p className="text-sm font-semibold text-foreground">
+                            {item.label}
+                          </p>
+                          <div className="mt-3 flex items-center justify-between gap-3">
+                            <code className="truncate text-sm font-semibold text-foreground">
+                              {item.value}
+                            </code>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="rounded-full border-input bg-background shadow-none hover:bg-background"
+                              onClick={() => copyToClipboard(item.value)}
+                            >
+                              <Copy className="size-4" />
+                              Copy
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {showInstructionFallback ? (
+                    <p className="text-center text-sm text-muted-foreground">
+                      Use the selected payment method to complete payment, then
+                      refresh the status on this page.
+                    </p>
+                  ) : null}
+                </div>
+              )}
+
+              <div className="border-t border-dashed">
+                <Accordion className="w-full">
+                  <AccordionItem value="product-detail" className="border-none">
+                    <AccordionTrigger className="text-md font-medium">
+                      Product Detail
+                    </AccordionTrigger>
+                    <AccordionPanel className="space-y-4 pb-2">
+                      {payment.orders.map((order) => (
+                        <div
+                          key={order.id}
+                          className="flex items-start justify-between gap-4 rounded-[1.2rem] border border-input bg-background px-4 py-4"
+                        >
+                          <div>
+                            <p className="font-semibold text-foreground">
+                              {order.productTitle}
+                            </p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              Qty {order.quantity}
+                            </p>
+                          </div>
+                          <span className="text-sm font-semibold text-foreground">
+                            {formatPrice(order.amountPaid)}
+                          </span>
+                        </div>
+                      ))}
+                    </AccordionPanel>
+                  </AccordionItem>
+                </Accordion>
                 {!isTerminalPaymentStatus(payment.status) ? (
                   <div className="w-full fixed bottom-0 left-0 right-0 z-20 bg-background p-4 md:static md:bg-transparent md:p-0">
                     <Button
@@ -537,87 +534,81 @@ function PaymentPage() {
                     </Button>
                   </div>
                 ) : null}
-              </CardPanel>
+              </div>
+            </div>
 
-            </Card>
+            <div className="space-y-6 pt-12 pb-32 md:pl-8 md:pb-8">
+              <span className="text-xs font-medium">Payment method</span>
 
-            <Card className='p-3 h-fit'>
-              <CardPanel className='flex flex-col gap-4'>
-                <h4 className="text-md font-medium">
-                  Payment Method
-                </h4>
-                <div className="rounded-full border px-3 py-2">
-                  <div className="flex items-center gap-4">
-                    <div className="rounded-full bg-primary px-3 py-1 text-xs font-bold uppercase text-primary-foreground">
-                      QRIS
-                    </div>
-                    <p className="text-sm font-medium">
-                      {payment.selectedPaymentMethod.title}
-                    </p>
+              <div className="rounded-full border px-3 py-2">
+                <div className="flex items-center gap-4">
+                  <div className="rounded-full bg-primary px-3 py-1 text-xs font-bold uppercase text-primary-foreground">
+                    QRIS
                   </div>
+                  <p className="text-sm font-medium">
+                    {payment.selectedPaymentMethod.title}
+                  </p>
                 </div>
-                <Accordion
-                  defaultValue={["transactions"]}
-                  className="w-full"
-                >
-                  <AccordionItem value="transactions" className="border-none">
-                    <AccordionTrigger className={'font-medium text-md'}>
-                      Detail Transactions
-                    </AccordionTrigger>
-                    <AccordionPanel>
-                      <div className="space-y-3">
-                        <div className="space-y-3 text-sm">
-                          {payment.orders.map((order) => (
-                            <div
-                              key={`summary-${order.id}`}
-                              className="flex items-start justify-between gap-4 "
-                            >
-                              <div>
-                                <p>Product</p>
-                              </div>
-                              <span>{formatPrice(order.amountPaid)}</span>
+              </div>
+
+              <Accordion defaultValue={["transactions"]} className="w-full">
+                <AccordionItem value="transactions" className="border-none">
+                  <AccordionTrigger className="text-md font-medium">
+                    Detail Transactions
+                  </AccordionTrigger>
+                  <AccordionPanel>
+                    <div className="space-y-3">
+                      <div className="space-y-3 text-sm">
+                        {payment.orders.map((order) => (
+                          <div
+                            key={`summary-${order.id}`}
+                            className="flex items-start justify-between gap-4"
+                          >
+                            <div>
+                              <p>Product</p>
                             </div>
-                          ))}
-                          <div className="flex items-center justify-between font-medium text-foreground">
-                            <span>Subtotal</span>
-                            <span>
-                              {formatPrice(
-                                payment.amountBreakdown.subtotalAmount,
-                              )}
-                            </span>
+                            <span>{formatPrice(order.amountPaid)}</span>
                           </div>
-                          <div className="flex items-center justify-between ">
-                            <span>Transaction Fee</span>
-                            <span>
-                              {formatPrice(
-                                payment.amountBreakdown.serviceFeeAmount,
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between ">
-                            <span>Payment Gateway Fee</span>
-                            <span>
-                              {formatPrice(
-                                payment.amountBreakdown.gatewayFeeAmount,
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between text-base font-medium text-foreground">
-                          <span>Total</span>
+                        ))}
+                        <div className="flex items-center justify-between font-medium text-foreground">
+                          <span>Subtotal</span>
                           <span>
-                            {formatPrice(payment.amountBreakdown.totalAmount)}
+                            {formatPrice(
+                              payment.amountBreakdown.subtotalAmount,
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Transaction Fee</span>
+                          <span>
+                            {formatPrice(
+                              payment.amountBreakdown.serviceFeeAmount,
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Payment Gateway Fee</span>
+                          <span>
+                            {formatPrice(
+                              payment.amountBreakdown.gatewayFeeAmount,
+                            )}
                           </span>
                         </div>
                       </div>
-                    </AccordionPanel>
-                  </AccordionItem>
-                </Accordion>
-              </CardPanel>
-            </Card>
+                      <div className="flex items-center justify-between text-base font-medium text-foreground">
+                        <span>Total</span>
+                        <span>
+                          {formatPrice(payment.amountBreakdown.totalAmount)}
+                        </span>
+                      </div>
+                    </div>
+                  </AccordionPanel>
+                </AccordionItem>
+              </Accordion>
+            </div>
           </div>
         </div>
-      </div >
+      </div>
     </>
   )
 }

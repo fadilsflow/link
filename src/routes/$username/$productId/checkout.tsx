@@ -360,7 +360,7 @@ function CheckoutPage() {
           <div className="space-y-4">
             <div className="flex items-start gap-4">
               {hasImage ? (
-                <div className="w-30 h-30 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
+                <div className="w-60 h-30 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
                   <img
                     src={productImages[0]}
                     alt={product.title}
@@ -379,7 +379,7 @@ function CheckoutPage() {
               )}
 
               <div className="flex-1 min-w-0 space-y-1">
-                <h1 className="text-lg font-semibold text-foreground leading-tight">
+                <h1 className="text-lg font-medium text-foreground leading-tight">
                   {product.title}
                 </h1>
                 <p className="text-sm text-muted-foreground">

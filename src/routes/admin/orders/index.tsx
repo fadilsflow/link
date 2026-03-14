@@ -55,7 +55,7 @@ function getStatusBadge(status: string) {
           variant="outline"
           className="border-zinc-500/30 text-zinc-600 bg-zinc-50/50"
         >
-          Cancelled
+          Expired
         </Badge>
       )
     case 'pending':

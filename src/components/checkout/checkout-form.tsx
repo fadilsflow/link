@@ -1,7 +1,5 @@
 import * as React from 'react'
-import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardPanel, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -80,158 +78,147 @@ export function CheckoutForm({
   }
 
   return (
-    <form onSubmit={onSubmit}>
-      <div className="relative min-h-screen bg-muted">
-        <header className="sticky top-0 z-40 px-2 bg-primary">
-          <div className="flex h-14 items-center justify-between px-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white/80 hover:bg-white/10"
-              onClick={() => window.history.back()}
-            >
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              Back
-            </Button>
-            <div className="-mt-0.5 flex shrink-0 items-center">
-              <LogoType className="text-white" />
-            </div>
-            <div className="w-[70px]" />
+    <form onSubmit={onSubmit} className="overflow-x-hidden">
+      <div className="relative">
+
+        {/* HEADER */}
+        <header className="sticky top-0 z-40 bg-background screen-line-after">
+          <div className="mx-auto flex max-w-6xl items-center justify-start px-4 py-4 sm:px-6 lg:px-10">
+            <LogoType className="text-foreground" text="Checkout" />
           </div>
         </header>
 
-        <div className="hidden md:block absolute inset-x-0 top-0 h-[420px] bg-primary" />
-        <div className="hidden md:block absolute inset-x-0 top-[300px] h-[240px] bg-muted [clip-path:polygon(0_28%,100%_0,100%_100%,0_100%)]" />
+        {/* MAIN CONTAINER */}
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
 
-        <div className="relative flex w-full max-w-6xl mx-auto flex-col px-4 pb-40 pt-5 sm:px-6 lg:px-10 lg:pb-8">
-          <div className="grid flex-1 gap-6 md:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)] xl:mt-8 xl:gap-8">
-            <Card className="p-3">
-              <CardHeader className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <CardTitle className="text-2xl font-heading">
-                  Checkout
-                </CardTitle>
-              </CardHeader>
-              <CardPanel className="space-y-6">
-                {purchasedProducts}
-                <div className="space-y-5">
-                  <h4 className="text-md font-medium">
-                    Complete Personal Information
-                  </h4>
+          <div className="grid min-h-screen flex-1 gap-8 md:grid-cols-[minmax(0,1.7fr)_minmax(360px,1fr)] md:divide-x">
 
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm">
-                        Email address*
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => onEmailChange(e.target.value)}
-                        placeholder="you@example.com"
-                        required
-                        size={'lg'}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-sm">
-                        Full name*
-                      </Label>
-                      <Input
-                        id="name"
-                        value={name}
-                        onChange={(e) => onNameChange(e.target.value)}
-                        placeholder="Your name"
-                        required
-                        size={'lg'}
-                      />
-                    </div>
-                  </div>
+            {/* LEFT COLUMN */}
+            <div className="space-y-6 pt-12 md:pr-8 screen-line-after">
 
-                  {additionalContactFields}
+              {purchasedProducts}
 
-                  <div className="space-y-2 pt-2">
-                    <Label htmlFor="note" className="text-sm">
-                      Note to seller{' '}
-                      <span className="text-muted-foreground">
-                        (optional)
-                      </span>
+              <div className="space-y-5">
+                <h4 className="text-md font-medium">
+                  Complete Personal Information
+                </h4>
+
+                <div className="space-y-4">
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm">
+                      Email address*
                     </Label>
-                    <Textarea
-                      id="note"
-                      rows={2}
-                      value={note}
-                      onChange={(e) => onNoteChange(e.target.value)}
-                      placeholder="Any special requests..."
-                      className="resize-none"
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => onEmailChange(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                      size="lg"
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm">
+                      Full name*
+                    </Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => onNameChange(e.target.value)}
+                      placeholder="Your name"
+                      required
+                      size="lg"
+                    />
+                  </div>
+
                 </div>
-              </CardPanel>
-            </Card>
 
-            <Card className="p-3 h-fit">
-              <CardPanel className="flex flex-col gap-4">
+                {additionalContactFields}
 
-                <Label
-                  htmlFor={paymentOptionsName}
-                  className="text-xs font-medium"
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="note" className="text-sm">
+                    Note to seller{" "}
+                    <span className="text-muted-foreground">(optional)</span>
+                  </Label>
+                  <Textarea
+                    id="note"
+                    rows={2}
+                    value={note}
+                    onChange={(e) => onNoteChange(e.target.value)}
+                    placeholder="Any special requests..."
+                    className="resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div className="space-y-6 pt-12 pb-32 md:pl-8 md:pb-8">
+
+              <Label htmlFor={paymentOptionsName} className="text-xs font-medium">
+                Payment method
+              </Label>
+
+              <Select
+                value={paymentMethod}
+                onValueChange={(value) =>
+                  onPaymentMethodChange(value as CheckoutPaymentMethod)
+                }
+              >
+                <SelectTrigger
+                  size="lg"
+                  id={paymentOptionsName}
+                  className="justify-between px-4"
                 >
-                  Payment method
-                </Label>
-                <Select
-                  value={paymentMethod}
-                  onValueChange={(value) =>
-                    onPaymentMethodChange(value as CheckoutPaymentMethod)
-                  }
-                >
-                  <SelectTrigger
-                    id={paymentOptionsName}
-                    className="justify-between px-4"
-                  >
-                    <SelectValue>
-                      <div className="flex w-full items-center justify-between gap-3 text-left">
-                        <span className="truncate font-medium text-foreground">
-                          {selectedPaymentMethod.title}
+                  <SelectValue>
+                    <div className="flex w-full items-center justify-between gap-3">
+                      <span className="truncate font-medium">
+                        {selectedPaymentMethod.title}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Fee {formatGatewayFeeLabel(selectedPaymentMethod.id)}
+                      </span>
+                    </div>
+                  </SelectValue>
+                </SelectTrigger>
+
+                <SelectContent>
+                  {PAYMENT_METHOD_CATALOG.map((option) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      <div className="flex w-full items-center justify-between gap-3">
+                        <span className="truncate font-medium">
+                          {option.title}
                         </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          Fee{' '}
-                          {formatGatewayFeeLabel(selectedPaymentMethod.id)}
+                        <span className="text-xs text-muted-foreground">
+                          {formatGatewayFeeLabel(option.id)}
                         </span>
                       </div>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAYMENT_METHOD_CATALOG.map((option) => (
-                      <SelectItem key={option.id} value={option.id}>
-                        <div className="flex w-full items-center justify-between gap-3">
-                          <span className="truncate font-medium text-foreground">
-                            {option.title}
-                          </span>
-                          <span className="shrink-0 text-xs text-muted-foreground">
-                            {formatGatewayFeeLabel(option.id)}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {paymentDetail}
-                {rightTopSection}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
+              {paymentDetail}
+              {rightTopSection}
 
-                <div className="w-full fixed bottom-0 left-0 right-0 z-20 bg-background p-4 md:static md:bg-transparent md:p-0">
+              {/* PAY BUTTON */}
+              <div className="fixed bottom-0 left-0 right-0 z-20 border-t bg-background p-4 md:static md:border-0 md:p-0">
+                <div className="mx-auto max-w-6xl">
                   <Button
                     type="submit"
                     size="xl"
-                    className="w-full py-6 rounded-full text-xl font-semibold md:mt-2"
+                    className="w-full rounded-full py-6 text-xl font-semibold"
                     loading={isSubmitting}
                   >
                     {payLabel}
                   </Button>
                 </div>
-              </CardPanel>
-            </Card>
+              </div>
+
+            </div>
           </div>
         </div>
       </div>

@@ -193,8 +193,8 @@ function ProductImage({ images, title }: ProductImageProps) {
               aria-hidden="true"
               className={
                 isCurrent
-                  ? 'h-2 w-2 rounded-full transition-colors bg-muted-foreground'
-                  : 'h-2 w-2 rounded-full transition-colors bg-background'
+                  ? 'border h-2 w-2 rounded-full transition-colors bg-muted-foreground'
+                  : 'border h-2 w-2 rounded-full transition-colors bg-background'
               }
             />
           )

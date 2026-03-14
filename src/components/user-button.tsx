@@ -37,7 +37,7 @@ export default function UserButton() {
             <UserIcon className="size-3 text-muted-foreground" />
           </div>
         )}
-        <span className="text-sm font-medium">
+        <span className="text-sm font-medium font-sans">
           {username || session.user.name.split(' ')[0]}
         </span>
       </PopoverTrigger>

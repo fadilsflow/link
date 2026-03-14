@@ -43,12 +43,12 @@ const LogoType = ({
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-2 text-xl font-medium text-black",
+        "flex items-center justify-center gap-1 text-xl font-medium text-black",
         className,
       )}
       style={style}
     >
-      <KreasiLogo width={logoSize ?? 24} height={logoSize ?? 24} />
+      <KreasiLogo width={logoSize ?? 24} height={logoSize ?? 24} className="mt-0.5"/>
       <span
         className={cn("relative top-0.5 text-2xl font-heading", textClassName)}
         style={textSize ? { fontSize: textSize } : undefined}

@@ -13,8 +13,8 @@ export default function PublicMark({ textColor, logoColor }: PublicMarkProps) {
         <p style={{ color: textColor }} className="text-sm">
           Powered by{" "}
         </p>
-        <Link className="font-heading" to="/" style={{ color: textColor }}>
-          <LogoType style={{ color: logoColor }} />
+        <Link className="" to="/" style={{ color: textColor }}>
+          <LogoType style={{ color: logoColor }} logoSize={14} textSize='15px' />
         </Link>
       </div>
     </div >

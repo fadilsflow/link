@@ -4,7 +4,10 @@ import { SidebarTrigger } from './ui/sidebar'
 function AppHeader({ className, ...props }: React.ComponentProps<'header'>) {
   return (
     <header
-      className={cn('mb-6 flex items-start justify-between gap-4', className)}
+      className={cn(
+        'sticky md:static top-0 sm:flex z-50 bg-background flex items-start justify-between gap-4 px-4 md:px-10 py-4 md:py-8',
+        className,
+      )}
       {...props}
     />
   )
@@ -19,13 +22,13 @@ function AppHeaderContent({
   return (
     <div className={cn('flex flex-col gap-1', className)} {...props}>
       <div className="flex items-center gap-3">
-        <SidebarTrigger className='flex md:hidden' />
+        <SidebarTrigger className="flex md:hidden" />
         <h1 className="font-medium text-foreground text-2xl leading-none">
           {title}
         </h1>
       </div>
       {children}
-    </div >
+    </div>
   )
 }
 

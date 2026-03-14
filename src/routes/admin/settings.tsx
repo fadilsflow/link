@@ -283,9 +283,9 @@ function SettingsPage() {
         (previous: typeof adminAuth | undefined) =>
           previous
             ? {
-                ...previous,
-                username,
-              }
+              ...previous,
+              username,
+            }
             : previous,
       )
       toastManager.add({
@@ -762,11 +762,11 @@ function SettingsPage() {
   }, [usernameFailedMessage])
 
   return (
-    <div className="p-4 md:p-10 pb-20 pd:mb-0">
-      <div className=" space-y-6">
-        <AppHeader>
-          <AppHeaderContent title="Settings" />
-        </AppHeader>
+    <div>
+      <AppHeader>
+        <AppHeaderContent title="Settings" />
+      </AppHeader>
+      <div className="px-4 md:px-10 pb-4 md:pb-10 space-y-6">
         <Tabs defaultValue="tab-1">
           <TabsList>
             <TabsTab value="tab-1">Accounts</TabsTab>

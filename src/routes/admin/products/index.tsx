@@ -405,44 +405,44 @@ function ProductsIndexPage() {
   if (!session?.user) return null
 
   return (
-    <div className="space-y-6 p-4 md:p-10 mb-20 md:mb-0">
+    <>
       <AppHeader>
-        <AppHeaderContent title="Products">
-        </AppHeaderContent>
+        <AppHeaderContent title="Products"></AppHeaderContent>
         <AppHeaderActions>
-          <Button size="lg" render={<Link to="/admin/products/new" />}>
+          <Button size="sm" render={<Link to="/admin/products/new" />}>
             <Plus className="h-4 w-4 mr-1.5" />
             New product
           </Button>
         </AppHeaderActions>
       </AppHeader>
-
-      {(isProductsLoading || isProductsFetching) && products.length === 0 ? (
-        <div className="min-h-[500px] flex items-center justify-center py-12">
-          <Spinner className="h-5 w-5 text-muted-foreground" />
-        </div>
-      ) : products.length === 0 ? (
-        <div className="min-h-[500px] flex items-center justify-center py-12">
-          <EmptyState
-            title="Create your first product"
-            description="Adding products to your store is easy peasy. Create products in
+      <div className="space-y-6 px-4 md:px-10 pb-4 md:pb-10 mb-20 md:mb-0">
+        {(isProductsLoading || isProductsFetching) && products.length === 0 ? (
+          <div className="min-h-[500px] flex items-center justify-center py-12">
+            <Spinner className="h-5 w-5 text-muted-foreground" />
+          </div>
+        ) : products.length === 0 ? (
+          <div className="min-h-[500px] flex items-center justify-center py-12">
+            <EmptyState
+              title="Create your first product"
+              description="Adding products to your store is easy peasy. Create products in
           minutes and start making sales."
-            icon={<PackageIcon className="h-5 w-5" />}
-          >
-            <Button render={<Link to="/admin/products/new" />}>
-              <Plus className="h-4 w-4 mr-1.5" />
-              Create Product
-            </Button>
-          </EmptyState>
-        </div>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={products}
-          searchKey="title"
-          filterPlaceholder="Search Products"
-        />
-      )}
-    </div>
+              icon={<PackageIcon className="h-5 w-5" />}
+            >
+              <Button render={<Link to="/admin/products/new" />}>
+                <Plus className="h-4 w-4 mr-1.5" />
+                Create Product
+              </Button>
+            </EmptyState>
+          </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={products}
+            searchKey="title"
+            filterPlaceholder="Search Products"
+          />
+        )}
+      </div>
+    </>
   )
 }

@@ -135,7 +135,7 @@ function HomePage() {
 
   return (
     <>
-      <AppHeader className="px-4 md:px-10 pt-4 md:pt-10 pb-6 mb-2 sm:mb-0">
+      <AppHeader>
         <AppHeaderContent title="Home">
         </AppHeaderContent>
       </AppHeader>

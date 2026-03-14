@@ -242,8 +242,8 @@ export function AppearancePreview({
         user.appearanceBackgroundGradientBottom || undefined
       }
       textForegroundColor={profileTextColor.foreground}
-      onOpenBlockUrl={() => {}}
-      onTrackClick={() => {}}
+      onOpenBlockUrl={() => { }}
+      onTrackClick={() => { }}
       renderVideoBlock={(block) => (
         <div
           key={block.id}

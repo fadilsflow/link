@@ -306,12 +306,11 @@ function OrdersPage() {
 
   return (
     <>
-      <div className="space-y-6">
-        <AppHeader>
-          <AppHeaderContent title="Orders">
-          </AppHeaderContent>
-        </AppHeader>
-
+      <AppHeader>
+        <AppHeaderContent title="Orders">
+        </AppHeaderContent>
+      </AppHeader>
+      <div className="space-y-6 px-4 md:px-10 pb-4 md:pb-10">
         {(isOrdersLoading || isOrdersFetching) && orders.length === 0 ? (
           <div className="min-h-[500px] flex items-center justify-center py-12">
             <Spinner className="h-5 w-5 text-muted-foreground" />

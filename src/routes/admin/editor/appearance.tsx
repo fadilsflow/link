@@ -355,11 +355,12 @@ function AppearanceEditor({
   }
 
   return (
-    <div className='p-4 md:p-10 space-y-6'>
-      <AppHeader >
+    <>
+      <AppHeader>
         <AppHeaderContent title="Appearance">
         </AppHeaderContent>
       </AppHeader>
+      <div className='px-4 md:px-10 pb-4 md:pb-10 space-y-6'>
       <Frame>
         <FrameHeader className="flex flex-row items-center justify-between">
           <FrameTitle>Banner</FrameTitle>
@@ -619,6 +620,7 @@ function AppearanceEditor({
           </Select>
         </FramePanel>
       </Frame>
-    </div>
+      </div>
+    </>
   )
 }

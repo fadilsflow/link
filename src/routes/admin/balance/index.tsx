@@ -330,177 +330,179 @@ function BalancePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <AppHeader>
         <AppHeaderContent title="Balance">
         </AppHeaderContent>
       </AppHeader>
-      {hasPendingPayout && (
-        <Alert variant={'info'} className="border-none bg-muted text-xs">
-          <InfoIcon />
-          <AlertTitle>You already have a pending payout request. Only one pending payout is allowed.
-          </AlertTitle>
-        </Alert>
-      )}
-      {/* Balance Cards */}
-      <div className="grid gap-0 sm:grid-cols-2 gap-4 ">
-        <BalanceCard
-          title="Active Balance"
-          value={summary?.availableBalance ?? 0}
-          isLoading={isLoading}
-          activeBalance
-          isHidden={isBalanceHidden}
-          onToggleHidden={() => setIsBalanceHidden(!isBalanceHidden)}
-          actionLabel={
-            hasPendingPayout
-              ? 'Pending payout in progress'
-              : 'Withdraw'
-          }
-          actionDisabled={disablePayoutRequest || isLoading}
-          // actionLoading={requestPayoutMutation.isPending}
-          onAction={() => setPayoutDialogOpen(true)}
-        />
-        <BalanceCard
-          title="Pending Balance"
-          value={summary?.pendingBalance ?? 0}
-          isLoading={isLoading}
-          isHidden={isBalanceHidden}
-          onToggleHidden={() => setIsBalanceHidden(!isBalanceHidden)}
-          actionLabel={'Refresh'}
-          actionLoading={isRefreshing}
-          onAction={handleRefreshBalance}
-        />
-      </div>
-
-
-      <Dialog
-        open={payoutDialogOpen}
-        onOpenChange={(open) => {
-          setPayoutDialogOpen(open)
-          if (!open) setPayoutAmountInput('')
-        }}
-      >
-        <DialogPopup className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create Payout</DialogTitle>
-            <DialogDescription>
-              Enter the amount you want to withdraw.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogPanel className="space-y-3">
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">
-                Available balance: {formatPrice(availableBalance)}
-              </p>
-              <div className="flex gap-2">
-                <Input
-                  inputMode="numeric"
-                  placeholder="0"
-                  value={payoutAmountInput}
-                  onChange={(e) => {
-                    const amount = parsePriceInput(e.target.value)
-                    setPayoutAmountInput(formatPriceInput(amount))
-                  }}
-                  autoFocus
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() =>
-                    setPayoutAmountInput(formatPriceInput(availableBalance))
-                  }
-                  disabled={availableBalance <= 0}
-                >
-                  Max
-                </Button>
-              </div>
-              {payoutAmountError && (
-                <p className="text-xs text-red-500">{payoutAmountError}</p>
-              )}
-            </div>
-          </DialogPanel>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setPayoutDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={() => requestPayoutMutation.mutate({ amount: payoutAmount })}
-              disabled={requestPayoutMutation.isPending || !!payoutAmountError}
-              loading={requestPayoutMutation.isPending}
-            >
-              Confirm Payout
-            </Button>
-          </DialogFooter>
-        </DialogPopup>
-      </Dialog>
-
-      <Frame>
-        <FrameHeader>
-          <FrameTitle>History</FrameTitle>
-        </FrameHeader>
-        <FramePanel className="space-y-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <Tabs
-              value={historyTab}
-              onValueChange={(value) => setHistoryTab(value as HistoryTab)}
-              className="gap-0"
-            >
-              <TabsList variant="underline" className="w-full md:w-auto">
-                <TabsTab value="all">All</TabsTab>
-                <TabsTab value="pending">Pending</TabsTab>
-                <TabsTab value="settled">Settled</TabsTab>
-              </TabsList>
-            </Tabs>
-
-            <div className="flex items-center gap-2">
-              <Select
-                value={historyTypeFilter}
-                onValueChange={(value) => setHistoryTypeFilter(value ?? 'all')}
-              >
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="By type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {historyTypeOptions.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type === 'all' ? 'All Types' : type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={historyDateOrder}
-                onValueChange={(value) => {
-                  setHistoryDateOrder((value as HistorySort | null) ?? 'recent')
-                }}
-              >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="By date" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recent">Recent</SelectItem>
-                  <SelectItem value="older">Older</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <DataTable
-            variant='none'
-            columns={historyColumns}
-            data={filteredHistoryRows}
-            isLoading={isHistoryLoading}
-            emptyText="No history found for the selected filters."
+      <div className="space-y-6 px-4 md:px-10 pb-4 md:pb-10">
+        {hasPendingPayout && (
+          <Alert variant={'info'} className="border-none bg-muted text-xs">
+            <InfoIcon />
+            <AlertTitle>You already have a pending payout request. Only one pending payout is allowed.
+            </AlertTitle>
+          </Alert>
+        )}
+        {/* Balance Cards */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          <BalanceCard
+            title="Active Balance"
+            value={summary?.availableBalance ?? 0}
+            isLoading={isLoading}
+            activeBalance
+            isHidden={isBalanceHidden}
+            onToggleHidden={() => setIsBalanceHidden(!isBalanceHidden)}
+            actionLabel={
+              hasPendingPayout
+                ? 'Pending payout in progress'
+                : 'Withdraw'
+            }
+            actionDisabled={disablePayoutRequest || isLoading}
+            // actionLoading={requestPayoutMutation.isPending}
+            onAction={() => setPayoutDialogOpen(true)}
           />
-        </FramePanel>
-      </Frame>
-    </div>
+          <BalanceCard
+            title="Pending Balance"
+            value={summary?.pendingBalance ?? 0}
+            isLoading={isLoading}
+            isHidden={isBalanceHidden}
+            onToggleHidden={() => setIsBalanceHidden(!isBalanceHidden)}
+            actionLabel={'Refresh'}
+            actionLoading={isRefreshing}
+            onAction={handleRefreshBalance}
+          />
+        </div>
+
+
+        <Dialog
+          open={payoutDialogOpen}
+          onOpenChange={(open) => {
+            setPayoutDialogOpen(open)
+            if (!open) setPayoutAmountInput('')
+          }}
+        >
+          <DialogPopup className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create Payout</DialogTitle>
+              <DialogDescription>
+                Enter the amount you want to withdraw.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogPanel className="space-y-3">
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Available balance: {formatPrice(availableBalance)}
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    inputMode="numeric"
+                    placeholder="0"
+                    value={payoutAmountInput}
+                    onChange={(e) => {
+                      const amount = parsePriceInput(e.target.value)
+                      setPayoutAmountInput(formatPriceInput(amount))
+                    }}
+                    autoFocus
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() =>
+                      setPayoutAmountInput(formatPriceInput(availableBalance))
+                    }
+                    disabled={availableBalance <= 0}
+                  >
+                    Max
+                  </Button>
+                </div>
+                {payoutAmountError && (
+                  <p className="text-xs text-red-500">{payoutAmountError}</p>
+                )}
+              </div>
+            </DialogPanel>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setPayoutDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={() => requestPayoutMutation.mutate({ amount: payoutAmount })}
+                disabled={requestPayoutMutation.isPending || !!payoutAmountError}
+                loading={requestPayoutMutation.isPending}
+              >
+                Confirm Payout
+              </Button>
+            </DialogFooter>
+          </DialogPopup>
+        </Dialog>
+
+        <Frame>
+          <FrameHeader>
+            <FrameTitle>History</FrameTitle>
+          </FrameHeader>
+          <FramePanel className="space-y-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <Tabs
+                value={historyTab}
+                onValueChange={(value) => setHistoryTab(value as HistoryTab)}
+                className="gap-0"
+              >
+                <TabsList variant="underline" className="w-full md:w-auto">
+                  <TabsTab value="all">All</TabsTab>
+                  <TabsTab value="pending">Pending</TabsTab>
+                  <TabsTab value="settled">Settled</TabsTab>
+                </TabsList>
+              </Tabs>
+
+              <div className="flex items-center gap-2">
+                <Select
+                  value={historyTypeFilter}
+                  onValueChange={(value) => setHistoryTypeFilter(value ?? 'all')}
+                >
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="By type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {historyTypeOptions.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type === 'all' ? 'All Types' : type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={historyDateOrder}
+                  onValueChange={(value) => {
+                    setHistoryDateOrder((value as HistorySort | null) ?? 'recent')
+                  }}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="By date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">Recent</SelectItem>
+                    <SelectItem value="older">Older</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DataTable
+              variant='none'
+              columns={historyColumns}
+              data={filteredHistoryRows}
+              isLoading={isHistoryLoading}
+              emptyText="No history found for the selected filters."
+            />
+          </FramePanel>
+        </Frame>
+      </div>
+    </>
   )
 }
 

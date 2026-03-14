@@ -21,9 +21,7 @@ import { Route as DTokenRouteImport } from './routes/d/$token'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminProductsRouteRouteImport } from './routes/admin/products/route'
-import { Route as AdminOrdersRouteRouteImport } from './routes/admin/orders/route'
 import { Route as AdminEditorRouteRouteImport } from './routes/admin/editor/route'
-import { Route as AdminBalanceRouteRouteImport } from './routes/admin/balance/route'
 import { Route as AdminProductsIndexRouteImport } from './routes/admin/products/index'
 import { Route as AdminOrdersIndexRouteImport } from './routes/admin/orders/index'
 import { Route as AdminBalanceIndexRouteImport } from './routes/admin/balance/index'
@@ -97,19 +95,9 @@ const AdminProductsRouteRoute = AdminProductsRouteRouteImport.update({
   path: '/products',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminOrdersRouteRoute = AdminOrdersRouteRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
 const AdminEditorRouteRoute = AdminEditorRouteRouteImport.update({
   id: '/editor',
   path: '/editor',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminBalanceRouteRoute = AdminBalanceRouteRouteImport.update({
-  id: '/balance',
-  path: '/balance',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminProductsIndexRoute = AdminProductsIndexRouteImport.update({
@@ -118,14 +106,14 @@ const AdminProductsIndexRoute = AdminProductsIndexRouteImport.update({
   getParentRoute: () => AdminProductsRouteRoute,
 } as any)
 const AdminOrdersIndexRoute = AdminOrdersIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminOrdersRouteRoute,
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminBalanceIndexRoute = AdminBalanceIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminBalanceRouteRoute,
+  id: '/balance/',
+  path: '/balance/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const UsernameProductIdIndexRoute = UsernameProductIdIndexRouteImport.update({
   id: '/$username/$productId/',
@@ -181,9 +169,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
-  '/admin/balance': typeof AdminBalanceRouteRouteWithChildren
   '/admin/editor': typeof AdminEditorRouteRouteWithChildren
-  '/admin/orders': typeof AdminOrdersRouteRouteWithChildren
   '/admin/products': typeof AdminProductsRouteRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -236,9 +222,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
-  '/admin/balance': typeof AdminBalanceRouteRouteWithChildren
   '/admin/editor': typeof AdminEditorRouteRouteWithChildren
-  '/admin/orders': typeof AdminOrdersRouteRouteWithChildren
   '/admin/products': typeof AdminProductsRouteRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -267,9 +251,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/register'
-    | '/admin/balance'
     | '/admin/editor'
-    | '/admin/orders'
     | '/admin/products'
     | '/admin/settings'
     | '/auth/callback'
@@ -321,9 +303,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/register'
-    | '/admin/balance'
     | '/admin/editor'
-    | '/admin/orders'
     | '/admin/products'
     | '/admin/settings'
     | '/auth/callback'
@@ -448,25 +428,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminProductsRouteRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/orders': {
-      id: '/admin/orders'
-      path: '/orders'
-      fullPath: '/admin/orders'
-      preLoaderRoute: typeof AdminOrdersRouteRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
     '/admin/editor': {
       id: '/admin/editor'
       path: '/editor'
       fullPath: '/admin/editor'
       preLoaderRoute: typeof AdminEditorRouteRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
-    '/admin/balance': {
-      id: '/admin/balance'
-      path: '/balance'
-      fullPath: '/admin/balance'
-      preLoaderRoute: typeof AdminBalanceRouteRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/products/': {
@@ -478,17 +444,17 @@ declare module '@tanstack/react-router' {
     }
     '/admin/orders/': {
       id: '/admin/orders/'
-      path: '/'
+      path: '/orders'
       fullPath: '/admin/orders/'
       preLoaderRoute: typeof AdminOrdersIndexRouteImport
-      parentRoute: typeof AdminOrdersRouteRoute
+      parentRoute: typeof AdminRouteRoute
     }
     '/admin/balance/': {
       id: '/admin/balance/'
-      path: '/'
+      path: '/balance'
       fullPath: '/admin/balance/'
       preLoaderRoute: typeof AdminBalanceIndexRouteImport
-      parentRoute: typeof AdminBalanceRouteRoute
+      parentRoute: typeof AdminRouteRoute
     }
     '/$username/$productId/': {
       id: '/$username/$productId/'
@@ -556,17 +522,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AdminBalanceRouteRouteChildren {
-  AdminBalanceIndexRoute: typeof AdminBalanceIndexRoute
-}
-
-const AdminBalanceRouteRouteChildren: AdminBalanceRouteRouteChildren = {
-  AdminBalanceIndexRoute: AdminBalanceIndexRoute,
-}
-
-const AdminBalanceRouteRouteWithChildren =
-  AdminBalanceRouteRoute._addFileChildren(AdminBalanceRouteRouteChildren)
-
 interface AdminEditorRouteRouteChildren {
   AdminEditorAppearanceRoute: typeof AdminEditorAppearanceRoute
   AdminEditorProfilesRoute: typeof AdminEditorProfilesRoute
@@ -579,17 +534,6 @@ const AdminEditorRouteRouteChildren: AdminEditorRouteRouteChildren = {
 
 const AdminEditorRouteRouteWithChildren =
   AdminEditorRouteRoute._addFileChildren(AdminEditorRouteRouteChildren)
-
-interface AdminOrdersRouteRouteChildren {
-  AdminOrdersIndexRoute: typeof AdminOrdersIndexRoute
-}
-
-const AdminOrdersRouteRouteChildren: AdminOrdersRouteRouteChildren = {
-  AdminOrdersIndexRoute: AdminOrdersIndexRoute,
-}
-
-const AdminOrdersRouteRouteWithChildren =
-  AdminOrdersRouteRoute._addFileChildren(AdminOrdersRouteRouteChildren)
 
 interface AdminProductsRouteRouteChildren {
   AdminProductsProductIdRoute: typeof AdminProductsProductIdRoute
@@ -607,21 +551,21 @@ const AdminProductsRouteRouteWithChildren =
   AdminProductsRouteRoute._addFileChildren(AdminProductsRouteRouteChildren)
 
 interface AdminRouteRouteChildren {
-  AdminBalanceRouteRoute: typeof AdminBalanceRouteRouteWithChildren
   AdminEditorRouteRoute: typeof AdminEditorRouteRouteWithChildren
-  AdminOrdersRouteRoute: typeof AdminOrdersRouteRouteWithChildren
   AdminProductsRouteRoute: typeof AdminProductsRouteRouteWithChildren
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminBalanceIndexRoute: typeof AdminBalanceIndexRoute
+  AdminOrdersIndexRoute: typeof AdminOrdersIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
-  AdminBalanceRouteRoute: AdminBalanceRouteRouteWithChildren,
   AdminEditorRouteRoute: AdminEditorRouteRouteWithChildren,
-  AdminOrdersRouteRoute: AdminOrdersRouteRouteWithChildren,
   AdminProductsRouteRoute: AdminProductsRouteRouteWithChildren,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminBalanceIndexRoute: AdminBalanceIndexRoute,
+  AdminOrdersIndexRoute: AdminOrdersIndexRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(

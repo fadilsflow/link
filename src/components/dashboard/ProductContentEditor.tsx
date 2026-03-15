@@ -1,7 +1,6 @@
 import type { Content } from '@tiptap/react'
 import { MainMinimalTiptapEditor } from '@/components/ui/minimal-tiptap'
 import { useMinimalTiptapEditor } from '@/components/ui/minimal-tiptap/hooks/use-minimal-tiptap'
-import { Label } from '@/components/ui/label'
 import { uploadFile } from '@/lib/upload-client'
 import { cn } from '@/lib/utils'
 

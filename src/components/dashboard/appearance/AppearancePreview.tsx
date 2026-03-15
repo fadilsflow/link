@@ -107,9 +107,6 @@ function PreviewProductCard({
 
         <div className={cn('space-y-2 p-4')}>
           <h3 className="line-clamp-2 text-lg font-medium">{product.title}</h3>
-          {/* <p className="text-sm line-clamp-2 text-foreground/70">
-            {product.description}
-          </p> */}
           <div className="flex items-center gap-1">
             <p className="text-foreground text-sm">{price}</p>
             {originalPrice ? (

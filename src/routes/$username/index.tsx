@@ -268,11 +268,6 @@ function ProductCard({
           )}
         >
           <h3 className="line-clamp-2 text-xl font-medium">{product.title}</h3>
-          {horizontalOnMd && (
-            <p className="text-sm line-clamp-2 text-foreground/70   ">
-              {product.description}
-            </p>
-          )}
           <div className="flex items-center gap-1">
             <p className="text-foreground  text-sm">{price}</p>
             {originalPrice ? (

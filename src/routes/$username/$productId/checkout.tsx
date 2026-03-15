@@ -20,8 +20,7 @@ import { formatPrice, formatPriceInput, parsePriceInput } from '@/lib/utils'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
 import { toastManager } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
-import LiteYouTube from '@/components/LiteYouTube'
-import { extractYouTubeVideoIdFromText } from '@/lib/lite-youtube'
+
 import {
   createMetaEventId,
   getMetaAttributionData,
@@ -127,7 +126,7 @@ function CheckoutPage() {
   )
   const productImages = product.images || []
   const hasImage = productImages.length > 0
-  const productVideoId = extractYouTubeVideoIdFromText(product.description)
+
 
   const [name, setName] = React.useState(search.name ?? '')
   const [email, setEmail] = React.useState(search.email ?? '')
@@ -360,7 +359,7 @@ function CheckoutPage() {
           <div className="space-y-4">
             <div className="flex items-start gap-4">
               {hasImage ? (
-                <div className="w-60 h-30 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 shadow-sm">
+                <div className="w-60 h-30 rounded-xl overflow-hidden shrink-0 bg-slate-100 shadow-sm">
                   <img
                     src={productImages[0]}
                     alt={product.title}
@@ -373,7 +372,7 @@ function CheckoutPage() {
                   />
                 </div>
               ) : (
-                <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <div className="w-20 h-20 rounded-xl bg-linear-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0 shadow-sm">
                   <ShoppingBag className="h-8 w-8 text-slate-300" />
                 </div>
               )}
@@ -493,19 +492,7 @@ function CheckoutPage() {
             </AccordionItem>
           </Accordion>
         }
-        rightTopSection={
-          productVideoId ? (
-            <div className="space-y-3">
-              <h4 className="text-md font-medium">Product preview</h4>
-              <LiteYouTube
-                videoId={productVideoId}
-                title={`${product.title} video preview`}
-                className="rounded-xl border border-slate-200"
-                playLabel="Play product video"
-              />
-            </div>
-          ) : null
-        }
+
         payLabel={'Pay'}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}

@@ -225,16 +225,6 @@ function OrdersPage() {
         return (
           <div className="flex items-center gap-2 flex-wrap">
             {getStatusBadge(order.status)}
-            <Badge
-              variant="outline"
-              className={
-                order.emailSent
-                  ? 'border-blue-500/30 text-blue-600 bg-blue-50/50'
-                  : 'border-amber-500/30 text-amber-600 bg-amber-50/50'
-              }
-            >
-              {order.emailSent ? 'Sent' : 'Pending'}
-            </Badge>
           </div>
         )
       },

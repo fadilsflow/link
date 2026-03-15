@@ -77,7 +77,7 @@ function ProductEditRoute() {
   const product = dashboardData?.products.find((p: any) => p.id === productId)
 
   const [form, setForm] = React.useState<ProductFormValues | null>(null)
-  const [initialForm, setInitialForm] = React.useState<ProductFormValues | null>(null)
+  const [, setInitialForm] = React.useState<ProductFormValues | null>(null)
   const [isUploading, setIsUploading] = React.useState<boolean>(false)
   const formId = 'product-edit-form'
 

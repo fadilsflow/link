@@ -151,7 +151,7 @@ function OrdersPage() {
         const title =
           order.productTitle ?? order.product?.title ?? 'Deleted Product'
         const image = order.productImage ?? order.product?.images?.[0] ?? null
-        const itemCount = order.items?.length ?? 0
+        
         return (
           <button
             type="button"

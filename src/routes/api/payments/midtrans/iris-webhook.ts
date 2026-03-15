@@ -1,18 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  type MidtransNotificationPayload,
-  verifyMidtransNotificationSignature,
-} from '@/lib/midtrans'
-import { processMidtransNotification } from '@/lib/payment-service'
+import { verifyIrisWebhookSignature } from '@/lib/midtrans-iris'
+import { processIrisNotification } from '@/server/services/payout'
 
-export const Route = createFileRoute('/api/payments/midtrans/webhook')({
+export const Route = createFileRoute('/api/payments/midtrans/iris-webhook')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        let payload: MidtransNotificationPayload
+        let payload: any
 
         try {
-          payload = (await request.json()) as MidtransNotificationPayload
+          payload = await request.json()
         } catch {
           return Response.json(
             { ok: false, error: 'Invalid JSON payload' },
@@ -20,24 +17,24 @@ export const Route = createFileRoute('/api/payments/midtrans/webhook')({
           )
         }
 
-        if (!payload?.signature_key || !payload?.order_id) {
+        if (!payload?.reference_no || !payload?.status) {
           return Response.json(
             {
               ok: false,
-              error: 'Missing required Midtrans notification fields',
+              error: 'Missing required Midtrans Iris payload fields',
             },
             { status: 400 },
           )
         }
 
-        if (!verifyMidtransNotificationSignature(payload)) {
+        if (!verifyIrisWebhookSignature(payload)) {
           return Response.json(
-            { ok: false, error: 'Invalid Midtrans signature' },
+            { ok: false, error: 'Invalid Midtrans Iris signature' },
             { status: 401 },
           )
         }
 
-        const result = await processMidtransNotification(payload)
+        const result = await processIrisNotification(payload)
 
         return Response.json({
           ok: true,

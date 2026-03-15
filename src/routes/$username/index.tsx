@@ -30,7 +30,7 @@ import {
 } from '@/lib/appearance'
 
 import SiteUserProfileHeader from '@/components/site-user-profile-header'
-import PublicProfileFooter from '@/components/public-profile-footer'
+
 import VerifiedIcon from '@/components/icon/verified-badge'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import PublicMark from '@/components/public-mark'
@@ -402,7 +402,7 @@ function UserProfile() {
         backgroundImageUrl: user.appearanceBgImageUrl,
       }).foreground
     : profileTextColor.foreground
-  const [headerLogoColor, setHeaderLogoColor] = React.useState(
+  const [, setHeaderLogoColor] = React.useState(
     defaultHeaderLogoColor,
   )
   const isDarkBg = isDarkBackground({

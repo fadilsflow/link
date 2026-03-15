@@ -2,7 +2,6 @@ import * as React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import {
-  AtSign,
   CircleCheck,
   CircleX,
   Landmark,
@@ -79,14 +78,630 @@ type BankOption = {
 }
 
 const BANK_OPTIONS: BankOption[] = [
-  { value: 'bca', label: 'Bank Central Asia (BCA)' },
-  { value: 'bni', label: 'Bank Negara Indonesia (BNI)' },
-  { value: 'bri', label: 'Bank Rakyat Indonesia (BRI)' },
-  { value: 'mandiri', label: 'Bank Mandiri' },
-  { value: 'cimb', label: 'CIMB Niaga' },
-  { value: 'permata', label: 'Bank Permata' },
-  { value: 'danamon', label: 'Bank Danamon' },
-  { value: 'jago', label: 'Bank Jago' },
+  {
+    "value": "aceh",
+    "label": "PT. BANK ACEH"
+  },
+  {
+    "value": "aceh_syar",
+    "label": "PT. BPD ISTIMEWA ACEH SYARIAH"
+  },
+  {
+    "value": "agris",
+    "label": "PT BANK IBK INDONESIA TBK"
+  },
+  {
+    "value": "agroniaga",
+    "label": "PT. BANK RAYA INDONESIA, TBK"
+  },
+  {
+    "value": "aladin_syar",
+    "label": "PT. BANK ALADIN SYARIAH TBK"
+  },
+  {
+    "value": "allo",
+    "label": "PT. ALLO BANK INDONESIA TBK."
+  },
+  {
+    "value": "amar",
+    "label": "PT. BANK AMAR INDONESIA"
+  },
+  {
+    "value": "andara",
+    "label": "PT. BANK ANDARA"
+  },
+  {
+    "value": "anglomas",
+    "label": "PT. BANK AMAR INDONESIA"
+  },
+  {
+    "value": "antar_daerah",
+    "label": "PT. BANK ANTAR DAERAH"
+  },
+  {
+    "value": "anz",
+    "label": "PT. BANK ANZ INDONESIA"
+  },
+  {
+    "value": "artajasa",
+    "label": "PT. ARTAJASA"
+  },
+  {
+    "value": "artha",
+    "label": "PT. BANK ARTHA GRAHA INTERNASIONAL TBK."
+  },
+  {
+    "value": "bali",
+    "label": "PT. BANK PEMBANGUNAN DAERAH BALI"
+  },
+  {
+    "value": "bangkok",
+    "label": "BANGKOK BANK PUBLIC CO.LTD"
+  },
+  {
+    "value": "banten",
+    "label": "PT. BANK BANTEN"
+  },
+  {
+    "value": "barclays",
+    "label": "PT BANK BARCLAYS INDONESIA"
+  },
+  {
+    "value": "bca",
+    "label": "PT. BANK CENTRAL ASIA TBK."
+  },
+  {
+    "value": "bca_va",
+    "label": "PT. BANK CENTRAL ASIA TBK. - VIRTUAL ACCOUNT"
+  },
+  {
+    "value": "bcad",
+    "label": "PT. BANK DIGITAL BCA"
+  },
+  {
+    "value": "bca_syar",
+    "label": "PT. BANK BCA SYARIAH"
+  },
+  {
+    "value": "bengkulu",
+    "label": "PT. BPD BENGKULU"
+  },
+  {
+    "value": "bisnis",
+    "label": "PT. BANK BISNIS INTERNASIONAL"
+  },
+  {
+    "value": "bjb",
+    "label": "PT. BANK PEMBANGUNAN DAERAH JABAR DAN BANTEN"
+  },
+  {
+    "value": "bjb_syar",
+    "label": "PT. BANK JABAR BANTEN SYARIAH"
+  },
+  {
+    "value": "bni",
+    "label": "PT. BANK NEGARA INDONESIA (PERSERO)"
+  },
+  {
+    "value": "bnp",
+    "label": "PT. BANK NUSANTARA PARAHYANGAN"
+  },
+  {
+    "value": "bnp_paribas",
+    "label": "PT. BANK BNP PARIBAS INDONESIA"
+  },
+  {
+    "value": "boa",
+    "label": "BANK OF AMERICA NA"
+  },
+  {
+    "value": "bri",
+    "label": "PT. BANK RAKYAT INDONESIA (PERSERO)"
+  },
+  {
+    "value": "bri_va",
+    "label": "PT. BANK RAKYAT INDONESIA (PERSERO) - VIRTUAL ACCOUNT"
+  },
+  {
+    "value": "bsi",
+    "label": "PT. BANK SYARIAH INDONESIA TBK."
+  },
+  {
+    "value": "btn",
+    "label": "PT. BANK TABUNGAN NEGARA (PERSERO)"
+  },
+  {
+    "value": "btn_syar",
+    "label": "PT. BANK TABUNGAN NEGARA (PERSERO) UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "btpn",
+    "label": "PT. BANK SMBC Indonesia Tbk"
+  },
+  {
+    "value": "btpn_syar",
+    "label": "PT. BANK TABUNGAN PENSIUNAN NASIONAL SYARIAH"
+  },
+  {
+    "value": "bukopin",
+    "label": "PT BANK KB BUKOPIN TBK."
+  },
+  {
+    "value": "bukopin_syar",
+    "label": "PT. BANK SYARIAH BUKOPIN"
+  },
+  {
+    "value": "bumiputera",
+    "label": "PT. BANK BUMIPUTERA"
+  },
+  {
+    "value": "bumi_artha",
+    "label": "PT. BANK BUMI ARTA"
+  },
+  {
+    "value": "capital",
+    "label": "PT BANK CAPITAL INDONESIA"
+  },
+  {
+    "value": "centratama",
+    "label": "PT. CENTRATAMA NASIONAL BANK"
+  },
+  {
+    "value": "chase",
+    "label": "JP MORGAN CHASE BANK, N.A"
+  },
+  {
+    "value": "china",
+    "label": "BANK OF CHINA"
+  },
+  {
+    "value": "china_cons",
+    "label": "CHINA CONSTRUCTION"
+  },
+  {
+    "value": "chinatrust",
+    "label": "PT. BANK CTBC INDONESIA"
+  },
+  {
+    "value": "cimb",
+    "label": "PT. BANK CIMB NIAGA TBK."
+  },
+  {
+    "value": "cimb_syar",
+    "label": "PT. BANK CIMB NIAGA TBK. - UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "cimb_rekening_ponsel",
+    "label": "PT. BANK CIMB NIAGA TBK. - REKENING PONSEL"
+  },
+  {
+    "value": "cimb_va",
+    "label": "PT. BANK CIMB NIAGA TBK. - VIRTUAL ACCOUNT."
+  },
+  {
+    "value": "citibank",
+    "label": "CITIBANK, NA"
+  },
+  {
+    "value": "commonwealth",
+    "label": "PT. BANK OCBC NISP, Tbk."
+  },
+  {
+    "value": "danamon",
+    "label": "PT. BANK DANAMON INDONESIA TBK."
+  },
+  {
+    "value": "danamon_syar",
+    "label": "PT. BANK DANAMON INDONESIA UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "dbs",
+    "label": "PT. BANK DBS INDONESIA"
+  },
+  {
+    "value": "deutsche",
+    "label": "DEUTSCHE BANK AG."
+  },
+  {
+    "value": "dipo",
+    "label": "PT. BANK DIPO INTERNATIONAL"
+  },
+  {
+    "value": "diy",
+    "label": "PT. BANK PEMBANGUNAN DAERAH DIY"
+  },
+  {
+    "value": "diy_syar",
+    "label": "PT.BANK PEMBANGUNAN DAERAH DIY UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "dki",
+    "label": "PT. BANK DKI"
+  },
+  {
+    "value": "dki_syar",
+    "label": "PT. BANK DKI UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "ekonomi",
+    "label": "PT. BANK EKONOMI RAHARJA"
+  },
+  {
+    "value": "fama",
+    "label": "PT. BANK FAMA INTERNATIONAL"
+  },
+  {
+    "value": "ganesha",
+    "label": "PT. BANK GANESHA"
+  },
+  {
+    "value": "gopay",
+    "label": "GoPay"
+  },
+  {
+    "value": "hana",
+    "label": "PT. BANK KEB HANA INDONESIA"
+  },
+  {
+    "value": "hs_1906",
+    "label": "PT. BANK WOORI SAUDARA INDONESIA 1906,TBK"
+  },
+  {
+    "value": "hsbc",
+    "label": "PT. BANK HSBC INDONESIA"
+  },
+  {
+    "value": "icbc",
+    "label": "PT. BANK ICBC INDONESIA"
+  },
+  {
+    "value": "ina_perdana",
+    "label": "PT. BANK INA PERDANA"
+  },
+  {
+    "value": "index_selindo",
+    "label": "BANK INDEX SELINDO"
+  },
+  {
+    "value": "india",
+    "label": "PT. BANK OF INDIA INDONESIA TBK."
+  },
+  {
+    "value": "jago",
+    "label": "PT. BANK JAGO TBK."
+  },
+  {
+    "value": "jago_syar",
+    "label": "PT. BANK JAGO UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "jambi",
+    "label": "PT.BANK PEMBANGUNAN DAERAH JAMBI"
+  },
+  {
+    "value": "jasa_jakarta",
+    "label": "PT. BANK JASA JAKARTA"
+  },
+  {
+    "value": "jateng",
+    "label": "PT. BANK PEMBANGUNAN DAERAH JAWA TENGAH"
+  },
+  {
+    "value": "jateng_syar",
+    "label": "PT. BANK PEMBANGUNAN DAERAH JAWA TENGAH"
+  },
+  {
+    "value": "jatim",
+    "label": "PT. BANK PEMBANGUNAN DAERAH JATIM"
+  },
+  {
+    "value": "jatim_syar",
+    "label": "PT.BANK PEMBANGUNAN DAERAH JATIM - UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "jtrust",
+    "label": "PT. BANK JTRUST INDONESIA TBK."
+  },
+  {
+    "value": "kalbar",
+    "label": "PT.BANK PEMBANGUNAN DAERAH KALBAR"
+  },
+  {
+    "value": "kalbar_syar",
+    "label": "PT.BANK PEMBANGUNAN DAERAH KALBAR UUS"
+  },
+  {
+    "value": "kalsel",
+    "label": "PT. BANK PEMBANGUNAN DAERAH KALSEL"
+  },
+  {
+    "value": "kalsel_syar",
+    "label": "PT. BANK PEMBANGUNAN DAERAH KALSEL - UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "kalteng",
+    "label": "PT. BPD KALIMANTAN TENGAH"
+  },
+  {
+    "value": "kaltim",
+    "label": "PT.BANK PEMBANGUNAN DAERAH KALTIM"
+  },
+  {
+    "value": "kaltim_syar",
+    "label": "PT.BANK PEMBANGUNAN DAERAH KALTIM - UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "lampung",
+    "label": "PT.BANK PEMBANGUNAN DAERAH LAMPUNG"
+  },
+  {
+    "value": "maluku",
+    "label": "PT.BANK PEMBANGUNAN DAERAH MALUKU"
+  },
+  {
+    "value": "mandiri",
+    "label": "PT. BANK MANDIRI (PERSERO) TBK."
+  },
+  {
+    "value": "mandiri_taspen",
+    "label": "PT. BANK MANDIRI TASPEN POS"
+  },
+  {
+    "value": "maspion",
+    "label": "PT. BANK MASPION"
+  },
+  {
+    "value": "mayapada",
+    "label": "PT. BANK MAYAPADA TBK."
+  },
+  {
+    "value": "maybank",
+    "label": "PT. BANK MAYBANK INDONESIA TBK."
+  },
+  {
+    "value": "maybank_syar",
+    "label": "PT. BANK MAYBANK SYARIAH INDONESIA"
+  },
+  {
+    "value": "maybank_uus",
+    "label": "PT. BANK MAYBANK INDONESIA TBK. UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "mayora",
+    "label": "PT. BANK MAYORA"
+  },
+  {
+    "value": "mega_syar",
+    "label": "PT. BANK MEGA SYARIAH"
+  },
+  {
+    "value": "mega_tbk",
+    "label": "PT. BANK MEGA TBK."
+  },
+  {
+    "value": "mestika",
+    "label": "PT. BANK MESTIKA DHARMA"
+  },
+  {
+    "value": "metro",
+    "label": "PT. BANK METRO EXPRESS"
+  },
+  {
+    "value": "mitraniaga",
+    "label": "PT. BANK MITRANIAGA"
+  },
+  {
+    "value": "mitsubishi",
+    "label": "THE BANK OF TOKYO MITSUBISHI UFJ LTD."
+  },
+  {
+    "value": "mizuho",
+    "label": "PT. BANK MIZUHO INDONESIA"
+  },
+  {
+    "value": "mnc",
+    "label": "PT. BANK MNC INTERNASIONAL TBK."
+  },
+  {
+    "value": "muamalat",
+    "label": "PT. BANK MUAMALAT INDONESIA"
+  },
+  {
+    "value": "multiarta",
+    "label": "PT. BANK MULTI ARTA SENTOSA"
+  },
+  {
+    "value": "mutiara",
+    "label": "PT. BANK JTRUST INDONESIA, TBK"
+  },
+  {
+    "value": "niaga_syar",
+    "label": "PT. BANK NIAGA TBK. SYARIAH"
+  },
+  {
+    "value": "nagari",
+    "label": "PT. BANK NAGARI"
+  },
+  {
+    "value": "nagari_syar",
+    "label": "PT. BANK NAGARI UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "nobu",
+    "label": "PT. BANK NATIONALNOBU"
+  },
+  {
+    "value": "ntb",
+    "label": "PT. BANK PEMBANGUNAN DAERAH NTB"
+  },
+  {
+    "value": "ntt",
+    "label": "PT.BANK PEMBANGUNAN DAERAH NTT"
+  },
+  {
+    "value": "ocbc",
+    "label": "PT. BANK OCBC NISP TBK."
+  },
+  {
+    "value": "ocbc_syar",
+    "label": "PT. BANK OCBC NISP TBK. - UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "ok",
+    "label": "PT. BANK OKE INDONESIA"
+  },
+  {
+    "value": "ovo",
+    "label": "OVO (See the Transfer to OVO notes)"
+  },
+  {
+    "value": "panin",
+    "label": "PT. PANIN BANK TBK."
+  },
+  {
+    "value": "panin_syar",
+    "label": "PT. BANK PANIN SYARIAH"
+  },
+  {
+    "value": "papua",
+    "label": "PT.BANK PEMBANGUNAN DAERAH PAPUA"
+  },
+  {
+    "value": "permata",
+    "label": "PT. BANK PERMATA TBK."
+  },
+  {
+    "value": "permata_syar",
+    "label": "PT. BANK PERMATA TBK. UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "permata_va",
+    "label": "PT. BANK PERMATA TBK. - VIRTUAL ACCOUNT"
+  },
+  {
+    "value": "prima_master",
+    "label": "PT. PRIMA MASTER BANK"
+  },
+  {
+    "value": "pundi",
+    "label": "PT. BANK PUNDI INDONESIA"
+  },
+  {
+    "value": "purba",
+    "label": "PT. BANK PURBA DANARTA"
+  },
+  {
+    "value": "qnb",
+    "label": "PT. BANK QNB INDONESIA TBK."
+  },
+  {
+    "value": "rabobank",
+    "label": "PT. BANK RABOBANK INTERNATIONAL INDONESIA"
+  },
+  {
+    "value": "rbos",
+    "label": "THE ROYAL BANK OF SCOTLAND N.V."
+  },
+  {
+    "value": "resona",
+    "label": "PT. BANK RESONA PERDANIA"
+  },
+  {
+    "value": "riau",
+    "label": "PT. BANK PEMBANGUNAN DAERAH RIAU KEPRI"
+  },
+  {
+    "value": "riau_syar",
+    "label": "PT. BANK PEMBANGUNAN DAERAH RIAU KEPRI SYARIAH"
+  },
+  {
+    "value": "sampoerna",
+    "label": "PT. BANK SAHABAT SAMPOERNA"
+  },
+  {
+    "value": "sbi",
+    "label": "PT. BANK SBI INDONESIA"
+  },
+  {
+    "value": "seabank",
+    "label": "PT. BANK SEABANK INDONESIA"
+  },
+  {
+    "value": "shinhan",
+    "label": "PT. BANK SHINHAN INDONESIA"
+  },
+  {
+    "value": "sinarmas",
+    "label": "PT. BANK SINARMAS"
+  },
+  {
+    "value": "sinarmas_syar",
+    "label": "PT. BANK SINARMAS UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "stanchard",
+    "label": "STANDARD CHARTERED BANK"
+  },
+  {
+    "value": "sulselbar",
+    "label": "PT. BANK SULSELBAR"
+  },
+  {
+    "value": "sulselbar_syar",
+    "label": "PT. BANK SULSELBAR UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "sulteng",
+    "label": "PT. BPD SULAWESI TENGAH"
+  },
+  {
+    "value": "sultenggara",
+    "label": "PT. BPD SULAWESI TENGGARA"
+  },
+  {
+    "value": "sulut",
+    "label": "PT. BANK SULUTGO"
+  },
+  {
+    "value": "sumitomo",
+    "label": "PT. BANK SUMITOMO MITSUI INDONESIA"
+  },
+  {
+    "value": "sumsel_babel",
+    "label": "PT. BPD SUMSEL DAN BABEL"
+  },
+  {
+    "value": "sumsel_babel_syar",
+    "label": "PT. BPD SUMSEL DAN BABEL UNIT USAHA SYARIAH"
+  },
+  {
+    "value": "sumut",
+    "label": "PT. BANK PEMBANGUNAN DAERAH SUMUT"
+  },
+  {
+    "value": "sumut_syar",
+    "label": "PT. BANK PEMBANGUNAN DAERAH SUMUT UUS"
+  },
+  {
+    "value": "uob",
+    "label": "PT. BANK UOB INDONESIA"
+  },
+  {
+    "value": "victoria",
+    "label": "PT. BANK VICTORIA INTERNATIONAL"
+  },
+  {
+    "value": "victoria_syar",
+    "label": "PT. BANK VICTORIA SYARIAH"
+  },
+  {
+    "value": "woori",
+    "label": "PT. BANK WOORI SAUDARA INDONESIA 1906 TBK."
+  },
+  {
+    "value": "yudha_bhakti",
+    "label": "PT. BANK NEO COMMERCE, TBK"
+  }
 ]
 
 const bankAccountSchema = z.object({

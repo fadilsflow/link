@@ -79,7 +79,7 @@ const Toolbar = ({
           "codeBlock",
           "blockquote",
           "horizontalRule",
-        ]}
+        ] as any}
         allowImageUpload={allowImageUpload}
         allowFileUpload={allowFileUpload}
         mainActionCount={0}

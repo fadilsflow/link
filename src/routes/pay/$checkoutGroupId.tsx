@@ -164,7 +164,7 @@ function formatCountdown(targetTime: string | null, now: number) {
 
 function PaymentPage() {
   const { checkoutGroupId } = Route.useParams()
-  const navigate = Route.useNavigate()
+
   const [statusDialogOpen, setStatusDialogOpen] = React.useState(false)
   const [now, setNow] = React.useState(() => Date.now())
 

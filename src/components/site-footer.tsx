@@ -10,7 +10,10 @@ export function SiteFooter() {
           <Link className="font-heading text-foreground text-lg" to="/">
             {COMPANY_NAME}
           </Link>{' '}
-          {/* – open source, open heart, open mind. */}
+          •{' '}
+          <Link className="underline" to="/tos">
+            Terms of Service
+          </Link>
         </p>
       </div>
     </footer>

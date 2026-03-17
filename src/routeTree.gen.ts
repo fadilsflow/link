@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TosRouteImport } from './routes/tos'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
@@ -36,6 +37,11 @@ import { Route as UsernameProductIdCheckoutRouteImport } from './routes/$usernam
 import { Route as ApiPaymentsMidtransWebhookRouteImport } from './routes/api/payments/midtrans/webhook'
 import { Route as ApiPaymentsMidtransIrisWebhookRouteImport } from './routes/api/payments/midtrans/iris-webhook'
 
+const TosRoute = TosRouteImport.update({
+  id: '/tos',
+  path: '/tos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
+  '/tos': typeof TosRoute
   '/admin/editor': typeof AdminEditorRouteRouteWithChildren
   '/admin/products': typeof AdminProductsRouteRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
+  '/tos': typeof TosRoute
   '/admin/editor': typeof AdminEditorRouteRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/register': typeof RegisterRoute
+  '/tos': typeof TosRoute
   '/admin/editor': typeof AdminEditorRouteRouteWithChildren
   '/admin/products': typeof AdminProductsRouteRouteWithChildren
   '/admin/settings': typeof AdminSettingsRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/register'
+    | '/tos'
     | '/admin/editor'
     | '/admin/products'
     | '/admin/settings'
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/register'
+    | '/tos'
     | '/admin/editor'
     | '/admin/settings'
     | '/auth/callback'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/register'
+    | '/tos'
     | '/admin/editor'
     | '/admin/products'
     | '/admin/settings'
@@ -344,6 +356,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   RegisterRoute: typeof RegisterRoute
+  TosRoute: typeof TosRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   PayCheckoutGroupIdRoute: typeof PayCheckoutGroupIdRoute
   UsernameIndexRoute: typeof UsernameIndexRoute
@@ -358,6 +371,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tos': {
+      id: '/tos'
+      path: '/tos'
+      fullPath: '/tos'
+      preLoaderRoute: typeof TosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -599,6 +619,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   RegisterRoute: RegisterRoute,
+  TosRoute: TosRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   PayCheckoutGroupIdRoute: PayCheckoutGroupIdRoute,
   UsernameIndexRoute: UsernameIndexRoute,

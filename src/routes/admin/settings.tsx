@@ -1463,14 +1463,16 @@ function SettingsPage() {
 
                         <div className="flex flex-wrap items-center gap-2">
                           <Button
-                            size="sm"
+                            size="lg"
+                            className='rounded-full'
                             variant="outline"
                             onClick={() => openEditDialog(account)}
                           >
                             Edit
                           </Button>
                           <Button
-                            size="sm"
+                            size="lg"
+                            className='rounded-full'
                             variant="destructive"
                             onClick={() => setDeleteTargetId(account.id)}
                           >
@@ -1533,7 +1535,8 @@ function SettingsPage() {
                           <div className="flex flex-wrap items-center gap-2">
                             {isConnected ? (
                               <Button
-                                size="sm"
+                                size="lg"
+                                className='rounded-full'
                                 variant="ghost"
                                 loading={
                                   removeTrackingIntegrationMutation.isPending
@@ -1546,7 +1549,8 @@ function SettingsPage() {
                               </Button>
                             ) : null}
                             <Button
-                              size="sm"
+                              size="lg"
+                              className='rounded-full'
                               variant={isConnected ? 'outline' : 'default'}
                               onClick={openTrackingDialog}
                             >

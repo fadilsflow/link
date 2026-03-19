@@ -827,6 +827,8 @@ function SettingsPage() {
     React.useState<TrackingIntegrationFormValues>(DEFAULT_TRACKING_FORM_VALUES)
   const [trackingFormErrors, setTrackingFormErrors] =
     React.useState<TrackingIntegrationFieldErrors>({})
+  const [isTrackingRemoveDialogOpen, setIsTrackingRemoveDialogOpen] =
+    React.useState(false)
   const [isUsernameDialogOpen, setIsUsernameDialogOpen] = React.useState(false)
   const [usernameFormValues, setUsernameFormValues] =
     React.useState<UsernameFormValues>(DEFAULT_USERNAME_FORM_VALUES)
@@ -1016,9 +1018,11 @@ function SettingsPage() {
       return await trpcClient.trackingIntegration.remove.mutate()
     },
     onSuccess: () => {
+      queryClient.setQueryData(['tracking-integrations'], null)
       void queryClient.invalidateQueries({
         queryKey: ['tracking-integrations'],
       })
+      setIsTrackingRemoveDialogOpen(false)
       toastManager.add({
         title: 'Tracking removed',
         description: 'Facebook Pixel has been disconnected.',
@@ -1420,7 +1424,7 @@ function SettingsPage() {
                   Add account
                 </Button>
               </FrameHeader>
-              <FramePanel className="min-h-40 space-y-3">
+              <FramePanel className="space-y-3">
                 {bankAccountsQuery.isLoading ? (
                   <div className="h-30 w-full rounded-xl bg-muted/32" />
                 ) : accounts.length === 0 ? (
@@ -1462,21 +1466,22 @@ function SettingsPage() {
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
+
                           <Button
+                            size="lg"
+                            className='rounded-full'
+                            variant="ghost"
+                            onClick={() => setDeleteTargetId(account.id)}
+                          >
+                            Delete
+                          </Button>
+                          < Button
                             size="lg"
                             className='rounded-full'
                             variant="outline"
                             onClick={() => openEditDialog(account)}
                           >
                             Edit
-                          </Button>
-                          <Button
-                            size="lg"
-                            className='rounded-full'
-                            variant="destructive"
-                            onClick={() => setDeleteTargetId(account.id)}
-                          >
-                            Delete
                           </Button>
                         </div>
                       </div>
@@ -1491,7 +1496,7 @@ function SettingsPage() {
               <FrameHeader>
                 <FrameTitle className="text-lg">Growth & Tracking</FrameTitle>
               </FrameHeader>
-              <FramePanel className="space-y-3 min-h-40">
+              <FramePanel className="space-y-3">
                 {trackingIntegrationsQuery.isLoading ? (
                   <div className="h-30 w-full rounded-xl bg-muted/32" />
                 ) : (
@@ -1539,12 +1544,10 @@ function SettingsPage() {
                                 size="lg"
                                 className='rounded-full'
                                 variant="ghost"
-                                loading={
+                                disabled={
                                   removeTrackingIntegrationMutation.isPending
                                 }
-                                onClick={() =>
-                                  removeTrackingIntegrationMutation.mutate()
-                                }
+                                onClick={() => setIsTrackingRemoveDialogOpen(true)}
                               >
                                 Remove
                               </Button>
@@ -1772,6 +1775,33 @@ function SettingsPage() {
         </AlertDialogPopup>
       </AlertDialog>
 
+      <AlertDialog
+        open={isTrackingRemoveDialogOpen}
+        onOpenChange={setIsTrackingRemoveDialogOpen}
+      >
+        <AlertDialogPopup>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove tracking integration?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will disconnect your Facebook Pixel and stop sending tracking
+              events.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose render={<Button variant="outline" />}>
+              Cancel
+            </AlertDialogClose>
+            <Button
+              variant="destructive"
+              loading={removeTrackingIntegrationMutation.isPending}
+              onClick={() => removeTrackingIntegrationMutation.mutate()}
+            >
+              Remove
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogPopup>
+      </AlertDialog>
+
       <Dialog
         open={isTrackingDialogOpen}
         onOpenChange={handleTrackingDialogChange}
@@ -1833,6 +1863,6 @@ function SettingsPage() {
           </Form>
         </DialogPopup>
       </Dialog>
-    </div>
+    </div >
   )
 }

@@ -71,7 +71,7 @@ type BankOption = {
   label: string
 }
 
-const BANK_OPTIONS: BankOption[] = [
+const BANK_OPTIONS: Array<BankOption> = [
   {
     value: 'aceh',
     label: 'PT. BANK ACEH',
@@ -769,7 +769,7 @@ function maskAccountNumber(value: string): string {
 }
 
 function mapZodIssuesToFieldErrors(
-  issues: z.ZodIssue[],
+  issues: Array<z.ZodIssue>,
 ): BankAccountFieldErrors {
   const nextErrors: BankAccountFieldErrors = {}
 
@@ -1648,7 +1648,7 @@ function SettingsPage() {
                   items={BANK_OPTIONS}
                   value={selectedBank}
                   onValueChange={(value) =>
-                    handleBankSelection((value as BankOption | null) ?? null)
+                    handleBankSelection((value) ?? null)
                   }
                 >
                   <ComboboxTrigger

@@ -1,9 +1,10 @@
 import * as React from 'react'
-import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
-import { File as FileIcon, Download } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import {  NodeViewWrapper } from '@tiptap/react'
+import { Download, File as FileIcon } from 'lucide-react'
 import { ImageOverlay } from '../../image/components/image-overlay'
 import { blobUrlToBase64, randomId } from '../../../utils'
+import type {NodeViewProps} from '@tiptap/react';
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 const formatFileSize = (bytes?: number | null) => {

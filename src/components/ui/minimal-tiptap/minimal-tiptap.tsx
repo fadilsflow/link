@@ -1,10 +1,6 @@
 import './styles/index.css'
 
-import type { Content, Editor } from '@tiptap/react'
-import type { UseMinimalTiptapEditorProps } from './hooks/use-minimal-tiptap'
 import { EditorContent, EditorContext } from '@tiptap/react'
-import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
 import { SectionOne } from './components/section/one'
 import { SectionTwo } from './components/section/two'
 import { SectionThree } from './components/section/three'
@@ -16,6 +12,10 @@ import { ButtonBubbleMenu } from './components/bubble-menu/button-bubble-menu'
 import { useMinimalTiptapEditor } from './hooks/use-minimal-tiptap'
 import { MeasuredContainer } from './components/measured-container'
 import { useTiptapEditor } from './hooks/use-tiptap-editor'
+import type { UseMinimalTiptapEditorProps } from './hooks/use-minimal-tiptap'
+import type { Content, Editor } from '@tiptap/react'
+import { cn } from '@/lib/utils'
+import { Separator } from '@/components/ui/separator'
 
 export interface MinimalTiptapProps extends Omit<
   UseMinimalTiptapEditorProps,

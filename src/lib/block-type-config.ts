@@ -1,6 +1,6 @@
+import { ImageIcon, Link2Icon, Package2, TypeIcon } from 'lucide-react'
 import type { SVGProps } from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { Link2Icon, Package2, TypeIcon, ImageIcon } from 'lucide-react'
 import { Discord } from '@/components/icon/discord'
 import { Instagram } from '@/components/icon/instagram'
 import { TelegramColor } from '@/components/icon/telegram'
@@ -83,7 +83,7 @@ const SOCIAL_BLOCK_STYLE_MAP: Record<SocialBlockType, SocialBlockStyle> = {
  * Configuration for available block types.
  * Add new block types here to extend the selector and block items.
  */
-export const BLOCK_TYPE_CONFIG: BlockTypeConfig[] = [
+export const BLOCK_TYPE_CONFIG: Array<BlockTypeConfig> = [
   {
     type: 'link',
     category: 'general',

@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Minus, Plus, ShoppingBag } from 'lucide-react'
+import type {CheckoutPaymentMethod} from '@/lib/payment-methods';
 import { CheckoutForm } from '@/components/checkout/checkout-form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,8 +14,8 @@ import {
 } from '@/components/ui/accordion'
 import { getPublicProduct } from '@/lib/profile-server'
 import {
-  CHECKOUT_PAYMENT_METHOD,
-  type CheckoutPaymentMethod,
+  CHECKOUT_PAYMENT_METHOD
+  
 } from '@/lib/payment-methods'
 import { formatPrice, formatPriceInput, parsePriceInput } from '@/lib/utils'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'
@@ -22,9 +23,9 @@ import { toastManager } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
 
 import {
+  MetaPixel,
   createMetaEventId,
   getMetaAttributionData,
-  MetaPixel,
   savePendingMetaPurchase,
   trackMetaPixelEvent,
 } from '@/lib/meta-pixel'

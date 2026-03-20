@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto'
+import type {CheckoutPaymentMethod} from '@/lib/payment-methods';
 import {
-  CHECKOUT_PAYMENT_METHOD,
-  type CheckoutPaymentMethod,
+  CHECKOUT_PAYMENT_METHOD
+  
 } from '@/lib/payment-methods'
 
 export const MIDTRANS_PROVIDER = 'midtrans'

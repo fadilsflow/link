@@ -60,12 +60,12 @@ import {
   InputGroupInput,
   InputGroupText,
 } from '../ui/input-group'
-import type { DragEndEvent } from '@dnd-kit/core'
-import { trpcClient } from '@/integrations/tanstack-query/root-provider'
-import { cn } from '@/lib/utils'
 import { GitHub } from '../icon/github'
 import { YouTube } from '../icon/youtube'
 import { Instagram } from '../icon/instagram'
+import type { DragEndEvent } from '@dnd-kit/core'
+import { trpcClient } from '@/integrations/tanstack-query/root-provider'
+import { cn } from '@/lib/utils'
 
 // Platform definitions with icons and URL handling
 const PLATFORMS = [

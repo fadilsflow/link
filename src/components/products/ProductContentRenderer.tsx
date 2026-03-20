@@ -1,5 +1,5 @@
-import type { Content } from '@tiptap/react'
 import { EditorContent } from '@tiptap/react'
+import type { Content } from '@tiptap/react'
 import '@/components/ui/minimal-tiptap/styles/index.css'
 import { useMinimalTiptapEditor } from '@/components/ui/minimal-tiptap/hooks/use-minimal-tiptap'
 import { cn } from '@/lib/utils'

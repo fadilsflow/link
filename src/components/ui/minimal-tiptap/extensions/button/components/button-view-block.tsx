@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
+import {  NodeViewWrapper } from '@tiptap/react'
+import type {NodeViewProps} from '@tiptap/react';
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 

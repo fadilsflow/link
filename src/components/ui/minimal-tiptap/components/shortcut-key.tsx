@@ -1,9 +1,9 @@
 import * as React from 'react'
-import { cn } from '@/lib/utils'
 import { getShortcutKey } from '../utils'
+import { cn } from '@/lib/utils'
 
 export interface ShortcutKeyProps extends React.ComponentProps<'span'> {
-  keys: string[]
+  keys: Array<string>
 }
 
 export const ShortcutKey = ({

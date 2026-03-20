@@ -1,11 +1,11 @@
 import * as React from 'react'
 import { BubbleMenu } from '@tiptap/react/menus'
-import type { Editor } from '@tiptap/react'
 import { NodeSelection } from '@tiptap/pm/state'
+import { ExternalLinkIcon, Pencil2Icon, TrashIcon } from '@radix-ui/react-icons'
 import { ButtonEditBlock } from '../button/button-edit-block'
 import { ToolbarButton } from '../toolbar-button'
+import type { Editor } from '@tiptap/react'
 import { Separator } from '@/components/ui/separator'
-import { ExternalLinkIcon, Pencil2Icon, TrashIcon } from '@radix-ui/react-icons'
 
 interface ButtonBubbleMenuProps {
   editor: Editor

@@ -1,10 +1,10 @@
 import { Link } from '@tanstack/react-router'
 import UserButton from './user-button'
-import { authClient } from '@/lib/auth-client'
 import { Button } from './ui/button'
 import { GitHub } from './icon/github'
-import { REPO_URL } from '@/lib/constans'
 import { LogoType } from './kreasi-logo'
+import { REPO_URL } from '@/lib/constans'
+import { authClient } from '@/lib/auth-client'
 
 export const Header = () => {
   const { data: session, isPending } = authClient.useSession()

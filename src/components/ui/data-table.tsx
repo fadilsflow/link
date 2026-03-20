@@ -21,6 +21,8 @@ import {
   ChevronsRight,
   Search,
 } from 'lucide-react'
+import { Frame } from './frame'
+import { InputGroup, InputGroupAddon, InputGroupInput } from './input-group'
 import type {
   Column,
   ColumnDef,
@@ -49,8 +51,6 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { Spinner } from '@/components/ui/spinner'
-import { Frame } from './frame'
-import { InputGroup, InputGroupAddon, InputGroupInput } from './input-group'
 
 interface DataTableProps<TData, TValue> {
   columns: Array<ColumnDef<TData, TValue>>

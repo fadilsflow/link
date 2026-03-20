@@ -4,7 +4,7 @@ type ContentNode = {
   text?: string
   marks?: Array<{ type?: string; attrs?: { href?: string } }>
   attrs?: { href?: string }
-  content?: ContentNode[]
+  content?: Array<ContentNode>
 }
 
 const isProbablyJson = (value: string) =>
@@ -34,7 +34,7 @@ export const normalizeTiptapContent = (value: unknown): Content | null => {
   return null
 }
 
-const collectText = (node: unknown, bucket: string[]) => {
+const collectText = (node: unknown, bucket: Array<string>) => {
   if (!node) return
 
   if (typeof node === 'string') {
@@ -73,7 +73,7 @@ export const tiptapContentToText = (content: Content | null): string => {
   if (!content) return ''
   if (typeof content === 'string') return content
 
-  const bucket: string[] = []
+  const bucket: Array<string> = []
   collectText(content as unknown, bucket)
 
   return bucket.join(' ').replace(/\s+/g, ' ').trim()

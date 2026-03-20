@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import { Copy, Check } from 'lucide-react'
+import { Check, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -14,8 +14,8 @@ import { Separator } from '@/components/ui/separator'
 import { getOrderByToken } from '@/lib/profile-server'
 import { formatPrice } from '@/lib/utils'
 import {
-  consumePendingMetaPurchase,
   MetaPixel,
+  consumePendingMetaPurchase,
   trackMetaPixelEvent,
 } from '@/lib/meta-pixel'
 import NotFound from '@/components/not-found'

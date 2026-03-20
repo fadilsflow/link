@@ -1,9 +1,8 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useRouter  } from '@tanstack/react-router'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth-client'
-import { useState } from 'react'
 import { Spinner } from '@/components/ui/spinner'
-import { useRouter } from '@tanstack/react-router'
 import { LogoMark } from '@/components/kreasi-logo'
 
 type AuthType = 'login' | 'register'

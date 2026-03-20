@@ -1,4 +1,5 @@
 import * as React from 'react'
+import type {CheckoutPaymentMethod} from '@/lib/payment-methods';
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,9 +12,9 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import {
+  
   PAYMENT_METHOD_CATALOG,
-  calculatePaymentGatewayFee,
-  type CheckoutPaymentMethod,
+  calculatePaymentGatewayFee
 } from '@/lib/payment-methods'
 import { formatPrice } from '@/lib/utils'
 import { LogoType } from '@/components/kreasi-logo'

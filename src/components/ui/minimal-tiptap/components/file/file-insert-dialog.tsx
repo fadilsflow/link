@@ -1,9 +1,9 @@
 import * as React from 'react'
+import { Upload } from 'lucide-react'
+import { ToolbarButton } from '../toolbar-button'
 import type { Editor } from '@tiptap/react'
 import type { VariantProps } from 'class-variance-authority'
 import type { toggleVariants } from '@/components/ui/toggle'
-import { Upload } from 'lucide-react'
-import { ToolbarButton } from '../toolbar-button'
 
 interface FileInsertDialogProps extends VariantProps<typeof toggleVariants> {
   editor: Editor

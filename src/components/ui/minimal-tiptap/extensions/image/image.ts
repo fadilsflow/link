@@ -1,15 +1,16 @@
-import type { ImageOptions } from '@tiptap/extension-image'
 import { Image as TiptapImage } from '@tiptap/extension-image'
-import type { Editor } from '@tiptap/react'
 import { ReactNodeViewRenderer } from '@tiptap/react'
-import { ImageViewBlock } from './components/image-view-block'
-import {
-  filterFiles,
-  randomId,
-  type FileError,
-  type FileValidationOptions,
-} from '../../utils'
 import { ReplaceStep } from '@tiptap/pm/transform'
+import {
+  
+  
+  filterFiles,
+  randomId
+} from '../../utils'
+import { ImageViewBlock } from './components/image-view-block'
+import type {FileError, FileValidationOptions} from '../../utils';
+import type { Editor } from '@tiptap/react'
+import type { ImageOptions } from '@tiptap/extension-image'
 import type { Attrs } from '@tiptap/pm/model'
 
 type ImageAction = 'download' | 'copyImage' | 'copyLink'
@@ -48,15 +49,15 @@ interface CustomImageOptions
     props: ImageActionProps,
     options: CustomImageOptions,
   ) => Promise<void>
-  onValidationError?: (errors: FileError[]) => void
-  onToggle?: (editor: Editor, files: File[], pos: number) => void
+  onValidationError?: (errors: Array<FileError>) => void
+  onToggle?: (editor: Editor, files: Array<File>, pos: number) => void
 }
 
 declare module '@tiptap/react' {
   interface Commands<ReturnType> {
     setImages: {
       setImages: (
-        attrs: { src: string | File; alt?: string; title?: string }[],
+        attrs: Array<{ src: string | File; alt?: string; title?: string }>,
       ) => ReturnType
     }
     downloadImage: {

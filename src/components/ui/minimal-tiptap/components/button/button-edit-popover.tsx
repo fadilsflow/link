@@ -1,4 +1,7 @@
 import * as React from 'react'
+import { BoxIcon } from 'lucide-react'
+import { ToolbarButton } from '../toolbar-button'
+import { ButtonEditBlock } from './button-edit-block'
 import type { Editor } from '@tiptap/react'
 import type { VariantProps } from 'class-variance-authority'
 import type { toggleVariants } from '@/components/ui/toggle'
@@ -7,9 +10,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { BoxIcon } from 'lucide-react'
-import { ToolbarButton } from '../toolbar-button'
-import { ButtonEditBlock } from './button-edit-block'
 
 interface ButtonEditPopoverProps extends VariantProps<typeof toggleVariants> {
   editor: Editor

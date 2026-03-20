@@ -1,17 +1,17 @@
 import * as React from 'react'
+import { CaretDownIcon, ListBulletIcon } from '@radix-ui/react-icons'
+import { ToolbarSection } from '../toolbar-section'
 import type { Editor } from '@tiptap/react'
 import type { FormatAction } from '../../types'
 import type { toggleVariants } from '@/components/ui/toggle'
 import type { VariantProps } from 'class-variance-authority'
-import { CaretDownIcon, ListBulletIcon } from '@radix-ui/react-icons'
-import { ToolbarSection } from '../toolbar-section'
 
 type ListItemAction = 'orderedList' | 'bulletList'
 interface ListItem extends FormatAction {
   value: ListItemAction
 }
 
-const formatActions: ListItem[] = [
+const formatActions: Array<ListItem> = [
   {
     value: 'orderedList',
     label: 'Numbered list',
@@ -46,7 +46,7 @@ const formatActions: ListItem[] = [
 
 interface SectionFourProps extends VariantProps<typeof toggleVariants> {
   editor: Editor
-  activeActions?: ListItemAction[]
+  activeActions?: Array<ListItemAction>
   mainActionCount?: number
 }
 

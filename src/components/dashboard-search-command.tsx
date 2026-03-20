@@ -8,6 +8,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import React from 'react'
+import type {AdminRoutePath} from '@/lib/admin-navigation';
 import { Button } from '@/components/ui/button'
 import {
   Command,
@@ -31,9 +32,9 @@ import { toastManager } from '@/components/ui/toast'
 import { authClient } from '@/lib/auth-client'
 import { adminAuthQueryKey, useAdminAuthContext } from '@/lib/admin-auth'
 import {
+  
   adminCommandRouteItems,
-  adminUtilityItems,
-  type AdminRoutePath,
+  adminUtilityItems
 } from '@/lib/admin-navigation'
 import { BASE_URL } from '@/lib/constans'
 
@@ -43,14 +44,14 @@ type CommandDefinition = {
   section: string
   shortcut?: string
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-  keywords?: readonly string[]
+  keywords?: ReadonlyArray<string>
   to?: AdminRoutePath
   onSelect?: () => Promise<void> | void
 }
 
 type CommandGroupItem = {
   value: string
-  items: CommandDefinition[]
+  items: Array<CommandDefinition>
 }
 
 function buildSearchValue(command: CommandDefinition) {

@@ -1,15 +1,15 @@
 import { and, desc, eq, lte, sql } from 'drizzle-orm'
 import { db } from '@/db'
 import {
+  PAYOUT_STATUS,
+  TRANSACTION_TYPE,
   bankAccounts,
   payouts,
   transactions,
-  PAYOUT_STATUS,
-  TRANSACTION_TYPE,
 } from '@/db/schema'
 import {
-  createPayout,
   approvePayout,
+  createPayout,
   validateBankAccount,
 } from '@/lib/midtrans-iris'
 

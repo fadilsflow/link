@@ -1,8 +1,8 @@
 import { Node, mergeAttributes } from '@tiptap/core'
-import type { Editor } from '@tiptap/core'
 import { ReactNodeViewRenderer } from '@tiptap/react'
-import { FileViewBlock } from './components/file-view-block'
 import { ReplaceStep } from '@tiptap/pm/transform'
+import { FileViewBlock } from './components/file-view-block'
+import type { Editor } from '@tiptap/core'
 import type { Attrs } from '@tiptap/pm/model'
 
 export type FileUploadReturnType =

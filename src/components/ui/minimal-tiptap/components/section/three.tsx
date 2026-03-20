@@ -1,13 +1,14 @@
 import * as React from 'react'
+import { CaretDownIcon, CheckIcon } from '@radix-ui/react-icons'
+import { ToolbarButton } from '../toolbar-button'
+import { useTheme } from '../../hooks/use-theme'
 import type { Editor } from '@tiptap/react'
 import type { toggleVariants } from '@/components/ui/toggle'
 import type { VariantProps } from 'class-variance-authority'
-import { CaretDownIcon, CheckIcon } from '@radix-ui/react-icons'
-import { ToolbarButton } from '../toolbar-button'
 import {
   Popover,
-  PopoverTrigger,
   PopoverContent,
+  PopoverTrigger,
 } from '@/components/ui/popover'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import {
@@ -15,7 +16,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useTheme } from '../../hooks/use-theme'
 
 interface ColorItem {
   cssVar: string
@@ -25,11 +25,11 @@ interface ColorItem {
 
 interface ColorPalette {
   label: string
-  colors: ColorItem[]
+  colors: Array<ColorItem>
   inverse: string
 }
 
-const COLORS: ColorPalette[] = [
+const COLORS: Array<ColorPalette> = [
   {
     label: 'Palette 1',
     inverse: 'hsl(var(--background))',

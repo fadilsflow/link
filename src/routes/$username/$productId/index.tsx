@@ -32,9 +32,9 @@ import {
 } from '@/components/ui/carousel'
 import { SimpleTooltip } from '@/components/ui/tooltip'
 import {
+  MetaPixel,
   createMetaEventId,
   getMetaAttributionData,
-  MetaPixel,
   trackMetaPixelEvent,
 } from '@/lib/meta-pixel'
 import { trpcClient } from '@/integrations/tanstack-query/root-provider'

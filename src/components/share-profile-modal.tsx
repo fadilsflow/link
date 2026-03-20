@@ -1,5 +1,6 @@
 import { CircleCheck, Download, Link2Icon, Share } from 'lucide-react'
 import { useState } from 'react'
+import { Group, GroupSeparator } from './ui/group'
 import {
   Dialog,
   DialogHeader,
@@ -10,7 +11,6 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
-import { Group, GroupSeparator } from './ui/group'
 
 export function ShareProfileModal({
   url,

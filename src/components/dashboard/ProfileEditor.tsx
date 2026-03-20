@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { SquarePen } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 
 import { Input } from '@/components/ui/input'
@@ -18,7 +19,6 @@ import {
 } from '@/components/ui/dialog'
 
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
-import { SquarePen } from 'lucide-react'
 
 interface ProfileData {
   name: string

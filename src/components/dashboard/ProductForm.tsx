@@ -1,8 +1,5 @@
 import * as React from 'react'
 import { ImageIcon, Plus, Trash2, X } from 'lucide-react'
-import type { Content } from '@tiptap/react'
-import { useFileUpload } from '@/hooks/use-file-upload'
-import { uploadFile } from '@/lib/upload-client'
 import {
   DndContext,
   KeyboardSensor,
@@ -19,7 +16,12 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { Separator } from '../ui/separator'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '../ui/input-group'
+import type { Content } from '@tiptap/react'
 import type { DragEndEvent } from '@dnd-kit/core'
+import { useFileUpload } from '@/hooks/use-file-upload'
+import { uploadFile } from '@/lib/upload-client'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,8 +30,6 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { toastManager } from '@/components/ui/toast'
 import { cn, formatPriceInput, parsePriceInput } from '@/lib/utils'
-import { Separator } from '../ui/separator'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '../ui/input-group'
 import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs'
 import { ProductContentEditor } from '@/components/dashboard/ProductContentEditor'
 import { MinimalTiptapEditor } from '@/components/ui/minimal-tiptap'
@@ -55,12 +55,12 @@ export type ProductFormValues = {
   title: string
   description: Content | null
   productContent?: Content | null
-  images: string[]
+  images: Array<string>
   isActive: boolean
   totalQuantity?: number | null
   limitPerCheckout?: number | null
   priceSettings: PriceSettings
-  customerQuestions: CustomerQuestion[]
+  customerQuestions: Array<CustomerQuestion>
 }
 
 export interface ProductFormProps {
@@ -96,7 +96,7 @@ export function emptyProductForm(): ProductFormValues {
   }
 }
 
-export function parseCustomerQuestions(raw: unknown): CustomerQuestion[] {
+export function parseCustomerQuestions(raw: unknown): Array<CustomerQuestion> {
   if (typeof raw !== 'string') return []
   try {
     const parsed = JSON.parse(raw)
@@ -315,7 +315,7 @@ export function ProductForm({
   const [enableQuantityChoice, setEnableQuantityChoice] = React.useState(false)
   const [enableSalesLimit, setEnableSalesLimit] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState<TabValue>('product')
-  const [imageOrder, setImageOrder] = React.useState<string[]>([])
+  const [imageOrder, setImageOrder] = React.useState<Array<string>>([])
 
   const setUploading = (val: boolean) => {
     setIsUploading(val)
@@ -346,7 +346,7 @@ export function ProductForm({
     setEnableSalesLimit(value.totalQuantity != null)
   }, [value.id])
 
-  const clearError = (...keys: string[]) => {
+  const clearError = (...keys: Array<string>) => {
     setErrors((prev) => {
       const next = { ...prev }
       keys.forEach((k) => delete next[k])
@@ -456,7 +456,7 @@ export function ProductForm({
     setUploading(true)
 
     try {
-      const finalImages: string[] = []
+      const finalImages: Array<string> = []
       for (const f of orderedImageFiles) {
         if (f.file instanceof File) {
           finalImages.push(await uploadFile(f.file, 'products/images'))

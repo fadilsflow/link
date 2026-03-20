@@ -12,7 +12,7 @@ export type FileError = {
 }
 
 export type FileValidationOptions = {
-  allowedMimeTypes: string[]
+  allowedMimeTypes: Array<string>
   maxFileSize?: number
   allowBase64: boolean
 }
@@ -37,7 +37,7 @@ const shortcutKeyMap: Record<string, ShortcutKeyResult> = {
 export const getShortcutKey = (key: string): ShortcutKeyResult =>
   shortcutKeyMap[key.toLowerCase()] || { symbol: key, readable: key }
 
-export const getShortcutKeys = (keys: string[]): ShortcutKeyResult[] =>
+export const getShortcutKeys = (keys: Array<string>): Array<ShortcutKeyResult> =>
   keys.map(getShortcutKey)
 
 export const getOutput = (
@@ -145,8 +145,8 @@ const validateFileOrBase64 = <T extends FileInput>(
   input: File | string,
   options: FileValidationOptions,
   originalFile: T,
-  validFiles: T[],
-  errors: FileError[],
+  validFiles: Array<T>,
+  errors: Array<FileError>,
 ): void => {
   const { isValidType, isValidSize } = checkTypeAndSize(input, options)
 
@@ -199,11 +199,11 @@ const isBase64 = (str: string): boolean => {
 }
 
 export const filterFiles = <T extends FileInput>(
-  files: T[],
+  files: Array<T>,
   options: FileValidationOptions,
-): [T[], FileError[]] => {
-  const validFiles: T[] = []
-  const errors: FileError[] = []
+): [Array<T>, Array<FileError>] => {
+  const validFiles: Array<T> = []
+  const errors: Array<FileError> = []
 
   files.forEach((file) => {
     const actualFile = 'src' in file ? file.src : file

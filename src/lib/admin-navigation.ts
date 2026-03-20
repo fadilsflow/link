@@ -1,4 +1,3 @@
-import type { ComponentType, SVGProps } from 'react'
 import {
   ExternalLink,
   Home,
@@ -10,6 +9,7 @@ import {
   User,
   Wallet,
 } from 'lucide-react'
+import type { ComponentType, SVGProps } from 'react'
 
 export type AdminRoutePath =
   | '/admin'
@@ -26,7 +26,7 @@ export type AdminNavItem = {
   url: AdminRoutePath
   icon: ComponentType<SVGProps<SVGSVGElement>>
   section: 'main' | 'monetize' | 'other'
-  keywords?: string[]
+  keywords?: Array<string>
 }
 
 export const adminNavigationItems: Array<AdminNavItem> = [

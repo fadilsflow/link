@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Package2, PlayCircle } from 'lucide-react'
-import type { PreviewSocialLink, PreviewProduct } from '@/lib/preview-context'
+import type { PreviewProduct, PreviewSocialLink } from '@/lib/preview-context'
 import type {
   AppearanceBackgroundType,
   AppearanceTextFont,

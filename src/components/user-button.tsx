@@ -2,10 +2,10 @@ import { LogOut, UserIcon } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter } from '@tanstack/react-router'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
+import { Button } from './ui/button'
 import { authClient } from '@/lib/auth-client'
 import { adminAuthQueryKey } from '@/lib/admin-auth'
-import { Popover, PopoverTrigger, PopoverContent } from './ui/popover'
-import { Button } from './ui/button'
 
 export default function UserButton() {
   const { data: session } = authClient.useSession()

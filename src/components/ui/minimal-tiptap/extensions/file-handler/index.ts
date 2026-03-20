@@ -1,14 +1,15 @@
-import { type Editor, Extension } from '@tiptap/react'
+import {  Extension } from '@tiptap/react'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
-import type { FileError, FileValidationOptions } from '../../utils'
 import { filterFiles } from '../../utils'
+import type {Editor} from '@tiptap/react';
+import type { FileError, FileValidationOptions } from '../../utils'
 
 type FileHandlePluginOptions = {
   key?: PluginKey
   editor: Editor
-  onPaste?: (editor: Editor, files: File[], pasteContent?: string) => void
-  onDrop?: (editor: Editor, files: File[], pos: number) => void
-  onValidationError?: (errors: FileError[]) => void
+  onPaste?: (editor: Editor, files: Array<File>, pasteContent?: string) => void
+  onDrop?: (editor: Editor, files: Array<File>, pos: number) => void
+  onValidationError?: (errors: Array<FileError>) => void
 } & FileValidationOptions
 
 const FileHandlePlugin = (options: FileHandlePluginOptions) => {

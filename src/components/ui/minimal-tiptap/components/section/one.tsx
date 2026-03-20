@@ -1,18 +1,18 @@
 import * as React from 'react'
+import { CaretDownIcon, LetterCaseCapitalizeIcon } from '@radix-ui/react-icons'
+import { ToolbarButton } from '../toolbar-button'
+import { ShortcutKey } from '../shortcut-key'
 import type { Editor } from '@tiptap/react'
 import type { FormatAction } from '../../types'
 import type { VariantProps } from 'class-variance-authority'
 import type { toggleVariants } from '@/components/ui/toggle'
 import { cn } from '@/lib/utils'
-import { CaretDownIcon, LetterCaseCapitalizeIcon } from '@radix-ui/react-icons'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ToolbarButton } from '../toolbar-button'
-import { ShortcutKey } from '../shortcut-key'
 
 type Level = 1 | 2 | 3 | 4 | 5 | 6
 interface TextStyle extends Omit<
@@ -24,7 +24,7 @@ interface TextStyle extends Omit<
   className: string
 }
 
-const formatActions: TextStyle[] = [
+const formatActions: Array<TextStyle> = [
   {
     label: 'Normal Text',
     element: 'span',
@@ -77,7 +77,7 @@ const formatActions: TextStyle[] = [
 
 interface SectionOneProps extends VariantProps<typeof toggleVariants> {
   editor: Editor
-  activeLevels?: Level[]
+  activeLevels?: Array<Level>
 }
 
 export const SectionOne: React.FC<SectionOneProps> = ({

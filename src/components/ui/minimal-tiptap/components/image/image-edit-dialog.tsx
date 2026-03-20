@@ -1,9 +1,9 @@
 import * as React from 'react'
+import { ImageIcon } from '@radix-ui/react-icons'
+import { ToolbarButton } from '../toolbar-button'
 import type { Editor } from '@tiptap/react'
 import type { VariantProps } from 'class-variance-authority'
 import type { toggleVariants } from '@/components/ui/toggle'
-import { ImageIcon } from '@radix-ui/react-icons'
-import { ToolbarButton } from '../toolbar-button'
 
 interface ImageEditDialogProps extends VariantProps<typeof toggleVariants> {
   editor: Editor

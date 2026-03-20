@@ -1,17 +1,18 @@
 import * as React from 'react'
-import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
-import type { ElementDimensions } from '../hooks/use-drag-resize'
-import { useDragResize } from '../hooks/use-drag-resize'
-import { ResizeHandle } from './resize-handle'
-import { cn } from '@/lib/utils'
+import {  NodeViewWrapper } from '@tiptap/react'
 import { Controlled as ControlledZoom } from 'react-medium-image-zoom'
-import { ActionButton, ActionWrapper, ImageActions } from './image-actions'
+import { InfoCircledIcon, TrashIcon } from '@radix-ui/react-icons'
 import { useImageActions } from '../hooks/use-image-actions'
 import { blobUrlToBase64, randomId } from '../../../utils'
-import { InfoCircledIcon, TrashIcon } from '@radix-ui/react-icons'
-import { ImageOverlay } from './image-overlay'
+import { useDragResize } from '../hooks/use-drag-resize'
 import { Spinner } from '../../../components/spinner'
+import { ImageOverlay } from './image-overlay'
+import { ActionButton, ActionWrapper, ImageActions } from './image-actions'
+import { ResizeHandle } from './resize-handle'
+import type {NodeViewProps} from '@tiptap/react';
+import type { ElementDimensions } from '../hooks/use-drag-resize'
 import type { UploadReturnType } from '../image'
+import { cn } from '@/lib/utils'
 
 const MAX_HEIGHT = 600
 const MIN_HEIGHT = 120

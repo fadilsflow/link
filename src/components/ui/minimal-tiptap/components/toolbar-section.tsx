@@ -1,24 +1,24 @@
 import * as React from 'react'
+import { CaretDownIcon } from '@radix-ui/react-icons'
+import { getShortcutKey } from '../utils'
+import { ToolbarButton } from './toolbar-button'
+import { ShortcutKey } from './shortcut-key'
 import type { Editor } from '@tiptap/react'
 import type { FormatAction } from '../types'
 import type { VariantProps } from 'class-variance-authority'
 import type { toggleVariants } from '@/components/ui/toggle'
 import { cn } from '@/lib/utils'
-import { CaretDownIcon } from '@radix-ui/react-icons'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ToolbarButton } from './toolbar-button'
-import { ShortcutKey } from './shortcut-key'
-import { getShortcutKey } from '../utils'
 
 interface ToolbarSectionProps extends VariantProps<typeof toggleVariants> {
   editor: Editor
-  actions: FormatAction[]
-  activeActions?: string[]
+  actions: Array<FormatAction>
+  activeActions?: Array<string>
   mainActionCount?: number
   dropdownIcon?: React.ReactNode
   dropdownTooltip?: string

@@ -1,6 +1,11 @@
-import { ChevronDown, Search, ExternalLink, Copy } from 'lucide-react'
+import { ChevronDown, Copy, ExternalLink, Search } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useRouter, useRouterState } from '@tanstack/react-router'
+import DashboardSearchCommand from '../dashboard-search-command'
+import { LogoStudioSidebar } from '../kreasi-logo'
+import { Kbd, KbdGroup } from '../ui/kbd'
+import { Popover, PopoverPopup, PopoverTrigger } from '../ui/popover'
+import { Button } from '../ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Sidebar,
@@ -18,11 +23,6 @@ import { authClient } from '@/lib/auth-client'
 import { adminAuthQueryKey, useAdminAuthContext } from '@/lib/admin-auth'
 import { adminNavigationItems } from '@/lib/admin-navigation'
 import { cn } from '@/lib/utils'
-import DashboardSearchCommand from '../dashboard-search-command'
-import { LogoStudioSidebar } from '../kreasi-logo'
-import { Kbd, KbdGroup } from '../ui/kbd'
-import { Popover, PopoverPopup, PopoverTrigger } from '../ui/popover'
-import { Button } from '../ui/button'
 
 const data = {
   navBottom: adminNavigationItems.filter((item) => item.section === 'other'),

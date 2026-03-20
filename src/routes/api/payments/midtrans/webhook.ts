@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
+import type {MidtransNotificationPayload} from '@/lib/midtrans';
 import {
-  type MidtransNotificationPayload,
-  verifyMidtransNotificationSignature,
+  
+  verifyMidtransNotificationSignature
 } from '@/lib/midtrans'
 import { processMidtransNotification } from '@/lib/payment-service'
 

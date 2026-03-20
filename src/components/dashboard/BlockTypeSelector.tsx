@@ -1,3 +1,6 @@
+import { Plus } from 'lucide-react'
+import { Frame } from '../ui/frame'
+import type {BlockCategory, BlockType} from '@/lib/block-type-config';
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -7,13 +10,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Plus } from 'lucide-react'
 import {
-  BLOCK_TYPE_CONFIG,
-  type BlockType,
-  type BlockCategory,
+  BLOCK_TYPE_CONFIG
+  
+  
 } from '@/lib/block-type-config'
-import { Frame } from '../ui/frame'
 
 export type { BlockType, BlockCategory } from '@/lib/block-type-config'
 
@@ -59,7 +60,7 @@ export function BlockTypeSelector({
   onSelect,
 }: BlockTypeSelectorProps) {
   const blocksByCategory = getBlocksByCategory()
-  const categories = Object.keys(blocksByCategory) as BlockCategory[]
+  const categories = Object.keys(blocksByCategory) as Array<BlockCategory>
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

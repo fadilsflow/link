@@ -1,8 +1,4 @@
 import * as React from 'react'
-import type { Editor } from '@tiptap/react'
-import type { FormatAction } from '../../types'
-import type { toggleVariants } from '@/components/ui/toggle'
-import type { VariantProps } from 'class-variance-authority'
 import {
   CaretDownIcon,
   CodeIcon,
@@ -15,6 +11,10 @@ import { LinkEditPopover } from '../link/link-edit-popover'
 import { ButtonEditPopover } from '../button/button-edit-popover'
 import { FileInsertDialog } from '../file/file-insert-dialog'
 import { ToolbarSection } from '../toolbar-section'
+import type { VariantProps } from 'class-variance-authority'
+import type { toggleVariants } from '@/components/ui/toggle'
+import type { FormatAction } from '../../types'
+import type { Editor } from '@tiptap/react'
 import { Separator } from '@/components/ui/separator'
 
 type InsertElementAction =
@@ -29,7 +29,7 @@ interface InsertElement extends FormatAction {
 
 interface SectionFiveProps extends VariantProps<typeof toggleVariants> {
   editor: Editor
-  activeActions?: InsertElementAction[]
+  activeActions?: Array<InsertElementAction>
   mainActionCount?: number
   allowImageUpload?: boolean
   allowFileUpload?: boolean
@@ -65,7 +65,7 @@ export const SectionFive: React.FC<SectionFiveProps> = ({
     [editor],
   )
 
-  const formatActions: InsertElement[] = [
+  const formatActions: Array<InsertElement> = [
     ...(allowImageUpload
       ? [
           {

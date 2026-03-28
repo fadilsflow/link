@@ -44,14 +44,16 @@ type PayoutRow = {
   bankAccountNumber: string | null
 }
 
-const statusVariantMap: Record<string, 'warning' | 'info' | 'success' | 'error'> =
-  {
-    pending: 'warning',
-    processing: 'info',
-    completed: 'success',
-    failed: 'error',
-    cancelled: 'error',
-  }
+const statusVariantMap: Record<
+  string,
+  'warning' | 'info' | 'success' | 'error'
+> = {
+  pending: 'warning',
+  processing: 'info',
+  completed: 'success',
+  failed: 'error',
+  cancelled: 'error',
+}
 
 function SuperAdminPayoutsPage() {
   const queryClient = useQueryClient()
@@ -108,11 +110,7 @@ function SuperAdminPayoutsPage() {
       const creatorName = payout.creator?.name ?? null
       const creatorEmail = payout.creator?.email ?? ''
       const creatorUsername = payout.creator?.username ?? null
-      const creatorLabel = [
-        creatorName,
-        creatorEmail,
-        creatorUsername,
-      ]
+      const creatorLabel = [creatorName, creatorEmail, creatorUsername]
         .filter(Boolean)
         .join(' ')
       const bankAccount = payout.bankAccount
@@ -226,10 +224,7 @@ function SuperAdminPayoutsPage() {
         id: 'actions',
         header: 'Actions',
         cell: ({ row }) => (
-          <PayoutRowActions
-            row={row.original}
-            onUpdate={handlePayoutUpdate}
-          />
+          <PayoutRowActions row={row.original} onUpdate={handlePayoutUpdate} />
         ),
       },
     ],
@@ -239,18 +234,6 @@ function SuperAdminPayoutsPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-10 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Payout Requests</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Review dan proses pencairan manual melalui bank/e-wallet.
-          </p>
-        </div>
-        {payoutsQuery.isLoading ? (
-          <Spinner className="h-4 w-4 text-muted-foreground" />
-        ) : null}
-      </div>
-
       <DataTable
         columns={columns}
         data={rows}
@@ -502,11 +485,7 @@ function EditNotesDialog({
     >
       <AlertDialogTrigger
         render={
-          <Button
-            size="sm"
-            variant="outline"
-            data-payout-id={payoutId}
-          >
+          <Button size="sm" variant="outline" data-payout-id={payoutId}>
             Edit Notes
           </Button>
         }
@@ -515,7 +494,8 @@ function EditNotesDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Edit notes</AlertDialogTitle>
           <AlertDialogDescription>
-            Simpan catatan internal untuk payout ini ({formatStatusLabel(status)}
+            Simpan catatan internal untuk payout ini (
+            {formatStatusLabel(status)}
             ).
           </AlertDialogDescription>
         </AlertDialogHeader>

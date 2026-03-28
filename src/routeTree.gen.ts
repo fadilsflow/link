@@ -19,7 +19,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuperadminIndexRouteImport } from './routes/superadmin/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as UsernameIndexRouteImport } from './routes/$username/index'
-import { Route as SuperadminUsersRouteImport } from './routes/superadmin/users'
 import { Route as SuperadminSettingsRouteImport } from './routes/superadmin/settings'
 import { Route as SuperadminPayoutsRouteImport } from './routes/superadmin/payouts'
 import { Route as PayCheckoutGroupIdRouteImport } from './routes/pay/$checkoutGroupId'
@@ -90,11 +89,6 @@ const UsernameIndexRoute = UsernameIndexRouteImport.update({
   id: '/$username/',
   path: '/$username/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const SuperadminUsersRoute = SuperadminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => SuperadminRouteRoute,
 } as any)
 const SuperadminSettingsRoute = SuperadminSettingsRouteImport.update({
   id: '/settings',
@@ -214,7 +208,6 @@ export interface FileRoutesByFullPath {
   '/pay/$checkoutGroupId': typeof PayCheckoutGroupIdRoute
   '/superadmin/payouts': typeof SuperadminPayoutsRoute
   '/superadmin/settings': typeof SuperadminSettingsRoute
-  '/superadmin/users': typeof SuperadminUsersRoute
   '/$username/': typeof UsernameIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/superadmin/': typeof SuperadminIndexRoute
@@ -244,7 +237,6 @@ export interface FileRoutesByTo {
   '/pay/$checkoutGroupId': typeof PayCheckoutGroupIdRoute
   '/superadmin/payouts': typeof SuperadminPayoutsRoute
   '/superadmin/settings': typeof SuperadminSettingsRoute
-  '/superadmin/users': typeof SuperadminUsersRoute
   '/$username': typeof UsernameIndexRoute
   '/admin': typeof AdminIndexRoute
   '/superadmin': typeof SuperadminIndexRoute
@@ -278,7 +270,6 @@ export interface FileRoutesById {
   '/pay/$checkoutGroupId': typeof PayCheckoutGroupIdRoute
   '/superadmin/payouts': typeof SuperadminPayoutsRoute
   '/superadmin/settings': typeof SuperadminSettingsRoute
-  '/superadmin/users': typeof SuperadminUsersRoute
   '/$username/': typeof UsernameIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/superadmin/': typeof SuperadminIndexRoute
@@ -313,7 +304,6 @@ export interface FileRouteTypes {
     | '/pay/$checkoutGroupId'
     | '/superadmin/payouts'
     | '/superadmin/settings'
-    | '/superadmin/users'
     | '/$username/'
     | '/admin/'
     | '/superadmin/'
@@ -343,7 +333,6 @@ export interface FileRouteTypes {
     | '/pay/$checkoutGroupId'
     | '/superadmin/payouts'
     | '/superadmin/settings'
-    | '/superadmin/users'
     | '/$username'
     | '/admin'
     | '/superadmin'
@@ -376,7 +365,6 @@ export interface FileRouteTypes {
     | '/pay/$checkoutGroupId'
     | '/superadmin/payouts'
     | '/superadmin/settings'
-    | '/superadmin/users'
     | '/$username/'
     | '/admin/'
     | '/superadmin/'
@@ -485,13 +473,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/$username/'
       preLoaderRoute: typeof UsernameIndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/superadmin/users': {
-      id: '/superadmin/users'
-      path: '/users'
-      fullPath: '/superadmin/users'
-      preLoaderRoute: typeof SuperadminUsersRouteImport
-      parentRoute: typeof SuperadminRouteRoute
     }
     '/superadmin/settings': {
       id: '/superadmin/settings'
@@ -689,14 +670,12 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 interface SuperadminRouteRouteChildren {
   SuperadminPayoutsRoute: typeof SuperadminPayoutsRoute
   SuperadminSettingsRoute: typeof SuperadminSettingsRoute
-  SuperadminUsersRoute: typeof SuperadminUsersRoute
   SuperadminIndexRoute: typeof SuperadminIndexRoute
 }
 
 const SuperadminRouteRouteChildren: SuperadminRouteRouteChildren = {
   SuperadminPayoutsRoute: SuperadminPayoutsRoute,
   SuperadminSettingsRoute: SuperadminSettingsRoute,
-  SuperadminUsersRoute: SuperadminUsersRoute,
   SuperadminIndexRoute: SuperadminIndexRoute,
 }
 
